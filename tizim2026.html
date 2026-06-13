@@ -1868,7 +1868,7 @@ body:not(.light-mode) .admin-badge{background:rgba(220,38,38,.15);border-color:r
     <div class="card-title">📱 Telegram Hisobot</div>
     <div class="fg"><label class="fl">Bot Token</label><input id="tg-bot-token" class="fc" placeholder="1234567890:ABCdef..." oninput="localStorage.setItem('tg_bot_token',this.value)"></div>
     <div class="fg"><label class="fl">Chat ID</label><input id="tg-chat-id" class="fc" placeholder="-1001234567890" oninput="localStorage.setItem('tg_chat_id',this.value)"></div>
-    <button class="btn btn-p" onclick="sendTelegramReport()" style="margin-top:8px;width:100%">📊 Hisobot Yuborish</button>
+    <button id="tg-send-btn" class="btn btn-p" onclick="sendTelegramReport()" style="margin-top:8px;width:100%">📤 PDF Hisobot Yuborish</button>
   </div>
 </div>
 
@@ -12121,31 +12121,116 @@ async function updatePulSoroviBadge(){
   badge.style.display = yangi > 0 ? 'inline' : 'none';
 }
 
+// ══ TELEGRAM PDF HISOBOT ══════════════════════════════════
+const TG_TOKEN = '8322455852:AAFKe_sYk-D5RO3VZliEUvu4LmeHRJbDw3c';
+const TG_CHAT  = '1884849724';
+
 async function sendTelegramReport(){
-  const token = localStorage.getItem('tg_bot_token') || document.getElementById('tg-bot-token')?.value;
-  const chatId = localStorage.getItem('tg_chat_id') || document.getElementById('tg-chat-id')?.value;
-  if(!token || !chatId){ alert('Bot token va Chat ID kiriting!'); return; }
+  const btn = document.getElementById('tg-send-btn');
+  if(btn){ btn.disabled=true; btn.textContent='⏳ Yuborilmoqda...'; }
   try {
-    const ops = await GA('operations');
-    const workers = await GA('workers');
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+    const [ops, workers, sotuvs, items] = await Promise.all([
+      GA('operations'), GA('workers'),
+      GA('sotuv_orders').catch(()=>[]),
+      GA('ombor_items').catch(()=>[])
+    ]);
     const today = TODAY();
     const todayOps = ops.filter(o => o.date === today);
-    const text = `📊 *KAFTIMDA ERP — Kunlik Hisobot*\n📅 Sana: ${today}\n\n` +
-      `👷 Jami xodimlar: *${workers.length}* ta\n` +
-      `⚙️ Bugungi operatsiyalar: *${todayOps.length}* ta\n\n` +
-      `_Hisobot: ${new Date().toLocaleTimeString('uz-UZ')}_`;
-    const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'Markdown' })
-    });
-    const data = await res.json();
-    if(data.ok) alert('✅ Hisobot Telegramga yuborildi!');
-    else alert('❌ Xato: ' + data.description);
-  } catch(e){ alert('❌ Yuborishda xato: ' + e.message); }
-}
+    const todaySotuv = sotuvs.filter(s => s.date === today);
 
-// Telegram sozlamalarini yuklash
+    // Sarlavha
+    doc.setFillColor(13,27,42);
+    doc.rect(0,0,210,40,'F');
+    doc.setTextColor(0,217,163);
+    doc.setFontSize(20);
+    doc.setFont('helvetica','bold');
+    doc.text('KAFTIMDA ERP', 15, 18);
+    doc.setFontSize(11);
+    doc.setTextColor(180,200,220);
+    doc.text('Kunlik Hisobot — ' + today, 15, 28);
+    doc.text('Vaqt: ' + new Date().toLocaleTimeString('uz-UZ'), 15, 35);
+
+    // Statistika
+    doc.setTextColor(30,30,30);
+    doc.setFontSize(13);
+    doc.setFont('helvetica','bold');
+    doc.text("Umumiy ko'rsatkichlar", 15, 55);
+    const stats = [
+      ["Jami xodimlar", workers.length + ' ta'],
+      ["Bugungi operatsiyalar", todayOps.length + ' ta'],
+      ["Bugungi sotuvlar", todaySotuv.length + ' ta'],
+      ["Ombor mahsulotlari", items.length + ' ta'],
+    ];
+    let y = 65;
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(11);
+    stats.forEach(([k,v]) => {
+      doc.setFillColor(240,248,255);
+      doc.rect(15,y-5,180,10,'F');
+      doc.setTextColor(60,60,60); doc.text(k,20,y);
+      doc.setFont('helvetica','bold'); doc.setTextColor(0,150,100); doc.text(v,160,y);
+      doc.setFont('helvetica','normal'); y+=14;
+    });
+
+    // Xodimlar jadvali
+    if(workers.length){
+      y+=5;
+      doc.setFont('helvetica','bold'); doc.setFontSize(13); doc.setTextColor(30,30,30);
+      doc.text("Xodimlar ro'yxati",15,y); y+=8;
+      doc.autoTable({
+        startY:y,
+        head:[['Ism',"Bo'lim",'Lavozim']],
+        body:workers.slice(0,15).map(w=>[w.name||'—',w.dept||'—',w.role||'—']),
+        styles:{fontSize:9,cellPadding:3},
+        headStyles:{fillColor:[13,27,42],textColor:[0,217,163]},
+        alternateRowStyles:{fillColor:[245,250,255]},
+        margin:{left:15,right:15}
+      });
+      y=doc.lastAutoTable.finalY+10;
+    }
+
+    // Bugungi operatsiyalar
+    if(todayOps.length && y<240){
+      doc.setFont('helvetica','bold'); doc.setFontSize(13); doc.setTextColor(30,30,30);
+      doc.text("Bugungi operatsiyalar",15,y); y+=8;
+      doc.autoTable({
+        startY:y,
+        head:[['Model',"Bo'lim",'Soni','Sana']],
+        body:todayOps.slice(0,10).map(o=>[o.name||o.model||'—',o.dept||'—',o.qty||o.count||1,o.date||today]),
+        styles:{fontSize:9,cellPadding:3},
+        headStyles:{fillColor:[13,27,42],textColor:[0,217,163]},
+        margin:{left:15,right:15}
+      });
+    }
+
+    // Footer
+    const pages=doc.internal.getNumberOfPages();
+    for(let i=1;i<=pages;i++){
+      doc.setPage(i);
+      doc.setFontSize(8); doc.setTextColor(150,150,150);
+      doc.text('KAFTIMDA ERP © '+new Date().getFullYear()+' | Sahifa '+i+'/'+pages,15,290);
+    }
+
+    // PDF ni Telegramga yuborish
+    const pdfBlob = doc.output('blob');
+    const fname = 'KAFTIMDA_'+today+'.pdf';
+    const form = new FormData();
+    form.append('chat_id', TG_CHAT);
+    form.append('document', pdfBlob, fname);
+    form.append('caption', '📊 KAFTIMDA ERP Hisobot\n📅 '+today+'\n👷 '+workers.length+' xodim | ⚙️ '+todayOps.length+' ops | 🛒 '+todaySotuv.length+' sotuv');
+    const res = await fetch('https://api.telegram.org/bot'+TG_TOKEN+'/sendDocument',{method:'POST',body:form});
+    const d = await res.json();
+    if(d.ok){
+      if(btn){ btn.disabled=false; btn.textContent='📤 PDF Hisobot Yuborish'; }
+      alert('✅ PDF hisobot Telegramga yuborildi!');
+    } else throw new Error(d.description);
+  } catch(e){
+    if(btn){ btn.disabled=false; btn.textContent='📤 PDF Hisobot Yuborish'; }
+    alert('❌ Xato: '+e.message);
+  }
+}
 (function loadTgSettings(){
   const t = localStorage.getItem('tg_bot_token');
   const c = localStorage.getItem('tg_chat_id');
