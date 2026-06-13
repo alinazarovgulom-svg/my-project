@@ -15,6 +15,8 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -1863,11 +1865,11 @@ body:not(.light-mode) .admin-badge{background:rgba(220,38,38,.15);border-color:r
     </div>
   </div>
   <div class="card" style="margin-top:16px">
-  <div class="card-title">📱 Telegram Hisobot</div>
-  <div class="fg"><label class="fl">Bot Token</label><input id="tg-bot-token" class="fc" placeholder="1234567890:ABCdef..." oninput="localStorage.setItem('tg_bot_token',this.value)"></div>
-  <div class="fg"><label class="fl">Chat ID</label><input id="tg-chat-id" class="fc" placeholder="-1001234567890" oninput="localStorage.setItem('tg_chat_id',this.value)"></div>
-  <button class="btn btn-p" onclick="sendTelegramReport()" style="margin-top:8px;width:100%">📊 Hisobot Yuborish</button>
-</div>
+    <div class="card-title">📱 Telegram Hisobot</div>
+    <div class="fg"><label class="fl">Bot Token</label><input id="tg-bot-token" class="fc" placeholder="1234567890:ABCdef..." oninput="localStorage.setItem('tg_bot_token',this.value)"></div>
+    <div class="fg"><label class="fl">Chat ID</label><input id="tg-chat-id" class="fc" placeholder="-1001234567890" oninput="localStorage.setItem('tg_chat_id',this.value)"></div>
+    <button class="btn btn-p" onclick="sendTelegramReport()" style="margin-top:8px;width:100%">📊 Hisobot Yuborish</button>
+  </div>
 </div>
 
 </div><!-- /main -->
@@ -1919,14 +1921,6 @@ body:not(.light-mode) .admin-badge{background:rgba(220,38,38,.15);border-color:r
       <button class="btn btn-p" id="m-save">Saqlash</button>
     </div>
   </div>
-
-<div class="card" style="margin-top:16px">
-  <div class="card-title">📱 Telegram Hisobot</div>
-  <div class="fg"><label class="fl">Bot Token</label><input id="tg-bot-token" class="fc" placeholder="1234567890:ABCdef..." oninput="localStorage.setItem('tg_bot_token',this.value)"></div>
-  <div class="fg"><label class="fl">Chat ID</label><input id="tg-chat-id" class="fc" placeholder="-1001234567890" oninput="localStorage.setItem('tg_chat_id',this.value)"></div>
-  <div style="font-size:12px;color:var(--txt3);margin-bottom:8px">Telegram botingiz Chat ID sini kiriting va hisobot yuboring.</div>
-  <button class="btn btn-p" onclick="sendTelegramReport()" style="width:100%">📊 Hisobot Yuborish</button>
-</div>
 </div>
 
 <!-- ═══ OMBOR ═══ -->
@@ -3018,6 +3012,9 @@ const FIREBASE_CONFIG = {
 };
 firebase.initializeApp(FIREBASE_CONFIG);
 const firebaseDB = firebase.database();
+const firebaseAuth = firebase.auth();
+const firebaseStorage = firebase.storage();
+firebaseDB.enablePersistence().catch(e => console.warn('Offline persistence:', e.code));
 
 // ══ DB (Firebase Realtime Database) ══════════════════════
 let db = true; // Firebase bilan ishlaydi
@@ -3049,6 +3046,22 @@ const PUT = (store, obj) => {
 const DEL = (store, id) => {
   return firebaseDB.ref(store+'/'+id).remove();
 };
+
+// Real-time listener - Firebase o'zgarishlarini darhol ko'rsatadi
+const LISTEN = (store, callback) => {
+  firebaseDB.ref(store).on('value', snap => {
+    const data = snap.val() || {};
+    callback(Object.entries(data).map(([key, val]) => ({...val, id: key})));
+  });
+};
+const UNLISTEN = (store) => firebaseDB.ref(store).off();
+
+async function uploadImageToStorage(dataUrl, path) {
+  if(!dataUrl || !dataUrl.startsWith('data:')) return dataUrl;
+  const ref = firebaseStorage.ref(path);
+  const snap = await ref.putString(dataUrl, 'data_url');
+  return await snap.ref.getDownloadURL();
+}
 
 // INIT ni Firebase tayyor bo'lgach ishga tushirish
 window.addEventListener('load', () => {
@@ -9940,16 +9953,38 @@ function doLogin(){
   const upass  = document.getElementById('login-password').value;
   const err    = document.getElementById('login-err');
   if(!uname || !upass){ err.style.display='block'; err.textContent='❌ Ism va parolni kiriting!'; return; }
-  const users = getUsers();
-  const user  = users.find(u => u.name === uname && u.pass === upass);
-  if(!user){ err.style.display='block'; err.textContent='❌ Ism yoki parol noto\'g\'ri!'; return; }
   err.style.display='none';
-  CURRENT_USER = user;
-  document.getElementById('login-screen').style.display='none';
-  applyUserPermissions();
-  helperLog(`Kirdi: ${user.name} (${user.role})`, 'ok');
+  const btn = document.querySelector('#login-screen .btn-p');
+  if(btn){ btn.disabled=true; btn.textContent='⏳ Kirilmoqda...'; }
+  function loginSuccess(user){
+    CURRENT_USER = user;
+    if(btn){ btn.disabled=false; btn.textContent='🔐 Kirish'; }
+    document.getElementById('login-screen').style.display='none';
+    applyUserPermissions();
+    helperLog('Kirdi: '+user.name+' ('+(user.role||'Foydalanuvchi')+')', 'ok');
+  }
+  function loginFail(msg){
+    if(btn){ btn.disabled=false; btn.textContent='🔐 Kirish'; }
+    err.style.display='block'; err.textContent=msg||"❌ Ism yoki parol noto'g'ri!";
+  }
+  // Avval mahalliy foydalanuvchilarni tekshirish
+  const localUsers = getUsers();
+  const localUser = localUsers.find(u => u.name === uname && u.pass === upass);
+  if(localUser){ loginSuccess(localUser); return; }
+  // Firebase Auth bilan urinish
+  const email = uname.includes('@') ? uname : uname + '@kaftimda.app';
+  firebaseAuth.signInWithEmailAndPassword(email, upass)
+    .then(async () => {
+      const users = await GA('users').catch(() => []);
+      const found = users.find(u => u.name === uname || u.email === email);
+      loginSuccess(found || { name: uname, dept: 'all', role: 'Admin', email });
+    })
+    .catch(e => {
+      if(e.code==='auth/network-request-failed') loginFail('❌ Internet aloqasi yo\'q!');
+      else if(e.code==='auth/too-many-requests') loginFail('❌ Juda ko\'p urinish!');
+      else loginFail("❌ Ism yoki parol noto'g'ri!");
+    });
 }
-
 function doLogout(){
   if(!confirm('Tizimdan chiqmoqchimisiz?')) return;
   firebaseAuth.signOut().finally(() => {
@@ -10057,9 +10092,9 @@ function saveNewUser(){
   users.push({ id: newId, name, pass, dept, role });
   saveUsers(users);
   // Firebase Auth da ham yaratish
-  const _authEmail = (nu_name + '@kaftimda.app');
-  firebaseAuth.createUserWithEmailAndPassword(_authEmail, nu_pass)
-    .catch(e => { if(e.code !== 'auth/email-already-in-use') console.warn('Auth create:', e.message); });
+  const email = (name + '@kaftimda.app');
+  firebaseAuth.createUserWithEmailAndPassword(email, pass)
+    .catch(e => { if(e.code !== 'auth/email-already-in-use') console.warn('Auth user create:', e.message); });
   document.getElementById('nu-name').value='';
   document.getElementById('nu-pass').value='';
   document.getElementById('nu-dept').value='all';
@@ -12086,30 +12121,20 @@ async function updatePulSoroviBadge(){
   badge.style.display = yangi > 0 ? 'inline' : 'none';
 }
 
-// ══ TELEGRAM HISOBOT ═══════════════════════════════════
 async function sendTelegramReport(){
   const token = localStorage.getItem('tg_bot_token') || document.getElementById('tg-bot-token')?.value;
   const chatId = localStorage.getItem('tg_chat_id') || document.getElementById('tg-chat-id')?.value;
   if(!token || !chatId){ alert('Bot token va Chat ID kiriting!'); return; }
   try {
-    const [ops, workers, sotuvs] = await Promise.all([GA('operations'), GA('workers'), GA('sotuv_orders').catch(()=>[])]);
+    const ops = await GA('operations');
+    const workers = await GA('workers');
     const today = TODAY();
     const todayOps = ops.filter(o => o.date === today);
-    const todaySotuv = sotuvs.filter(s => s.date === today);
-    const text = `📊 *KAFTIMDA ERP — Kunlik Hisobot*
-`+
-      `📅 Sana: ${today}
-
-`+
-      `👷 Jami xodimlar: *${workers.length}* ta
-`+
-      `⚙️ Bugungi operatsiyalar: *${todayOps.length}* ta
-`+
-      `🛒 Bugungi sotuvlar: *${todaySotuv.length}* ta
-
-`+
+    const text = `📊 *KAFTIMDA ERP — Kunlik Hisobot*\n📅 Sana: ${today}\n\n` +
+      `👷 Jami xodimlar: *${workers.length}* ta\n` +
+      `⚙️ Bugungi operatsiyalar: *${todayOps.length}* ta\n\n` +
       `_Hisobot: ${new Date().toLocaleTimeString('uz-UZ')}_`;
-    const res = await fetch('https://api.telegram.org/bot'+token+'/sendMessage', {
+    const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'Markdown' })
@@ -12119,12 +12144,18 @@ async function sendTelegramReport(){
     else alert('❌ Xato: ' + data.description);
   } catch(e){ alert('❌ Yuborishda xato: ' + e.message); }
 }
-setTimeout(()=>{
-  const ti=document.getElementById('tg-bot-token');
-  const ci=document.getElementById('tg-chat-id');
-  if(ti) ti.value=localStorage.getItem('tg_bot_token')||'';
-  if(ci) ci.value=localStorage.getItem('tg_chat_id')||'';
-},1500);
+
+// Telegram sozlamalarini yuklash
+(function loadTgSettings(){
+  const t = localStorage.getItem('tg_bot_token');
+  const c = localStorage.getItem('tg_chat_id');
+  setTimeout(() => {
+    const ti = document.getElementById('tg-bot-token');
+    const ci = document.getElementById('tg-chat-id');
+    if(ti && t) ti.value = t;
+    if(ci && c) ci.value = c;
+  }, 1000);
+})();
 </script>
 
 </body>
