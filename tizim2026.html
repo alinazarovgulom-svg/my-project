@@ -15,6 +15,8 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -2988,75 +2990,65 @@ const DEPTS=[
 const DEPT_LABELS={tana:'🪡 Tana',astar:'🔵 Astar',montaj:'🔧 Montaj',kamzul:'🟣 Kamzul',shim:'🟡 Shim',pardoz:'♨️ Pardoz dazmol',qadoq:'📦 Qadoqlash'};
 const DEPT_FULL={tana:'Tana Bo\'limi',astar:'Astar Bo\'limi',montaj:'Montaj Bo\'limi',kamzul:'Kamzul Bo\'limi',shim:'Shim Bo\'limi',pardoz:'Pardoz Dazmol Bo\'limi',qadoq:'Qadoqlash Bo\'limi'};
 
-// ══ DB ══════════════════════════════════════════════════
-let db;
+// ══ FIREBASE CONFIG ══════════════════════════════════════
+// ⬇️  Firebase loyihangiz konfiguratsiyasini shu yerga kiriting:
+const FIREBASE_CONFIG = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+  databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_PROJECT_ID.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID"
+};
+firebase.initializeApp(FIREBASE_CONFIG);
+const firebaseDB = firebase.database();
+
+// ══ DB (Firebase Realtime Database) ══════════════════════
+let db = true; // Firebase bilan ishlaydi
 const DBN='GTS_ERP_v6', DBV=10;
 const STORES=['operations','workers','plans','entries','raw_items','raw_prices','opex','rw_mc_entries','ombor_items','maosh_payments','qarz_entries','mijozlar','sotuv_orders','buyurtma_orders','etiketkalar','chat_messages','pul_sorovlar','xomashyo_katalog','xomashyo_kirim','xomashyo_chiqim','xomashyo_yetkazib','yb_tolovlar'];
 const SIZES=[28, 30, 32, 34, 36, 38, 40, 42, 44, 46, 48, 50, 52, 54, 56, 58, 60, 62, 64, 66];
 
-// Eski v5 bazadan ma'lumotlarni ko'chirish
-async function migrateFromV5(){
-  return new Promise(resolve=>{
-    const req = indexedDB.open('GTS_ERP_v6', 1);
-    req.onerror = ()=>resolve(false);
-    req.onsuccess = e=>{
-      const oldDb = e.target.result;
-      const oldStores = [...oldDb.objectStoreNames];
-      if(!oldStores.length){ oldDb.close(); resolve(false); return; }
-      let pending = 0;
-      const common = STORES.filter(s=>oldStores.includes(s));
-      if(!common.length){ oldDb.close(); resolve(false); return; }
-      common.forEach(s=>{
-        pending++;
-        const tx = oldDb.transaction(s,'readonly');
-        tx.objectStore(s).getAll().onsuccess = ev=>{
-          const items = ev.target.result||[];
-          if(items.length){
-            const newTx = db.transaction(s,'readwrite');
-            const store = newTx.objectStore(s);
-            store.count().onsuccess = ce=>{
-              if(ce.target.result === 0){
-                items.forEach(item=>{ const ni={...item}; delete ni.id; store.add(ni); });
-              }
-            };
-          }
-          pending--;
-          if(pending===0){ oldDb.close(); resolve(true); }
-        };
-        tx.onerror = ()=>{ pending--; if(pending===0){ oldDb.close(); resolve(false); } };
-      });
-    };
-  });
-}
+// ── Firebase DB funksiyalari ──────────────────────────────
+const GA = (store) => firebaseDB.ref(store).once('value').then(snap => {
+  const data = snap.val() || {};
+  return Object.entries(data).map(([key, val]) => ({...val, id: key}));
+});
 
-const dbr=indexedDB.open(DBN,DBV);
-dbr.onupgradeneeded=e=>{
-  const d=e.target.result;
-  STORES.forEach(s=>{if(!d.objectStoreNames.contains(s))d.createObjectStore(s,{autoIncrement:true,keyPath:'id'});});
+const GI = (store, id) => firebaseDB.ref(store+'/'+id).once('value').then(snap => {
+  const val = snap.val();
+  return val ? {...val, id} : null;
+});
+
+const ADD = (store, obj) => {
+  const newRef = firebaseDB.ref(store).push();
+  const item = {...obj, id: newRef.key};
+  return newRef.set(item).then(() => newRef.key);
 };
-dbr.onsuccess=async e=>{
-  db=e.target.result;
-  // Eski v5 dan ma'lumotlarni ko'chirish (faqat bir marta)
-  const migrated = localStorage.getItem('gts_migrated_v6');
-  if(!migrated){
-    const ok = await migrateFromV5();
-    localStorage.setItem('gts_migrated_v6','1');
-    if(ok) console.log('✅ V5 dan V6 ga ma\'lumotlar ko\'chirildi');
+
+const PUT = (store, obj) => {
+  return firebaseDB.ref(store+'/'+obj.id).set(obj).then(() => obj.id);
+};
+
+const DEL = (store, id) => {
+  return firebaseDB.ref(store+'/'+id).remove();
+};
+
+// INIT ni Firebase tayyor bo'lgach ishga tushirish
+window.addEventListener('load', () => {
+  try {
+    firebaseDB.ref('.info/connected').once('value').then(() => {
+      INIT();
+    }).catch(e => {
+      console.error('Firebase ulanishda xato:', e);
+      alert('Firebase ulanishda xato! FIREBASE_CONFIG ni tekshiring.');
+    });
+  } catch(e) {
+    console.error(e);
+    alert('Firebase xatosi: '+e.message);
   }
-  INIT();
-};
-dbr.onerror=e=>alert('DB xatosi: '+e.target.error);
-
-const T=(s,m='readonly')=>{
-  if(!db) throw new Error('DB tayyor emas. Sahifani yangilang (F5).');
-  if(!db.objectStoreNames.contains(s)) throw new Error('Jadval topilmadi: '+s+'. Brauzer cache ni tozalab F5 bosing.');
-  return db.transaction(s,m).objectStore(s);
-};
-const GA=s=>new Promise((res,rej)=>{try{const r=T(s).getAll();r.onsuccess=e=>res(e.target.result);r.onerror=e=>rej(e.target.error);}catch(e){rej(e);}});
-const GI=(s,id)=>new Promise((res,rej)=>{try{const r=T(s).get(id);r.onsuccess=e=>res(e.target.result);r.onerror=e=>rej(e.target.error);}catch(e){rej(e);}});
-const ADD=(s,o)=>new Promise((res,rej)=>{try{const r=T(s,'readwrite').add(o);r.onsuccess=e=>res(e.target.result);r.onerror=e=>rej(e.target.error);}catch(e){rej(e);}});
-const PUT=(s,o)=>new Promise((res,rej)=>{try{const r=T(s,'readwrite').put(o);r.onsuccess=e=>res(e.target.result);r.onerror=e=>rej(e.target.error);}catch(e){rej(e);}});
-const DEL=(s,id)=>new Promise((res,rej)=>{try{const r=T(s,'readwrite').delete(id);r.onsuccess=()=>res();r.onerror=e=>rej(e.target.error);}catch(e){rej(e);}});
+});
 
 const TODAY=()=>new Date().toISOString().split('T')[0];
 const N=v=>parseFloat(v)||0;
@@ -3106,34 +3098,10 @@ function toggleTheme(){
 })();
 
 // ══ OMBOR ════════════════════════════════════════════════
-function getAllItems(storeName){
-  return new Promise((res,rej)=>{
-    const tx=db.transaction(storeName,'readonly');
-    tx.objectStore(storeName).getAll().onsuccess=e=>res(e.target.result||[]);
-    tx.onerror=e=>rej(e);
-  });
-}
-function addItem(storeName,item){
-  return new Promise((res,rej)=>{
-    const tx=db.transaction(storeName,'readwrite');
-    tx.objectStore(storeName).add(item).onsuccess=e=>res(e.target.result);
-    tx.onerror=e=>rej(e);
-  });
-}
-function updateItem(storeName,item){
-  return new Promise((res,rej)=>{
-    const tx=db.transaction(storeName,'readwrite');
-    tx.objectStore(storeName).put(item).onsuccess=e=>res(e.target.result);
-    tx.onerror=e=>rej(e);
-  });
-}
-function deleteItem(storeName,id){
-  return new Promise((res,rej)=>{
-    const tx=db.transaction(storeName,'readwrite');
-    tx.objectStore(storeName).delete(id).onsuccess=e=>res();
-    tx.onerror=e=>rej(e);
-  });
-}
+function getAllItems(s){ return GA(s); }
+function addItem(s,item){ return ADD(s,item); }
+function updateItem(s,item){ return PUT(s,item); }
+function deleteItem(s,id){ return DEL(s,id); }
 // ══════════════════════════════════════════════════════════
 // ══ YANGI OMBOR BO'LIMI (v9) ══════════════════════════════
 // ══════════════════════════════════════════════════════════
