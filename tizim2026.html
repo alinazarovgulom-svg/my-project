@@ -12131,10 +12131,14 @@ async function sendTelegramReport(){
   try {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+    const fbGet = (store) => firebaseDB.ref(store).once('value').then(snap => {
+      const data = snap.val() || {};
+      return Object.entries(data).map(([key, val]) => ({...val, id: key}));
+    });
     const [ops, workers, sotuvs, items] = await Promise.all([
-      GA('operations'), GA('workers'),
-      GA('sotuv_orders').catch(()=>[]),
-      GA('ombor_items').catch(()=>[])
+      fbGet('operations'), fbGet('workers'),
+      fbGet('sotuv_orders').catch(()=>[]),
+      fbGet('ombor_items').catch(()=>[])
     ]);
     const today = TODAY();
     const todayOps = ops.filter(o => o.date === today);
