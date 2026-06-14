@@ -15,14 +15,14 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -1864,12 +1864,6 @@ body:not(.light-mode) .admin-badge{background:rgba(220,38,38,.15);border-color:r
       <button class="btn btn-d" onclick="clearAll()">⚠️ Hammasini O'chirish</button>
     </div>
   </div>
-  <div class="card" style="margin-top:16px">
-    <div class="card-title">📱 Telegram Hisobot</div>
-    <div class="fg"><label class="fl">Bot Token</label><input id="tg-bot-token" class="fc" placeholder="1234567890:ABCdef..." oninput="localStorage.setItem('tg_bot_token',this.value)"></div>
-    <div class="fg"><label class="fl">Chat ID</label><input id="tg-chat-id" class="fc" placeholder="-1001234567890" oninput="localStorage.setItem('tg_chat_id',this.value)"></div>
-    <button id="tg-send-btn" class="btn btn-p" onclick="sendTelegramReport()" style="margin-top:8px;width:100%">📤 PDF Hisobot Yuborish</button>
-  </div>
 </div>
 
 </div><!-- /main -->
@@ -2998,31 +2992,24 @@ const DEPTS=[
 const DEPT_LABELS={tana:'🪡 Tana',astar:'🔵 Astar',montaj:'🔧 Montaj',kamzul:'🟣 Kamzul',shim:'🟡 Shim',pardoz:'♨️ Pardoz dazmol',qadoq:'📦 Qadoqlash'};
 const DEPT_FULL={tana:'Tana Bo\'limi',astar:'Astar Bo\'limi',montaj:'Montaj Bo\'limi',kamzul:'Kamzul Bo\'limi',shim:'Shim Bo\'limi',pardoz:'Pardoz Dazmol Bo\'limi',qadoq:'Qadoqlash Bo\'limi'};
 
-// ══ FIREBASE CONFIG ══════════════════════════════════════
-// ⬇️  Firebase loyihangiz konfiguratsiyasini shu yerga kiriting:
-const FIREBASE_CONFIG = {
+// ══ DB ══════════════════════════════════════════════════
+const SIZES=[28, 30, 32, 34, 36, 38, 40, 42, 44, 46, 48, 50, 52, 54, 56, 58, 60, 62, 64, 66];
+
+// Firebase sozlamalar
+const firebaseConfig = {
   apiKey: "AIzaSyChvsVcf4pSc8unAkbY_tNpREBDFiu4FTI",
   authDomain: "gulom-tech-erp.firebaseapp.com",
   databaseURL: "https://gulom-tech-erp-default-rtdb.europe-west1.firebasedatabase.app",
   projectId: "gulom-tech-erp",
-  storageBucket: "gulom-tech-erp.firebasestorage.app",
-  messagingSenderId: "1054096469645",
-  appId: "1:1054096469645:web:788fd469c2d96ab968bcc4",
-  measurementId: "G-L7STRB8RD2"
+  storageBucket: "gulom-tech-erp.appspot.com",
+  messagingSenderId: "748264801896",
+  appId: "1:748264801896:web:kaftimda2026"
 };
-firebase.initializeApp(FIREBASE_CONFIG);
+firebase.initializeApp(firebaseConfig);
 const firebaseDB = firebase.database();
 const firebaseAuth = firebase.auth();
-const firebaseStorage = firebase.storage();
-firebaseDB.enablePersistence().catch(e => console.warn('Offline persistence:', e.code));
+const db = true;
 
-// ══ DB (Firebase Realtime Database) ══════════════════════
-let db = true; // Firebase bilan ishlaydi
-const DBN='GTS_ERP_v6', DBV=10;
-const STORES=['operations','workers','plans','entries','raw_items','raw_prices','opex','rw_mc_entries','ombor_items','maosh_payments','qarz_entries','mijozlar','sotuv_orders','buyurtma_orders','etiketkalar','chat_messages','pul_sorovlar','xomashyo_katalog','xomashyo_kirim','xomashyo_chiqim','xomashyo_yetkazib','yb_tolovlar'];
-const SIZES=[28, 30, 32, 34, 36, 38, 40, 42, 44, 46, 48, 50, 52, 54, 56, 58, 60, 62, 64, 66];
-
-// ── Firebase DB funksiyalari ──────────────────────────────
 function GA(store){ return firebaseDB.ref(store).once('value').then(snap => {
   const data = snap.val() || {};
   return Object.entries(data).map(([key, val]) => ({...val, id: key}));
@@ -3046,44 +3033,6 @@ function PUT(store, obj){
 function DEL(store, id){
   return firebaseDB.ref(store+'/'+id).remove();
 }
-
-// Real-time listener - Firebase o'zgarishlarini darhol ko'rsatadi
-function LISTEN(store, callback){
-  firebaseDB.ref(store).on('value', snap => {
-    const data = snap.val() || {};
-    callback(Object.entries(data).map(([key, val]) => ({...val, id: key})));
-  });
-}
-function UNLISTEN(store){ firebaseDB.ref(store).off(); }
-
-async function uploadImageToStorage(dataUrl, path) {
-  if(!dataUrl || !dataUrl.startsWith('data:')) return dataUrl;
-  const ref = firebaseStorage.ref(path);
-  const snap = await ref.putString(dataUrl, 'data_url');
-  return await snap.ref.getDownloadURL();
-}
-
-// INIT ni Firebase tayyor bo'lgach ishga tushirish
-window.addEventListener('load', () => {
-  firebaseAuth.onAuthStateChanged(async user => {
-    if(user && !CURRENT_USER){
-      // Avvalgi session — avtomatik kirish
-      const users = await GA('users').catch(() => []);
-      const email = user.email || '';
-      const name = email.replace('@kaftimda.app','');
-      const found = users.find(u => u.name === name || u.email === email);
-      CURRENT_USER = found || { name, dept: 'all', role: 'Admin', email };
-      document.getElementById('login-screen').style.display='none';
-      INIT();
-    } else if(!user) {
-      // Tizimdan chiqilgan
-      CURRENT_USER = null;
-      document.getElementById('login-screen').style.display='flex';
-    } else {
-      INIT();
-    }
-  });
-});
 
 const TODAY=()=>new Date().toISOString().split('T')[0];
 const N=v=>parseFloat(v)||0;
@@ -3133,10 +3082,34 @@ function toggleTheme(){
 })();
 
 // ══ OMBOR ════════════════════════════════════════════════
-function getAllItems(s){ return GA(s); }
-function addItem(s,item){ return ADD(s,item); }
-function updateItem(s,item){ return PUT(s,item); }
-function deleteItem(s,id){ return DEL(s,id); }
+function getAllItems(storeName){
+  return new Promise((res,rej)=>{
+    const tx=db.transaction(storeName,'readonly');
+    tx.objectStore(storeName).getAll().onsuccess=e=>res(e.target.result||[]);
+    tx.onerror=e=>rej(e);
+  });
+}
+function addItem(storeName,item){
+  return new Promise((res,rej)=>{
+    const tx=db.transaction(storeName,'readwrite');
+    tx.objectStore(storeName).add(item).onsuccess=e=>res(e.target.result);
+    tx.onerror=e=>rej(e);
+  });
+}
+function updateItem(storeName,item){
+  return new Promise((res,rej)=>{
+    const tx=db.transaction(storeName,'readwrite');
+    tx.objectStore(storeName).put(item).onsuccess=e=>res(e.target.result);
+    tx.onerror=e=>rej(e);
+  });
+}
+function deleteItem(storeName,id){
+  return new Promise((res,rej)=>{
+    const tx=db.transaction(storeName,'readwrite');
+    tx.objectStore(storeName).delete(id).onsuccess=e=>res();
+    tx.onerror=e=>rej(e);
+  });
+}
 // ══════════════════════════════════════════════════════════
 // ══ YANGI OMBOR BO'LIMI (v9) ══════════════════════════════
 // ══════════════════════════════════════════════════════════
@@ -3595,56 +3568,7 @@ async function loadKirimList(){
   const TUR_LBL = { sotib:'🛒 Sotib olish', ishlab:'🔧 Ishlab chiqarish' };
   const TUR_CLS = { sotib:'bg', ishlab:'bb' };
 
-  // ── Eng oxirgi kirim — alohida highlight card ──
-  const last = filtered[0];
-  const lastItem = katalog.find(i=>i.id===last.itemId);
-  const lastPriceStr = last.price>0
-    ? (last.currency==='UZS'
-        ? FMT(last.price)+' UZS / '+lastItem?.unit
-        : (last.currency==='USD'?'$':'€')+last.price+' / '+lastItem?.unit)
-    : '—';
-  const lastTotal = last.price>0 && last.qty>0
-    ? (last.currency==='UZS'
-        ? FMT(Math.round(last.price*last.qty))+' UZS'
-        : (last.currency==='USD'?'$':'€')+(last.price*last.qty).toFixed(2))
-    : '—';
-  const lastCardHtml = `<div style="margin-bottom:14px;padding:14px 16px;background:linear-gradient(135deg,rgba(0,217,163,.1),rgba(0,217,163,.04));border:1.5px solid rgba(0,217,163,.4);border-radius:10px">
-    <div style="font-size:10px;font-weight:700;color:var(--acc);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:10px">⬇️ Eng oxirgi kirim</div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px">
-      <div style="background:var(--sur2);border-radius:7px;padding:9px 12px">
-        <div style="font-size:10px;color:var(--txt3);margin-bottom:3px">Xomashyo</div>
-        <div style="font-size:13px;font-weight:700;color:var(--txt)">${lastItem?.name||'—'}</div>
-        <div style="font-size:11px;color:var(--txt3)">${lastItem?.code||''}</div>
-      </div>
-      <div style="background:var(--sur2);border-radius:7px;padding:9px 12px">
-        <div style="font-size:10px;color:var(--txt3);margin-bottom:3px">Miqdor</div>
-        <div style="font-size:15px;font-weight:700;color:var(--acc);font-family:'IBM Plex Mono',monospace">${FMT2(last.qty)} ${lastItem?.unit||''}</div>
-      </div>
-      <div style="background:var(--sur2);border-radius:7px;padding:9px 12px">
-        <div style="font-size:10px;color:var(--txt3);margin-bottom:3px">Birlik narxi</div>
-        <div style="font-size:13px;font-weight:600;color:var(--yel)">${lastPriceStr}</div>
-      </div>
-      <div style="background:var(--sur2);border-radius:7px;padding:9px 12px">
-        <div style="font-size:10px;color:var(--txt3);margin-bottom:3px">Jami qiymat</div>
-        <div style="font-size:13px;font-weight:700;color:var(--grn)">${lastTotal}</div>
-      </div>
-      <div style="background:var(--sur2);border-radius:7px;padding:9px 12px">
-        <div style="font-size:10px;color:var(--txt3);margin-bottom:3px">Yetkazuvchi</div>
-        <div style="font-size:13px;font-weight:600;color:var(--acc3)">${last.supplierName||'—'}</div>
-      </div>
-      <div style="background:var(--sur2);border-radius:7px;padding:9px 12px">
-        <div style="font-size:10px;color:var(--txt3);margin-bottom:3px">Sana · Tur</div>
-        <div style="font-size:12px;font-weight:600;color:var(--txt)">${last.date||'—'}</div>
-        <div style="margin-top:3px"><span class="bdg ${TUR_CLS[last.tur]||'bgr'}" style="font-size:10px">${TUR_LBL[last.tur]||last.tur}</span></div>
-      </div>
-      ${last.note?`<div style="background:var(--sur2);border-radius:7px;padding:9px 12px;grid-column:1/-1">
-        <div style="font-size:10px;color:var(--txt3);margin-bottom:3px">Izoh</div>
-        <div style="font-size:12px;color:var(--txt2)">💬 ${last.note}</div>
-      </div>`:''}
-    </div>
-  </div>`;
-
-  el.innerHTML = lastCardHtml + `<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">
+  el.innerHTML = `<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">
     <thead><tr>
       <th>Sana</th><th>Xomashyo</th><th>Tur</th><th>Miqdor</th><th>Narx</th><th>Yetkazuvchi</th><th>Izoh</th>
       ${isAdmin()?'<th></th>':''}
@@ -3843,42 +3767,7 @@ async function loadChiqimList(){
   const TUR_LBL = { buyurtma:'📋 Buyurtma', tashqi:'🏭 Tashqi fabrika', qayta:'♻️ Qayta ishlov' };
   const TUR_CLS = { buyurtma:'bg', tashqi:'bo', qayta:'bpu' };
 
-  // ── Eng oxirgi chiqim — alohida highlight card ──
-  const lastC = filtered[0];
-  const lastCItem = katalog.find(i=>i.id===lastC.itemId);
-  const turIconMap = { buyurtma:'📋', tashqi:'🏭', qayta:'♻️' };
-  const lastCCardHtml = `<div style="margin-bottom:14px;padding:14px 16px;background:linear-gradient(135deg,rgba(249,115,22,.1),rgba(249,115,22,.04));border:1.5px solid rgba(249,115,22,.4);border-radius:10px">
-    <div style="font-size:10px;font-weight:700;color:var(--acc2);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:10px">⬆️ Eng oxirgi chiqim</div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px">
-      <div style="background:var(--sur2);border-radius:7px;padding:9px 12px">
-        <div style="font-size:10px;color:var(--txt3);margin-bottom:3px">Xomashyo</div>
-        <div style="font-size:13px;font-weight:700;color:var(--txt)">${lastCItem?.name||'—'}</div>
-        <div style="font-size:11px;color:var(--txt3)">${lastCItem?.code||''}</div>
-      </div>
-      <div style="background:var(--sur2);border-radius:7px;padding:9px 12px">
-        <div style="font-size:10px;color:var(--txt3);margin-bottom:3px">Miqdor</div>
-        <div style="font-size:15px;font-weight:700;color:var(--acc2);font-family:'IBM Plex Mono',monospace">${FMT2(lastC.qty)} ${lastCItem?.unit||''}</div>
-      </div>
-      <div style="background:var(--sur2);border-radius:7px;padding:9px 12px">
-        <div style="font-size:10px;color:var(--txt3);margin-bottom:3px">Chiqim turi</div>
-        <div style="margin-top:4px"><span class="bdg ${TUR_CLS[lastC.tur]||'bgr'}" style="font-size:12px">${TUR_LBL[lastC.tur]||lastC.tur}</span></div>
-      </div>
-      <div style="background:var(--sur2);border-radius:7px;padding:9px 12px">
-        <div style="font-size:10px;color:var(--txt3);margin-bottom:3px">Manzil / Maqsad</div>
-        <div style="font-size:13px;font-weight:600;color:var(--acc3)">${lastC.targetName||'—'}</div>
-      </div>
-      <div style="background:var(--sur2);border-radius:7px;padding:9px 12px">
-        <div style="font-size:10px;color:var(--txt3);margin-bottom:3px">Sana</div>
-        <div style="font-size:13px;font-weight:600;color:var(--txt)">${lastC.date||'—'}</div>
-      </div>
-      ${lastC.note?`<div style="background:var(--sur2);border-radius:7px;padding:9px 12px;grid-column:1/-1">
-        <div style="font-size:10px;color:var(--txt3);margin-bottom:3px">Izoh</div>
-        <div style="font-size:12px;color:var(--txt2)">💬 ${lastC.note}</div>
-      </div>`:''}
-    </div>
-  </div>`;
-
-  el.innerHTML = lastCCardHtml + `<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">
+  el.innerHTML = `<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">
     <thead><tr>
       <th>Sana</th><th>Xomashyo</th><th>Tur</th><th>Miqdor</th><th>Manzil</th><th>Izoh</th>
       ${isAdmin()?'<th></th>':''}
@@ -3923,23 +3812,24 @@ async function saveYetkazib(){
   if(!name){ alert('Ism yoki kompaniya nomini kiriting!'); return; }
   const editId = window._ybEditId || null;
   if(editId){
+    // Tahrirlash rejimi — mavjud yetkazuvchini yangilash (ID saqlanadi)
     const all = await GA('xomashyo_yetkazib');
     const existing = all.find(i=>i.id===editId);
-    if(existing){
-      await PUT('xomashyo_yetkazib', {
-        ...existing,
-        name,
-        phone: document.getElementById('yb-phone').value.trim(),
-        address: document.getElementById('yb-address').value.trim(),
-        note: document.getElementById('yb-note').value.trim(),
-        updatedAt: new Date().toISOString()
-      });
-    }
+    if(!existing){ alert('Yetkazib beruvchi topilmadi!'); return; }
+    await PUT('xomashyo_yetkazib', {
+      ...existing,
+      name,
+      phone: document.getElementById('yb-phone').value.trim(),
+      address: document.getElementById('yb-address').value.trim(),
+      note: document.getElementById('yb-note').value.trim(),
+      updatedAt: new Date().toISOString()
+    });
     window._ybEditId = null;
     const saveBtn = document.querySelector('[onclick="saveYetkazib()"]');
     if(saveBtn){ saveBtn.textContent='+ Saqlash'; saveBtn.style.background=''; }
     alert('✅ Yetkazib beruvchi yangilandi! Barcha kirim va to\'lovlar saqlanib qoldi.');
   } else {
+    // Yangi qo'shish
     await ADD('xomashyo_yetkazib',{
       name,
       phone: document.getElementById('yb-phone').value.trim(),
@@ -3959,9 +3849,10 @@ async function saveYetkazib(){
 
 async function loadYetkazibList(){
   try {
-  const [yetkazib, tolovlar, kirimlar] = await Promise.all([
-    GA('xomashyo_yetkazib'), GA('yb_tolovlar'), GA('xomashyo_kirim')
+  const [yetkazib, tolovlar, kirimlar, chiqimlar] = await Promise.all([
+    GA('xomashyo_yetkazib'), GA('yb_tolovlar'), GA('xomashyo_kirim'), GA('xomashyo_chiqim')
   ]);
+  const katalog = await GA('xomashyo_katalog');
   const el = document.getElementById('yb-list-wrap');
   if(!el) return;
   if(!yetkazib.length){
@@ -4002,6 +3893,14 @@ async function loadYetkazibList(){
     const anyCredit = balUSD<0||balUZS<0;
     const borderClr = anyDebt?'rgba(248,113,113,.4)':anyCredit?'rgba(74,222,128,.35)':'var(--bor)';
 
+    // Oxirgi 3 kirim
+    const lastKirimlar = ybKirimlar.sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt)).slice(0,3);
+    // Oxirgi 3 chiqim (bu yetkazuvchiga qayta ishlash uchun berilgan)
+    const ybChiqimlar = chiqimlar.filter(c=>c.tur==='qayta' && c.targetId===y.id);
+    const lastChiqimlar = ybChiqimlar.sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt)).slice(0,3);
+    // Oxirgi 3 to'lov
+    const lastTolovlar = ybTolovlar.sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt)).slice(0,3);
+
     return `<div class="card mb16" style="border-color:${borderClr}">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap">
         <div style="flex:1;min-width:0">
@@ -4034,6 +3933,56 @@ async function loadYetkazibList(){
               <span style="font-weight:700;color:var(--acc)">${(t.currency||'UZS')==='USD'?'$'+(parseFloat(t.summa)||0).toFixed(2):FMT(parseFloat(t.summa)||0)+' UZS'}</span>
             </div>`).join('') || '<div style="padding:8px 10px;font-size:12px;color:var(--txt3)">To\'lov yo\'q</div>'}
           </div>
+
+          <!-- ── KIRIM / CHIQIM / TO'LOV BLOKLARI ── -->
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-top:10px">
+
+            <!-- Kirim bloki -->
+            <div style="background:rgba(0,217,163,.06);border:1px solid rgba(0,217,163,.2);border-radius:8px;padding:10px">
+              <div style="font-size:11px;font-weight:700;color:var(--acc);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">📦 Oxirgi Kirimlar (${ybKirimlar.length})</div>
+              ${lastKirimlar.length ? lastKirimlar.map(k=>{
+                const item = katalog.find(i=>i.id===k.itemId);
+                return `<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px dashed rgba(0,217,163,.15);font-size:12px">
+                  <span style="color:var(--txt2);max-width:55%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${item?.name||'—'}">${item?.name||'—'}</span>
+                  <span style="color:var(--acc);font-weight:600;font-family:'IBM Plex Mono',monospace">${FMT2(k.qty)} ${item?.unit||''}</span>
+                </div>
+                <div style="font-size:10px;color:var(--txt3);padding-bottom:4px">${k.date||'—'}</div>`;
+              }).join('') : `<div style="font-size:12px;color:var(--txt3);text-align:center;padding:6px 0">Kirim yo'q</div>`}
+              ${ybKirimlar.length>3?`<div style="font-size:11px;color:var(--txt3);text-align:center;margin-top:4px">+${ybKirimlar.length-3} ta ko'proq</div>`:''}
+            </div>
+
+            <!-- Chiqim bloki (qayta ishlov) -->
+            <div style="background:rgba(249,115,22,.06);border:1px solid rgba(249,115,22,.2);border-radius:8px;padding:10px">
+              <div style="font-size:11px;font-weight:700;color:var(--acc2);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">📤 Oxirgi Chiqimlar (${ybChiqimlar.length})</div>
+              ${lastChiqimlar.length ? lastChiqimlar.map(c=>{
+                const item = katalog.find(i=>i.id===c.itemId);
+                return `<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px dashed rgba(249,115,22,.15);font-size:12px">
+                  <span style="color:var(--txt2);max-width:55%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${item?.name||'—'}">${item?.name||'—'}</span>
+                  <span style="color:var(--acc2);font-weight:600;font-family:'IBM Plex Mono',monospace">${FMT2(c.qty)} ${item?.unit||''}</span>
+                </div>
+                <div style="font-size:10px;color:var(--txt3);padding-bottom:4px">${c.date||'—'}</div>`;
+              }).join('') : `<div style="font-size:12px;color:var(--txt3);text-align:center;padding:6px 0">Chiqim yo'q</div>`}
+              ${ybChiqimlar.length>3?`<div style="font-size:11px;color:var(--txt3);text-align:center;margin-top:4px">+${ybChiqimlar.length-3} ta ko'proq</div>`:''}
+            </div>
+
+            <!-- To'lovlar bloki -->
+            <div style="background:rgba(56,189,248,.06);border:1px solid rgba(56,189,248,.2);border-radius:8px;padding:10px">
+              <div style="font-size:11px;font-weight:700;color:var(--acc3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">💳 Oxirgi To'lovlar (${ybTolovlar.length})</div>
+              ${lastTolovlar.length ? lastTolovlar.map(t=>{
+                const amtStr = (t.currency||'UZS')==='USD'?'$'+(parseFloat(t.summa)||0).toFixed(2):FMT(parseFloat(t.summa)||0)+' UZS';
+                const turIcon = t.tur==='naqd'?'💵':t.tur==='karta'?'💳':'🏦';
+                return `<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px dashed rgba(56,189,248,.15);font-size:12px">
+                  <span style="color:var(--txt2)">${turIcon} ${t.date||'—'}</span>
+                  <span style="color:var(--acc3);font-weight:600;font-family:'IBM Plex Mono',monospace">${amtStr}</span>
+                </div>
+                ${t.note?`<div style="font-size:10px;color:var(--txt3);padding-bottom:2px">💬 ${t.note}</div>`:''}`;
+              }).join('') : `<div style="font-size:12px;color:var(--txt3);text-align:center;padding:6px 0">To'lov yo'q</div>`}
+              ${ybTolovlar.length>3?`<div style="font-size:11px;color:var(--txt3);text-align:center;margin-top:4px">+${ybTolovlar.length-3} ta ko'proq</div>`:''}
+            </div>
+
+          </div>
+          <!-- ── BLOKLAR TUGADI ── -->
+
         </div>
         <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
           ${isAdm?`<button class="btn btn-s btn-sm" onclick="showYbTolovModal(${y.id},'${y.name.replace(/'/g,"\\'")}')">💳 To'lov</button>`:''}
@@ -4093,7 +4042,7 @@ async function editYetkazib(id){
   document.getElementById('yb-phone').value=y.phone||'';
   document.getElementById('yb-address').value=y.address||'';
   document.getElementById('yb-note').value=y.note||'';
-  // Tahrirlash rejimi — ID ni saqlab qo'yamiz, o'chirib tashlaMaymiz
+  // Saqlash tugmasini tahrirlash rejimiga o'tkazish
   window._ybEditId = id;
   const saveBtn = document.querySelector('[onclick="saveYetkazib()"]');
   if(saveBtn){ saveBtn.textContent='✅ O\'zgarishlarni Saqlash'; saveBtn.style.background='linear-gradient(135deg,#38bdf8,#0284c7)'; }
@@ -6211,7 +6160,7 @@ async function loadRwMcBlock3(){
 
   try{
     const [allEnt, allItems] = await Promise.all([GA('rw_mc_entries'), GA('raw_items')]);
-    const today = new Date().toISOString().split('T')[0];
+    const today = TODAY();
 
     // Filterlash
     let ents = allEnt;
@@ -7186,6 +7135,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   if(om&&!om.value) om.value=TODAY().slice(0,7);
   const rd=document.getElementById('rwmc-date');
   if(rd&&!rd.value) rd.value=TODAY();
+  INIT();
 });
 
 async function saveOpex(){
@@ -9951,11 +9901,12 @@ function toggleLoginPass(){
 function doLogin(){
   const uname = document.getElementById('login-username').value.trim();
   const upass  = document.getElementById('login-password').value;
-  const err    = document.getElementById('login-err');
-  if(!uname || !upass){ err.style.display='block'; err.textContent='❌ Ism va parolni kiriting!'; return; }
-  err.style.display='none';
-  const btn = document.querySelector('#login-screen .btn-p');
-  if(btn){ btn.disabled=true; btn.textContent='⏳ Kirilmoqda...'; }
+  const btn = document.getElementById('login-btn');
+  const err = document.getElementById('login-err');
+  if(!uname||!upass){ if(err){err.style.display='block';err.textContent='❌ Ism va parol kiriting!';} return; }
+  if(btn){ btn.disabled=true; btn.textContent='Kirilmoqda...'; }
+  if(err) err.style.display='none';
+
   function loginSuccess(user){
     CURRENT_USER = user;
     if(btn){ btn.disabled=false; btn.textContent='🔐 Kirish'; }
@@ -9965,13 +9916,13 @@ function doLogin(){
   }
   function loginFail(msg){
     if(btn){ btn.disabled=false; btn.textContent='🔐 Kirish'; }
-    err.style.display='block'; err.textContent=msg||"❌ Ism yoki parol noto'g'ri!";
+    if(err){err.style.display='block'; err.textContent=msg||"❌ Ism yoki parol noto'g'ri!";}
   }
-  // Avval mahalliy foydalanuvchilarni tekshirish
+
   const localUsers = getUsers();
   const localUser = localUsers.find(u => u.name === uname && u.pass === upass);
   if(localUser){ loginSuccess(localUser); return; }
-  // Firebase Auth bilan urinish
+
   const email = uname.includes('@') ? uname : uname + '@kaftimda.app';
   firebaseAuth.signInWithEmailAndPassword(email, upass)
     .then(async () => {
@@ -9985,15 +9936,14 @@ function doLogin(){
       else loginFail("❌ Ism yoki parol noto'g'ri!");
     });
 }
+
 function doLogout(){
   if(!confirm('Tizimdan chiqmoqchimisiz?')) return;
-  firebaseAuth.signOut().finally(() => {
-    CURRENT_USER = null;
-    document.getElementById('login-screen').style.display='flex';
-    document.getElementById('login-username').value='';
-    document.getElementById('login-password').value='';
-    document.getElementById('login-err').style.display='none';
-  });
+  CURRENT_USER = null;
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('login-username').value='';
+  document.getElementById('login-password').value='';
+  document.getElementById('login-err').style.display='none';
 }
 
 // ── Bo'lim cheklovi: foydalanuvchi faqat o'z bo'limini ko'radi ──
@@ -10090,10 +10040,6 @@ function saveNewUser(){
   const role = DEPT_ROLE[dept] || dept;
   users.push({ id: newId, name, pass, dept, role });
   saveUsers(users);
-  // Firebase Auth da ham yaratish
-  const email = (name + '@kaftimda.app');
-  firebaseAuth.createUserWithEmailAndPassword(email, pass)
-    .catch(e => { if(e.code !== 'auth/email-already-in-use') console.warn('Auth user create:', e.message); });
   document.getElementById('nu-name').value='';
   document.getElementById('nu-pass').value='';
   document.getElementById('nu-dept').value='all';
@@ -12119,131 +12065,39 @@ async function updatePulSoroviBadge(){
   badge.textContent = yangi;
   badge.style.display = yangi > 0 ? 'inline' : 'none';
 }
+</script>
 
-// ══ TELEGRAM PDF HISOBOT ══════════════════════════════════
+<script>
 const TG_TOKEN = '8322455852:AAFKe_sYk-D5RO3VZliEUvu4LmeHRJbDw3c';
 const TG_CHAT  = '1884849724';
-
 async function sendTelegramReport(){
-  const btn = document.getElementById('tg-send-btn');
-  if(btn){ btn.disabled=true; btn.textContent='⏳ Yuborilmoqda...'; }
-  try {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+  try{
+    const today = new Date().toISOString().split('T')[0];
     const fbGet = (store) => firebaseDB.ref(store).once('value').then(snap => {
       const data = snap.val() || {};
       return Object.entries(data).map(([key, val]) => ({...val, id: key}));
     });
-    const [ops, workers, sotuvs, items] = await Promise.all([
-      fbGet('operations'), fbGet('workers'),
-      fbGet('sotuv_orders').catch(()=>[]),
-      fbGet('ombor_items').catch(()=>[])
-    ]);
-    const today = new Date().toISOString().split('T')[0];
-    const todayOps = ops.filter(o => o.date === today);
-    const todaySotuv = sotuvs.filter(s => s.date === today);
-
-    // Sarlavha
-    doc.setFillColor(13,27,42);
-    doc.rect(0,0,210,40,'F');
-    doc.setTextColor(0,217,163);
-    doc.setFontSize(20);
-    doc.setFont('helvetica','bold');
-    doc.text('KAFTIMDA ERP', 15, 18);
+    const [entries, workers] = await Promise.all([fbGet('entries'), fbGet('workers')]);
+    const todayEnt = entries.filter(e => e.date === today);
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    doc.setFontSize(16);
+    doc.text('KAFTIMDA ERP - Kunlik Hisobot', 14, 20);
     doc.setFontSize(11);
-    doc.setTextColor(180,200,220);
-    doc.text('Kunlik Hisobot — ' + today, 15, 28);
-    doc.text('Vaqt: ' + new Date().toLocaleTimeString('uz-UZ'), 15, 35);
-
-    // Statistika
-    doc.setTextColor(30,30,30);
-    doc.setFontSize(13);
-    doc.setFont('helvetica','bold');
-    doc.text("Umumiy ko'rsatkichlar", 15, 55);
-    const stats = [
-      ["Jami xodimlar", workers.length + ' ta'],
-      ["Bugungi operatsiyalar", todayOps.length + ' ta'],
-      ["Bugungi sotuvlar", todaySotuv.length + ' ta'],
-      ["Ombor mahsulotlari", items.length + ' ta'],
-    ];
-    let y = 65;
-    doc.setFont('helvetica','normal');
-    doc.setFontSize(11);
-    stats.forEach(([k,v]) => {
-      doc.setFillColor(240,248,255);
-      doc.rect(15,y-5,180,10,'F');
-      doc.setTextColor(60,60,60); doc.text(k,20,y);
-      doc.setFont('helvetica','bold'); doc.setTextColor(0,150,100); doc.text(v,160,y);
-      doc.setFont('helvetica','normal'); y+=14;
-    });
-
-    // Xodimlar jadvali
-    if(workers.length){
-      y+=5;
-      doc.setFont('helvetica','bold'); doc.setFontSize(13); doc.setTextColor(30,30,30);
-      doc.text("Xodimlar ro'yxati",15,y); y+=8;
-      doc.autoTable({
-        startY:y,
-        head:[['Ism',"Bo'lim",'Lavozim']],
-        body:workers.slice(0,15).map(w=>[w.name||'—',w.dept||'—',w.role||'—']),
-        styles:{fontSize:9,cellPadding:3},
-        headStyles:{fillColor:[13,27,42],textColor:[0,217,163]},
-        alternateRowStyles:{fillColor:[245,250,255]},
-        margin:{left:15,right:15}
-      });
-      y=doc.lastAutoTable.finalY+10;
-    }
-
-    // Bugungi operatsiyalar
-    if(todayOps.length && y<240){
-      doc.setFont('helvetica','bold'); doc.setFontSize(13); doc.setTextColor(30,30,30);
-      doc.text("Bugungi operatsiyalar",15,y); y+=8;
-      doc.autoTable({
-        startY:y,
-        head:[['Model',"Bo'lim",'Soni','Sana']],
-        body:todayOps.slice(0,10).map(o=>[o.name||o.model||'—',o.dept||'—',o.qty||o.count||1,o.date||today]),
-        styles:{fontSize:9,cellPadding:3},
-        headStyles:{fillColor:[13,27,42],textColor:[0,217,163]},
-        margin:{left:15,right:15}
-      });
-    }
-
-    // Footer
-    const pages=doc.internal.getNumberOfPages();
-    for(let i=1;i<=pages;i++){
-      doc.setPage(i);
-      doc.setFontSize(8); doc.setTextColor(150,150,150);
-      doc.text('KAFTIMDA ERP © '+new Date().getFullYear()+' | Sahifa '+i+'/'+pages,15,290);
-    }
-
-    // PDF ni Telegramga yuborish
-    const pdfBlob = doc.output('blob');
-    const fname = 'KAFTIMDA_'+today+'.pdf';
-    const form = new FormData();
-    form.append('chat_id', TG_CHAT);
-    form.append('document', pdfBlob, fname);
-    form.append('caption', '📊 KAFTIMDA ERP Hisobot\n📅 '+today+'\n👷 '+workers.length+' xodim | ⚙️ '+todayOps.length+' ops | 🛒 '+todaySotuv.length+' sotuv');
-    const res = await fetch('https://api.telegram.org/bot'+TG_TOKEN+'/sendDocument',{method:'POST',body:form});
-    const d = await res.json();
-    if(d.ok){
-      if(btn){ btn.disabled=false; btn.textContent='📤 PDF Hisobot Yuborish'; }
-      alert('✅ PDF hisobot Telegramga yuborildi!');
-    } else throw new Error(d.description);
-  } catch(e){
-    if(btn){ btn.disabled=false; btn.textContent='📤 PDF Hisobot Yuborish'; }
-    alert('❌ Xato: '+e.message);
-  }
+    doc.text('Sana: ' + today, 14, 30);
+    doc.text('Jami yozuvlar: ' + todayEnt.length, 14, 38);
+    const rows = todayEnt.slice(0,30).map(e=>[e.date||'',e.dept||'',e.worker||'',e.op||'',String(e.qty||0)]);
+    doc.autoTable({head:[["Sana","Bo'lim","Xodim","Operatsiya","Miqdor"]],body:rows,startY:46,styles:{fontSize:9}});
+    const blob = doc.output('blob');
+    const fd = new FormData();
+    fd.append('chat_id', TG_CHAT);
+    fd.append('document', blob, 'hisobot_'+today+'.pdf');
+    fd.append('caption', '📊 KAFTIMDA ERP Kunlik Hisobot — '+today);
+    const r = await fetch('https://api.telegram.org/bot'+TG_TOKEN+'/sendDocument',{method:'POST',body:fd});
+    const res = await r.json();
+    if(res.ok) alert('✅ Hisobot Telegramga yuborildi!');
+    else alert('❌ Xato: '+res.description);
+  } catch(e){ alert('❌ Xato: '+e.message); }
 }
-(function loadTgSettings(){
-  const t = localStorage.getItem('tg_bot_token');
-  const c = localStorage.getItem('tg_chat_id');
-  setTimeout(() => {
-    const ti = document.getElementById('tg-bot-token');
-    const ci = document.getElementById('tg-chat-id');
-    if(ti && t) ti.value = t;
-    if(ci && c) ci.value = c;
-  }, 1000);
-})();
 </script>
-
 </body>
