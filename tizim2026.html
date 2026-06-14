@@ -687,6 +687,7 @@ body:not(.light-mode) .admin-badge{background:rgba(220,38,38,.15);border-color:r
     <div class="nav-item" id="nav-ombor" onclick="SP('ombor',this)"><span class="ic">🏭</span>Ombor <span id="ombor-badge" style="display:none;background:var(--red);color:#fff;font-size:10px;border-radius:10px;padding:1px 6px;margin-left:4px">!</span></div>
     <div class="sb-sec">Moliya</div>
     <div class="nav-item" id="nav-sotuv" onclick="SP('sotuv',this)"><span class="ic">🛒</span>Sotuv <span id="sotuv-badge" style="display:none;background:var(--acc);color:#000;font-size:10px;border-radius:10px;padding:1px 6px;margin-left:4px">0</span></div>
+    <div class="nav-item" id="nav-avans" onclick="SP('avans',this)"><span class="ic">💵</span>Avans & To'lov</div>
     <div class="nav-item" id="nav-maosh" onclick="SP('maosh',this)"><span class="ic">💰</span>Maosh & Qarz</div>
     <div class="sb-sec">Yordamchi</div>
     <div class="nav-item" id="nav-chat" onclick="SP('chat',this)"><span class="ic">💬</span>Chat <span id="chat-badge" style="display:none;background:var(--red);color:#fff;font-size:10px;border-radius:10px;padding:1px 6px;margin-left:4px">0</span></div>
@@ -2392,6 +2393,188 @@ body:not(.light-mode) .admin-badge{background:rgba(220,38,38,.15);border-color:r
     </div>
   </div>
 
+</div>
+
+<!-- ═══ AVANS & TO'LOV ═══ -->
+<div id="pg-avans" class="page">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;flex-wrap:wrap;gap:10px">
+    <div>
+      <div class="pg-title">💵 Avans & To'lov</div>
+      <div class="pg-sub">Xodimlar uchun avans, yo'l haqqi, raschot, qarz va boshqa to'lovlar</div>
+    </div>
+    <div id="avans-add-btn" style="display:none">
+      <button class="btn btn-sm" style="background:rgba(0,217,163,.15);color:var(--acc);border-color:rgba(0,217,163,.3)" onclick="showAvansModal()">+ To'lov Qo'shish</button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="g4 mb20" id="avans-stats">
+    <div class="card" style="text-align:center">
+      <div style="font-size:11px;color:var(--txt3);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-family:'IBM Plex Mono',monospace">Bu Oy Avans</div>
+      <div id="av-stat-avans" style="font-size:22px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:var(--txt)">0</div>
+      <div style="font-size:11px;color:var(--txt3)">UZS</div>
+    </div>
+    <div class="card" style="text-align:center">
+      <div style="font-size:11px;color:var(--txt3);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-family:'IBM Plex Mono',monospace">Yo'l Haqqi</div>
+      <div id="av-stat-yol" style="font-size:22px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:var(--acc)">0</div>
+      <div style="font-size:11px;color:var(--txt3)">UZS</div>
+    </div>
+    <div class="card" style="text-align:center">
+      <div style="font-size:11px;color:var(--txt3);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-family:'IBM Plex Mono',monospace">Raschot</div>
+      <div id="av-stat-raschot" style="font-size:22px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:#f8b035">0</div>
+      <div style="font-size:11px;color:var(--txt3)">UZS</div>
+    </div>
+    <div class="card" style="text-align:center">
+      <div style="font-size:11px;color:var(--txt3);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-family:'IBM Plex Mono',monospace">Qarz (umumiy)</div>
+      <div id="av-stat-qarz" style="font-size:22px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:var(--red)">0</div>
+      <div style="font-size:11px;color:var(--txt3)">UZS</div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="card mb20" style="padding:12px 16px">
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+      <select class="fc" id="av-f-wk" style="flex:1;min-width:150px" onchange="loadAvansPage()">
+        <option value="">-- Barcha xodimlar --</option>
+      </select>
+      <select class="fc" id="av-f-type" style="flex:1;min-width:150px" onchange="loadAvansPage()">
+        <option value="">-- Barcha turlar --</option>
+        <option value="naqd_avans">Naqd avans</option>
+        <option value="karta_avans">Karta o'tkazma avans</option>
+        <option value="naqd_yol">Naqd yo'l haqqi</option>
+        <option value="karta_yol">Karta o'tkazma yo'l haqqi</option>
+        <option value="naqd_raschot">Naqd raschot</option>
+        <option value="karta_raschot">Karta o'tkazma raschyot</option>
+        <option value="qarz">Qarz berilishi</option>
+        <option value="xomashyo">Ombordan xomashyo</option>
+        <option value="mahsulot">Tayyor mahsulot olingan</option>
+      </select>
+      <select class="fc" id="av-f-month" style="flex:1;min-width:130px" onchange="loadAvansPage()">
+        <option value="">-- Barcha oylar --</option>
+        <option value="2026-01">Yanvar 2026</option>
+        <option value="2026-02">Fevral 2026</option>
+        <option value="2026-03">Mart 2026</option>
+        <option value="2026-04">Aprel 2026</option>
+        <option value="2026-05">May 2026</option>
+        <option value="2026-06">Iyun 2026</option>
+        <option value="2026-07">Iyul 2026</option>
+        <option value="2026-08">Avgust 2026</option>
+        <option value="2026-09">Sentabr 2026</option>
+        <option value="2026-10">Oktabr 2026</option>
+        <option value="2026-11">Noyabr 2026</option>
+        <option value="2026-12">Dekabr 2026</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="card" style="overflow-x:auto">
+    <table style="width:100%;border-collapse:collapse;min-width:600px">
+      <thead>
+        <tr style="border-bottom:1px solid var(--brd)">
+          <th style="text-align:left;padding:10px 8px;font-size:12px;color:var(--txt3);font-weight:600">Sana</th>
+          <th style="text-align:left;padding:10px 8px;font-size:12px;color:var(--txt3);font-weight:600">Xodim</th>
+          <th style="text-align:left;padding:10px 8px;font-size:12px;color:var(--txt3);font-weight:600">Tur</th>
+          <th style="text-align:right;padding:10px 8px;font-size:12px;color:var(--txt3);font-weight:600">Miqdor</th>
+          <th style="text-align:left;padding:10px 8px;font-size:12px;color:var(--txt3);font-weight:600">Izoh</th>
+          <th style="text-align:center;padding:10px 8px;font-size:12px;color:var(--txt3);font-weight:600" id="avans-th-actions"></th>
+        </tr>
+      </thead>
+      <tbody id="avans-tbody">
+        <tr><td colspan="6" style="text-align:center;padding:30px;color:var(--txt3)">Yuklanmoqda...</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Avans Modal -->
+<div id="avans-modal" class="modal" onclick="if(event.target===this)hideAvansModal()">
+  <div class="modal-box" style="max-width:500px">
+    <div class="modal-title">💵 To'lov Qo'shish</div>
+    <input type="hidden" id="av-edit-id">
+
+    <div style="margin-bottom:12px">
+      <label class="lbl">Xodim</label>
+      <select class="fc" id="av-wk" style="width:100%"></select>
+    </div>
+
+    <div style="margin-bottom:12px">
+      <label class="lbl">To'lov turi</label>
+      <select class="fc" id="av-type" style="width:100%" onchange="onAvTypeChange()">
+        <option value="naqd_avans">Naqd avans</option>
+        <option value="karta_avans">Karta o'tkazma avans</option>
+        <option value="naqd_yol">Naqd yo'l haqqi</option>
+        <option value="karta_yol">Karta o'tkazma yo'l haqqi</option>
+        <option value="naqd_raschot">Naqd raschot</option>
+        <option value="karta_raschot">Karta o'tkazma raschyot</option>
+        <option value="qarz">Qarz berilishi</option>
+        <option value="xomashyo">Ombordan xomashyo</option>
+        <option value="mahsulot">Tayyor mahsulot olingan</option>
+      </select>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+      <div>
+        <label class="lbl">Sana</label>
+        <input type="date" class="fc" id="av-date" style="width:100%">
+      </div>
+      <div>
+        <label class="lbl" id="av-summa-lbl">Miqdor (UZS)</label>
+        <input type="number" class="fc" id="av-summa" placeholder="0" style="width:100%">
+      </div>
+    </div>
+
+    <!-- Qarz-specific fields -->
+    <div id="av-qarz-block" style="display:none;background:rgba(248,81,73,.07);border:1px solid rgba(248,81,73,.2);border-radius:10px;padding:14px;margin-bottom:12px">
+      <div style="font-size:12px;color:var(--red);font-weight:600;margin-bottom:10px">Qarz parametrlari</div>
+      <div style="margin-bottom:10px">
+        <label class="lbl">Qaytarish sanasi</label>
+        <input type="date" class="fc" id="av-qarz-qaytarish" style="width:100%">
+      </div>
+      <div>
+        <label class="lbl">Maoshdan olib qolinadigan oylar</label>
+        <div id="av-qarz-oylar" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">
+          <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer"><input type="checkbox" value="01"> Yanvar</label>
+          <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer"><input type="checkbox" value="02"> Fevral</label>
+          <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer"><input type="checkbox" value="03"> Mart</label>
+          <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer"><input type="checkbox" value="04"> Aprel</label>
+          <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer"><input type="checkbox" value="05"> May</label>
+          <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer"><input type="checkbox" value="06"> Iyun</label>
+          <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer"><input type="checkbox" value="07"> Iyul</label>
+          <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer"><input type="checkbox" value="08"> Avgust</label>
+          <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer"><input type="checkbox" value="09"> Sentabr</label>
+          <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer"><input type="checkbox" value="10"> Oktabr</label>
+          <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer"><input type="checkbox" value="11"> Noyabr</label>
+          <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer"><input type="checkbox" value="12"> Dekabr</label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Xomashyo/Mahsulot-specific fields -->
+    <div id="av-tovar-block" style="display:none;background:rgba(0,217,163,.07);border:1px solid rgba(0,217,163,.2);border-radius:10px;padding:14px;margin-bottom:12px">
+      <div style="font-size:12px;color:var(--acc);font-weight:600;margin-bottom:10px" id="av-tovar-title">Mahsulot ma'lumotlari</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div>
+          <label class="lbl">Nomi</label>
+          <input type="text" class="fc" id="av-tovar-nom" placeholder="Nomi..." style="width:100%">
+        </div>
+        <div>
+          <label class="lbl">Miqdor/o'lchov</label>
+          <input type="text" class="fc" id="av-tovar-miq" placeholder="10 m, 5 dona..." style="width:100%">
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-bottom:16px">
+      <label class="lbl">Izoh (ixtiyoriy)</label>
+      <input type="text" class="fc" id="av-note" placeholder="Qo'shimcha izoh..." style="width:100%">
+    </div>
+
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-p" style="flex:1" onclick="saveAvans()">✅ Saqlash</button>
+      <button class="btn btn-s" onclick="hideAvansModal()">Bekor</button>
+    </div>
+  </div>
 </div>
 
 <!-- ═══ MAOSH & QARZ ═══ -->
@@ -4694,6 +4877,7 @@ function SP(id,el){
   if(id==='kirim')loadKrPage();
   if(id==='ombor')loadOmborPage();
   if(id==='maosh')loadMaoshPage();
+  if(id==='avans')loadAvansPage();
   if(id==='xomashyo') loadSarfRejaPage();
   if(id==='opex'){
     const od=document.getElementById('ox-date');if(od&&!od.value)od.value=TODAY();
@@ -13282,4 +13466,238 @@ async function expOpexPDF(){
   doc.text('Ishlab Chiqarish ERP v6.0  |  Operatsion Xarajatlar (OPEX) Hisoboti', M+2, 22);
 
 </script>
+
+<script>
+// ═══════════════════════════════════════════════
+// AVANS & TO'LOV SECTION
+// ═══════════════════════════════════════════════
+
+const AV_TYPE_LABELS = {
+  naqd_avans: "Naqd avans",
+  karta_avans: "Karta avans",
+  naqd_yol: "Naqd yo'l haqqi",
+  karta_yol: "Karta yo'l haqqi",
+  naqd_raschot: "Naqd raschot",
+  karta_raschot: "Karta raschyot",
+  qarz: "Qarz berilishi",
+  xomashyo: "Ombordan xomashyo",
+  mahsulot: "Tayyor mahsulot"
+};
+
+const AV_MONEY_TYPES = ['naqd_avans','karta_avans','naqd_yol','karta_yol','naqd_raschot','karta_raschot','qarz'];
+
+function avRole(){
+  if(isAdmin()) return 'admin';
+  if(!CURRENT_USER) return 'worker';
+  const dept = (CURRENT_USER.dept||'').toLowerCase();
+  if(dept.includes('ombor')) return 'ombor';
+  if(dept.includes('sotuv')) return 'sotuv';
+  return 'worker';
+}
+
+async function loadAvansPage(){
+  // Show add button: admin, ombor, sotuv can add; regular workers only see their own
+  const role = avRole();
+  const addBtn = document.getElementById('avans-add-btn');
+  if(addBtn) addBtn.style.display = (role==='admin'||role==='ombor'||role==='sotuv') ? '' : 'none';
+
+  // Populate worker filter (admin only)
+  const fWk = document.getElementById('av-f-wk');
+  if(fWk && role==='admin'){
+    const workers = await GA('workers');
+    const cur = fWk.value;
+    fWk.innerHTML = '<option value="">-- Barcha xodimlar --</option>' +
+      workers.map(w=>`<option value="${w.id}" ${cur===w.id?'selected':''}>${w.name||w.id}</option>`).join('');
+    fWk.closest('.card').style.display='';
+  } else if(fWk){
+    fWk.closest('.card').style.display='none';
+  }
+
+  const fType = (document.getElementById('av-f-type')||{}).value||'';
+  const fMonth = (document.getElementById('av-f-month')||{}).value||'';
+  const fWkVal = role==='admin' ? ((document.getElementById('av-f-wk')||{}).value||'') : '';
+
+  let records = await GA('avans_tolovlar');
+
+  // Non-admins only see their own
+  if(role!=='admin'){
+    const uid = CURRENT_USER ? (CURRENT_USER.uid||CURRENT_USER.id||CURRENT_USER.email||'') : '';
+    records = records.filter(r=>r.wkId===uid);
+  }
+
+  // Filter
+  if(fWkVal) records = records.filter(r=>r.wkId===fWkVal);
+  if(fType) records = records.filter(r=>r.type===fType);
+  if(fMonth) records = records.filter(r=>(r.date||'').startsWith(fMonth));
+
+  // Sort newest first
+  records.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+
+  // Stats (current month)
+  const now = new Date();
+  const cm = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  const cm_recs = records.filter(r=>(r.date||'').startsWith(cm));
+  const sumByGroup = (types)=>cm_recs.filter(r=>types.includes(r.type)).reduce((s,r)=>s+(+r.summa||0),0);
+  const fmtN = n=>n?n.toLocaleString('uz-UZ'):'0';
+  document.getElementById('av-stat-avans').textContent = fmtN(sumByGroup(['naqd_avans','karta_avans']));
+  document.getElementById('av-stat-yol').textContent = fmtN(sumByGroup(['naqd_yol','karta_yol']));
+  document.getElementById('av-stat-raschot').textContent = fmtN(sumByGroup(['naqd_raschot','karta_raschot']));
+  document.getElementById('av-stat-qarz').textContent = fmtN(records.filter(r=>r.type==='qarz').reduce((s,r)=>s+(+r.summa||0),0));
+
+  // Table
+  const isAdm = role==='admin';
+  document.getElementById('avans-th-actions').textContent = isAdm ? 'Amal' : '';
+
+  const tbody = document.getElementById('avans-tbody');
+  if(!records.length){
+    tbody.innerHTML='<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--txt3)">Ma\'lumot yo\'q</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = records.map(r=>{
+    const typeLabel = AV_TYPE_LABELS[r.type]||r.type||'—';
+    const typeColor = r.type==='qarz'?'var(--red)':r.type==='xomashyo'||r.type==='mahsulot'?'var(--acc)':'var(--txt2)';
+    const summaCell = AV_MONEY_TYPES.includes(r.type)
+      ? `<strong>${(+r.summa||0).toLocaleString('uz-UZ')} UZS</strong>`
+      : (r.tovarMiq||'—');
+    let extraNote = '';
+    if(r.type==='qarz' && r.qarzQaytarish) extraNote = ` | Qaytarish: ${r.qarzQaytarish}`;
+    if(r.type==='qarz' && r.qarzOylar && r.qarzOylar.length) extraNote += ` | Oylar: ${r.qarzOylar.join(', ')}`;
+    if(r.type==='xomashyo'||r.type==='mahsulot') extraNote = r.tovarNom ? ` | ${r.tovarNom}` : '';
+    const actionsCell = isAdm
+      ? `<td style="text-align:center;padding:8px">
+           <button class="btn btn-sm" onclick="editAvans('${r.id}')" style="padding:4px 8px;font-size:11px;margin-right:4px">✏️</button>
+           <button class="btn btn-sm" onclick="delAvans('${r.id}')" style="padding:4px 8px;font-size:11px;background:rgba(248,81,73,.1);color:var(--red);border-color:rgba(248,81,73,.3)">🗑</button>
+         </td>`
+      : '<td></td>';
+    return `<tr style="border-bottom:1px solid var(--brd)">
+      <td style="padding:10px 8px;font-size:13px;white-space:nowrap">${r.date||'—'}</td>
+      <td style="padding:10px 8px;font-size:13px">${r.wkName||r.wkId||'—'}</td>
+      <td style="padding:10px 8px;font-size:13px"><span style="color:${typeColor};font-weight:600">${typeLabel}</span></td>
+      <td style="padding:10px 8px;font-size:13px;text-align:right">${summaCell}</td>
+      <td style="padding:10px 8px;font-size:12px;color:var(--txt3)">${(r.note||'')+extraNote}</td>
+      ${actionsCell}
+    </tr>`;
+  }).join('');
+}
+
+function showAvansModal(editData){
+  const role = avRole();
+  const modal = document.getElementById('avans-modal');
+
+  // Populate worker select
+  const wkSel = document.getElementById('av-wk');
+  GA('workers').then(workers=>{
+    if(role==='admin'){
+      wkSel.innerHTML = workers.map(w=>`<option value="${w.id}">${w.name||w.id}</option>`).join('');
+      wkSel.disabled = false;
+    } else {
+      // Pre-fill current user
+      const u = CURRENT_USER;
+      wkSel.innerHTML = `<option value="${u?u.uid||u.id||u.email:''}">${u?u.name||u.email||u.uid:''}</option>`;
+      wkSel.disabled = true;
+    }
+    if(editData && editData.wkId) wkSel.value = editData.wkId;
+  });
+
+  // Reset form
+  document.getElementById('av-edit-id').value = editData ? editData.id : '';
+  document.getElementById('av-date').value = editData ? (editData.date||'') : new Date().toISOString().slice(0,10);
+  document.getElementById('av-type').value = editData ? (editData.type||'naqd_avans') : 'naqd_avans';
+  document.getElementById('av-summa').value = editData ? (editData.summa||'') : '';
+  document.getElementById('av-note').value = editData ? (editData.note||'') : '';
+  document.getElementById('av-qarz-qaytarish').value = editData ? (editData.qarzQaytarish||'') : '';
+  document.getElementById('av-tovar-nom').value = editData ? (editData.tovarNom||'') : '';
+  document.getElementById('av-tovar-miq').value = editData ? (editData.tovarMiq||'') : '';
+
+  // Clear qarz checkboxes
+  document.querySelectorAll('#av-qarz-oylar input[type=checkbox]').forEach(cb=>{
+    cb.checked = editData && editData.qarzOylar ? editData.qarzOylar.includes(cb.value) : false;
+  });
+
+  onAvTypeChange();
+  modal.style.display='flex';
+}
+
+function hideAvansModal(){
+  document.getElementById('avans-modal').style.display='none';
+}
+
+function onAvTypeChange(){
+  const type = document.getElementById('av-type').value;
+  const qarzBlock = document.getElementById('av-qarz-block');
+  const tovarBlock = document.getElementById('av-tovar-block');
+  const summaField = document.getElementById('av-summa').parentElement;
+  const summaLbl = document.getElementById('av-summa-lbl');
+
+  qarzBlock.style.display = type==='qarz' ? '' : 'none';
+  tovarBlock.style.display = (type==='xomashyo'||type==='mahsulot') ? '' : 'none';
+
+  if(type==='xomashyo'||type==='mahsulot'){
+    summaLbl.textContent = "Narxi (UZS, ixtiyoriy)";
+    document.getElementById('av-tovar-title').textContent =
+      type==='xomashyo' ? "Xomashyo ma'lumotlari" : "Tayyor mahsulot ma'lumotlari";
+  } else {
+    summaLbl.textContent = "Miqdor (UZS)";
+  }
+}
+
+async function saveAvans(){
+  const id = document.getElementById('av-edit-id').value;
+  const type = document.getElementById('av-type').value;
+  const wkId = document.getElementById('av-wk').value;
+  const wkOpt = document.getElementById('av-wk').selectedOptions[0];
+  const wkName = wkOpt ? wkOpt.text : wkId;
+  const date = document.getElementById('av-date').value;
+  const summa = parseFloat(document.getElementById('av-summa').value)||0;
+  const note = document.getElementById('av-note').value.trim();
+
+  if(!wkId){ showToast('Xodimni tanlang!','error'); return; }
+  if(!date){ showToast('Sanani kiriting!','error'); return; }
+  if(AV_MONEY_TYPES.includes(type) && !summa){ showToast('Miqdorni kiriting!','error'); return; }
+
+  const obj = { type, wkId, wkName, date, summa, note, ts: Date.now() };
+
+  if(type==='qarz'){
+    obj.qarzQaytarish = document.getElementById('av-qarz-qaytarish').value;
+    obj.qarzOylar = [...document.querySelectorAll('#av-qarz-oylar input[type=checkbox]:checked')].map(cb=>cb.value);
+  }
+  if(type==='xomashyo'||type==='mahsulot'){
+    obj.tovarNom = document.getElementById('av-tovar-nom').value.trim();
+    obj.tovarMiq = document.getElementById('av-tovar-miq').value.trim();
+  }
+
+  // Role restriction: ombor can only save xomashyo type, sotuv only mahsulot
+  const role = avRole();
+  if(role==='ombor' && type!=='xomashyo'){ showToast("Ombor xodimi faqat 'Ombordan xomashyo' turini kiritishi mumkin!",'error'); return; }
+  if(role==='sotuv' && type!=='mahsulot'){ showToast("Sotuv xodimi faqat 'Tayyor mahsulot' turini kiritishi mumkin!",'error'); return; }
+
+  try {
+    if(id){ obj.id = id; await PUT('avans_tolovlar', obj); }
+    else { await ADD('avans_tolovlar', obj); }
+    hideAvansModal();
+    showToast('Saqlandi!','success');
+    loadAvansPage();
+  } catch(e){
+    showToast('Xatolik: '+e.message,'error');
+  }
+}
+
+async function editAvans(id){
+  if(!isAdmin()){ showToast('Faqat admin tahrirlashi mumkin!','error'); return; }
+  const records = await GA('avans_tolovlar');
+  const rec = records.find(r=>r.id===id);
+  if(!rec){ showToast('Topilmadi','error'); return; }
+  showAvansModal(rec);
+}
+
+async function delAvans(id){
+  if(!isAdmin()){ showToast("Faqat admin o'chirishi mumkin!",'error'); return; }
+  if(!confirm("Bu to'lovni o'chirishni tasdiqlaysizmi?")) return;
+  await DEL('avans_tolovlar', id);
+  showToast("O'chirildi",'success');
+  loadAvansPage();
+}
+</script>
+
 </body>
