@@ -418,19 +418,48 @@ body:not(.light-mode) .op-status-card.red{background:rgba(220,38,38,.07)}
 
 /* ── RESPONSIVE ── */
 @media(max-width:768px){
-  .sidebar{width:100%;min-height:auto;position:relative;flex-direction:row;flex-wrap:wrap;border-right:none;border-bottom:2px solid var(--acc)}
-  .sb-brand{width:100%;padding:12px 16px 10px}
-  .sb-nav{display:flex;flex-wrap:wrap;padding:6px 8px;gap:2px}
-  .sb-sec{display:none}
-  .sb-foot{display:none}
-  .main{margin-left:0;width:100%;padding-top:0}
-  .nav-item{font-size:11px;padding:5px 8px}
+  /* Sidebar: yashirin, chap tomonda slayd bo'lib chiqadi */
+  .sidebar{
+    position:fixed;top:0;left:-260px;width:260px;height:100vh;
+    z-index:1000;transition:left .28s cubic-bezier(.4,0,.2,1);
+    box-shadow:4px 0 24px rgba(0,0,0,.3);
+    flex-direction:column;min-height:100vh;
+    overflow-y:auto;
+  }
+  .sidebar.mob-open{left:0}
+  .sb-nav{flex-direction:column;padding:8px 0}
+  .sb-sec{display:block}
+  .sb-foot{display:block}
+  .nav-item{font-size:13px;padding:10px 16px}
+  .main{margin-left:0;width:100%;padding-top:56px;padding-bottom:70px}
+  .topbar{left:0;position:fixed;top:0;right:0;z-index:900;height:56px}
   .g4{grid-template-columns:1fr 1fr}
   .g3{grid-template-columns:1fr 1fr}
   .g5{grid-template-columns:1fr 1fr}
   .we-row{grid-template-columns:1fr 1fr;gap:6px}
   body{flex-direction:column}
-  .topbar{left:0;position:relative}
+  /* Mobil overlay */
+  #mob-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:999}
+  #mob-overlay.show{display:block}
+  /* Hamburger tugma */
+  #mob-menu-btn{display:flex}
+  /* Pastki navigatsiya */
+  #mob-bottom-nav{display:flex}
+  /* Jadvallar skroll */
+  .tw{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  /* Card ichida bo'sh joy */
+  .card{padding:14px}
+  /* Input va tugmalar kattaroq */
+  .fc{height:40px;font-size:14px}
+  .btn{padding:10px 16px;font-size:13px}
+  .btn-sm{padding:8px 12px;font-size:12px}
+  /* Page padding */
+  .page{padding:12px}
+}
+@media(min-width:769px){
+  #mob-menu-btn{display:none}
+  #mob-bottom-nav{display:none}
+  #mob-overlay{display:none!important}
 }
 
 /* ── LOGIN SCREEN — Bizim Hesap uslubi ── */
@@ -587,6 +616,34 @@ body:not(.light-mode) .admin-badge{background:rgba(220,38,38,.15);border-color:r
 </div>
 
 <!-- MAIN -->
+<!-- Mobil overlay -->
+<div id="mob-overlay" onclick="closeMobMenu()"></div>
+
+<!-- Mobil tepa panel -->
+<div style="display:none" id="mob-topbar" style="position:fixed;top:0;left:0;right:0;height:56px;background:var(--sur);border-bottom:1px solid var(--bor);display:flex;align-items:center;padding:0 12px;gap:12px;z-index:900">
+  <button id="mob-menu-btn" onclick="toggleMobMenu()" style="background:none;border:none;color:var(--txt);font-size:22px;cursor:pointer;padding:8px;border-radius:8px;line-height:1">☰</button>
+  <span style="font-weight:700;font-size:15px;color:var(--acc)">KAFTIMDA ERP</span>
+</div>
+
+<!-- Mobil pastki navigatsiya -->
+<div id="mob-bottom-nav" style="display:none;position:fixed;bottom:0;left:0;right:0;height:62px;background:var(--sur);border-top:2px solid var(--bor);z-index:900;display:flex;align-items:center;justify-content:space-around;padding:0 4px">
+  <button onclick="SP('dashboard',null);closeMobMenu()" class="mob-nav-btn" style="display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;color:var(--txt2);font-size:10px;cursor:pointer;padding:6px 8px;border-radius:8px;min-width:52px">
+    <span style="font-size:20px">📊</span><span>Dashboard</span>
+  </button>
+  <button onclick="SPD(curDept||'tana',null);closeMobMenu()" class="mob-nav-btn" style="display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;color:var(--txt2);font-size:10px;cursor:pointer;padding:6px 8px;border-radius:8px;min-width:52px">
+    <span style="font-size:20px">✂️</span><span>Chiqim</span>
+  </button>
+  <button onclick="SP('chat',null);closeMobMenu()" class="mob-nav-btn" style="display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;color:var(--txt2);font-size:10px;cursor:pointer;padding:6px 8px;border-radius:8px;min-width:52px">
+    <span style="font-size:20px">💬</span><span>Chat</span>
+  </button>
+  <button onclick="SP('hisobot',null);closeMobMenu()" class="mob-nav-btn" style="display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;color:var(--txt2);font-size:10px;cursor:pointer;padding:6px 8px;border-radius:8px;min-width:52px">
+    <span style="font-size:20px">📋</span><span>Hisobot</span>
+  </button>
+  <button onclick="SP('yordamchi',null);closeMobMenu()" class="mob-nav-btn" style="display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;color:var(--txt2);font-size:10px;cursor:pointer;padding:6px 8px;border-radius:8px;min-width:52px">
+    <span style="font-size:20px">🤝</span><span>Yordam</span>
+  </button>
+</div>
+
 <div class="main">
 
 <!-- ═══ DASHBOARD ═══ -->
@@ -12300,6 +12357,43 @@ async function sendDeptTelegramReport(){
 }
 
 
+
+// ══ MOBIL MENYU ══
+function isMobile(){ return window.innerWidth <= 768; }
+
+function toggleMobMenu(){
+  const sb = document.querySelector('.sidebar');
+  const ov = document.getElementById('mob-overlay');
+  if(!sb) return;
+  const open = sb.classList.toggle('mob-open');
+  if(ov) ov.classList.toggle('show', open);
+}
+
+function closeMobMenu(){
+  const sb = document.querySelector('.sidebar');
+  const ov = document.getElementById('mob-overlay');
+  if(sb) sb.classList.remove('mob-open');
+  if(ov) ov.classList.remove('show');
+}
+
+// Mobil elementlarni ko'rsatish/yashirish
+function applyMobileUI(){
+  const mob = isMobile();
+  const topbar = document.getElementById('mob-topbar');
+  const botnav = document.getElementById('mob-bottom-nav');
+  if(topbar) topbar.style.display = mob ? 'flex' : 'none';
+  if(botnav) botnav.style.display = mob ? 'flex' : 'none';
+}
+
+// Navigatsiya bosilganda menyuni yopish
+const _origSP = window.SP;
+window.SP = function(id, el){
+  if(typeof _origSP === 'function') _origSP(id, el);
+  if(isMobile()) closeMobMenu();
+};
+
+window.addEventListener('resize', applyMobileUI);
+document.addEventListener('DOMContentLoaded', applyMobileUI);
 
 // ══ PAROL O'ZGARTIRISH ══
 function changePassword(){
