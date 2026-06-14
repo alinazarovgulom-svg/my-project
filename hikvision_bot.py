@@ -79,6 +79,7 @@ def get_capture_photo(base_url: str, auth, employee_id: str) -> bytes | None:
 
 def parse_event(event_data: dict, device: dict, base_url: str, auth):
     try:
+        print(f"[DEBUG] {device['door_name']}: {json.dumps(event_data, ensure_ascii=False)[:300]}")
         if event_data.get("eventType") != "AccessControllerEvent":
             return
 
