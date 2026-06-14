@@ -12195,18 +12195,13 @@ async function sendDeptTelegramReport(){
       }).sort((a,b) => b.pct - a.pct);
 
       const summaryBody = workers.map(w => [w.name, w.ops, String(w.qty), String(w.norm), w.pct+'%']);
-      const summaryStyles = workers.map(w => {
-        if(w.pct >= 100) return {fillColor:[220,255,220]};
-        if(w.pct >= 80)  return {fillColor:[255,253,220]};
-        return {fillColor:[255,225,225]};
-      });
 
       doc.autoTable({
         head:[['Xodim ismi','Operatsiya','Bajarildi','Norma','Holat']],
         body: summaryBody,
         startY: startY,
-        styles:{ fontSize:9, cellPadding:2.5, font: doc.getFont().fontName },
-        headStyles:{ fillColor:[0,105,92], textColor:255, fontStyle:'bold', fontSize:9 },
+        styles:{ fontSize:9, cellPadding:3, font: doc.getFont().fontName },
+        headStyles:{ fillColor:[0,90,80], textColor:255, fontStyle:'bold', fontSize:9 },
         columnStyles:{
           0:{cellWidth:55},
           1:{cellWidth:55},
@@ -12214,18 +12209,25 @@ async function sendDeptTelegramReport(){
           3:{cellWidth:22, halign:'center'},
           4:{cellWidth:22, halign:'center', fontStyle:'bold'}
         },
-        bodyStyles:{ textColor:[30,30,30] },
         didParseCell: (data) => {
           if(data.section==='body'){
             const w = workers[data.row.index];
             if(!w) return;
-            if(w.pct>=100) data.cell.styles.fillColor=[220,255,220];
-            else if(w.pct>=80) data.cell.styles.fillColor=[255,253,220];
-            else data.cell.styles.fillColor=[255,225,225];
+            // Fon rangi
+            if(w.pct>=100){
+              data.cell.styles.fillColor=[0,160,80];
+              data.cell.styles.textColor=[255,255,255];
+            } else if(w.pct>=80){
+              data.cell.styles.fillColor=[240,200,0];
+              data.cell.styles.textColor=[60,40,0];
+            } else {
+              data.cell.styles.fillColor=[210,40,40];
+              data.cell.styles.textColor=[255,255,255];
+            }
+            // Holat ustunida foiz va belgi
             if(data.column.index===4){
-              if(w.pct>=100) data.cell.styles.textColor=[0,140,0];
-              else if(w.pct>=80) data.cell.styles.textColor=[180,120,0];
-              else data.cell.styles.textColor=[200,0,0];
+              data.cell.styles.fontStyle='bold';
+              data.cell.styles.fontSize=10;
             }
           }
         },
