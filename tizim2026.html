@@ -11053,24 +11053,54 @@ async function onBrtModelChange(){
   const product = document.getElementById('brt-product-sel').value;
   const model = document.getElementById('brt-model-sel').value;
   const infoBox = document.getElementById('brt-model-info');
-  const matsDiv = document.getElementById('brt-model-mats');
   if(!model){ infoBox.style.display='none'; return; }
+
+  const totalQty = Object.values(brtSizes||{}).reduce((a,b)=>a+Number(b),0) || 0;
   const [allMc, allItems] = await Promise.all([GA('rw_mc_entries'), GA('raw_items')]);
   const products = product==='all' ? ['kostyum','shim','kamzul'] : [product];
-  const entries = allMc.filter(e => products.includes(e.product) && e.model === model);
+
+  // Eng so'nggi sanali normalarni olish (har xomashyo uchun)
+  const mcFiltered = allMc.filter(e => products.includes(e.product) && e.model === model);
+  // Har itemId uchun eng yangi entry
+  const latestMap = {};
+  mcFiltered.forEach(e => {
+    if(!latestMap[e.itemId] || (e.date||'') > (latestMap[e.itemId].date||''))
+      latestMap[e.itemId] = e;
+  });
+  const entries = Object.values(latestMap);
+
   if(!entries.length){ infoBox.style.display='none'; return; }
   infoBox.style.display = 'block';
-  matsDiv.innerHTML = entries.map(e => {
+
+  // Materiallar ro'yxatini avtomatik to'ldirish
+  // Har entry uchun _brtMatRows ga qo'shamiz (agar yo'q bo'lsa)
+  entries.forEach(e => {
+    const item = allItems.find(i => i.id === e.itemId);
+    const kerakQty = totalQty > 0 ? +(e.qty * totalQty).toFixed(3) : e.qty;
+    // Agar bu xomashyo turi allaqachon qo'shilmagan bo'lsa
+    const exists = _brtMatRows.find(r => r.rawItemId == e.itemId);
+    if(!exists){
+      _brtMatRows.push({
+        katalogId: '',
+        rawItemId: e.itemId,
+        rawItemName: item ? item.name : '',
+        rawItemUnit: item ? item.unit||'' : '',
+        normaDona: e.qty,
+        kerakQty,
+        snapshotNorma: {itemId: e.itemId, qty: e.qty, date: e.date||TODAY()}
+      });
+    }
+  });
+  renderBrtMatRows();
+
+  // Info box
+  const matsDiv = document.getElementById('brt-model-mats');
+  if(matsDiv) matsDiv.innerHTML = entries.map(e => {
     const item = allItems.find(i => i.id === e.itemId);
     return `<span style="display:inline-flex;align-items:center;gap:4px;background:rgba(0,217,163,.1);color:var(--acc);border-radius:5px;padding:3px 8px;font-size:11px;margin:2px;font-family:'IBM Plex Mono',monospace">
-      ${item ? item.name : 'ID:'+e.itemId} · ${e.qty} ${item ? item.unit||'' : ''}
+      ${item ? item.name : '?'} · ${e.qty} ${item ? item.unit||'' : ''}
     </span>`;
   }).join('');
-  // Avtomatik materiallarni checkbox larda belgilash
-  const itemIds = entries.map(e => e.itemId);
-  document.querySelectorAll('.brt-mat-cb').forEach(cb => {
-    if(itemIds.includes(parseInt(cb.value))) cb.checked = true;
-  });
 }
 
 // ──── Materiallar (xomashyo_katalog dan jadval ko'rinishida) ────
@@ -11114,13 +11144,19 @@ function renderBrtMatRows(){
     const sel = _brtKatalog.map(k =>
       `<option value="${k.id}" ${k.id==row.katalogId?'selected':''}>[${k.code}] ${k.name} (${k.unit||'dona'})</option>`
     ).join('');
-    return `<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;flex-wrap:wrap">
-      <select class="fc" style="flex:2;min-width:160px" onchange="brtMatRowChange(${idx},'katalogId',this.value)">
-        <option value="">— Material tanlang —</option>
-        ${sel}
-      </select>
-      <span id="brt-mat-qoldiq-${idx}" style="font-size:11px;color:var(--txt3);min-width:80px"></span>
-      <button type="button" onclick="brtRemoveMatRow(${idx})" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:16px;padding:4px">✕</button>
+    const normaLabel = row.rawItemName
+      ? `<div style="font-size:11px;color:var(--acc2);margin-bottom:4px">📋 ${row.rawItemName} — norma: <b>${row.normaDona} ${row.rawItemUnit}/dona</b>${row.kerakQty?` | Jami kerak: <b>${row.kerakQty} ${row.rawItemUnit}</b>`:''}</div>`
+      : '';
+    return `<div style="background:var(--sur);border:1px solid var(--bor);border-radius:8px;padding:8px 10px;margin-bottom:6px">
+      ${normaLabel}
+      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+        <select class="fc" style="flex:2;min-width:160px" onchange="brtMatRowChange(${idx},'katalogId',this.value)">
+          <option value="">— Aniq material tanlang —</option>
+          ${sel}
+        </select>
+        <span id="brt-mat-qoldiq-${idx}" style="font-size:11px;color:var(--txt3);min-width:80px"></span>
+        <button type="button" onclick="brtRemoveMatRow(${idx})" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:16px;padding:4px">✕</button>
+      </div>
     </div>`;
   }).join('');
   // Show qoldiq for each row
@@ -11343,7 +11379,15 @@ async function saveBuyurtma(){
     drop: document.getElementById('brt-drop').value.trim(),
     etiketkaId: parseInt(document.getElementById('brt-etkt-sel-id').value)||null,
     etiketkaName: (()=>{ const el=document.querySelector('.brt-etkt-chip.etkt-active'); return el?el.dataset.name:''; })(),
-    materialTalablari: validMats.map(r=>({katalogId: r.katalogId})),
+    materialTalablari: validMats.map(r=>({
+      katalogId: r.katalogId,
+      rawItemId: r.rawItemId||null,
+      rawItemName: r.rawItemName||'',
+      rawItemUnit: r.rawItemUnit||'',
+      normaDona: r.normaDona||null,
+      kerakQty: r.kerakQty||null,
+      snapshotNorma: r.snapshotNorma||null
+    })),
     material: materialNames.join(' | '),
     sizes: Object.assign({}, brtSizes), totalQty,
     deadline: document.getElementById('brt-deadline').value,
@@ -11550,11 +11594,13 @@ async function showBrtChiqimModal(ordId){
         <div>
           <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--acc3);font-weight:700">${item.code}</span>
           <span style="margin-left:8px;font-weight:600">${item.name}</span>
+          ${t.rawItemName?`<span style="margin-left:6px;font-size:11px;color:var(--txt3)">(${t.rawItemName})</span>`:''}
         </div>
         <div style="font-size:12px;color:var(--txt3)">
-          Kerak: <b style="color:var(--acc2)">${t.kerakQty} ${item.unit||''}</b> |
-          Qoldiq ombordan: <b style="color:${color}">${qoldiq} ${item.unit||''}</b>
-          ${ordChiqim>0?`| Bu buyurtmaga chiqilgan: <b style="color:var(--acc)">${ordChiqim} ${item.unit||''}</b>`:''}
+          ${t.normaDona?`Norma: <b>${t.normaDona} ${t.rawItemUnit||''}/dona</b> | `:''}
+          Kerak: <b style="color:var(--acc2)">${t.kerakQty||'?'} ${item.unit||''}</b> |
+          Qoldiq: <b style="color:${color}">${qoldiq} ${item.unit||''}</b>
+          ${ordChiqim>0?`| Chiqilgan: <b style="color:var(--acc)">${ordChiqim} ${item.unit||''}</b>`:''}
         </div>
       </div>
       ${qoldi > 0 ? `
