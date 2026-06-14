@@ -12194,6 +12194,28 @@ async function sendDeptTelegramReport(){
         return {name, qty:v.qty, norm:v.norm, pct, ops:v.ops.join(', ')};
       }).sort((a,b) => b.pct - a.pct);
 
+      // Foizga qarab gradient rang hisoblash
+      function pctColor(pct){
+        if(pct >= 100){
+          // 100% → sariq (240,200,0), 150%+ → to'q yashil (0,120,40)
+          const t = Math.min((pct - 100) / 60, 1); // 0..1 (0=100%, 1=160%+)
+          const r = Math.round(240 - 240*t);
+          const g = Math.round(200 + (120-200)*t + 80*t); // 200→160
+          // sariq(240,200,0) → to'q yashil(0,140,40)
+          return [Math.round(240*(1-t)), Math.round(200 - 60*t + (t>0.5?-40:0)), Math.round(t*40)];
+        } else {
+          // 100% → sariq (240,200,0), 0% → to'q qizil (180,0,0)
+          const t = pct / 100; // 0..1 (0=0%, 1=100%)
+          // to'q qizil(180,0,0) → to'q sariq(240,200,0)
+          return [Math.round(180 + 60*t), Math.round(200*t), 0];
+        }
+      }
+      function textColor(pct){
+        // Sariqda qora matn, boshqalarda oq
+        if(pct>=85 && pct<=115) return [40,30,0];
+        return [255,255,255];
+      }
+
       const summaryBody = workers.map(w => [w.name, w.ops, String(w.qty), String(w.norm), w.pct+'%']);
 
       doc.autoTable({
@@ -12213,18 +12235,8 @@ async function sendDeptTelegramReport(){
           if(data.section==='body'){
             const w = workers[data.row.index];
             if(!w) return;
-            // Fon rangi
-            if(w.pct>=100){
-              data.cell.styles.fillColor=[0,160,80];
-              data.cell.styles.textColor=[255,255,255];
-            } else if(w.pct>=80){
-              data.cell.styles.fillColor=[240,200,0];
-              data.cell.styles.textColor=[60,40,0];
-            } else {
-              data.cell.styles.fillColor=[210,40,40];
-              data.cell.styles.textColor=[255,255,255];
-            }
-            // Holat ustunida foiz va belgi
+            data.cell.styles.fillColor = pctColor(w.pct);
+            data.cell.styles.textColor = textColor(w.pct);
             if(data.column.index===4){
               data.cell.styles.fontStyle='bold';
               data.cell.styles.fontSize=10;
