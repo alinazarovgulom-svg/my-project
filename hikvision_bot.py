@@ -12,7 +12,7 @@ import telebot
 DEVICES = [
     {
         "ip":        "192.168.1.30",
-        "port":      8000,
+        "port":      80,
         "user":      "admin",
         "password":  "qwerty@12",
         "door_name": "Asosiy kirish",
@@ -20,7 +20,7 @@ DEVICES = [
     },
     {
         "ip":        "192.168.1.55",
-        "port":      8000,
+        "port":      80,
         "user":      "admin",
         "password":  "qwerty@12",
         "door_name": "Asosiy chiqish",
