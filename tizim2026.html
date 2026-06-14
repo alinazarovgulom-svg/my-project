@@ -3122,28 +3122,184 @@ const firebaseDB = firebase.database();
 const firebaseAuth = firebase.auth();
 const db = true;
 
-function GA(store){ return firebaseDB.ref(store).once('value').then(snap => {
-  const data = snap.val() || {};
-  return Object.entries(data).map(([key, val]) => ({...val, id: key}));
-}); }
+// ══ OFLAYN REJIM ══
+const OFFLINE_Q_KEY = 'kaftimda_offline_queue';
+const OFFLINE_CACHE_KEY = 'kaftimda_offline_cache';
 
-function GI(store, id){ return firebaseDB.ref(store+'/'+id).once('value').then(snap => {
-  const val = snap.val();
-  return val ? {...val, id} : null;
-}); }
+function isOnline(){ return navigator.onLine; }
+
+function offlineGetQueue(){
+  try{ return JSON.parse(localStorage.getItem(OFFLINE_Q_KEY)||'[]'); }catch(e){ return []; }
+}
+function offlineSaveQueue(q){
+  localStorage.setItem(OFFLINE_Q_KEY, JSON.stringify(q));
+}
+function offlineQueueOp(op, store, data){
+  const q = offlineGetQueue();
+  q.push({op, store, data, ts: Date.now()});
+  offlineSaveQueue(q);
+}
+
+// Cache store data locally
+function offlineCacheSet(store, items){
+  try{
+    const cache = JSON.parse(localStorage.getItem(OFFLINE_CACHE_KEY)||'{}');
+    cache[store] = items;
+    localStorage.setItem(OFFLINE_CACHE_KEY, JSON.stringify(cache));
+  }catch(e){}
+}
+function offlineCacheGet(store){
+  try{
+    const cache = JSON.parse(localStorage.getItem(OFFLINE_CACHE_KEY)||'{}');
+    return cache[store] || [];
+  }catch(e){ return []; }
+}
+
+// Sync offline queue to Firebase
+async function syncOfflineQueue(){
+  const q = offlineGetQueue();
+  if(!q.length) return;
+  const failed = [];
+  for(const item of q){
+    try{
+      if(item.op==='ADD'){
+        const ref = firebaseDB.ref(item.store+'/'+item.data.id);
+        await ref.set(item.data);
+      } else if(item.op==='PUT'){
+        await firebaseDB.ref(item.store+'/'+item.data.id).set(item.data);
+      } else if(item.op==='DEL'){
+        await firebaseDB.ref(item.store+'/'+item.data).remove();
+      }
+    }catch(e){ failed.push(item); }
+  }
+  offlineSaveQueue(failed);
+  if(failed.length===0 && q.length>0){
+    showToast(`✅ ${q.length} ta oflayn ma'lumot yuborildi!`, 'success');
+    // Reload current page data
+    if(typeof loadWkPage==='function') loadWkPage();
+    if(typeof loadDash==='function') loadDash();
+  }
+}
+
+// Show offline/online status bar
+function updateOnlineStatus(){
+  let bar = document.getElementById('offline-bar');
+  if(!bar){
+    bar = document.createElement('div');
+    bar.id = 'offline-bar';
+    bar.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;text-align:center;font-size:13px;font-weight:600;padding:6px;transition:all .3s;pointer-events:none';
+    document.body.appendChild(bar);
+  }
+  if(isOnline()){
+    bar.style.display = 'none';
+    syncOfflineQueue();
+  } else {
+    bar.style.display = 'block';
+    bar.style.background = '#c0392b';
+    bar.style.color = '#fff';
+    const cnt = offlineGetQueue().length;
+    bar.textContent = `📵 Oflayn rejim${cnt>0?' | '+cnt+' ta kutilmoqda':''}`;
+  }
+}
+
+window.addEventListener('online', updateOnlineStatus);
+window.addEventListener('offline', updateOnlineStatus);
+setTimeout(updateOnlineStatus, 1000);
+
+function showToast(msg, type='info'){
+  let t = document.getElementById('kf-toast');
+  if(!t){ t=document.createElement('div'); t.id='kf-toast';
+    t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);padding:10px 20px;border-radius:10px;font-size:13px;font-weight:600;z-index:9999;opacity:0;transition:opacity .3s;max-width:90vw;text-align:center';
+    document.body.appendChild(t); }
+  t.style.background = type==='success'?'#27ae60':'#2980b9';
+  t.style.color='#fff';
+  t.textContent=msg;
+  t.style.opacity='1';
+  clearTimeout(t._timer);
+  t._timer=setTimeout(()=>{ t.style.opacity='0'; },3000);
+}
+
+function GA(store){
+  if(!isOnline()){
+    return Promise.resolve(offlineCacheGet(store));
+  }
+  return firebaseDB.ref(store).once('value').then(snap => {
+    const data = snap.val() || {};
+    const items = Object.entries(data).map(([key, val]) => ({...val, id: key}));
+    offlineCacheSet(store, items);
+    return items;
+  });
+}
+
+function GI(store, id){
+  if(!isOnline()){
+    const items = offlineCacheGet(store);
+    return Promise.resolve(items.find(i=>i.id===id)||null);
+  }
+  return firebaseDB.ref(store+'/'+id).once('value').then(snap => {
+    const val = snap.val();
+    return val ? {...val, id} : null;
+  });
+}
 
 function ADD(store, obj){
+  if(!isOnline()){
+    const tempId = 'off_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
+    const item = {...obj, id: tempId, _offline: true};
+    offlineQueueOp('ADD', store, item);
+    // Update local cache
+    const cached = offlineCacheGet(store);
+    cached.push(item);
+    offlineCacheSet(store, cached);
+    updateOnlineStatus();
+    showToast('📵 Oflayn saqlandi, internet kelganda yuboriladi');
+    return Promise.resolve(tempId);
+  }
   const newRef = firebaseDB.ref(store).push();
   const item = {...obj, id: newRef.key};
-  return newRef.set(item).then(() => newRef.key);
+  return newRef.set(item).then(() => {
+    // Update cache
+    const cached = offlineCacheGet(store);
+    cached.push(item);
+    offlineCacheSet(store, cached);
+    return newRef.key;
+  });
 }
 
 function PUT(store, obj){
-  return firebaseDB.ref(store+'/'+obj.id).set(obj).then(() => obj.id);
+  if(!isOnline()){
+    offlineQueueOp('PUT', store, obj);
+    // Update local cache
+    const cached = offlineCacheGet(store);
+    const idx = cached.findIndex(i=>i.id===obj.id);
+    if(idx>=0) cached[idx]=obj; else cached.push(obj);
+    offlineCacheSet(store, cached);
+    updateOnlineStatus();
+    showToast('📵 Oflayn saqlandi, internet kelganda yuboriladi');
+    return Promise.resolve(obj.id);
+  }
+  return firebaseDB.ref(store+'/'+obj.id).set(obj).then(() => {
+    const cached = offlineCacheGet(store);
+    const idx = cached.findIndex(i=>i.id===obj.id);
+    if(idx>=0) cached[idx]=obj; else cached.push(obj);
+    offlineCacheSet(store, cached);
+    return obj.id;
+  });
 }
 
 function DEL(store, id){
-  return firebaseDB.ref(store+'/'+id).remove();
+  if(!isOnline()){
+    offlineQueueOp('DEL', store, id);
+    const cached = offlineCacheGet(store);
+    offlineCacheSet(store, cached.filter(i=>i.id!==id));
+    updateOnlineStatus();
+    showToast('📵 Oflayn o\'chirildi, internet kelganda sinxronlanadi');
+    return Promise.resolve();
+  }
+  return firebaseDB.ref(store+'/'+id).remove().then(()=>{
+    const cached = offlineCacheGet(store);
+    offlineCacheSet(store, cached.filter(i=>i.id!==id));
+  });
 }
 
 const TODAY=()=>new Date().toISOString().split('T')[0];
