@@ -3023,38 +3023,38 @@ const STORES=['operations','workers','plans','entries','raw_items','raw_prices',
 const SIZES=[28, 30, 32, 34, 36, 38, 40, 42, 44, 46, 48, 50, 52, 54, 56, 58, 60, 62, 64, 66];
 
 // ── Firebase DB funksiyalari ──────────────────────────────
-const GA = (store) => firebaseDB.ref(store).once('value').then(snap => {
+function GA(store){ return firebaseDB.ref(store).once('value').then(snap => {
   const data = snap.val() || {};
   return Object.entries(data).map(([key, val]) => ({...val, id: key}));
-});
+}); }
 
-const GI = (store, id) => firebaseDB.ref(store+'/'+id).once('value').then(snap => {
+function GI(store, id){ return firebaseDB.ref(store+'/'+id).once('value').then(snap => {
   const val = snap.val();
   return val ? {...val, id} : null;
-});
+}); }
 
-const ADD = (store, obj) => {
+function ADD(store, obj){
   const newRef = firebaseDB.ref(store).push();
   const item = {...obj, id: newRef.key};
   return newRef.set(item).then(() => newRef.key);
-};
+}
 
-const PUT = (store, obj) => {
+function PUT(store, obj){
   return firebaseDB.ref(store+'/'+obj.id).set(obj).then(() => obj.id);
-};
+}
 
-const DEL = (store, id) => {
+function DEL(store, id){
   return firebaseDB.ref(store+'/'+id).remove();
-};
+}
 
 // Real-time listener - Firebase o'zgarishlarini darhol ko'rsatadi
-const LISTEN = (store, callback) => {
+function LISTEN(store, callback){
   firebaseDB.ref(store).on('value', snap => {
     const data = snap.val() || {};
     callback(Object.entries(data).map(([key, val]) => ({...val, id: key})));
   });
-};
-const UNLISTEN = (store) => firebaseDB.ref(store).off();
+}
+function UNLISTEN(store){ firebaseDB.ref(store).off(); }
 
 async function uploadImageToStorage(dataUrl, path) {
   if(!dataUrl || !dataUrl.startsWith('data:')) return dataUrl;
