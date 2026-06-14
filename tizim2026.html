@@ -433,29 +433,121 @@ body:not(.light-mode) .op-status-card.red{background:rgba(220,38,38,.07)}
   .nav-item{font-size:13px;padding:10px 16px}
   .main{margin-left:0;width:100%;padding-top:56px;padding-bottom:70px}
   .topbar{left:0;position:fixed;top:0;right:0;z-index:900;height:56px}
+
+  /* Grid - telefonda 1 yoki 2 ustun */
   .g4{grid-template-columns:1fr 1fr}
-  .g3{grid-template-columns:1fr 1fr}
+  .g3{grid-template-columns:1fr}
   .g5{grid-template-columns:1fr 1fr}
+  .g2{grid-template-columns:1fr!important}
   .we-row{grid-template-columns:1fr 1fr;gap:6px}
+
+  /* 3 ustunli gridlar 1 ustunli bo'lsin */
+  [style*="grid-template-columns:1fr 1fr 1fr"],
+  [style*="grid-template-columns: 1fr 1fr 1fr"]{
+    grid-template-columns:1fr!important;
+  }
+
   body{flex-direction:column}
+
   /* Mobil overlay */
   #mob-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:999}
   #mob-overlay.show{display:block}
+
   /* Hamburger tugma */
   #mob-menu-btn{display:flex}
+
   /* Pastki navigatsiya */
   #mob-bottom-nav{display:flex}
+
   /* Jadvallar skroll */
   .tw{overflow-x:auto;-webkit-overflow-scrolling:touch}
-  /* Card ichida bo'sh joy */
-  .card{padding:14px}
-  /* Input va tugmalar kattaroq */
-  .fc{height:40px;font-size:14px}
-  .btn{padding:10px 16px;font-size:13px}
+  table{min-width:500px}
+
+  /* Card */
+  .card{padding:12px;border-radius:10px}
+  .card-t{font-size:13px}
+
+  /* Input va tugmalar kattaroq (barmoq bilan bosish uchun) */
+  .fc{height:44px;font-size:14px;border-radius:8px}
+  select.fc{height:44px}
+  .btn{padding:11px 16px;font-size:13px;border-radius:8px}
   .btn-sm{padding:8px 12px;font-size:12px}
+  .btn-p,.btn-s{min-height:44px}
+
   /* Page padding */
-  .page{padding:12px}
+  .page{padding:10px 10px 20px}
+  .pg-title{font-size:18px!important}
+  .pg-sub{font-size:12px!important}
+
+  /* Modals - to'liq ekran */
+  .modal-box{width:100%!important;max-width:100%!important;border-radius:14px 14px 0 0!important;
+    position:fixed!important;bottom:0!important;left:0!important;right:0!important;
+    max-height:90vh!important;overflow-y:auto!important;margin:0!important}
+  [style*="position:fixed"][style*="z-index:999"] > div,
+  [style*="position:fixed"][style*="z-index:1000"] > div{
+    border-radius:14px 14px 0 0;
+    position:fixed;bottom:0;left:0;right:0;
+    max-height:88vh;overflow-y:auto;
+    margin:0!important;
+    width:100%!important;
+    max-width:100%!important;
+  }
+
+  /* Stat kartochkalar */
+  .stat-card{padding:12px!important}
+
+  /* Dashboard stat grid */
+  .g4.mb20{grid-template-columns:1fr 1fr!important}
+
+  /* Tugmalar guruhi wrap */
+  [style*="display:flex"][style*="gap"]{flex-wrap:wrap}
+
+  /* Sessiya header */
+  .sess-hdr .g4{grid-template-columns:1fr 1fr!important}
+
+  /* Journal jadval */
+  #jn-tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+
+  /* Font kichikroq joylarda */
+  .mb20{margin-bottom:12px!important}
+  .mb16{margin-bottom:10px!important}
+  .mb12{margin-bottom:8px!important}
+
+  /* Xodimlar kirim forma */
+  .dept-check{grid-template-columns:1fr 1fr!important}
+  .ops-check{grid-template-columns:1fr 1fr!important}
+
+  /* Ombor katalog grid */
+  #ob-katalog-grid{grid-template-columns:1fr 1fr!important}
+
+  /* Sarf-reja 3 ustun -> 1 ustun */
+  #pg-xomashyo > div:not(.pg-title):not(.pg-sub){grid-template-columns:1fr!important}
+
+  /* Hisobot filter */
+  .hisobot-filter-row{flex-wrap:wrap!important;gap:6px!important}
+
+  /* Chat */
+  .chat-sidebar{width:100%!important;height:auto!important;max-height:40vh!important}
+  .chat-main{height:calc(100vh - 250px)!important}
+
+  /* Overflow hidden o'rniga auto */
+  .tw table{min-width:600px}
 }
+
+@media(max-width:480px){
+  /* Juda kichik telefonlar */
+  .g4{grid-template-columns:1fr!important}
+  .g5{grid-template-columns:1fr 1fr!important}
+  .g2{grid-template-columns:1fr!important}
+  .page{padding:8px 8px 16px}
+  .card{padding:10px}
+  .pg-title{font-size:16px!important}
+  .btn{font-size:12px;padding:9px 12px}
+  .fc{height:42px;font-size:13px}
+  table{font-size:11px}
+  .stat-card{padding:10px!important}
+}
+
 @media(min-width:769px){
   #mob-menu-btn{display:none}
   #mob-bottom-nav{display:none}
