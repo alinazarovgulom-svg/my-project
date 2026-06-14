@@ -12117,10 +12117,24 @@ async function sendDeptTelegramReport(){
       return Object.entries(data).map(([key, val]) => ({...val, id: key}));
     });
     const [allEnt, allOps] = await Promise.all([fbGet('entries'), fbGet('operations')]);
-    const entries = allEnt.filter(e => e.date === date && e.dept === dept);
+
+    // Soat filtri: curSess ochiq bo'lsa o'sha sessiya, aks holda barcha kun
+    const sessStart = curSess ? curSess.start : null;
+    const sessEnd   = curSess ? curSess.end   : null;
+    const entries = allEnt.filter(e => {
+      if(e.date !== date || e.dept !== dept) return false;
+      if(sessStart && sessEnd){
+        const ts = e.timeOverride ? e.timeOverride.start : e.start;
+        const te = e.timeOverride ? e.timeOverride.end   : e.end;
+        return ts === sessStart && te === sessEnd;
+      }
+      return true;
+    });
+
     const oGrp = GRP(allOps);
     const DEPT_LBL = {tana:'Tana Bo\'limi',astar:'Astar Bo\'limi',montaj:'Montaj Bo\'limi',kamzul:'Kamzul Bo\'limi',shim:'Shim Bo\'limi',pardoz:'Pardoz Dazmol Bo\'limi',qadoq:'Qadoqlash Bo\'limi'};
     const deptName = DEPT_LBL[dept] || dept;
+    const sessLabel = sessStart ? (sessStart + '–' + sessEnd) : 'Kunlik (barcha sessiyalar)';
 
     // Kirill harflarini qo'llab-quvvatlovchi font yuklash
     const fontResp = await fetch('https://fonts.gstatic.com/s/roboto/v32/KFOmCnqEu92Fr1Mu4mxK.woff2');
@@ -12150,7 +12164,7 @@ async function sendDeptTelegramReport(){
     doc.setFontSize(12);
     doc.text(deptName + ' — Kunlik Hisobot', 14, 23);
     doc.setFontSize(9);
-    doc.text('Sana: ' + date + '   Vaqt: ' + timeStr + '   Yozuvlar: ' + entries.length, 14, 32);
+    doc.text('Sana: ' + date + '   Sessiya: ' + sessLabel + '   Yozuvlar: ' + entries.length, 14, 32);
 
     // Gorizontal chiziq
     doc.setDrawColor(255,255,255);
