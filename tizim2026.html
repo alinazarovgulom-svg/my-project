@@ -44,6 +44,8 @@
   --sur3:#252840;
   --brd:#2a2d42;
   --brd2:#363a56;
+  --bor:#2a2d42;
+  --bor2:#363a56;
   --acc:#818cf8;
   --acc-h:#6366f1;
   --acc-light:rgba(129,140,248,.12);
@@ -64,13 +66,11 @@
   --shadow-md:0 8px 32px rgba(0,0,0,.55);
   --sidebar-w:235px;
 }
-/* keep old --bor names as alias */
-:root{--bor:var(--brd);--bor2:var(--brd2)}
 
 /* ── LIGHT MODE ── */
 body.light-mode{
   --bg:#f4f6ff;--sur:#ffffff;--sur2:#eef0fb;--sur3:#e2e5f7;
-  --brd:#d0d4f0;--brd2:#a8aed8;--bor:var(--brd);--bor2:var(--brd2);
+  --brd:#d0d4f0;--brd2:#a8aed8;--bor:#d0d4f0;--bor2:#a8aed8;
   --acc:#6366f1;--acc-h:#4f46e5;--acc-light:rgba(99,102,241,.1);
   --acc3:#059669;
   --red:#ef4444;--red-light:#fef2f2;
@@ -81,7 +81,7 @@ body.light-mode{
 }
 body:not(.light-mode){
   --bg:#0b0d17;--sur:#12141f;--sur2:#1c1f2e;--sur3:#252840;
-  --brd:#2a2d42;--brd2:#363a56;--bor:var(--brd);--bor2:var(--brd2);
+  --brd:#2a2d42;--brd2:#363a56;--bor:#2a2d42;--bor2:#363a56;
   --acc:#818cf8;--acc-h:#6366f1;--acc-light:rgba(129,140,248,.12);
   --red:#f87171;--red-light:rgba(248,113,113,.1);
   --yel:#fbbf24;--yel-light:rgba(251,191,36,.1);
@@ -7935,6 +7935,9 @@ function doLogin(){
     saveLoginHistory(user);
     resetInactiveTimer();
     loadAutoReportSettings();
+    // Ma'lumotlarni qayta yukla (Firebase auth keyin ishlaydi)
+    setTimeout(()=>{ if(typeof loadDash==='function') loadDash(); }, 300);
+    setTimeout(()=>{ if(typeof loadOpsPage==='function') loadOpsPage(); if(typeof loadWkPage==='function') loadWkPage(); }, 900);
   }
   function loginFail(msg){
     if(btn){ btn.disabled=false; btn.textContent='🔐 Kirish'; }
