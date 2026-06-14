@@ -5837,26 +5837,55 @@ async function loadJournal(){
 
   const date=document.getElementById('jn-date')?.value||TODAY();
   const [allEnt,allOps]=await Promise.all([GA('entries'),GA('operations')]);
-  const filt=allEnt.filter(e=>e.date===date&&e.dept===curDept).reverse();
+  const filt=allEnt.filter(e=>e.date===date&&e.dept===curDept);
   const t=document.getElementById('jn-tbl');if(!t)return;
   if(!filt.length){t.innerHTML='<tr><td colspan="8" style="color:var(--txt3);text-align:center">Yozuv yo\'q</td></tr>';return;}
   const oGrp=GRP(allOps);
-  t.innerHTML=filt.map(e=>{
-    const ov=oGrp[e.op]?GAV(oGrp[e.op],e.date):null;
-    const norm=ov?ov.norm:30;
+
+  // Sessiyalar bo'yicha guruhlash (start-end vaqti bo'yicha)
+  const sessByTime={};
+  filt.forEach(e=>{
     const ts=e.timeOverride?`${e.timeOverride.start}–${e.timeOverride.end}`:`${e.start}–${e.end}`;
-    const pct=Math.round(e.qty/norm*100);
-    const cls=pct>=100?'bg':pct>=80?'bo':'br';
-    return`<tr>
-      <td style="font-size:12px">${e.date}</td>
-      <td style="font-size:12px;font-family:'IBM Plex Mono',monospace">${ts}</td>
-      <td><b>${e.worker}</b></td><td>${e.op}</td>
-      <td><span class="bdg bb">${e.plan}</span></td>
-      <td style="font-family:'IBM Plex Mono',monospace">${e.qty}</td>
-      <td style="font-family:'IBM Plex Mono',monospace">${norm}</td>
-      <td><span class="bdg ${cls}">${pct}%</span></td>
-    </tr>`;
-  }).join('');
+    if(!sessByTime[ts]) sessByTime[ts]=[];
+    sessByTime[ts].push(e);
+  });
+
+  let html='';
+  Object.entries(sessByTime).sort(([a],[b])=>a.localeCompare(b)).forEach(([ts,entries])=>{
+    // Xodimlar bo'yicha jamlaymiz
+    const byWorker={};
+    entries.forEach(e=>{
+      if(!byWorker[e.worker]) byWorker[e.worker]={qty:0,norm:0,ops:[]};
+      const ov=oGrp[e.op]?GAV(oGrp[e.op],e.date):null;
+      const norm=ov?ov.norm:30;
+      byWorker[e.worker].qty+=(e.qty||0);
+      byWorker[e.worker].norm+=norm;
+      byWorker[e.worker].ops.push(e.op);
+    });
+
+    // Saralash: yashil (≥100%) → sariq (≥80%) → qizil (<80%)
+    const workers=Object.entries(byWorker).map(([name,v])=>{
+      const pct=v.norm>0?Math.round(v.qty/v.norm*100):0;
+      return {name,qty:v.qty,norm:v.norm,pct,ops:[...new Set(v.ops)]};
+    }).sort((a,b)=>b.pct-a.pct);
+
+    html+=`<tr><td colspan="8" style="background:var(--sur2);padding:6px 10px;font-size:11px;color:var(--txt3);font-family:'IBM Plex Mono',monospace;letter-spacing:1px">⏱ ${ts}</td></tr>`;
+    workers.forEach(w=>{
+      const cls=w.pct>=100?'bg':w.pct>=80?'bo':'br';
+      const rowBg=w.pct>=100?'rgba(0,200,100,.06)':w.pct>=80?'rgba(255,200,0,.06)':'rgba(255,80,80,.06)';
+      html+=`<tr style="background:${rowBg}">
+        <td style="font-size:12px">${date}</td>
+        <td style="font-size:12px;font-family:'IBM Plex Mono',monospace">${ts}</td>
+        <td><b>${w.name}</b></td>
+        <td style="font-size:11px;color:var(--txt2)">${w.ops.join(', ')}</td>
+        <td>—</td>
+        <td style="font-family:'IBM Plex Mono',monospace;font-weight:700">${w.qty}</td>
+        <td style="font-family:'IBM Plex Mono',monospace">${w.norm}</td>
+        <td><span class="bdg ${cls}">${w.pct}%</span></td>
+      </tr>`;
+    });
+  });
+  t.innerHTML=html;
 
   }catch(err){console.error("loadJournal xatosi:",err);alert("Xato: "+err.message);}
 }
