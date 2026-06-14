@@ -56,12 +56,14 @@ def send_telegram_message(name, event_time, direction, door_name):
 
 def parse_event(event_data, device, is_first_batch):
     try:
-        event_type = event_data.get("eventType", "")
+        event_type = event_data.get("eventType", "NOETYPE")
+        print(f"[EVENT] {device['door_name']} | type={event_type} | first={is_first_batch} | {str(event_data)[:200]}")
+
         if event_type != "AccessControllerEvent":
             return
 
-        info   = event_data.get("AccessControllerEvent", {})
-        name   = info.get("name", "Noma'lum")
+        info     = event_data.get("AccessControllerEvent", {})
+        name     = info.get("name", "Noma'lum")
         raw_time = event_data.get("dateTime", "")
 
         try:
@@ -70,7 +72,7 @@ def parse_event(event_data, device, is_first_batch):
         except Exception:
             event_time = raw_time
 
-        print(f"[{device['door_name']}] {name} — {event_time} {'(eski, o`tkazildi)' if is_first_batch else ''}")
+        print(f"[{device['door_name']}] {name} — {event_time} {'(eski)' if is_first_batch else '>>> YUBORILDI'}")
 
         if not is_first_batch:
             send_telegram_message(name, event_time, device["direction"], device["door_name"])
