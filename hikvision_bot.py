@@ -28,8 +28,8 @@ DEVICES = [
     },
 ]
 
-TELEGRAM_TOKEN   = "YOUR_BOT_TOKEN"   # ← @BotFather dan token
-TELEGRAM_CHAT_ID = "YOUR_CHAT_ID"     # ← Chat yoki guruh ID
+TELEGRAM_TOKEN   = "8861647970:AAEJlWA1BQvcdwe0_MrRZ0bhD03EGwnTzO8"
+TELEGRAM_CHAT_ID = "1884849724"
 # ============================================================
 
 bot = telebot.TeleBot(TELEGRAM_TOKEN)
