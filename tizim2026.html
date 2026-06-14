@@ -10024,11 +10024,10 @@ function applyUserPermissions(){
     // Faqat ko'rish: hamma ko'rinadi lekin yozish yo'q
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('locked'));
   } else {
-    // Bo'lim xodimi: o'z bo'limi + umumiy sahifalar
+    // Bo'lim xodimi: faqat o'z bo'limi + dashboard + chat
     const allowed = new Set([
-      'nav-dashboard', 'nav-yordamchi', 'nav-workers', 'nav-unumdorlik',
-      'nav-kirim',  // kirimni ko'rish kerak
-      'nav-pulsorovi', // pul so'rovi
+      'nav-dashboard',
+      'nav-chat',
       deptNavMap[user.dept]
     ].filter(Boolean));
 
