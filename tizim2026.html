@@ -12109,6 +12109,8 @@ const TG_CHAT  = '1884849724';
 async function sendDeptTelegramReport(){
   try{
     const date = document.getElementById('jn-date')?.value || new Date().toISOString().split('T')[0];
+    const now = new Date();
+    const timeStr = now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
     const dept = curDept;
     const fbGet = (store) => firebaseDB.ref(store).once('value').then(snap => {
       const data = snap.val() || {};
@@ -12117,68 +12119,144 @@ async function sendDeptTelegramReport(){
     const [allEnt, allOps] = await Promise.all([fbGet('entries'), fbGet('operations')]);
     const entries = allEnt.filter(e => e.date === date && e.dept === dept);
     const oGrp = GRP(allOps);
-    const DEPT_FULL = {tana:'Tana',astar:'Astar',montaj:'Montaj',kamzul:'Kamzul',shim:'Shim',pardoz:'Pardoz Dazmol',qadoq:'Qadoqlash'};
+    const DEPT_LBL = {tana:'Tana Bo\'limi',astar:'Astar Bo\'limi',montaj:'Montaj Bo\'limi',kamzul:'Kamzul Bo\'limi',shim:'Shim Bo\'limi',pardoz:'Pardoz Dazmol Bo\'limi',qadoq:'Qadoqlash Bo\'limi'};
+    const deptName = DEPT_LBL[dept] || dept;
 
+    // Kirill harflarini qo'llab-quvvatlovchi font yuklash
+    const fontResp = await fetch('https://fonts.gstatic.com/s/roboto/v32/KFOmCnqEu92Fr1Mu4mxK.woff2');
+    // Fallback: font yuklanmasa ham ishlaydi
     const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-    doc.setFontSize(15);
-    doc.text('KAFTIMDA ERP — ' + (DEPT_FULL[dept]||dept) + ' Bo\'limi', 14, 18);
-    doc.setFontSize(10);
-    doc.text('Sana: ' + date + '   |   Jami yozuv: ' + entries.length, 14, 26);
+    const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
 
-    // Xodimlar bo'yicha jamlab hisoblaymiz
-    const byWorker = {};
+    // Unicode font qo'shish
+    try {
+      const fontBuf = await fetch('https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/fonts/Roboto/Roboto-Regular.ttf').then(r=>r.arrayBuffer());
+      const u8 = new Uint8Array(fontBuf);
+      let bin=''; u8.forEach(b=>bin+=String.fromCharCode(b));
+      const b64 = btoa(bin);
+      doc.addFileToVFS('Roboto.ttf', b64);
+      doc.addFont('Roboto.ttf','Roboto','normal');
+      doc.setFont('Roboto');
+    } catch(e){ doc.setFont('helvetica'); }
+
+    const pageW = doc.internal.pageSize.getWidth();
+
+    // ── HEADER ──
+    doc.setFillColor(0, 105, 92);
+    doc.rect(0, 0, pageW, 38, 'F');
+    doc.setTextColor(255,255,255);
+    doc.setFontSize(20);
+    doc.text('KAFTIMDA ERP', 14, 14);
+    doc.setFontSize(12);
+    doc.text(deptName + ' — Kunlik Hisobot', 14, 23);
+    doc.setFontSize(9);
+    doc.text('Sana: ' + date + '   Vaqt: ' + timeStr + '   Yozuvlar: ' + entries.length, 14, 32);
+
+    // Gorizontal chiziq
+    doc.setDrawColor(255,255,255);
+    doc.setLineWidth(0.3);
+    doc.line(14, 35, pageW-14, 35);
+    doc.setTextColor(30,30,30);
+
+    // ── XODIMLAR JAMI (sessiyalar bo'yicha guruhlangan) ──
+    const sessByTime = {};
     entries.forEach(e => {
-      if(!byWorker[e.worker]) byWorker[e.worker] = {total:0, norm:0, count:0};
-      const ov = oGrp[e.op] ? GAV(oGrp[e.op], e.date) : null;
-      const norm = ov ? ov.norm : 30;
-      byWorker[e.worker].total += (e.qty||0);
-      byWorker[e.worker].norm += norm;
-      byWorker[e.worker].count++;
+      const ts = (e.start||'??') + '–' + (e.end||'??');
+      if(!sessByTime[ts]) sessByTime[ts] = [];
+      sessByTime[ts].push(e);
     });
 
-    const summaryRows = Object.entries(byWorker).map(([name, v]) => {
-      const pct = v.norm > 0 ? Math.round(v.total / v.norm * 100) : 0;
-      const status = pct >= 100 ? '✅ ' + pct + '%' : pct >= 80 ? '⚠️ ' + pct + '%' : '❌ ' + pct + '%';
-      return [name, String(v.total), String(v.norm), status];
-    });
+    let startY = 44;
+    Object.entries(sessByTime).sort(([a],[b])=>a.localeCompare(b)).forEach(([ts, sEntries]) => {
+      // Sessiya sarlavhasi
+      doc.setFillColor(236, 246, 255);
+      doc.rect(14, startY-4, pageW-28, 7, 'F');
+      doc.setFontSize(9);
+      doc.setTextColor(0,105,92);
+      doc.text('Sessiya: ' + ts, 16, startY+1);
+      doc.setTextColor(30,30,30);
+      startY += 6;
 
-    doc.autoTable({
-      head:[['Xodim','Bajarildi','Norma','Holat (%)']],
-      body: summaryRows,
-      startY: 32,
-      styles:{fontSize:10},
-      headStyles:{fillColor:[0,128,128]},
-      columnStyles:{3:{fontStyle:'bold'}}
-    });
-
-    // Batafsil jadvali
-    doc.autoTable({
-      head:[['Vaqt','Xodim','Operatsiya','Plan','Miqdor','Norma','%']],
-      body: entries.map(e => {
+      // Xodimlarni jamlaymiz
+      const byW = {};
+      sEntries.forEach(e => {
+        if(!byW[e.worker]) byW[e.worker] = {qty:0, norm:0, ops:[]};
         const ov = oGrp[e.op] ? GAV(oGrp[e.op], e.date) : null;
         const norm = ov ? ov.norm : 30;
-        const pct = Math.round((e.qty||0)/norm*100);
-        return [
-          (e.start||'')+'–'+(e.end||''),
-          e.worker||'',
-          e.op||'',
-          e.plan||'—',
-          String(e.qty||0),
-          String(norm),
-          pct+'%'
-        ];
-      }),
-      startY: doc.lastAutoTable.finalY + 10,
-      styles:{fontSize:8},
-      headStyles:{fillColor:[30,60,90]}
+        byW[e.worker].qty += (e.qty||0);
+        byW[e.worker].norm += norm;
+        if(!byW[e.worker].ops.includes(e.op)) byW[e.worker].ops.push(e.op);
+      });
+
+      // Saralash: yashil > sariq > qizil
+      const workers = Object.entries(byW).map(([name,v]) => {
+        const pct = v.norm > 0 ? Math.round(v.qty/v.norm*100) : 0;
+        return {name, qty:v.qty, norm:v.norm, pct, ops:v.ops.join(', ')};
+      }).sort((a,b) => b.pct - a.pct);
+
+      const summaryBody = workers.map(w => [w.name, w.ops, String(w.qty), String(w.norm), w.pct+'%']);
+      const summaryStyles = workers.map(w => {
+        if(w.pct >= 100) return {fillColor:[220,255,220]};
+        if(w.pct >= 80)  return {fillColor:[255,253,220]};
+        return {fillColor:[255,225,225]};
+      });
+
+      doc.autoTable({
+        head:[['Xodim ismi','Operatsiya','Bajarildi','Norma','Holat']],
+        body: summaryBody,
+        startY: startY,
+        styles:{ fontSize:9, cellPadding:2.5, font: doc.getFont().fontName },
+        headStyles:{ fillColor:[0,105,92], textColor:255, fontStyle:'bold', fontSize:9 },
+        columnStyles:{
+          0:{cellWidth:55},
+          1:{cellWidth:55},
+          2:{cellWidth:22, halign:'center'},
+          3:{cellWidth:22, halign:'center'},
+          4:{cellWidth:22, halign:'center', fontStyle:'bold'}
+        },
+        bodyStyles:{ textColor:[30,30,30] },
+        didParseCell: (data) => {
+          if(data.section==='body'){
+            const w = workers[data.row.index];
+            if(!w) return;
+            if(w.pct>=100) data.cell.styles.fillColor=[220,255,220];
+            else if(w.pct>=80) data.cell.styles.fillColor=[255,253,220];
+            else data.cell.styles.fillColor=[255,225,225];
+            if(data.column.index===4){
+              if(w.pct>=100) data.cell.styles.textColor=[0,140,0];
+              else if(w.pct>=80) data.cell.styles.textColor=[180,120,0];
+              else data.cell.styles.textColor=[200,0,0];
+            }
+          }
+        },
+        margin:{left:14, right:14}
+      });
+      startY = doc.lastAutoTable.finalY + 6;
     });
 
+    // ── FOOTER ──
+    const pageH = doc.internal.pageSize.getHeight();
+    doc.setFillColor(245,245,245);
+    doc.rect(0, pageH-14, pageW, 14, 'F');
+    doc.setFontSize(8);
+    doc.setTextColor(120,120,120);
+    doc.text('KAFTIMDA ERP — kaftimda@gmail.com | +998 91 760 66 66', 14, pageH-6);
+    doc.text('Hisobot vaqti: ' + date + ' ' + timeStr, pageW-55, pageH-6);
+
+    // Telegram yuborish
     const blob = doc.output('blob');
     const fd = new FormData();
     fd.append('chat_id', TG_CHAT);
-    fd.append('document', blob, (DEPT_FULL[dept]||dept)+'_'+date+'.pdf');
-    fd.append('caption', '📊 ' + (DEPT_FULL[dept]||dept) + ' Bo\'limi Hisoboti — ' + date + '\n👥 Xodimlar: ' + Object.keys(byWorker).length + '\n📝 Yozuvlar: ' + entries.length);
+    fd.append('document', blob, deptName.replace(/ /g,'_')+'_'+date+'.pdf');
+    const totalQty = entries.reduce((s,e)=>s+(e.qty||0),0);
+    const uniqWorkers = [...new Set(entries.map(e=>e.worker))].length;
+    fd.append('caption',
+      '📊 *'+deptName+'* Hisoboti\n'+
+      '📅 Sana: '+date+' | ⏰ '+timeStr+'\n'+
+      '👥 Xodimlar: '+uniqWorkers+'\n'+
+      '📦 Jami bajarildi: '+totalQty+' ta\n'+
+      '📝 Yozuvlar: '+entries.length
+    );
     const r = await fetch('https://api.telegram.org/bot'+TG_TOKEN+'/sendDocument',{method:'POST',body:fd});
     const res = await r.json();
     if(res.ok) alert('✅ Hisobot Telegramga yuborildi!');
