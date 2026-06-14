@@ -104,13 +104,22 @@ def parse_event(event_data: dict, device: dict, base_url: str, auth):
 
 def listen_device(device: dict):
     base_url = f"http://{device['ip']}:{device['port']}"
-    auth     = HTTPDigestAuth(device["user"], device["password"])
+    from requests.auth import HTTPBasicAuth
+    auth_digest = HTTPDigestAuth(device["user"], device["password"])
+    auth_basic  = HTTPBasicAuth(device["user"], device["password"])
+    auth        = auth_digest
     url      = f"{base_url}/ISAPI/Event/notification/alertStream"
 
     while True:
         try:
             print(f"[Ulanyapti] {device['door_name']} → {base_url}")
             with requests.get(url, auth=auth, stream=True, timeout=30) as resp:
+                if resp.status_code == 401:
+                    # Digest ishlamasa Basic auth sinab ko'ramiz
+                    auth = auth_basic if auth == auth_digest else auth_digest
+                    print(f"[{device['door_name']}] HTTP 401 — boshqa auth sinayapti...")
+                    time.sleep(2)
+                    continue
                 if resp.status_code != 200:
                     print(f"[{device['door_name']}] HTTP {resp.status_code} — 10s kutilmoqda")
                     time.sleep(10)
@@ -118,8 +127,10 @@ def listen_device(device: dict):
 
                 print(f"[OK] {device['door_name']} ulandi!")
                 buffer = ""
-                for chunk in resp.iter_content(chunk_size=1024, decode_unicode=True):
+                for chunk in resp.iter_content(chunk_size=1024, decode_unicode=False):
                     if chunk:
+                        if isinstance(chunk, bytes):
+                            chunk = chunk.decode("utf-8", errors="ignore")
                         buffer += chunk
                         while True:
                             start = buffer.find("{")
