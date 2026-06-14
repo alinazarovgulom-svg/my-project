@@ -945,7 +945,13 @@ body:not(.light-mode) .admin-badge{background:rgba(220,38,38,.15);border-color:r
   <div class="card" style="margin-top:20px">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
       <div class="card-t" style="margin:0">Chiqimlar Jurnali</div>
-      <div style="display:flex;gap:8px"><input id="jn-date" type="date" class="fc" style="width:150px"><button class="btn btn-s btn-sm" onclick="loadJournal()">Filtrlash</button><button class="btn btn-sm" style="background:#229ED9;color:#fff;border:none;border-radius:6px;padding:4px 10px;cursor:pointer" onclick="sendDeptTelegramReport()">📤 Telegramga</button></div>
+      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+        <input id="jn-date" type="date" class="fc" style="width:140px">
+        <input id="jn-st" type="time" class="fc" style="width:90px" placeholder="Boshlanish">
+        <input id="jn-en" type="time" class="fc" style="width:90px" placeholder="Tugash">
+        <button class="btn btn-s btn-sm" onclick="loadJournal()">Filtrlash</button>
+        <button class="btn btn-sm" style="background:#229ED9;color:#fff;border:none;border-radius:6px;padding:4px 10px;cursor:pointer" onclick="sendDeptTelegramReport()">📤 Telegramga</button>
+      </div>
     </div>
     <div class="tw"><table><thead><tr><th>Sana</th><th>Vaqt</th><th>Xodim</th><th>Operatsiya</th><th>Plan</th><th>Miqdor</th><th>Norma</th><th>Holat</th></tr></thead><tbody id="jn-tbl"></tbody></table></div>
   </div>
@@ -5635,6 +5641,9 @@ async function openSession(){
   const en=document.getElementById('ss-en').value;
   if(!date||!st||!en)return alert('Sana va vaqtni to\'ldiring');
   curSess={date,start:st,end:en,dept:curDept};
+  // Jurnal soat filtrini sessiyaga mos qilib o'rnatamiz
+  const jst=document.getElementById('jn-st'); if(jst) jst.value=st;
+  const jen=document.getElementById('jn-en'); if(jen) jen.value=en;
   document.getElementById('sess-lbl').innerText=`Sessiya: ${date} | ${st} — ${en} | ${DEPT_FULL[curDept]||curDept}`;
   document.getElementById('sess-area').style.display='block';
   if(curDept==='qadoq'){
@@ -12118,9 +12127,9 @@ async function sendDeptTelegramReport(){
     });
     const [allEnt, allOps] = await Promise.all([fbGet('entries'), fbGet('operations')]);
 
-    // Soat filtri: curSess ochiq bo'lsa o'sha sessiya, aks holda barcha kun
-    const sessStart = curSess ? curSess.start : null;
-    const sessEnd   = curSess ? curSess.end   : null;
+    // Soat filtri: jn-st / jn-en maydonlaridan olinadi
+    const sessStart = (document.getElementById('jn-st')?.value) || null;
+    const sessEnd   = (document.getElementById('jn-en')?.value) || null;
     const entries = allEnt.filter(e => {
       if(e.date !== date || e.dept !== dept) return false;
       if(sessStart && sessEnd){
