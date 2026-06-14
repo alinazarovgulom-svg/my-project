@@ -348,16 +348,14 @@ body:not(.light-mode) .ps.warn{background:rgba(248,113,113,.06)!important}
 /* ── MODAL ── */
 .modal-ov{display:none;position:fixed;inset:0;background:rgba(5,6,16,.75);backdrop-filter:blur(8px);z-index:1000;align-items:center;justify-content:center}
 .modal-ov.open{display:flex}
-.modal,.modal-box{
+.modal-box{
   background:var(--sur);border:1px solid var(--brd);border-radius:18px;
   padding:28px;width:580px;max-width:96vw;max-height:92vh;overflow-y:auto;
   box-shadow:0 24px 64px rgba(0,0,0,.55);
   animation:modalIn .22s cubic-bezier(.22,.68,0,1.2);
-  display:none;
 }
-.modal{position:fixed;inset:0;background:rgba(5,6,16,.75);backdrop-filter:blur(8px);z-index:1000;align-items:center;justify-content:center}
-.modal[style*="flex"]{display:flex!important}
-.modal > .modal-box{display:block!important}
+/* avans-modal va inline-style orqali boshqariladigan modallar */
+.modal-wrap{display:none;position:fixed;inset:0;background:rgba(5,6,16,.75);backdrop-filter:blur(8px);z-index:1000;align-items:center;justify-content:center}
 @keyframes modalIn{from{opacity:0;transform:scale(.94) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}
 .modal-title{font-size:17px;font-weight:700;margin-bottom:22px;color:var(--txt);display:flex;align-items:center;gap:9px;letter-spacing:-.2px}
 
@@ -2455,7 +2453,7 @@ body.light-mode .toast.info{border-left-color:#6366f1;color:#1a1c2e}
 </div>
 
 <!-- Avans Modal -->
-<div id="avans-modal" class="modal" onclick="if(event.target===this)hideAvansModal()">
+<div id="avans-modal" style="display:none;position:fixed;inset:0;background:rgba(5,6,16,.75);backdrop-filter:blur(8px);z-index:1000;align-items:center;justify-content:center" onclick="if(event.target===this)hideAvansModal()">
   <div class="modal-box" style="max-width:500px">
     <div class="modal-title">💵 To'lov Qo'shish</div>
     <input type="hidden" id="av-edit-id">
