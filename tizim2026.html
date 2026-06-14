@@ -945,7 +945,7 @@ body:not(.light-mode) .admin-badge{background:rgba(220,38,38,.15);border-color:r
   <div class="card" style="margin-top:20px">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
       <div class="card-t" style="margin:0">Chiqimlar Jurnali</div>
-      <div style="display:flex;gap:8px"><input id="jn-date" type="date" class="fc" style="width:150px"><button class="btn btn-s btn-sm" onclick="loadJournal()">Filtrlash</button></div>
+      <div style="display:flex;gap:8px"><input id="jn-date" type="date" class="fc" style="width:150px"><button class="btn btn-s btn-sm" onclick="loadJournal()">Filtrlash</button><button class="btn btn-sm" style="background:#229ED9;color:#fff;border:none;border-radius:6px;padding:4px 10px;cursor:pointer" onclick="sendDeptTelegramReport()">📤 Telegramga</button></div>
     </div>
     <div class="tw"><table><thead><tr><th>Sana</th><th>Vaqt</th><th>Xodim</th><th>Operatsiya</th><th>Plan</th><th>Miqdor</th><th>Norma</th><th>Holat</th></tr></thead><tbody id="jn-tbl"></tbody></table></div>
   </div>
@@ -12077,6 +12077,86 @@ async function updatePulSoroviBadge(){
 <script>
 const TG_TOKEN = '8322455852:AAFKe_sYk-D5RO3VZliEUvu4LmeHRJbDw3c';
 const TG_CHAT  = '1884849724';
+async function sendDeptTelegramReport(){
+  try{
+    const date = document.getElementById('jn-date')?.value || new Date().toISOString().split('T')[0];
+    const dept = curDept;
+    const fbGet = (store) => firebaseDB.ref(store).once('value').then(snap => {
+      const data = snap.val() || {};
+      return Object.entries(data).map(([key, val]) => ({...val, id: key}));
+    });
+    const [allEnt, allOps] = await Promise.all([fbGet('entries'), fbGet('operations')]);
+    const entries = allEnt.filter(e => e.date === date && e.dept === dept);
+    const oGrp = GRP(allOps);
+    const DEPT_FULL = {tana:'Tana',astar:'Astar',montaj:'Montaj',kamzul:'Kamzul',shim:'Shim',pardoz:'Pardoz Dazmol',qadoq:'Qadoqlash'};
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    doc.setFontSize(15);
+    doc.text('KAFTIMDA ERP — ' + (DEPT_FULL[dept]||dept) + ' Bo\'limi', 14, 18);
+    doc.setFontSize(10);
+    doc.text('Sana: ' + date + '   |   Jami yozuv: ' + entries.length, 14, 26);
+
+    // Xodimlar bo'yicha jamlab hisoblaymiz
+    const byWorker = {};
+    entries.forEach(e => {
+      if(!byWorker[e.worker]) byWorker[e.worker] = {total:0, norm:0, count:0};
+      const ov = oGrp[e.op] ? GAV(oGrp[e.op], e.date) : null;
+      const norm = ov ? ov.norm : 30;
+      byWorker[e.worker].total += (e.qty||0);
+      byWorker[e.worker].norm += norm;
+      byWorker[e.worker].count++;
+    });
+
+    const summaryRows = Object.entries(byWorker).map(([name, v]) => {
+      const pct = v.norm > 0 ? Math.round(v.total / v.norm * 100) : 0;
+      const status = pct >= 100 ? '✅ ' + pct + '%' : pct >= 80 ? '⚠️ ' + pct + '%' : '❌ ' + pct + '%';
+      return [name, String(v.total), String(v.norm), status];
+    });
+
+    doc.autoTable({
+      head:[['Xodim','Bajarildi','Norma','Holat (%)']],
+      body: summaryRows,
+      startY: 32,
+      styles:{fontSize:10},
+      headStyles:{fillColor:[0,128,128]},
+      columnStyles:{3:{fontStyle:'bold'}}
+    });
+
+    // Batafsil jadvali
+    doc.autoTable({
+      head:[['Vaqt','Xodim','Operatsiya','Plan','Miqdor','Norma','%']],
+      body: entries.map(e => {
+        const ov = oGrp[e.op] ? GAV(oGrp[e.op], e.date) : null;
+        const norm = ov ? ov.norm : 30;
+        const pct = Math.round((e.qty||0)/norm*100);
+        return [
+          (e.start||'')+'–'+(e.end||''),
+          e.worker||'',
+          e.op||'',
+          e.plan||'—',
+          String(e.qty||0),
+          String(norm),
+          pct+'%'
+        ];
+      }),
+      startY: doc.lastAutoTable.finalY + 10,
+      styles:{fontSize:8},
+      headStyles:{fillColor:[30,60,90]}
+    });
+
+    const blob = doc.output('blob');
+    const fd = new FormData();
+    fd.append('chat_id', TG_CHAT);
+    fd.append('document', blob, (DEPT_FULL[dept]||dept)+'_'+date+'.pdf');
+    fd.append('caption', '📊 ' + (DEPT_FULL[dept]||dept) + ' Bo\'limi Hisoboti — ' + date + '\n👥 Xodimlar: ' + Object.keys(byWorker).length + '\n📝 Yozuvlar: ' + entries.length);
+    const r = await fetch('https://api.telegram.org/bot'+TG_TOKEN+'/sendDocument',{method:'POST',body:fd});
+    const res = await r.json();
+    if(res.ok) alert('✅ Hisobot Telegramga yuborildi!');
+    else alert('❌ Xato: '+res.description);
+  } catch(e){ alert('❌ Xato: '+e.message); }
+}
+
 async function sendTelegramReport(){
   try{
     const today = new Date().toISOString().split('T')[0];
