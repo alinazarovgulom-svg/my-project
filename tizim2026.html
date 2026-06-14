@@ -2774,14 +2774,15 @@ body:not(.light-mode) .admin-badge{background:rgba(220,38,38,.15);border-color:r
         <input type="hidden" id="brt-etkt-sel-id" value="">
       </div>
 
-      <!-- MATERIALLAR: ombordagi raw_items dan tanlanadi (checkbox) -->
+      <!-- MATERIALLAR: xomashyo_katalog dan tanlanadi + kerak miqdor -->
       <div class="mb12">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-          <label class="fl" style="margin:0">Materiallar (ombordagi) *</label>
-          <span style="font-size:11px;color:var(--txt3)">Birdan ko'p tanlash mumkin</span>
+          <label class="fl" style="margin:0">Materiallar *</label>
+          <button class="btn btn-s btn-sm" onclick="brtAddMatRow()" type="button">+ Material qo'sh</button>
         </div>
-        <div id="brt-mats-box" style="background:var(--sur2);border:1px solid var(--bor);border-radius:8px;padding:10px;max-height:160px;overflow-y:auto">
-          <div style="color:var(--txt3);font-size:12px" id="brt-mats-empty">Omborda xomashyo yo'q. Avval Xomashyo bo'limiga kiriting.</div>
+        <div id="brt-mats-box" style="background:var(--sur2);border:1px solid var(--bor);border-radius:8px;padding:10px">
+          <div id="brt-mats-rows"></div>
+          <div id="brt-mats-empty" style="color:var(--txt3);font-size:12px;display:none">Material qo'shilmagan</div>
         </div>
       </div>
 
@@ -2834,6 +2835,17 @@ body:not(.light-mode) .admin-badge{background:rgba(220,38,38,.15);border-color:r
         <button class="btn btn-sm btn-p" style="flex:1;min-width:140px" onclick="saveBuyurtma()">✅ Saqlash</button>
         <button class="btn btn-s btn-sm" onclick="hideBuyurtmaModal()">Bekor</button>
       </div>
+    </div>
+  </div>
+
+  <!-- ═══ OMBOR CHIQIM MODAL (omborchi) ═══ -->
+  <div id="brt-chiqim-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.65);z-index:1000;overflow-y:auto;padding:24px 16px">
+    <div style="background:var(--sur);border:1px solid var(--bor);border-radius:12px;max-width:640px;margin:0 auto;padding:24px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+        <div style="font-size:16px;font-weight:700">📤 Ombor chiqimi</div>
+        <button onclick="hideBrtChiqimModal()" style="background:none;border:none;color:var(--txt3);font-size:20px;cursor:pointer">✕</button>
+      </div>
+      <div id="brt-chiqim-content"></div>
     </div>
   </div>
 
@@ -11061,23 +11073,73 @@ async function onBrtModelChange(){
   });
 }
 
-// ──── Materiallar checkbox (ombordagi raw_items) ────
+// ──── Materiallar (xomashyo_katalog dan jadval ko'rinishida) ────
+let _brtKatalog = [];
+let _brtMatRows = []; // [{katalogId, kerakQty}]
+
 async function loadBrtMatsCbs(){
-  const box = document.getElementById('brt-mats-box');
+  _brtKatalog = await GA('xomashyo_katalog');
+  _brtMatRows = [];
+  renderBrtMatRows();
+}
+
+function brtAddMatRow(){
+  _brtMatRows.push({katalogId: '', kerakQty: ''});
+  renderBrtMatRows();
+}
+
+function brtRemoveMatRow(idx){
+  _brtMatRows.splice(idx, 1);
+  renderBrtMatRows();
+}
+
+function brtMatRowChange(idx, field, val){
+  _brtMatRows[idx][field] = val;
+  if(field === 'katalogId') renderBrtMatRowQoldiq(idx, val);
+}
+
+function renderBrtMatRowQoldiq(idx, katalogId){}
+
+function renderBrtMatRows(){
+  const cont = document.getElementById('brt-mats-rows');
   const emp = document.getElementById('brt-mats-empty');
-  const items = await GA('raw_items');
-  const omborItems = await GA('ombor_items');
-  if(!items.length){ box.innerHTML = '<div style="color:var(--txt3);font-size:12px" id="brt-mats-empty">Omborda xomashyo yo\'q. Avval Xomashyo bo\'limiga kiriting.</div>'; return; }
-  box.innerHTML = items.map(item => {
-    const ob = omborItems.find(o => o.name && item.name && o.name.toLowerCase().includes(item.name.toLowerCase()));
-    const qty = ob ? N(ob.qty) : 0;
-    const statusColor = qty > 0 ? 'var(--acc)' : 'var(--red)';
-    return `<label style="display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:6px;cursor:pointer;border:1px solid transparent;transition:all .15s" onmouseover="this.style.background='var(--sur)';this.style.borderColor='var(--bor)'" onmouseout="this.style.background='';this.style.borderColor='transparent'">
-      <input type="checkbox" class="brt-mat-cb" value="${item.id}" style="cursor:pointer">
-      <span style="flex:1;font-size:13px">${item.name}</span>
-      <span style="font-size:11px;color:${statusColor};font-family:'IBM Plex Mono',monospace">${qty} ${item.unit||'dona'}</span>
-    </label>`;
+  if(!cont) return;
+  if(!_brtMatRows.length){
+    cont.innerHTML = '';
+    if(emp) emp.style.display = 'block';
+    return;
+  }
+  if(emp) emp.style.display = 'none';
+  cont.innerHTML = _brtMatRows.map((row, idx) => {
+    const sel = _brtKatalog.map(k =>
+      `<option value="${k.id}" ${k.id==row.katalogId?'selected':''}>[${k.code}] ${k.name} (${k.unit||'dona'})</option>`
+    ).join('');
+    return `<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;flex-wrap:wrap">
+      <select class="fc" style="flex:2;min-width:160px" onchange="brtMatRowChange(${idx},'katalogId',this.value)">
+        <option value="">— Material tanlang —</option>
+        ${sel}
+      </select>
+      <span id="brt-mat-qoldiq-${idx}" style="font-size:11px;color:var(--txt3);min-width:80px"></span>
+      <button type="button" onclick="brtRemoveMatRow(${idx})" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:16px;padding:4px">✕</button>
+    </div>`;
   }).join('');
+  // Show qoldiq for each row
+  _brtMatRows.forEach((row, idx) => {
+    if(row.katalogId) updateBrtMatQoldiq(idx, row.katalogId);
+  });
+}
+
+async function updateBrtMatQoldiq(idx, katalogId){
+  const [kirimlar, chiqimlar] = await Promise.all([GA('xomashyo_kirim'), GA('xomashyo_chiqim')]);
+  const kirim = kirimlar.filter(k=>k.itemId==katalogId).reduce((s,k)=>s+(k.qty||0),0);
+  const chiqim = chiqimlar.filter(c=>c.itemId==katalogId).reduce((s,c)=>s+(c.qty||0),0);
+  const qoldiq = kirim - chiqim;
+  const item = _brtKatalog.find(k=>k.id==katalogId);
+  const el = document.getElementById('brt-mat-qoldiq-'+idx);
+  if(el && item) {
+    el.style.color = qoldiq > 0 ? 'var(--acc)' : 'var(--red)';
+    el.textContent = `Qoldiq: ${qoldiq} ${item.unit||''}`;
+  }
 }
 
 // ──── O'lchamlar ────
@@ -11178,8 +11240,11 @@ async function showBuyurtmaModal(id){
     document.getElementById('brt-holat').value = ord.holat||'kutilmoqda';
     document.getElementById('brt-izoh').value = ord.izoh||'';
     if(ord.etiketkaId) selectBrtEtiketka(ord.etiketkaId);
-    // Restore checked materials
-    if(ord.materialIds) document.querySelectorAll('.brt-mat-cb').forEach(cb=>{ cb.checked = ord.materialIds.includes(parseInt(cb.value)); });
+    // Restore materials
+    if(ord.materialTalablari && ord.materialTalablari.length){
+      _brtMatRows = ord.materialTalablari.map(r=>({katalogId: r.katalogId, kerakQty: r.kerakQty}));
+    } else { _brtMatRows = []; }
+    renderBrtMatRows();
     brtSizes = Object.assign({}, ord.sizes||{});
     renderBrtSizes();
   }
@@ -11262,12 +11327,14 @@ async function saveBuyurtma(){
   if(!product){ alert("Mahsulot turini tanlang!"); return; }
   if(!model){ alert("Modelni tanlang!"); return; }
 
-  const materialIds = [...document.querySelectorAll('.brt-mat-cb:checked')].map(cb=>parseInt(cb.value));
-  if(!materialIds.length){ alert("Kamida bitta material tanlang!"); return; }
+  const validMats = _brtMatRows.filter(r => r.katalogId);
+  if(!validMats.length){ alert("Kamida bitta material tanlang!"); return; }
   if(!Object.keys(brtSizes).length){ alert("Kamida bitta o'lcham qo'shing!"); return; }
 
-  const [allItems] = await Promise.all([GA('raw_items')]);
-  const materialNames = materialIds.map(id => { const it = allItems.find(i=>i.id===id); return it ? it.name : ''; }).filter(Boolean);
+  const materialNames = validMats.map(r => {
+    const k = _brtKatalog.find(k=>k.id==r.katalogId);
+    return k ? `[${k.code}] ${k.name}` : '';
+  }).filter(Boolean);
   const totalQty = Object.values(brtSizes).reduce((a,b)=>a+Number(b),0);
 
   const ord = {
@@ -11276,7 +11343,8 @@ async function saveBuyurtma(){
     drop: document.getElementById('brt-drop').value.trim(),
     etiketkaId: parseInt(document.getElementById('brt-etkt-sel-id').value)||null,
     etiketkaName: (()=>{ const el=document.querySelector('.brt-etkt-chip.etkt-active'); return el?el.dataset.name:''; })(),
-    materialIds, material: materialNames.join(', '),
+    materialTalablari: validMats.map(r=>({katalogId: r.katalogId})),
+    material: materialNames.join(' | '),
     sizes: Object.assign({}, brtSizes), totalQty,
     deadline: document.getElementById('brt-deadline').value,
     holat: document.getElementById('brt-holat').value,
@@ -11431,6 +11499,7 @@ async function loadBuyurtmaPage(){
       <td>${omborStatus}</td>
       <td>
         <div style="display:flex;gap:3px;flex-wrap:wrap">
+          <button class="bic btn-sm" onclick="showBrtChiqimModal('${ord.id}')" title="Ombor chiqimi" style="color:var(--acc)">📤</button>
           <button class="bic btn-sm" onclick="showBrtNotify(${ord.id})" title="Ombor hisoboti">📦</button>
           <button class="bic btn-sm" onclick="brtPdfOne(${ord.id})" title="PDF">📄</button>
           <button class="bic btn-sm" onclick="showBuyurtmaModal(${ord.id})" title="Tahrirlash">✏️</button>
@@ -11440,6 +11509,93 @@ async function loadBuyurtmaPage(){
       </td>
     </tr>`;
   }).join('');
+}
+
+// ──── Ombor chiqimi (omborchi) ────
+function hideBrtChiqimModal(){
+  document.getElementById('brt-chiqim-modal').style.display='none';
+}
+
+async function showBrtChiqimModal(ordId){
+  const modal = document.getElementById('brt-chiqim-modal');
+  const cont = document.getElementById('brt-chiqim-content');
+  cont.innerHTML = '<div style="text-align:center;padding:20px;color:var(--txt3)">⏳ Yuklanmoqda...</div>';
+  modal.style.display = 'block';
+
+  const [ord, katalog, kirimlar, chiqimlar] = await Promise.all([
+    GI('buyurtma_orders', ordId),
+    GA('xomashyo_katalog'),
+    GA('xomashyo_kirim'),
+    GA('xomashyo_chiqim')
+  ]);
+  if(!ord){ cont.innerHTML='<div style="color:var(--red)">Buyurtma topilmadi</div>'; return; }
+
+  const talablar = ord.materialTalablari || [];
+  if(!talablar.length){
+    cont.innerHTML = '<div style="color:var(--txt3);text-align:center;padding:16px">Bu buyurtmada material talablari yo\'q.<br>Buyurtmani tahrirlash orqali material qo\'shing.</div>';
+    return;
+  }
+
+  const rows = talablar.map((t, idx) => {
+    const item = katalog.find(k=>k.id==t.katalogId);
+    if(!item) return '';
+    const totalKirim = kirimlar.filter(k=>k.itemId==t.katalogId).reduce((s,k)=>s+(k.qty||0),0);
+    const totalChiqim = chiqimlar.filter(c=>c.itemId==t.katalogId).reduce((s,c)=>s+(c.qty||0),0);
+    const qoldiq = totalKirim - totalChiqim;
+    const ordChiqim = chiqimlar.filter(c=>c.itemId==t.katalogId&&c.buyurtmaId==ordId).reduce((s,c)=>s+(c.qty||0),0);
+    const qoldi = Math.max(0, (t.kerakQty||0) - ordChiqim);
+    const color = qoldiq >= qoldi ? 'var(--acc)' : 'var(--red)';
+    return `<div style="background:var(--sur2);border:1px solid var(--bor);border-radius:10px;padding:14px;margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:6px">
+        <div>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--acc3);font-weight:700">${item.code}</span>
+          <span style="margin-left:8px;font-weight:600">${item.name}</span>
+        </div>
+        <div style="font-size:12px;color:var(--txt3)">
+          Kerak: <b style="color:var(--acc2)">${t.kerakQty} ${item.unit||''}</b> |
+          Qoldiq ombordan: <b style="color:${color}">${qoldiq} ${item.unit||''}</b>
+          ${ordChiqim>0?`| Bu buyurtmaga chiqilgan: <b style="color:var(--acc)">${ordChiqim} ${item.unit||''}</b>`:''}
+        </div>
+      </div>
+      ${qoldi > 0 ? `
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <input type="number" id="brt-chiqim-qty-${idx}" class="fc" style="width:120px"
+          placeholder="Chiqim miqdori" min="0.01" step="0.01" max="${Math.min(qoldiq, qoldi)}" value="${qoldi}">
+        <span style="font-size:13px;color:var(--txt2)">${item.unit||''}</span>
+        <button class="btn btn-p btn-sm" onclick="saveBrtChiqimRow('${ordId}','${t.katalogId}',${idx},'${item.unit||''}','${item.name}')">
+          ✅ Chiqim qilish
+        </button>
+      </div>` : `<div style="color:var(--acc);font-size:13px;font-weight:600">✅ Bu material to'liq chiqilgan</div>`}
+    </div>`;
+  }).join('');
+
+  cont.innerHTML = `
+    <div style="margin-bottom:14px;font-size:13px;color:var(--txt2)">
+      <b>${ord.mijoz}</b> — ${ord.model} | Jami: <b>${ord.totalQty||0} dona</b>
+    </div>
+    ${rows}
+    <div style="text-align:right;margin-top:12px">
+      <button class="btn btn-s" onclick="hideBrtChiqimModal()">Yopish</button>
+    </div>`;
+}
+
+async function saveBrtChiqimRow(ordId, katalogId, idx, unit, matName){
+  const qtyEl = document.getElementById('brt-chiqim-qty-'+idx);
+  const qty = parseFloat(qtyEl?.value||0);
+  if(!qty || qty <= 0){ alert('Miqdorni kiriting!'); return; }
+  const entry = {
+    itemId: katalogId,
+    buyurtmaId: ordId,
+    qty,
+    unit,
+    izoh: 'Buyurtma #'+ordId+' — '+matName,
+    sana: TODAY(),
+    tur: 'buyurtma',
+    createdAt: new Date().toISOString()
+  };
+  await ADD('xomashyo_chiqim', entry);
+  showToast('✅ Chiqim saqlandi!', 'success');
+  showBrtChiqimModal(ordId);
 }
 
 // ──── Ombor bildirishnomasi ────
