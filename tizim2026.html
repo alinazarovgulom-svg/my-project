@@ -33,196 +33,211 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 /* ══════════════════════════════════════════
-   KAFTIMDA ERP — Zamonaviy toza dizayn
-   Deep purple + clean white, professional
+   KAFTIMDA ERP — Sapyor ERP uslubi
+   Qorong'u navy/teal tema, professional
    ══════════════════════════════════════════ */
 
+/* O'zbek geometrik naqsh */
+@keyframes patternShift{from{background-position:0 0}to{background-position:40px 40px}}
+
 :root{
-  --bg:#0b0d17;
-  --sur:#12141f;
-  --sur2:#1c1f2e;
-  --sur3:#252840;
-  --brd:#2a2d42;
-  --brd2:#363a56;
-  --bor:#2a2d42;
-  --bor2:#363a56;
-  --acc:#818cf8;
-  --acc-h:#6366f1;
-  --acc-light:rgba(129,140,248,.12);
-  --acc2:#f59e0b;
-  --acc3:#34d399;
+  --bg:#0d1b2a;
+  --sur:#0f2236;
+  --sur2:#142a40;
+  --sur3:#1a3350;
+  --bor:#1e3d5c;
+  --bor2:#2a5070;
+  --acc:#00d9a3;
+  --acc-h:#00b88b;
+  --acc-light:rgba(0,217,163,.12);
+  --acc2:#f97316;
+  --acc3:#38bdf8;
   --red:#f87171;
-  --red-light:rgba(248,113,113,.1);
+  --red-light:rgba(248,113,113,.12);
   --yel:#fbbf24;
   --yel-light:rgba(251,191,36,.1);
-  --grn:#34d399;
-  --grn-light:rgba(52,211,153,.1);
-  --txt:#f1f3ff;
-  --txt2:#9499c4;
-  --txt3:#5a5f82;
-  --r:10px;
-  --r2:14px;
-  --shadow:0 2px 20px rgba(0,0,0,.45);
-  --shadow-md:0 8px 32px rgba(0,0,0,.55);
-  --sidebar-w:235px;
+  --grn:#4ade80;
+  --grn-light:rgba(74,222,128,.1);
+  --txt:#e2edf8;
+  --txt2:#8fb3cc;
+  --txt3:#4a6a80;
+  --r:8px;
+  --r2:12px;
+  --shadow:0 2px 16px rgba(0,0,0,.4);
+  --shadow-md:0 4px 24px rgba(0,0,0,.5);
+  --sidebar-w:230px;
 }
 
-/* ── LIGHT MODE ── */
+/* ── LIGHT MODE (Yorug' rejim) ── */
 body.light-mode{
-  --bg:#f4f6ff;--sur:#ffffff;--sur2:#eef0fb;--sur3:#e2e5f7;
-  --brd:#d0d4f0;--brd2:#a8aed8;--bor:#d0d4f0;--bor2:#a8aed8;
-  --acc:#6366f1;--acc-h:#4f46e5;--acc-light:rgba(99,102,241,.1);
-  --acc3:#059669;
-  --red:#ef4444;--red-light:#fef2f2;
+  --bg:#f0f5fb;--sur:#ffffff;--sur2:#e8f0f8;--sur3:#dceaf5;
+  --bor:#b8d0e8;--bor2:#8ab0d0;
+  --acc:#0099a3;--acc-h:#007a82;--acc-light:rgba(0,153,163,.12);
+  --acc3:#0369a1;
+  --red:#dc2626;--red-light:#fff0f0;
   --yel:#d97706;--yel-light:#fffbeb;
-  --grn:#059669;--grn-light:#ecfdf5;
-  --txt:#1a1c2e;--txt2:#4b5180;--txt3:#9499c4;
-  --shadow:0 2px 12px rgba(99,102,241,.08);--shadow-md:0 8px 28px rgba(99,102,241,.14);
+  --grn:#16a34a;--grn-light:#f0fdf4;
+  --txt:#0d2137;--txt2:#2d5a7a;--txt3:#7a9eb5;
+  --shadow:0 2px 12px rgba(0,0,0,.08);--shadow-md:0 4px 20px rgba(0,0,0,.12);
 }
 body:not(.light-mode){
-  --bg:#0b0d17;--sur:#12141f;--sur2:#1c1f2e;--sur3:#252840;
-  --brd:#2a2d42;--brd2:#363a56;--bor:#2a2d42;--bor2:#363a56;
-  --acc:#818cf8;--acc-h:#6366f1;--acc-light:rgba(129,140,248,.12);
-  --red:#f87171;--red-light:rgba(248,113,113,.1);
+  --bg:#0d1b2a;--sur:#0f2236;--sur2:#142a40;--sur3:#1a3350;
+  --bor:#1e3d5c;--bor2:#2a5070;
+  --acc:#00d9a3;--acc-h:#00b88b;--acc-light:rgba(0,217,163,.12);
+  --red:#f87171;--red-light:rgba(248,113,113,.12);
   --yel:#fbbf24;--yel-light:rgba(251,191,36,.1);
-  --grn:#34d399;--grn-light:rgba(52,211,153,.1);
-  --txt:#f1f3ff;--txt2:#9499c4;--txt3:#5a5f82;
-  --shadow:0 2px 20px rgba(0,0,0,.45);--shadow-md:0 8px 32px rgba(0,0,0,.55);
+  --grn:#4ade80;--grn-light:rgba(74,222,128,.1);
+  --txt:#e2edf8;--txt2:#8fb3cc;--txt3:#4a6a80;
+  --shadow:0 2px 16px rgba(0,0,0,.4);--shadow-md:0 4px 24px rgba(0,0,0,.5);
 }
 
 /* THEME TOGGLE */
-.theme-toggle-btn{display:flex;align-items:center;justify-content:space-between;padding:9px 14px;margin:6px 10px;border-radius:10px;cursor:pointer;border:1px solid var(--brd);background:var(--sur2);color:var(--txt2);font-size:12px;font-family:'Inter',sans-serif;transition:all .2s;user-select:none}
+.theme-toggle-btn{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;margin:6px 8px;border-radius:8px;cursor:pointer;border:1px solid var(--bor);background:var(--sur2);color:var(--txt2);font-size:12px;font-family:'Inter',sans-serif;transition:all .2s;user-select:none}
 .theme-toggle-btn:hover{border-color:var(--acc);color:var(--acc)}
-.theme-track{width:36px;height:20px;border-radius:10px;background:var(--brd);position:relative;transition:background .25s;flex-shrink:0}
+.theme-track{width:34px;height:18px;border-radius:9px;background:var(--bor);position:relative;transition:background .2s;flex-shrink:0}
 .theme-track.on{background:var(--acc)}
-.theme-thumb{width:16px;height:16px;border-radius:50%;background:#fff;position:absolute;top:2px;left:2px;transition:left .25s;box-shadow:0 1px 4px rgba(0,0,0,.25)}
+.theme-thumb{width:14px;height:14px;border-radius:50%;background:#fff;position:absolute;top:2px;left:2px;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
 .theme-track.on .theme-thumb{left:18px}
 
 /* BASE */
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;font-size:14px;display:flex;min-height:100vh;line-height:1.55}
+body{background:var(--bg);color:var(--txt);font-family:'Plus Jakarta Sans','Inter',sans-serif;font-size:14px;display:flex;min-height:100vh;line-height:1.5}
 
 /* SCROLLBAR */
-::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar{width:5px;height:5px}
 ::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:var(--brd2);border-radius:4px}
+::-webkit-scrollbar-thumb{background:var(--bor2);border-radius:3px}
 
-/* ══ SIDEBAR ══ */
+/* ══ SIDEBAR — Sapyor ERP uslubi ══ */
 .sidebar{
   width:var(--sidebar-w);min-height:100vh;
-  background:var(--sur);
-  border-right:1px solid var(--brd);
+  background:linear-gradient(180deg,#091624 0%,var(--sur) 100%);
+  border-right:1px solid var(--bor);
   display:flex;flex-direction:column;
   position:fixed;top:0;left:0;bottom:0;
   overflow-y:auto;z-index:100;
+  box-shadow:4px 0 20px rgba(0,0,0,.4);
 }
 .sb-brand{
-  padding:20px 18px 16px;
-  border-bottom:1px solid var(--brd);
+  padding:18px 18px 16px;
+  border-bottom:1px solid rgba(0,217,163,.25);
+  background:linear-gradient(135deg,rgba(0,217,163,.1),rgba(56,189,248,.05));
 }
 .sb-logo{
-  font-family:'Inter',sans-serif;font-size:15px;font-weight:800;
-  color:var(--txt);letter-spacing:-.3px;
-  display:flex;align-items:center;gap:10px;
+  font-family:'Plus Jakarta Sans','Inter',sans-serif;font-size:14px;font-weight:800;
+  color:var(--acc);letter-spacing:.5px;
+  display:flex;align-items:center;gap:8px;
 }
 .sb-logo::before{
-  content:'K';width:34px;height:34px;
-  background:linear-gradient(135deg,#818cf8,#6366f1);
-  color:#fff;border-radius:10px;display:flex;align-items:center;
-  justify-content:center;font-size:16px;font-weight:900;
-  flex-shrink:0;box-shadow:0 4px 14px rgba(99,102,241,.4);
+  content:'K';width:32px;height:32px;
+  background:linear-gradient(135deg,#00d9a3,#38bdf8);
+  color:#000;border-radius:8px;display:flex;align-items:center;
+  justify-content:center;font-size:15px;font-weight:900;
+  flex-shrink:0;box-shadow:0 0 12px rgba(0,217,163,.4);
 }
-.sb-ver{font-size:10px;color:var(--txt3);margin-top:4px;padding-left:44px;letter-spacing:.3px}
-.sb-nav{padding:12px 10px;flex:1}
+.sb-ver{font-size:10px;color:var(--txt3);margin-top:3px;padding-left:40px}
+.sb-nav{padding:10px 8px;flex:1}
 .sb-sec{
-  font-size:9px;color:var(--txt3);text-transform:uppercase;
-  letter-spacing:2px;padding:14px 12px 5px;font-weight:700;
+  font-size:9px;color:rgba(0,217,163,.5);text-transform:uppercase;
+  letter-spacing:1.5px;padding:12px 12px 4px;font-weight:700;
 }
 .nav-item{
-  display:flex;align-items:center;gap:10px;
-  padding:10px 13px;border-radius:10px;cursor:pointer;
+  display:flex;align-items:center;gap:9px;
+  padding:9px 12px;border-radius:8px;cursor:pointer;
   color:var(--txt2);font-size:13px;font-weight:500;
-  transition:all .15s;margin-bottom:2px;
-  user-select:none;
+  transition:all .18s;margin-bottom:2px;
+  border:1px solid transparent;user-select:none;
 }
-.nav-item:hover{background:var(--sur2);color:var(--txt)}
+.nav-item:hover{background:rgba(0,217,163,.1);color:var(--acc);border-color:rgba(0,217,163,.15)}
 .nav-item.active{
-  background:rgba(129,140,248,.14);
+  background:linear-gradient(90deg,rgba(0,217,163,.18),rgba(0,217,163,.06));
   color:var(--acc);font-weight:600;
+  border-color:rgba(0,217,163,.3);
+  border-left:3px solid var(--acc);
 }
 .nav-item.active .ic{color:var(--acc)}
-.nav-item .ic{font-size:16px;width:22px;text-align:center;color:var(--txt3);transition:color .15s;flex-shrink:0}
-.nav-item:hover .ic{color:var(--txt)}
-.sb-foot{padding:12px 18px;border-top:1px solid var(--brd);font-size:10px;color:var(--txt3)}
+.nav-item .ic{font-size:15px;width:20px;text-align:center;color:var(--txt3);transition:color .15s}
+.nav-item:hover .ic{color:var(--acc)}
+.sb-foot{padding:10px 18px;border-top:1px solid var(--bor);font-size:10px;color:var(--txt3)}
 
 /* ── TOPBAR ── */
 .topbar{
-  position:fixed;top:0;left:var(--sidebar-w);right:0;height:58px;
-  background:var(--sur);border-bottom:1px solid var(--brd);
+  position:fixed;top:0;left:var(--sidebar-w);right:0;height:56px;
+  background:var(--sur);border-bottom:1px solid var(--bor);
   display:flex;align-items:center;justify-content:space-between;
   padding:0 24px;z-index:90;
+  box-shadow:0 1px 12px rgba(0,0,0,.3);
+  backdrop-filter:blur(12px);
 }
-.topbar-title{font-size:15px;font-weight:700;color:var(--txt);letter-spacing:-.2px}
+.topbar-title{font-size:16px;font-weight:700;color:var(--txt);letter-spacing:-.2px}
 .topbar-right{display:flex;align-items:center;gap:12px}
 .topbar-badge{
-  background:var(--red);color:#fff;border-radius:50%;
-  width:20px;height:20px;font-size:10px;font-weight:700;
+  background:var(--acc);color:#000;border-radius:50%;
+  width:20px;height:20px;font-size:11px;font-weight:700;
   display:flex;align-items:center;justify-content:center;
 }
 
 /* ── MAIN AREA ── */
 .main{margin-left:var(--sidebar-w);flex:1;padding-top:0}
-.page{display:none;padding:28px 28px 50px;max-width:1380px}
-.page.active{display:block;animation:fadeIn .2s ease}
-@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.page{display:none;padding:24px 24px 40px;max-width:1320px}
+.page.active{display:block;animation:fadeIn .18s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
 
 /* PAGE HEADER */
-.pg-title{font-size:22px;font-weight:700;margin-bottom:4px;color:var(--txt);letter-spacing:-.3px}
-.pg-sub{color:var(--txt3);font-size:13px;margin-bottom:24px}
+.pg-title{font-size:20px;font-weight:700;margin-bottom:4px;color:var(--txt)}
+.pg-sub{color:var(--txt3);font-size:13px;margin-bottom:22px}
 
-/* ── STAT CARDS ── */
+/* ── STAT CARDS — Sapyor style ── */
 .stat-card{
-  background:var(--sur);border:1px solid var(--brd);
-  border-radius:16px;padding:20px 22px;
+  background:var(--sur);border:1px solid var(--bor);
+  border-radius:var(--r2);padding:18px 20px;
   box-shadow:var(--shadow);
   transition:box-shadow .2s,transform .2s,border-color .2s;
   position:relative;overflow:hidden;
   display:flex;align-items:center;gap:16px;
 }
-.stat-card:hover{box-shadow:var(--shadow-md);transform:translateY(-2px);border-color:rgba(129,140,248,.3)}
+.stat-card::before{
+  content:'';position:absolute;top:0;right:0;
+  width:60px;height:60px;
+  background:radial-gradient(circle,rgba(0,217,163,.1),transparent 70%);
+  pointer-events:none;
+}
+.stat-card:hover{box-shadow:var(--shadow-md);transform:translateY(-2px);border-color:rgba(0,217,163,.3)}
 .stat-card-icon{
-  width:52px;height:52px;border-radius:14px;
+  width:52px;height:52px;border-radius:12px;
   display:flex;align-items:center;justify-content:center;
   font-size:24px;flex-shrink:0;
 }
-.stat-card-icon.red{background:rgba(248,113,113,.12);color:#f87171}
-.stat-card-icon.blue{background:rgba(129,140,248,.14);color:#818cf8}
-.stat-card-icon.orange{background:rgba(245,158,11,.12);color:#f59e0b}
-.stat-card-icon.green{background:rgba(52,211,153,.12);color:#34d399}
-.stat-card-icon.purple{background:rgba(167,139,250,.14);color:#a78bfa}
-.stat-card-icon.teal{background:rgba(52,211,153,.12);color:#34d399}
-body.light-mode .stat-card-icon.red{background:#fef2f2;color:#ef4444}
-body.light-mode .stat-card-icon.blue{background:#eff0ff;color:#6366f1}
-body.light-mode .stat-card-icon.orange{background:#fffbeb;color:#d97706}
-body.light-mode .stat-card-icon.green{background:#ecfdf5;color:#059669}
-body.light-mode .stat-card-icon.purple{background:#f5f3ff;color:#7c3aed}
-body.light-mode .stat-card-icon.teal{background:#ecfdf5;color:#059669}
+.stat-card-icon.red{background:rgba(248,113,113,.15);color:#f87171}
+.stat-card-icon.blue{background:rgba(56,189,248,.15);color:#38bdf8}
+.stat-card-icon.orange{background:rgba(249,115,22,.15);color:#fb923c}
+.stat-card-icon.green{background:rgba(74,222,128,.15);color:#4ade80}
+.stat-card-icon.purple{background:rgba(167,139,250,.15);color:#a78bfa}
+.stat-card-icon.teal{background:rgba(0,217,163,.15);color:#00d9a3}
+body.light-mode .stat-card-icon.red{background:rgba(220,38,38,.1);color:#dc2626}
+body.light-mode .stat-card-icon.blue{background:rgba(14,165,233,.1);color:#0284c7}
+body.light-mode .stat-card-icon.orange{background:rgba(234,88,12,.1);color:#ea580c}
+body.light-mode .stat-card-icon.green{background:rgba(22,163,74,.1);color:#16a34a}
+body.light-mode .stat-card-icon.purple{background:rgba(109,40,217,.1);color:#7c3aed}
+body.light-mode .stat-card-icon.teal{background:rgba(0,153,163,.1);color:#0099a3}
 .stat-card-body{flex:1;min-width:0}
-.stat-lbl{font-size:11px;color:var(--txt3);margin-bottom:5px;font-weight:600;text-transform:uppercase;letter-spacing:.8px}
-.stat-val{font-size:26px;font-weight:700;line-height:1.1;color:var(--txt);letter-spacing:-.5px}
+.stat-lbl{font-size:12px;color:var(--txt2);margin-bottom:4px;font-weight:500}
+.stat-val{font-size:24px;font-weight:700;line-height:1.1;color:var(--txt)}
 .stat-val.g{color:var(--grn)}.stat-val.b{color:var(--acc)}.stat-val.o{color:var(--acc2)}.stat-val.r{color:var(--red)}
-.stat-note{font-size:11px;color:var(--txt3);margin-top:5px}
+.stat-note{font-size:11px;color:var(--txt3);margin-top:4px}
 
 /* ── CARDS ── */
 .card{
-  background:var(--sur);border:1px solid var(--brd);
-  border-radius:16px;padding:22px;
+  background:var(--sur);border:1px solid var(--bor);
+  border-radius:var(--r2);padding:20px;
   box-shadow:var(--shadow);
+  transition:border-color .2s;
 }
 .card-t{
-  font-size:10px;text-transform:uppercase;letter-spacing:1.8px;
-  color:var(--acc);font-weight:700;margin-bottom:16px;
+  font-size:10px;text-transform:uppercase;letter-spacing:1.5px;
+  color:rgba(0,217,163,.7);font-weight:700;margin-bottom:16px;
 }
+body.light-mode .card-t{color:var(--acc)}
 
 /* GRIDS */
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
@@ -231,56 +246,38 @@ body.light-mode .stat-card-icon.teal{background:#ecfdf5;color:#059669}
 .g4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
 .mb16{margin-bottom:16px}.mb20{margin-bottom:20px}
 
-/* ── LABEL ALIAS ── */
-.lbl{font-size:12px;color:var(--txt2);margin-bottom:5px;display:block;font-weight:500}
-
 /* FORMS */
 .fg{margin-bottom:14px}
 .fl{font-size:12px;color:var(--txt2);margin-bottom:5px;display:block;font-weight:500}
 .fc,.fs{
-  background:var(--sur2);border:1.5px solid var(--brd);color:var(--txt);
-  border-radius:10px;padding:10px 13px;font-size:13px;width:100%;
+  background:var(--sur2);border:1px solid var(--bor);color:var(--txt);
+  border-radius:7px;padding:8px 11px;font-size:13px;width:100%;
   font-family:'Inter',sans-serif;
   transition:border-color .15s,box-shadow .15s;
-  outline:none;
 }
-.fc:focus,.fs:focus{border-color:var(--acc);box-shadow:0 0 0 3px rgba(129,140,248,.18)}
+.fc:focus,.fs:focus{outline:none;border-color:var(--acc);box-shadow:0 0 0 3px rgba(0,217,163,.15)}
 .fc::placeholder{color:var(--txt3)}
 .fs option{background:var(--sur2)}
-body.light-mode .fc,body.light-mode .fs{background:#f8f9ff;border-color:#d0d4f0}
-body.light-mode .fc:focus,body.light-mode .fs:focus{border-color:var(--acc);box-shadow:0 0 0 3px rgba(99,102,241,.14)}
 
-/* ── BUTTONS ── */
+/* ── BUTTONS — Sapyor style ── */
 .btn{
-  padding:10px 20px;border-radius:50px;font-size:13px;font-weight:600;
-  cursor:pointer;border:none;
-  transition:all .18s;font-family:'Inter',sans-serif;
-  display:inline-flex;align-items:center;justify-content:center;gap:7px;
-  letter-spacing:.1px;white-space:nowrap;
+  padding:8px 16px;border-radius:7px;font-size:13px;font-weight:600;
+  cursor:pointer;border:1px solid transparent;
+  transition:all .15s;font-family:'Inter',sans-serif;
+  display:inline-flex;align-items:center;gap:6px;
 }
-.btn-p{
-  background:linear-gradient(135deg,#818cf8,#6366f1);
-  color:#fff;
-  box-shadow:0 4px 14px rgba(99,102,241,.35);
-}
-.btn-p:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(99,102,241,.5);filter:brightness(1.07)}
-.btn-p:active{transform:translateY(0);box-shadow:0 2px 8px rgba(99,102,241,.3)}
-.btn-s{
-  background:var(--sur2);color:var(--txt2);
-  border:1.5px solid var(--brd);
-}
+.btn-p{background:linear-gradient(135deg,#00d9a3,#00b88b);color:#000;border-color:transparent}
+.btn-p:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(0,217,163,.4);filter:brightness(1.08)}
+.btn-s{background:var(--sur2);color:var(--txt2);border-color:var(--bor)}
 .btn-s:hover{border-color:var(--acc);color:var(--acc);background:var(--acc-light)}
-.btn-d{
-  background:var(--red-light);color:var(--red);
-  border:1.5px solid rgba(248,113,113,.3);
-}
-.btn-d:hover{background:rgba(248,113,113,.18)}
-body.light-mode .btn-d{background:#fef2f2;color:#ef4444;border-color:#fecaca}
-.btn-w{background:var(--yel-light);color:var(--yel);border:1.5px solid rgba(251,191,36,.3)}
-.btn-sm{padding:6px 14px;font-size:12px}
+.btn-d{background:rgba(248,113,113,.12);color:var(--red);border-color:rgba(248,113,113,.3)}
+.btn-d:hover{background:rgba(248,113,113,.2)}
+body.light-mode .btn-d{background:#fff0f0;color:#dc2626;border-color:#fecaca}
+.btn-w{background:var(--yel-light);color:var(--yel);border-color:rgba(251,191,36,.3)}
+.btn-sm{padding:5px 11px;font-size:12px}
 .bic{
-  padding:5px 11px;border-radius:8px;font-size:12px;font-weight:500;
-  background:var(--sur2);border:1px solid var(--brd);color:var(--txt2);
+  padding:4px 10px;border-radius:6px;font-size:12px;font-weight:500;
+  background:var(--sur2);border:1px solid var(--bor);color:var(--txt2);
   cursor:pointer;transition:all .15s;font-family:'Inter',sans-serif;
 }
 .bic:hover{border-color:var(--acc);color:var(--acc);background:var(--acc-light)}
@@ -288,108 +285,107 @@ body.light-mode .btn-d{background:#fef2f2;color:#ef4444;border-color:#fecaca}
 /* ── TABLE ── */
 table{width:100%;border-collapse:collapse}
 th{
-  font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;
-  color:var(--txt3);padding:11px 16px;border-bottom:1.5px solid var(--brd);
+  font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;
+  color:rgba(0,217,163,.7);padding:10px 14px;border-bottom:1px solid var(--bor);
   text-align:left;background:var(--sur2);white-space:nowrap;
 }
+body.light-mode th{color:var(--acc)}
 td{
-  padding:12px 16px;border-bottom:1px solid var(--brd);
+  padding:10px 14px;border-bottom:1px solid var(--bor);
   font-size:13px;vertical-align:middle;
   transition:background .1s;
 }
 tr:last-child td{border-bottom:none}
-tr:hover td{background:rgba(129,140,248,.04)}
-.tw{overflow-x:auto;border-radius:14px;border:1px solid var(--brd);background:var(--sur)}
-.tw table th:first-child{border-radius:13px 0 0 0}
-.tw table th:last-child{border-radius:0 13px 0 0}
+tr:hover td{background:rgba(0,217,163,.04)}
+.tw{overflow-x:auto;border-radius:var(--r);border:1px solid var(--bor);background:var(--sur)}
+.tw table th:first-child{border-radius:8px 0 0 0}
+.tw table th:last-child{border-radius:0 8px 0 0}
 
 /* ── BADGES ── */
-.bdg{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;letter-spacing:.2px}
-.bg{background:rgba(52,211,153,.12);color:#34d399}
-.bo{background:rgba(245,158,11,.12);color:#f59e0b}
-.br{background:rgba(248,113,113,.12);color:#f87171}
-.bb{background:rgba(129,140,248,.14);color:#818cf8}
-.by{background:rgba(251,191,36,.12);color:#fbbf24}
-.bgr{background:var(--sur2);color:var(--txt2);border:1px solid var(--brd)}
-.bpu{background:rgba(167,139,250,.14);color:#a78bfa}
-body.light-mode .bg{background:#ecfdf5;color:#059669}
-body.light-mode .bo{background:#fffbeb;color:#d97706}
-body.light-mode .br{background:#fef2f2;color:#ef4444}
-body.light-mode .bb{background:#eff0ff;color:#6366f1}
-body.light-mode .by{background:#fefce8;color:#a16207}
-body.light-mode .bpu{background:#f5f3ff;color:#7c3aed}
+.bdg{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;letter-spacing:.2px}
+.bg{background:rgba(74,222,128,.15);color:#4ade80}
+.bo{background:rgba(249,115,22,.15);color:#fb923c}
+.br{background:rgba(248,113,113,.15);color:#f87171}
+.bb{background:rgba(56,189,248,.15);color:#38bdf8}
+.by{background:rgba(251,191,36,.15);color:#fbbf24}
+.bgr{background:var(--sur2);color:var(--txt2);border:1px solid var(--bor)}
+.bpu{background:rgba(167,139,250,.15);color:#a78bfa}
+body.light-mode .bg{background:#dcfce7;color:#16a34a}
+body.light-mode .bo{background:#ffedd5;color:#ea580c}
+body.light-mode .br{background:#fee2e2;color:#dc2626}
+body.light-mode .bb{background:#dbeafe;color:#2563eb}
+body.light-mode .by{background:#fef9c3;color:#a16207}
+body.light-mode .bpu{background:#f3e8ff;color:#9333ea}
 
 /* ── ALERTS ── */
-.alert{padding:12px 16px;border-radius:10px;border-left:4px solid;margin-bottom:14px;font-size:13px}
+.alert{padding:12px 16px;border-radius:8px;border-left:4px solid;margin-bottom:12px;font-size:13px}
 .alert-r{background:var(--red-light);border-color:var(--red);color:var(--red)}
 .alert-g{background:var(--grn-light);border-color:var(--grn);color:var(--grn)}
-body:not(.light-mode) .alert-r{background:rgba(248,113,113,.08);color:#f87171}
-body:not(.light-mode) .alert-g{background:rgba(52,211,153,.08);color:#34d399}
+body:not(.light-mode) .alert-r{background:rgba(220,38,38,.08);color:#fc8181}
+body:not(.light-mode) .alert-g{background:rgba(22,163,74,.08);color:#4ade80}
 
 /* ── PIPELINE ── */
 .pipeline{display:flex;overflow-x:auto;padding-bottom:10px;gap:0}
 .ps{
   flex:1;min-width:160px;background:var(--sur);
-  border:1px solid var(--brd);border-right:none;
-  padding:18px;position:relative;transition:background .15s;
+  border:1px solid var(--bor);border-right:none;
+  padding:16px;position:relative;transition:background .15s;
 }
-.ps:last-child{border-right:1px solid var(--brd);border-radius:0 var(--r) var(--r) 0}
+.ps:last-child{border-right:1px solid var(--bor);border-radius:0 var(--r) var(--r) 0}
 .ps:first-child{border-radius:var(--r) 0 0 var(--r)}
 .ps:hover{background:var(--sur2)}
 .ps-arr{position:absolute;right:-13px;top:50%;transform:translateY(-50%);z-index:2;color:var(--txt3);font-size:18px;background:var(--bg);padding:2px}
 .ps-name{font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--txt3);font-weight:700}
-.ps-val{font-size:26px;font-weight:700;margin:6px 0 4px;color:var(--txt);letter-spacing:-.5px}
+.ps-val{font-size:24px;font-weight:700;margin:6px 0 4px;color:var(--txt)}
 .ps-sub{font-size:11px;color:var(--txt3)}
 .ps.warn .ps-val{color:var(--red)}.ps.warn{border-color:var(--red)!important;background:var(--red-light)!important}
-body:not(.light-mode) .ps.warn{background:rgba(248,113,113,.06)!important}
+body:not(.light-mode) .ps.warn{background:rgba(220,38,38,.06)!important}
 .pb-wrap{background:var(--sur2);border-radius:4px;height:6px;overflow:hidden;margin:6px 0}
 .pb-fill{height:100%;border-radius:4px;transition:width .5s ease}
 
 /* ── MODAL ── */
-.modal-ov{display:none;position:fixed;inset:0;background:rgba(5,6,16,.75);backdrop-filter:blur(8px);z-index:1000;align-items:center;justify-content:center}
+.modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,10,.7);backdrop-filter:blur(6px);z-index:1000;align-items:center;justify-content:center}
 .modal-ov.open{display:flex}
 .modal-box{
-  background:var(--sur);border:1px solid var(--brd);border-radius:18px;
+  background:var(--sur);border:1px solid var(--bor);border-radius:14px;
   padding:28px;width:580px;max-width:96vw;max-height:92vh;overflow-y:auto;
-  box-shadow:0 24px 64px rgba(0,0,0,.55);
-  animation:modalIn .22s cubic-bezier(.22,.68,0,1.2);
+  box-shadow:0 20px 60px rgba(0,0,0,.5),0 0 0 1px rgba(0,217,163,.1);
+  animation:modalIn .2s cubic-bezier(.22,.68,0,1.2);
 }
-/* avans-modal va inline-style orqali boshqariladigan modallar */
-.modal-wrap{display:none;position:fixed;inset:0;background:rgba(5,6,16,.75);backdrop-filter:blur(8px);z-index:1000;align-items:center;justify-content:center}
-@keyframes modalIn{from{opacity:0;transform:scale(.94) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}
-.modal-title{font-size:17px;font-weight:700;margin-bottom:22px;color:var(--txt);display:flex;align-items:center;gap:9px;letter-spacing:-.2px}
+@keyframes modalIn{from{opacity:0;transform:scale(.95) translateY(8px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.modal-title{font-size:16px;font-weight:700;margin-bottom:20px;color:var(--txt);display:flex;align-items:center;gap:8px}
 
 /* ── MISC COMPONENTS ── */
-.sess-hdr{background:var(--sur2);border:1px solid var(--brd);border-radius:12px;padding:16px;margin-bottom:16px}
-.we-row{display:grid;grid-template-columns:160px 1fr 110px 90px 50px 36px;gap:8px;align-items:end;padding:12px;background:var(--sur2);border-radius:10px;margin-bottom:8px;border:1px solid var(--brd);transition:border-color .15s}
+.sess-hdr{background:var(--sur2);border:1px solid var(--bor);border-radius:var(--r);padding:14px;margin-bottom:14px}
+.we-row{display:grid;grid-template-columns:160px 1fr 110px 90px 50px 36px;gap:8px;align-items:end;padding:11px;background:var(--sur2);border-radius:7px;margin-bottom:8px;border:1px solid var(--bor);transition:border-color .15s}
 .we-row:hover{border-color:var(--acc)}
-.tgl{display:flex;border:1.5px solid var(--brd);border-radius:50px;overflow:hidden;background:var(--sur2);padding:3px;gap:2px}
-.tgl-btn{padding:7px 18px;font-size:12px;font-weight:600;background:transparent;color:var(--txt2);border:none;cursor:pointer;transition:all .18s;border-radius:50px}
-.tgl-btn.on{background:linear-gradient(135deg,#818cf8,#6366f1);color:#fff;box-shadow:0 2px 8px rgba(99,102,241,.3)}
-.ops-check{display:flex;flex-wrap:wrap;gap:7px;padding:10px;background:var(--sur2);border:1.5px solid var(--brd);border-radius:10px;min-height:44px}
-.ops-check label{display:flex;align-items:center;gap:5px;cursor:pointer;font-size:12px;color:var(--txt);padding:5px 10px;border-radius:8px;border:1px solid var(--brd);background:var(--sur);transition:all .15s}
+.tgl{display:flex;border:1px solid var(--bor);border-radius:7px;overflow:hidden;background:var(--sur2)}
+.tgl-btn{padding:7px 16px;font-size:12px;font-weight:500;background:transparent;color:var(--txt2);border:none;cursor:pointer;transition:all .15s}
+.tgl-btn.on{background:linear-gradient(135deg,#00d9a3,#00b88b);color:#000;font-weight:700}
+.ops-check{display:flex;flex-wrap:wrap;gap:7px;padding:10px;background:var(--sur2);border:1px solid var(--bor);border-radius:7px;min-height:40px}
+.ops-check label{display:flex;align-items:center;gap:5px;cursor:pointer;font-size:12px;color:var(--txt);padding:4px 8px;border-radius:5px;border:1px solid var(--bor);background:var(--sur);transition:all .15s}
 .ops-check label:hover{border-color:var(--acc);color:var(--acc)}
 .ops-check input[type=checkbox]{accent-color:var(--acc)}
-.dept-check{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:10px;background:var(--sur2);border:1.5px solid var(--brd);border-radius:10px}
-.dept-check label{display:flex;align-items:center;gap:7px;cursor:pointer;font-size:13px;color:var(--txt);padding:7px 10px;border-radius:8px;border:1px solid transparent;transition:all .15s}
-.dept-check label:hover{background:var(--acc-light);border-color:rgba(129,140,248,.3)}
+.dept-check{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:10px;background:var(--sur2);border:1px solid var(--bor);border-radius:8px}
+.dept-check label{display:flex;align-items:center;gap:7px;cursor:pointer;font-size:13px;color:var(--txt);padding:6px 9px;border-radius:6px;border:1px solid transparent;transition:all .15s}
+.dept-check label:hover{background:var(--acc-light);border-color:rgba(0,217,163,.3)}
 .dept-check input[type=checkbox]{accent-color:var(--acc);width:15px;height:15px}
 .dept-check input[type=checkbox]:checked + span{color:var(--acc);font-weight:600}
-.tab-pills{display:flex;gap:3px;border:1.5px solid var(--brd);border-radius:50px;overflow:hidden;width:fit-content;margin-bottom:20px;background:var(--sur2);padding:3px}
-.tab-pill{padding:8px 22px;font-size:13px;font-weight:500;background:transparent;color:var(--txt2);border:none;cursor:pointer;transition:all .18s;font-family:'Inter',sans-serif;border-radius:50px}
-.tab-pill.on{background:linear-gradient(135deg,#818cf8,#6366f1);color:#fff;font-weight:700;box-shadow:0 2px 10px rgba(99,102,241,.3)}
-.plan-card{background:var(--sur);border:1px solid var(--brd);border-radius:16px;margin-bottom:14px;overflow:hidden;box-shadow:var(--shadow)}
-.plan-card-hdr{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:var(--sur2);border-bottom:1px solid var(--brd)}
+.tab-pills{display:flex;gap:0;border:1px solid var(--bor);border-radius:8px;overflow:hidden;width:fit-content;margin-bottom:20px;background:var(--sur2)}
+.tab-pill{padding:8px 20px;font-size:13px;font-weight:500;background:transparent;color:var(--txt2);border:none;cursor:pointer;transition:all .15s;font-family:'Inter',sans-serif}
+.tab-pill.on{background:var(--acc);color:#fff;font-weight:600}
+.plan-card{background:var(--sur);border:1px solid var(--bor);border-radius:var(--r2);margin-bottom:14px;overflow:hidden;box-shadow:var(--shadow)}
+.plan-card-hdr{display:flex;align-items:center;justify-content:space-between;padding:13px 18px;background:var(--sur2);border-bottom:1px solid var(--bor)}
 .plan-card-body{padding:0}
-.op-row{display:grid;grid-template-columns:1fr 120px 200px 60px;gap:12px;align-items:center;padding:12px 20px;border-bottom:1px solid var(--brd)}
+.op-row{display:grid;grid-template-columns:1fr 120px 200px 60px;gap:12px;align-items:center;padding:11px 18px;border-bottom:1px solid var(--bor)}
 .op-row:last-child{border-bottom:none}
 .op-row:hover{background:var(--sur2)}
 .ready-box{
-  background:var(--grn-light);border:1px solid rgba(52,211,153,.3);
-  border-radius:14px;padding:16px 20px;
+  background:var(--grn-light);border:1px solid #bbf7d0;
+  border-radius:var(--r2);padding:15px 20px;
   display:flex;align-items:center;justify-content:space-between;
 }
-body:not(.light-mode) .ready-box{background:rgba(52,211,153,.08);border-color:rgba(52,211,153,.2)}
+body:not(.light-mode) .ready-box{background:rgba(22,163,74,.08);border-color:rgba(22,163,74,.2)}
 .dept-tag{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;margin:2px}
 .dt-tana{background:#dcfce7;color:#16a34a}
 .dt-astar{background:#dbeafe;color:#2563eb}
@@ -399,22 +395,22 @@ body:not(.light-mode) .ready-box{background:rgba(52,211,153,.08);border-color:rg
 .dt-pardoz{background:#fee2e2;color:#dc2626}
 .dt-qadoq{background:#ccfbf1;color:#0d9488}
 body:not(.light-mode) .dt-tana{background:rgba(22,163,74,.15);color:#4ade80}
-body:not(.light-mode) .dt-astar{background:rgba(37,99,235,.15);color:#818cf8}
+body:not(.light-mode) .dt-astar{background:rgba(37,99,235,.15);color:#60a5fa}
 body:not(.light-mode) .dt-montaj{background:rgba(234,88,12,.15);color:#fb923c}
 body:not(.light-mode) .dt-kamzul{background:rgba(147,51,234,.15);color:#c084fc}
 body:not(.light-mode) .dt-shim{background:rgba(161,98,7,.15);color:#fbbf24}
 body:not(.light-mode) .dt-pardoz{background:rgba(220,38,38,.15);color:#fc8181}
 body:not(.light-mode) .dt-qadoq{background:rgba(13,148,136,.15);color:#2dd4bf}
-.plan-info-box{background:rgba(129,140,248,.07);border:1px solid rgba(129,140,248,.2);border-radius:12px;padding:14px 18px;margin-bottom:18px}
-body.light-mode .plan-info-box{background:#eff0ff;border-color:#c7d2fe}
-.op-status-card{border-radius:12px;padding:14px 18px;margin-bottom:10px;border-left:4px solid;transition:all .15s}
+.plan-info-box{background:#eff6ff;border:1px solid #bfdbfe;border-radius:9px;padding:13px 17px;margin-bottom:18px}
+body:not(.light-mode) .plan-info-box{background:rgba(37,99,235,.07);border-color:rgba(37,99,235,.2)}
+.op-status-card{border-radius:10px;padding:14px 18px;margin-bottom:10px;border-left:4px solid;transition:all .15s}
 .op-status-card:hover{transform:translateX(2px);box-shadow:var(--shadow)}
 .op-status-card.green{background:var(--grn-light);border-color:var(--grn)}
 .op-status-card.yellow{background:var(--yel-light);border-color:var(--yel)}
 .op-status-card.red{background:var(--red-light);border-color:var(--red)}
-body:not(.light-mode) .op-status-card.green{background:rgba(52,211,153,.07)}
-body:not(.light-mode) .op-status-card.yellow{background:rgba(251,191,36,.07)}
-body:not(.light-mode) .op-status-card.red{background:rgba(248,113,113,.07)}
+body:not(.light-mode) .op-status-card.green{background:rgba(22,163,74,.07)}
+body:not(.light-mode) .op-status-card.yellow{background:rgba(217,119,6,.07)}
+body:not(.light-mode) .op-status-card.red{background:rgba(220,38,38,.07)}
 .op-card-name{font-size:13px;font-weight:600;margin-bottom:7px;display:flex;align-items:center;gap:8px}
 .op-card-nums{display:flex;gap:10px;margin-bottom:8px;font-size:12px;flex-wrap:wrap;color:var(--txt2)}
 .op-card-bar{height:5px;border-radius:3px;background:var(--sur2);overflow:hidden;margin-top:4px}
@@ -422,73 +418,134 @@ body:not(.light-mode) .op-status-card.red{background:rgba(248,113,113,.07)}
 
 /* ── RESPONSIVE ── */
 @media(max-width:768px){
+  /* Sidebar: yashirin, chap tomonda slayd bo'lib chiqadi */
   .sidebar{
-    position:fixed;top:0;left:-270px;width:270px;height:100vh;
-    z-index:1000;transition:left .26s cubic-bezier(.4,0,.2,1);
-    box-shadow:6px 0 30px rgba(0,0,0,.4);
-    flex-direction:column;min-height:100vh;overflow-y:auto;
+    position:fixed;top:0;left:-260px;width:260px;height:100vh;
+    z-index:1000;transition:left .28s cubic-bezier(.4,0,.2,1);
+    box-shadow:4px 0 24px rgba(0,0,0,.3);
+    flex-direction:column;min-height:100vh;
+    overflow-y:auto;
   }
   .sidebar.mob-open{left:0}
   .sb-nav{flex-direction:column;padding:8px 0}
   .sb-sec{display:block}
   .sb-foot{display:block}
-  .nav-item{font-size:13px;padding:11px 16px}
-  .main{margin-left:0;width:100%;padding-top:58px;padding-bottom:72px}
-  .topbar{left:0;position:fixed;top:0;right:0;z-index:900;height:58px}
+  .nav-item{font-size:13px;padding:10px 16px}
+  .main{margin-left:0;width:100%;padding-top:56px;padding-bottom:70px}
+  .topbar{left:0;position:fixed;top:0;right:0;z-index:900;height:56px}
+
+  /* Grid - telefonda 1 yoki 2 ustun */
   .g4{grid-template-columns:1fr 1fr}
   .g3{grid-template-columns:1fr}
   .g5{grid-template-columns:1fr 1fr}
   .g2{grid-template-columns:1fr!important}
   .we-row{grid-template-columns:1fr 1fr;gap:6px}
+
+  /* 3 ustunli gridlar 1 ustunli bo'lsin */
   [style*="grid-template-columns:1fr 1fr 1fr"],
-  [style*="grid-template-columns: 1fr 1fr 1fr"]{grid-template-columns:1fr!important}
+  [style*="grid-template-columns: 1fr 1fr 1fr"]{
+    grid-template-columns:1fr!important;
+  }
+
   body{flex-direction:column}
-  #mob-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:999}
+
+  /* Mobil overlay */
+  #mob-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:999}
   #mob-overlay.show{display:block}
+
+  /* Hamburger tugma */
   #mob-menu-btn{display:flex}
+
+  /* Pastki navigatsiya */
   #mob-bottom-nav{display:flex}
+
+  /* Jadvallar skroll */
   .tw{overflow-x:auto;-webkit-overflow-scrolling:touch}
   table{min-width:500px}
-  .card{padding:14px;border-radius:14px}
-  .fc{height:46px;font-size:14px;border-radius:10px}
-  select.fc{height:46px}
-  .btn{padding:12px 20px;font-size:13px}
-  .btn-sm{padding:9px 14px;font-size:12px}
-  .btn-p,.btn-s{min-height:46px}
-  .page{padding:12px 12px 24px}
-  .pg-title{font-size:19px!important}
+
+  /* Card */
+  .card{padding:12px;border-radius:10px}
+  .card-t{font-size:13px}
+
+  /* Input va tugmalar kattaroq (barmoq bilan bosish uchun) */
+  .fc{height:44px;font-size:14px;border-radius:8px}
+  select.fc{height:44px}
+  .btn{padding:11px 16px;font-size:13px;border-radius:8px}
+  .btn-sm{padding:8px 12px;font-size:12px}
+  .btn-p,.btn-s{min-height:44px}
+
+  /* Page padding */
+  .page{padding:10px 10px 20px}
+  .pg-title{font-size:18px!important}
   .pg-sub{font-size:12px!important}
-  .modal-box{width:100%!important;max-width:100%!important;border-radius:18px 18px 0 0!important;
+
+  /* Modals - to'liq ekran */
+  .modal-box{width:100%!important;max-width:100%!important;border-radius:14px 14px 0 0!important;
     position:fixed!important;bottom:0!important;left:0!important;right:0!important;
-    max-height:92vh!important;overflow-y:auto!important;margin:0!important}
-  .stat-card{padding:14px!important}
+    max-height:90vh!important;overflow-y:auto!important;margin:0!important}
+  [style*="position:fixed"][style*="z-index:999"] > div,
+  [style*="position:fixed"][style*="z-index:1000"] > div{
+    border-radius:14px 14px 0 0;
+    position:fixed;bottom:0;left:0;right:0;
+    max-height:88vh;overflow-y:auto;
+    margin:0!important;
+    width:100%!important;
+    max-width:100%!important;
+  }
+
+  /* Stat kartochkalar */
+  .stat-card{padding:12px!important}
+
+  /* Dashboard stat grid */
   .g4.mb20{grid-template-columns:1fr 1fr!important}
+
+  /* Tugmalar guruhi wrap */
   [style*="display:flex"][style*="gap"]{flex-wrap:wrap}
+
+  /* Sessiya header */
   .sess-hdr .g4{grid-template-columns:1fr 1fr!important}
+
+  /* Journal jadval */
   #jn-tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
-  .mb20{margin-bottom:14px!important}
+
+  /* Font kichikroq joylarda */
+  .mb20{margin-bottom:12px!important}
   .mb16{margin-bottom:10px!important}
+  .mb12{margin-bottom:8px!important}
+
+  /* Xodimlar kirim forma */
   .dept-check{grid-template-columns:1fr 1fr!important}
   .ops-check{grid-template-columns:1fr 1fr!important}
+
+  /* Ombor katalog grid */
   #ob-katalog-grid{grid-template-columns:1fr 1fr!important}
+
+  /* Sarf-reja 3 ustun -> 1 ustun */
   #pg-xomashyo > div:not(.pg-title):not(.pg-sub){grid-template-columns:1fr!important}
+
+  /* Hisobot filter */
   .hisobot-filter-row{flex-wrap:wrap!important;gap:6px!important}
+
+  /* Chat */
   .chat-sidebar{width:100%!important;height:auto!important;max-height:40vh!important}
   .chat-main{height:calc(100vh - 250px)!important}
+
+  /* Overflow hidden o'rniga auto */
   .tw table{min-width:600px}
 }
 
 @media(max-width:480px){
+  /* Juda kichik telefonlar */
   .g4{grid-template-columns:1fr!important}
   .g5{grid-template-columns:1fr 1fr!important}
   .g2{grid-template-columns:1fr!important}
-  .page{padding:10px 10px 18px}
-  .card{padding:12px}
-  .pg-title{font-size:17px!important}
-  .btn{font-size:12px;padding:11px 16px}
-  .fc{height:44px;font-size:13px}
-  table{font-size:12px}
-  .stat-card{padding:12px!important}
+  .page{padding:8px 8px 16px}
+  .card{padding:10px}
+  .pg-title{font-size:16px!important}
+  .btn{font-size:12px;padding:9px 12px}
+  .fc{height:42px;font-size:13px}
+  table{font-size:11px}
+  .stat-card{padding:10px!important}
 }
 
 @media(min-width:769px){
@@ -497,89 +554,67 @@ body:not(.light-mode) .op-status-card.red{background:rgba(248,113,113,.07)}
   #mob-overlay{display:none!important}
 }
 
-/* ── LOGIN SCREEN ── */
+/* ── LOGIN SCREEN — Bizim Hesap uslubi ── */
 #login-screen{
   position:fixed;inset:0;z-index:9999;
   display:flex;align-items:center;justify-content:center;flex-direction:column;
-  background:radial-gradient(ellipse at 30% 20%,rgba(99,102,241,.18) 0%,transparent 60%),
-             radial-gradient(ellipse at 70% 80%,rgba(129,140,248,.12) 0%,transparent 60%),
-             var(--bg);
+  background:linear-gradient(135deg,#e8f0fe 0%,#f0f4f9 50%,#e0ecff 100%);
 }
-body.light-mode #login-screen{
-  background:radial-gradient(ellipse at 30% 20%,rgba(99,102,241,.12) 0%,transparent 60%),
-             radial-gradient(ellipse at 70% 80%,rgba(129,140,248,.08) 0%,transparent 60%),
-             #f4f6ff;
+body:not(.light-mode) #login-screen{
+  background:linear-gradient(135deg,#111827 0%,#1a2340 50%,#0f1929 100%);
 }
 .login-box{
-  background:var(--sur);border:1px solid var(--brd);
-  border-radius:20px;padding:44px 40px;width:420px;max-width:96vw;
-  box-shadow:0 24px 64px rgba(0,0,0,.4),0 0 0 1px rgba(129,140,248,.08);
+  background:var(--sur);border:1px solid var(--bor);
+  border-radius:16px;padding:40px 36px;width:400px;max-width:96vw;
+  box-shadow:0 20px 60px rgba(46,107,230,.12);
   animation:modalIn .3s cubic-bezier(.22,.68,0,1.2);
 }
-body.light-mode .login-box{box-shadow:0 20px 60px rgba(99,102,241,.12),0 0 0 1px rgba(99,102,241,.08)}
 .login-logo{
   font-size:16px;font-weight:800;
-  color:var(--txt);margin-bottom:4px;
-  display:flex;align-items:center;gap:10px;
+  color:var(--acc);margin-bottom:4px;
+  display:flex;align-items:center;gap:8px;
 }
 .login-logo::before{
-  content:'K';width:36px;height:36px;
-  background:linear-gradient(135deg,#818cf8,#6366f1);
-  color:#fff;border-radius:10px;display:flex;align-items:center;
+  content:'K';width:32px;height:32px;background:var(--acc);
+  color:#fff;border-radius:8px;display:flex;align-items:center;
   justify-content:center;font-size:18px;font-weight:900;
-  box-shadow:0 4px 14px rgba(99,102,241,.4);
 }
-.login-sub{font-size:11px;color:var(--txt3);margin-bottom:32px;padding-left:46px;letter-spacing:.3px}
-.login-title{font-size:18px;font-weight:700;margin-bottom:22px;color:var(--txt);letter-spacing:-.3px}
-.login-err{background:var(--red-light);border:1px solid rgba(248,113,113,.3);border-radius:10px;padding:11px 15px;font-size:13px;color:var(--red);margin-bottom:14px;display:none}
-body.light-mode .login-err{background:#fef2f2;border-color:#fecaca;color:#ef4444}
+.login-sub{font-size:11px;color:var(--txt3);margin-bottom:28px;padding-left:40px}
+.login-title{font-size:17px;font-weight:700;margin-bottom:20px;color:var(--txt)}
+.login-err{background:#fff0f0;border:1px solid #fecaca;border-radius:7px;padding:10px 14px;font-size:13px;color:var(--red);margin-bottom:14px;display:none}
+body:not(.light-mode) .login-err{background:rgba(220,38,38,.1);border-color:rgba(220,38,38,.3);color:#fc8181}
 
 /* USER BADGE IN SIDEBAR */
-.sb-user{padding:14px 16px;border-top:1px solid var(--brd);display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--sur2)}
+.sb-user{padding:12px 16px;border-top:1px solid var(--bor);display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--sur2)}
 .sb-user-info{font-size:11px}
 .sb-user-name{color:var(--acc);font-weight:700;font-size:12px}
 .sb-user-role{color:var(--txt3);font-size:10px;margin-top:2px}
-.nav-item.locked{opacity:.3;cursor:not-allowed;pointer-events:none}
+.nav-item.locked{opacity:.35;cursor:not-allowed;pointer-events:none}
 
 /* ADMIN PANEL */
-.admin-badge{background:rgba(248,113,113,.12);color:var(--red);border:1px solid rgba(248,113,113,.3);border-radius:6px;padding:2px 9px;font-size:10px;font-weight:700}
-body.light-mode .admin-badge{background:#fef2f2;border-color:#fecaca;color:#ef4444}
-.user-row{display:grid;grid-template-columns:1fr 120px 120px 80px;gap:8px;align-items:center;padding:11px 15px;background:var(--sur2);border-radius:10px;margin-bottom:6px;border:1.5px solid var(--brd);transition:border-color .15s}
+.admin-badge{background:#fee2e2;color:#dc2626;border:1px solid #fca5a5;border-radius:5px;padding:2px 8px;font-size:10px;font-weight:700}
+body:not(.light-mode) .admin-badge{background:rgba(220,38,38,.15);border-color:rgba(220,38,38,.3);color:#fc8181}
+.user-row{display:grid;grid-template-columns:1fr 120px 120px 80px;gap:8px;align-items:center;padding:10px 14px;background:var(--sur2);border-radius:8px;margin-bottom:6px;border:1px solid var(--bor);transition:border-color .15s}
 .user-row:hover{border-color:var(--acc)}
 
 /* CHAT */
-.chat-room-item{display:flex;align-items:center;gap:8px;padding:9px 13px;border-radius:10px;cursor:pointer;transition:all .15s;font-size:13px;color:var(--txt2);font-weight:500}
+.chat-room-item{display:flex;align-items:center;gap:8px;padding:8px 11px;border-radius:8px;cursor:pointer;transition:all .15s;font-size:13px;color:var(--txt2);font-weight:500}
 .chat-room-item:hover{background:var(--sur2);color:var(--txt)}
 .chat-room-item.active{background:var(--acc-light);color:var(--acc);font-weight:600}
-.chat-room-item .room-badge{min-width:20px;height:20px;background:var(--red);color:#fff;font-size:10px;border-radius:10px;display:flex;align-items:center;justify-content:center;margin-left:auto;padding:0 5px;font-weight:700}
-.chat-bubble{max-width:72%;padding:10px 14px;border-radius:14px;font-size:13px;line-height:1.55;word-break:break-word}
-.chat-bubble.mine{background:linear-gradient(135deg,#818cf8,#6366f1);color:#fff;border-bottom-right-radius:4px;align-self:flex-end}
-.chat-bubble.other{background:var(--sur2);color:var(--txt);border-bottom-left-radius:4px;align-self:flex-start;border:1px solid var(--brd)}
+.chat-room-item .room-badge{min-width:19px;height:19px;background:var(--red);color:#fff;font-size:10px;border-radius:10px;display:flex;align-items:center;justify-content:center;margin-left:auto;padding:0 5px;font-weight:700}
+.chat-bubble{max-width:72%;padding:9px 13px;border-radius:13px;font-size:13px;line-height:1.55;word-break:break-word}
+.chat-bubble.mine{background:var(--acc);color:#fff;border-bottom-right-radius:4px;align-self:flex-end}
+.chat-bubble.other{background:var(--sur2);color:var(--txt);border-bottom-left-radius:4px;align-self:flex-start;border:1px solid var(--bor)}
 .chat-bubble.sys{background:transparent;color:var(--txt3);font-size:11px;align-self:center;font-style:italic}
 .chat-msg-wrap{display:flex;flex-direction:column;gap:2px}
 .chat-msg-wrap.mine{align-items:flex-end}
 .chat-msg-wrap.other{align-items:flex-start}
 .chat-sender{font-size:11px;color:var(--txt3);margin-bottom:2px;padding:0 4px;font-weight:600}
 .chat-time{font-size:10px;color:var(--txt3);margin-top:3px;padding:0 4px}
-.chat-img-msg{max-width:220px;border-radius:10px;cursor:pointer;display:block;border:1px solid var(--brd)}
+.chat-img-msg{max-width:220px;border-radius:9px;cursor:pointer;display:block;border:1px solid var(--bor)}
 .chat-voice-msg{display:flex;align-items:center;gap:8px;padding:4px 0}
 .chat-voice-msg audio{height:32px;min-width:160px}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
-
-/* ── TOAST ── */
-.toast-container{position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
-.toast{padding:12px 18px;border-radius:12px;font-size:13px;font-weight:500;display:flex;align-items:center;gap:9px;min-width:220px;max-width:360px;pointer-events:all;animation:toastIn .25s cubic-bezier(.22,.68,0,1.2);box-shadow:0 8px 28px rgba(0,0,0,.35)}
-@keyframes toastIn{from{opacity:0;transform:translateY(12px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
-.toast.success{background:#1a1f2e;border-left:3px solid #34d399;color:#f1f3ff}
-.toast.error{background:#1a1f2e;border-left:3px solid #f87171;color:#f1f3ff}
-.toast.info{background:#1a1f2e;border-left:3px solid #818cf8;color:#f1f3ff}
-body.light-mode .toast{background:#fff;box-shadow:0 8px 28px rgba(0,0,0,.12)}
-body.light-mode .toast.success{border-left-color:#059669;color:#1a1c2e}
-body.light-mode .toast.error{border-left-color:#ef4444;color:#1a1c2e}
-body.light-mode .toast.info{border-left-color:#6366f1;color:#1a1c2e}
-
-/* ── ONLINE STATUS BAR ── */
-#offline-bar{position:fixed;top:0;left:0;right:0;z-index:9998;background:#ef4444;color:#fff;text-align:center;font-size:12px;font-weight:600;padding:6px;display:none}
 </style>
 </head>
 <body>
@@ -652,7 +687,6 @@ body.light-mode .toast.info{border-left-color:#6366f1;color:#1a1c2e}
     <div class="nav-item" id="nav-ombor" onclick="SP('ombor',this)"><span class="ic">🏭</span>Ombor <span id="ombor-badge" style="display:none;background:var(--red);color:#fff;font-size:10px;border-radius:10px;padding:1px 6px;margin-left:4px">!</span></div>
     <div class="sb-sec">Moliya</div>
     <div class="nav-item" id="nav-sotuv" onclick="SP('sotuv',this)"><span class="ic">🛒</span>Sotuv <span id="sotuv-badge" style="display:none;background:var(--acc);color:#000;font-size:10px;border-radius:10px;padding:1px 6px;margin-left:4px">0</span></div>
-    <div class="nav-item" id="nav-avans" onclick="SP('avans',this)"><span class="ic">💵</span>Avans & To'lov</div>
     <div class="nav-item" id="nav-maosh" onclick="SP('maosh',this)"><span class="ic">💰</span>Maosh & Qarz</div>
     <div class="sb-sec">Yordamchi</div>
     <div class="nav-item" id="nav-chat" onclick="SP('chat',this)"><span class="ic">💬</span>Chat <span id="chat-badge" style="display:none;background:var(--red);color:#fff;font-size:10px;border-radius:10px;padding:1px 6px;margin-left:4px">0</span></div>
@@ -2358,188 +2392,6 @@ body.light-mode .toast.info{border-left-color:#6366f1;color:#1a1c2e}
     </div>
   </div>
 
-</div>
-
-<!-- ═══ AVANS & TO'LOV ═══ -->
-<div id="pg-avans" class="page">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;flex-wrap:wrap;gap:10px">
-    <div>
-      <div class="pg-title">💵 Avans & To'lov</div>
-      <div class="pg-sub">Xodimlar uchun avans, yo'l haqqi, raschot, qarz va boshqa to'lovlar</div>
-    </div>
-    <div id="avans-add-btn" style="display:none">
-      <button class="btn btn-sm" style="background:rgba(0,217,163,.15);color:var(--acc);border-color:rgba(0,217,163,.3)" onclick="showAvansModal()">+ To'lov Qo'shish</button>
-    </div>
-  </div>
-
-  <!-- Stats -->
-  <div class="g4 mb20" id="avans-stats">
-    <div class="card" style="text-align:center">
-      <div style="font-size:11px;color:var(--txt3);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-family:'IBM Plex Mono',monospace">Bu Oy Avans</div>
-      <div id="av-stat-avans" style="font-size:22px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:var(--txt)">0</div>
-      <div style="font-size:11px;color:var(--txt3)">UZS</div>
-    </div>
-    <div class="card" style="text-align:center">
-      <div style="font-size:11px;color:var(--txt3);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-family:'IBM Plex Mono',monospace">Yo'l Haqqi</div>
-      <div id="av-stat-yol" style="font-size:22px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:var(--acc)">0</div>
-      <div style="font-size:11px;color:var(--txt3)">UZS</div>
-    </div>
-    <div class="card" style="text-align:center">
-      <div style="font-size:11px;color:var(--txt3);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-family:'IBM Plex Mono',monospace">Raschot</div>
-      <div id="av-stat-raschot" style="font-size:22px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:#f8b035">0</div>
-      <div style="font-size:11px;color:var(--txt3)">UZS</div>
-    </div>
-    <div class="card" style="text-align:center">
-      <div style="font-size:11px;color:var(--txt3);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-family:'IBM Plex Mono',monospace">Qarz (umumiy)</div>
-      <div id="av-stat-qarz" style="font-size:22px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:var(--red)">0</div>
-      <div style="font-size:11px;color:var(--txt3)">UZS</div>
-    </div>
-  </div>
-
-  <!-- Filters -->
-  <div class="card mb20" style="padding:12px 16px">
-    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-      <select class="fc" id="av-f-wk" style="flex:1;min-width:150px" onchange="loadAvansPage()">
-        <option value="">-- Barcha xodimlar --</option>
-      </select>
-      <select class="fc" id="av-f-type" style="flex:1;min-width:150px" onchange="loadAvansPage()">
-        <option value="">-- Barcha turlar --</option>
-        <option value="naqd_avans">Naqd avans</option>
-        <option value="karta_avans">Karta o'tkazma avans</option>
-        <option value="naqd_yol">Naqd yo'l haqqi</option>
-        <option value="karta_yol">Karta o'tkazma yo'l haqqi</option>
-        <option value="naqd_raschot">Naqd raschot</option>
-        <option value="karta_raschot">Karta o'tkazma raschyot</option>
-        <option value="qarz">Qarz berilishi</option>
-        <option value="xomashyo">Ombordan xomashyo</option>
-        <option value="mahsulot">Tayyor mahsulot olingan</option>
-      </select>
-      <select class="fc" id="av-f-month" style="flex:1;min-width:130px" onchange="loadAvansPage()">
-        <option value="">-- Barcha oylar --</option>
-        <option value="2026-01">Yanvar 2026</option>
-        <option value="2026-02">Fevral 2026</option>
-        <option value="2026-03">Mart 2026</option>
-        <option value="2026-04">Aprel 2026</option>
-        <option value="2026-05">May 2026</option>
-        <option value="2026-06">Iyun 2026</option>
-        <option value="2026-07">Iyul 2026</option>
-        <option value="2026-08">Avgust 2026</option>
-        <option value="2026-09">Sentabr 2026</option>
-        <option value="2026-10">Oktabr 2026</option>
-        <option value="2026-11">Noyabr 2026</option>
-        <option value="2026-12">Dekabr 2026</option>
-      </select>
-    </div>
-  </div>
-
-  <!-- Table -->
-  <div class="card" style="overflow-x:auto">
-    <table style="width:100%;border-collapse:collapse;min-width:600px">
-      <thead>
-        <tr style="border-bottom:1px solid var(--brd)">
-          <th style="text-align:left;padding:10px 8px;font-size:12px;color:var(--txt3);font-weight:600">Sana</th>
-          <th style="text-align:left;padding:10px 8px;font-size:12px;color:var(--txt3);font-weight:600">Xodim</th>
-          <th style="text-align:left;padding:10px 8px;font-size:12px;color:var(--txt3);font-weight:600">Tur</th>
-          <th style="text-align:right;padding:10px 8px;font-size:12px;color:var(--txt3);font-weight:600">Miqdor</th>
-          <th style="text-align:left;padding:10px 8px;font-size:12px;color:var(--txt3);font-weight:600">Izoh</th>
-          <th style="text-align:center;padding:10px 8px;font-size:12px;color:var(--txt3);font-weight:600" id="avans-th-actions"></th>
-        </tr>
-      </thead>
-      <tbody id="avans-tbody">
-        <tr><td colspan="6" style="text-align:center;padding:30px;color:var(--txt3)">Yuklanmoqda...</td></tr>
-      </tbody>
-    </table>
-  </div>
-</div>
-
-<!-- Avans Modal -->
-<div id="avans-modal" style="display:none;position:fixed;inset:0;background:rgba(5,6,16,.75);backdrop-filter:blur(8px);z-index:1000;align-items:center;justify-content:center" onclick="if(event.target===this)hideAvansModal()">
-  <div class="modal-box" style="max-width:500px">
-    <div class="modal-title">💵 To'lov Qo'shish</div>
-    <input type="hidden" id="av-edit-id">
-
-    <div style="margin-bottom:12px">
-      <label class="lbl">Xodim</label>
-      <select class="fc" id="av-wk" style="width:100%"></select>
-    </div>
-
-    <div style="margin-bottom:12px">
-      <label class="lbl">To'lov turi</label>
-      <select class="fc" id="av-type" style="width:100%" onchange="onAvTypeChange()">
-        <option value="naqd_avans">Naqd avans</option>
-        <option value="karta_avans">Karta o'tkazma avans</option>
-        <option value="naqd_yol">Naqd yo'l haqqi</option>
-        <option value="karta_yol">Karta o'tkazma yo'l haqqi</option>
-        <option value="naqd_raschot">Naqd raschot</option>
-        <option value="karta_raschot">Karta o'tkazma raschyot</option>
-        <option value="qarz">Qarz berilishi</option>
-        <option value="xomashyo">Ombordan xomashyo</option>
-        <option value="mahsulot">Tayyor mahsulot olingan</option>
-      </select>
-    </div>
-
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
-      <div>
-        <label class="lbl">Sana</label>
-        <input type="date" class="fc" id="av-date" style="width:100%">
-      </div>
-      <div>
-        <label class="lbl" id="av-summa-lbl">Miqdor (UZS)</label>
-        <input type="number" class="fc" id="av-summa" placeholder="0" style="width:100%">
-      </div>
-    </div>
-
-    <!-- Qarz-specific fields -->
-    <div id="av-qarz-block" style="display:none;background:rgba(248,81,73,.07);border:1px solid rgba(248,81,73,.2);border-radius:10px;padding:14px;margin-bottom:12px">
-      <div style="font-size:12px;color:var(--red);font-weight:600;margin-bottom:10px">Qarz parametrlari</div>
-      <div style="margin-bottom:10px">
-        <label class="lbl">Qaytarish sanasi</label>
-        <input type="date" class="fc" id="av-qarz-qaytarish" style="width:100%">
-      </div>
-      <div>
-        <label class="lbl">Maoshdan olib qolinadigan oylar</label>
-        <div id="av-qarz-oylar" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">
-          <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer"><input type="checkbox" value="01"> Yanvar</label>
-          <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer"><input type="checkbox" value="02"> Fevral</label>
-          <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer"><input type="checkbox" value="03"> Mart</label>
-          <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer"><input type="checkbox" value="04"> Aprel</label>
-          <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer"><input type="checkbox" value="05"> May</label>
-          <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer"><input type="checkbox" value="06"> Iyun</label>
-          <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer"><input type="checkbox" value="07"> Iyul</label>
-          <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer"><input type="checkbox" value="08"> Avgust</label>
-          <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer"><input type="checkbox" value="09"> Sentabr</label>
-          <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer"><input type="checkbox" value="10"> Oktabr</label>
-          <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer"><input type="checkbox" value="11"> Noyabr</label>
-          <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer"><input type="checkbox" value="12"> Dekabr</label>
-        </div>
-      </div>
-    </div>
-
-    <!-- Xomashyo/Mahsulot-specific fields -->
-    <div id="av-tovar-block" style="display:none;background:rgba(0,217,163,.07);border:1px solid rgba(0,217,163,.2);border-radius:10px;padding:14px;margin-bottom:12px">
-      <div style="font-size:12px;color:var(--acc);font-weight:600;margin-bottom:10px" id="av-tovar-title">Mahsulot ma'lumotlari</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <div>
-          <label class="lbl">Nomi</label>
-          <input type="text" class="fc" id="av-tovar-nom" placeholder="Nomi..." style="width:100%">
-        </div>
-        <div>
-          <label class="lbl">Miqdor/o'lchov</label>
-          <input type="text" class="fc" id="av-tovar-miq" placeholder="10 m, 5 dona..." style="width:100%">
-        </div>
-      </div>
-    </div>
-
-    <div style="margin-bottom:16px">
-      <label class="lbl">Izoh (ixtiyoriy)</label>
-      <input type="text" class="fc" id="av-note" placeholder="Qo'shimcha izoh..." style="width:100%">
-    </div>
-
-    <div style="display:flex;gap:10px">
-      <button class="btn btn-p" style="flex:1" onclick="saveAvans()">✅ Saqlash</button>
-      <button class="btn btn-s" onclick="hideAvansModal()">Bekor</button>
-    </div>
-  </div>
 </div>
 
 <!-- ═══ MAOSH & QARZ ═══ -->
@@ -4842,7 +4694,6 @@ function SP(id,el){
   if(id==='kirim')loadKrPage();
   if(id==='ombor')loadOmborPage();
   if(id==='maosh')loadMaoshPage();
-  if(id==='avans')loadAvansPage();
   if(id==='xomashyo') loadSarfRejaPage();
   if(id==='opex'){
     const od=document.getElementById('ox-date');if(od&&!od.value)od.value=TODAY();
@@ -7935,9 +7786,6 @@ function doLogin(){
     saveLoginHistory(user);
     resetInactiveTimer();
     loadAutoReportSettings();
-    // Ma'lumotlarni qayta yukla (Firebase auth keyin ishlaydi)
-    setTimeout(()=>{ if(typeof loadDash==='function') loadDash(); }, 300);
-    setTimeout(()=>{ if(typeof loadOpsPage==='function') loadOpsPage(); if(typeof loadWkPage==='function') loadWkPage(); }, 900);
   }
   function loginFail(msg){
     if(btn){ btn.disabled=false; btn.textContent='🔐 Kirish'; }
@@ -13434,238 +13282,4 @@ async function expOpexPDF(){
   doc.text('Ishlab Chiqarish ERP v6.0  |  Operatsion Xarajatlar (OPEX) Hisoboti', M+2, 22);
 
 </script>
-
-<script>
-// ═══════════════════════════════════════════════
-// AVANS & TO'LOV SECTION
-// ═══════════════════════════════════════════════
-
-const AV_TYPE_LABELS = {
-  naqd_avans: "Naqd avans",
-  karta_avans: "Karta avans",
-  naqd_yol: "Naqd yo'l haqqi",
-  karta_yol: "Karta yo'l haqqi",
-  naqd_raschot: "Naqd raschot",
-  karta_raschot: "Karta raschyot",
-  qarz: "Qarz berilishi",
-  xomashyo: "Ombordan xomashyo",
-  mahsulot: "Tayyor mahsulot"
-};
-
-const AV_MONEY_TYPES = ['naqd_avans','karta_avans','naqd_yol','karta_yol','naqd_raschot','karta_raschot','qarz'];
-
-function avRole(){
-  if(isAdmin()) return 'admin';
-  if(!CURRENT_USER) return 'worker';
-  const dept = (CURRENT_USER.dept||'').toLowerCase();
-  if(dept.includes('ombor')) return 'ombor';
-  if(dept.includes('sotuv')) return 'sotuv';
-  return 'worker';
-}
-
-async function loadAvansPage(){
-  // Show add button: admin, ombor, sotuv can add; regular workers only see their own
-  const role = avRole();
-  const addBtn = document.getElementById('avans-add-btn');
-  if(addBtn) addBtn.style.display = (role==='admin'||role==='ombor'||role==='sotuv') ? '' : 'none';
-
-  // Populate worker filter (admin only)
-  const fWk = document.getElementById('av-f-wk');
-  if(fWk && role==='admin'){
-    const workers = await GA('workers');
-    const cur = fWk.value;
-    fWk.innerHTML = '<option value="">-- Barcha xodimlar --</option>' +
-      workers.map(w=>`<option value="${w.id}" ${cur===w.id?'selected':''}>${w.name||w.id}</option>`).join('');
-    fWk.closest('.card').style.display='';
-  } else if(fWk){
-    fWk.closest('.card').style.display='none';
-  }
-
-  const fType = (document.getElementById('av-f-type')||{}).value||'';
-  const fMonth = (document.getElementById('av-f-month')||{}).value||'';
-  const fWkVal = role==='admin' ? ((document.getElementById('av-f-wk')||{}).value||'') : '';
-
-  let records = await GA('avans_tolovlar');
-
-  // Non-admins only see their own
-  if(role!=='admin'){
-    const uid = CURRENT_USER ? (CURRENT_USER.uid||CURRENT_USER.id||CURRENT_USER.email||'') : '';
-    records = records.filter(r=>r.wkId===uid);
-  }
-
-  // Filter
-  if(fWkVal) records = records.filter(r=>r.wkId===fWkVal);
-  if(fType) records = records.filter(r=>r.type===fType);
-  if(fMonth) records = records.filter(r=>(r.date||'').startsWith(fMonth));
-
-  // Sort newest first
-  records.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
-
-  // Stats (current month)
-  const now = new Date();
-  const cm = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
-  const cm_recs = records.filter(r=>(r.date||'').startsWith(cm));
-  const sumByGroup = (types)=>cm_recs.filter(r=>types.includes(r.type)).reduce((s,r)=>s+(+r.summa||0),0);
-  const fmtN = n=>n?n.toLocaleString('uz-UZ'):'0';
-  document.getElementById('av-stat-avans').textContent = fmtN(sumByGroup(['naqd_avans','karta_avans']));
-  document.getElementById('av-stat-yol').textContent = fmtN(sumByGroup(['naqd_yol','karta_yol']));
-  document.getElementById('av-stat-raschot').textContent = fmtN(sumByGroup(['naqd_raschot','karta_raschot']));
-  document.getElementById('av-stat-qarz').textContent = fmtN(records.filter(r=>r.type==='qarz').reduce((s,r)=>s+(+r.summa||0),0));
-
-  // Table
-  const isAdm = role==='admin';
-  document.getElementById('avans-th-actions').textContent = isAdm ? 'Amal' : '';
-
-  const tbody = document.getElementById('avans-tbody');
-  if(!records.length){
-    tbody.innerHTML='<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--txt3)">Ma\'lumot yo\'q</td></tr>';
-    return;
-  }
-
-  tbody.innerHTML = records.map(r=>{
-    const typeLabel = AV_TYPE_LABELS[r.type]||r.type||'—';
-    const typeColor = r.type==='qarz'?'var(--red)':r.type==='xomashyo'||r.type==='mahsulot'?'var(--acc)':'var(--txt2)';
-    const summaCell = AV_MONEY_TYPES.includes(r.type)
-      ? `<strong>${(+r.summa||0).toLocaleString('uz-UZ')} UZS</strong>`
-      : (r.tovarMiq||'—');
-    let extraNote = '';
-    if(r.type==='qarz' && r.qarzQaytarish) extraNote = ` | Qaytarish: ${r.qarzQaytarish}`;
-    if(r.type==='qarz' && r.qarzOylar && r.qarzOylar.length) extraNote += ` | Oylar: ${r.qarzOylar.join(', ')}`;
-    if(r.type==='xomashyo'||r.type==='mahsulot') extraNote = r.tovarNom ? ` | ${r.tovarNom}` : '';
-    const actionsCell = isAdm
-      ? `<td style="text-align:center;padding:8px">
-           <button class="btn btn-sm" onclick="editAvans('${r.id}')" style="padding:4px 8px;font-size:11px;margin-right:4px">✏️</button>
-           <button class="btn btn-sm" onclick="delAvans('${r.id}')" style="padding:4px 8px;font-size:11px;background:rgba(248,81,73,.1);color:var(--red);border-color:rgba(248,81,73,.3)">🗑</button>
-         </td>`
-      : '<td></td>';
-    return `<tr style="border-bottom:1px solid var(--brd)">
-      <td style="padding:10px 8px;font-size:13px;white-space:nowrap">${r.date||'—'}</td>
-      <td style="padding:10px 8px;font-size:13px">${r.wkName||r.wkId||'—'}</td>
-      <td style="padding:10px 8px;font-size:13px"><span style="color:${typeColor};font-weight:600">${typeLabel}</span></td>
-      <td style="padding:10px 8px;font-size:13px;text-align:right">${summaCell}</td>
-      <td style="padding:10px 8px;font-size:12px;color:var(--txt3)">${(r.note||'')+extraNote}</td>
-      ${actionsCell}
-    </tr>`;
-  }).join('');
-}
-
-function showAvansModal(editData){
-  const role = avRole();
-  const modal = document.getElementById('avans-modal');
-
-  // Populate worker select
-  const wkSel = document.getElementById('av-wk');
-  GA('workers').then(workers=>{
-    if(role==='admin'){
-      wkSel.innerHTML = workers.map(w=>`<option value="${w.id}">${w.name||w.id}</option>`).join('');
-      wkSel.disabled = false;
-    } else {
-      // Pre-fill current user
-      const u = CURRENT_USER;
-      wkSel.innerHTML = `<option value="${u?u.uid||u.id||u.email:''}">${u?u.name||u.email||u.uid:''}</option>`;
-      wkSel.disabled = true;
-    }
-    if(editData && editData.wkId) wkSel.value = editData.wkId;
-  });
-
-  // Reset form
-  document.getElementById('av-edit-id').value = editData ? editData.id : '';
-  document.getElementById('av-date').value = editData ? (editData.date||'') : new Date().toISOString().slice(0,10);
-  document.getElementById('av-type').value = editData ? (editData.type||'naqd_avans') : 'naqd_avans';
-  document.getElementById('av-summa').value = editData ? (editData.summa||'') : '';
-  document.getElementById('av-note').value = editData ? (editData.note||'') : '';
-  document.getElementById('av-qarz-qaytarish').value = editData ? (editData.qarzQaytarish||'') : '';
-  document.getElementById('av-tovar-nom').value = editData ? (editData.tovarNom||'') : '';
-  document.getElementById('av-tovar-miq').value = editData ? (editData.tovarMiq||'') : '';
-
-  // Clear qarz checkboxes
-  document.querySelectorAll('#av-qarz-oylar input[type=checkbox]').forEach(cb=>{
-    cb.checked = editData && editData.qarzOylar ? editData.qarzOylar.includes(cb.value) : false;
-  });
-
-  onAvTypeChange();
-  modal.style.display='flex';
-}
-
-function hideAvansModal(){
-  document.getElementById('avans-modal').style.display='none';
-}
-
-function onAvTypeChange(){
-  const type = document.getElementById('av-type').value;
-  const qarzBlock = document.getElementById('av-qarz-block');
-  const tovarBlock = document.getElementById('av-tovar-block');
-  const summaField = document.getElementById('av-summa').parentElement;
-  const summaLbl = document.getElementById('av-summa-lbl');
-
-  qarzBlock.style.display = type==='qarz' ? '' : 'none';
-  tovarBlock.style.display = (type==='xomashyo'||type==='mahsulot') ? '' : 'none';
-
-  if(type==='xomashyo'||type==='mahsulot'){
-    summaLbl.textContent = "Narxi (UZS, ixtiyoriy)";
-    document.getElementById('av-tovar-title').textContent =
-      type==='xomashyo' ? "Xomashyo ma'lumotlari" : "Tayyor mahsulot ma'lumotlari";
-  } else {
-    summaLbl.textContent = "Miqdor (UZS)";
-  }
-}
-
-async function saveAvans(){
-  const id = document.getElementById('av-edit-id').value;
-  const type = document.getElementById('av-type').value;
-  const wkId = document.getElementById('av-wk').value;
-  const wkOpt = document.getElementById('av-wk').selectedOptions[0];
-  const wkName = wkOpt ? wkOpt.text : wkId;
-  const date = document.getElementById('av-date').value;
-  const summa = parseFloat(document.getElementById('av-summa').value)||0;
-  const note = document.getElementById('av-note').value.trim();
-
-  if(!wkId){ showToast('Xodimni tanlang!','error'); return; }
-  if(!date){ showToast('Sanani kiriting!','error'); return; }
-  if(AV_MONEY_TYPES.includes(type) && !summa){ showToast('Miqdorni kiriting!','error'); return; }
-
-  const obj = { type, wkId, wkName, date, summa, note, ts: Date.now() };
-
-  if(type==='qarz'){
-    obj.qarzQaytarish = document.getElementById('av-qarz-qaytarish').value;
-    obj.qarzOylar = [...document.querySelectorAll('#av-qarz-oylar input[type=checkbox]:checked')].map(cb=>cb.value);
-  }
-  if(type==='xomashyo'||type==='mahsulot'){
-    obj.tovarNom = document.getElementById('av-tovar-nom').value.trim();
-    obj.tovarMiq = document.getElementById('av-tovar-miq').value.trim();
-  }
-
-  // Role restriction: ombor can only save xomashyo type, sotuv only mahsulot
-  const role = avRole();
-  if(role==='ombor' && type!=='xomashyo'){ showToast("Ombor xodimi faqat 'Ombordan xomashyo' turini kiritishi mumkin!",'error'); return; }
-  if(role==='sotuv' && type!=='mahsulot'){ showToast("Sotuv xodimi faqat 'Tayyor mahsulot' turini kiritishi mumkin!",'error'); return; }
-
-  try {
-    if(id){ obj.id = id; await PUT('avans_tolovlar', obj); }
-    else { await ADD('avans_tolovlar', obj); }
-    hideAvansModal();
-    showToast('Saqlandi!','success');
-    loadAvansPage();
-  } catch(e){
-    showToast('Xatolik: '+e.message,'error');
-  }
-}
-
-async function editAvans(id){
-  if(!isAdmin()){ showToast('Faqat admin tahrirlashi mumkin!','error'); return; }
-  const records = await GA('avans_tolovlar');
-  const rec = records.find(r=>r.id===id);
-  if(!rec){ showToast('Topilmadi','error'); return; }
-  showAvansModal(rec);
-}
-
-async function delAvans(id){
-  if(!isAdmin()){ showToast("Faqat admin o'chirishi mumkin!",'error'); return; }
-  if(!confirm("Bu to'lovni o'chirishni tasdiqlaysizmi?")) return;
-  await DEL('avans_tolovlar', id);
-  showToast("O'chirildi",'success');
-  loadAvansPage();
-}
-</script>
-
 </body>
