@@ -1928,6 +1928,42 @@ body:not(.light-mode) .admin-badge{background:rgba(220,38,38,.15);border-color:r
       <button class="btn btn-p" id="m-save">Saqlash</button>
     </div>
   </div>
+
+  <!-- Parol o'zgartirish -->
+  <div class="card" style="margin-top:16px">
+    <div class="card-t">🔑 Parolni O'zgartirish</div>
+    <div style="font-size:12px;color:var(--txt2);margin-bottom:12px">Faqat o'z parolingizni o'zgartira olasiz</div>
+    <div class="g2" style="gap:10px;margin-bottom:10px">
+      <div class="fg" style="margin:0"><label class="fl">Joriy parol</label><input id="cp-old" type="password" class="fc" placeholder="Hozirgi parol"></div>
+      <div class="fg" style="margin:0"><label class="fl">Yangi parol</label><input id="cp-new" type="password" class="fc" placeholder="Yangi parol (min 4 belgi)"></div>
+    </div>
+    <button class="btn btn-p btn-sm" onclick="changePassword()">💾 Parolni Saqlash</button>
+    <div id="cp-msg" style="display:none;margin-top:8px;font-size:12px;padding:6px 10px;border-radius:6px"></div>
+  </div>
+
+  <!-- Kirish tarixi -->
+  <div class="card" style="margin-top:16px" id="login-history-card">
+    <div class="card-t">📋 Kirish Tarixi</div>
+    <div style="font-size:12px;color:var(--txt2);margin-bottom:12px">So'nggi 20 ta kirish</div>
+    <div id="login-history-list" style="font-size:12px"></div>
+  </div>
+
+  <!-- Avtomatik hisobot sozlamasi -->
+  <div class="card" style="margin-top:16px">
+    <div class="card-t">⏰ Avtomatik Kunlik Hisobot</div>
+    <div style="font-size:12px;color:var(--txt2);margin-bottom:12px">Har kuni belgilangan vaqtda Telegramga hisobot yuboriladi</div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+      <label class="fl" style="margin:0;width:auto">Vaqt:</label>
+      <input id="auto-report-time" type="time" class="fc" style="width:110px" value="18:00">
+      <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+        <input type="checkbox" id="auto-report-on" style="width:16px;height:16px;accent-color:var(--acc)">
+        <span style="font-size:13px">Yoqiq</span>
+      </label>
+    </div>
+    <button class="btn btn-p btn-sm" onclick="saveAutoReport()">💾 Saqlash</button>
+    <div id="auto-report-msg" style="font-size:11px;color:var(--txt3);margin-top:6px"></div>
+  </div>
+
 </div>
 
 <!-- ═══ OMBOR ═══ -->
@@ -4416,6 +4452,7 @@ function SP(id,el){
   }
   if(id==='hisobot'){hrInit();}
   if(id==='yordamchi'){renderHelperTable();}
+  if(id==='settings'){renderLoginHistory(); loadAutoReportSettings();}
   if(id==='unumdorlik'){initUnumdorlik();}
 }
 
@@ -9958,6 +9995,9 @@ function doLogin(){
     document.getElementById('login-screen').style.display='none';
     applyUserPermissions();
     helperLog('Kirdi: '+user.name+' ('+(user.role||'Foydalanuvchi')+')', 'ok');
+    saveLoginHistory(user);
+    resetInactiveTimer();
+    loadAutoReportSettings();
   }
   function loginFail(msg){
     if(btn){ btn.disabled=false; btn.textContent='🔐 Kirish'; }
@@ -12254,6 +12294,108 @@ async function sendDeptTelegramReport(){
 }
 
 
+
+// ══ PAROL O'ZGARTIRISH ══
+function changePassword(){
+  const oldP = document.getElementById('cp-old').value;
+  const newP = document.getElementById('cp-new').value;
+  const msg  = document.getElementById('cp-msg');
+  const show = (txt, ok) => {
+    msg.style.display='block';
+    msg.style.background = ok ? 'rgba(0,200,100,.15)' : 'rgba(255,80,80,.15)';
+    msg.style.color = ok ? 'var(--acc3)' : 'var(--red)';
+    msg.textContent = txt;
+  };
+  if(!oldP||!newP){ show('❌ Ikkala maydonni to\'ldiring', false); return; }
+  if(newP.length < 4){ show('❌ Yangi parol kamida 4 belgi bo\'lishi kerak', false); return; }
+  if(!CURRENT_USER){ show('❌ Avval tizimga kiring', false); return; }
+  const users = getUsers();
+  const idx = users.findIndex(u => u.name === CURRENT_USER.name && u.pass === oldP);
+  if(idx === -1){ show('❌ Joriy parol noto\'g\'ri', false); return; }
+  users[idx].pass = newP;
+  CURRENT_USER.pass = newP;
+  saveUsers(users);
+  document.getElementById('cp-old').value='';
+  document.getElementById('cp-new').value='';
+  show('✅ Parol muvaffaqiyatli o\'zgartirildi!', true);
+}
+
+// ══ KIRISH TARIXI ══
+function saveLoginHistory(user){
+  try{
+    const hist = JSON.parse(localStorage.getItem('login_history')||'[]');
+    hist.unshift({
+      name: user.name,
+      role: user.role||'',
+      time: new Date().toLocaleString('uz-UZ'),
+      ts: Date.now()
+    });
+    localStorage.setItem('login_history', JSON.stringify(hist.slice(0,20)));
+  }catch(e){}
+}
+function renderLoginHistory(){
+  const el = document.getElementById('login-history-list');
+  if(!el) return;
+  try{
+    const hist = JSON.parse(localStorage.getItem('login_history')||'[]');
+    if(!hist.length){ el.innerHTML='<span style="color:var(--txt3)">Kirish tarixi yo\'q</span>'; return; }
+    el.innerHTML = hist.map((h,i) => `
+      <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bor);${i===0?'color:var(--acc3)':''}">
+        <span>👤 <b>${h.name}</b> <span style="color:var(--txt3);font-size:11px">(${h.role})</span></span>
+        <span style="color:var(--txt3);font-size:11px">${h.time}</span>
+      </div>`).join('');
+  }catch(e){ el.innerHTML='<span style="color:var(--txt3)">Xato</span>'; }
+}
+
+// ══ AVTOMATIK SESSIYA MUDDATI (30 daqiqa) ══
+let _inactiveTimer = null;
+function resetInactiveTimer(){
+  clearTimeout(_inactiveTimer);
+  _inactiveTimer = setTimeout(() => {
+    if(CURRENT_USER){
+      alert('⏰ 30 daqiqa faollik bo\'lmadi. Tizimdan chiqildi.');
+      doLogout();
+    }
+  }, 30 * 60 * 1000);
+}
+['click','keydown','mousemove','touchstart'].forEach(ev =>
+  document.addEventListener(ev, resetInactiveTimer, {passive:true})
+);
+
+// ══ AVTOMATIK KUNLIK HISOBOT ══
+function saveAutoReport(){
+  const time = document.getElementById('auto-report-time').value;
+  const on   = document.getElementById('auto-report-on').checked;
+  localStorage.setItem('auto_report', JSON.stringify({time, on}));
+  const msg = document.getElementById('auto-report-msg');
+  if(msg) msg.textContent = on ? ('✅ Har kuni soat '+time+' da yuboriladi') : '⭕ O\'chirilgan';
+}
+function loadAutoReportSettings(){
+  try{
+    const s = JSON.parse(localStorage.getItem('auto_report')||'{}');
+    const ti = document.getElementById('auto-report-time');
+    const ch = document.getElementById('auto-report-on');
+    if(ti && s.time) ti.value = s.time;
+    if(ch) ch.checked = !!s.on;
+    const msg = document.getElementById('auto-report-msg');
+    if(msg && s.on) msg.textContent = '✅ Har kuni soat '+(s.time||'18:00')+' da yuboriladi';
+  }catch(e){}
+}
+// Har daqiqa tekshiruv
+setInterval(() => {
+  try{
+    const s = JSON.parse(localStorage.getItem('auto_report')||'{}');
+    if(!s.on || !CURRENT_USER) return;
+    const now = new Date();
+    const hm = now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+    const lastSent = localStorage.getItem('auto_report_last');
+    const today = now.toISOString().split('T')[0];
+    if(hm === (s.time||'18:00') && lastSent !== today){
+      localStorage.setItem('auto_report_last', today);
+      sendTelegramReport();
+    }
+  }catch(e){}
+}, 60000);
 
 async function sendTelegramReport(){
   try{
