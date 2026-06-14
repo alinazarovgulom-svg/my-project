@@ -4477,8 +4477,10 @@ function INIT(){
   const yr1=new Date();yr1.setFullYear(yr1.getFullYear()+1);
   const re=document.getElementById('rwp-en');if(re)re.value=yr1.toISOString().split('T')[0];
   startDashClock();
-  loadDash();loadOpsPage();loadWkPage();loadKrPage();loadRwItemsPage();loadRwPricesPage();
-  setTimeout(updatePulSoroviBadge, 1500);
+  loadDash();
+  setTimeout(()=>{loadOpsPage();loadWkPage();},800);
+  setTimeout(()=>{loadKrPage();loadRwItemsPage();loadRwPricesPage();},1600);
+  setTimeout(updatePulSoroviBadge, 2500);
 }
 
 // ══ NAV ══
@@ -4772,9 +4774,9 @@ async function saveWorker(){
 
 async function loadWkPage(){
   try{
-
-  const all=await GA('workers');
   const t=document.getElementById('wk-tbl');if(!t)return;
+  t.innerHTML='<tr><td colspan="8" style="color:var(--txt3);text-align:center;padding:20px">⏳ Yuklanmoqda...</td></tr>';
+  const all=await GA('workers');
   if(!all.length){t.innerHTML='<tr><td colspan="8" style="color:var(--txt3);text-align:center;padding:20px">Xodim yo\'q</td></tr>';return;}
   const grouped={};
   all.forEach(w=>{const key=w.name;if(!grouped[key])grouped[key]=[];grouped[key].push(w);});
