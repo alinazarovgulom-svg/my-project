@@ -83,13 +83,12 @@ def fetch_events(device):
 
     try:
         r = requests.post(url, json=payload, auth=auth, timeout=8)
+        print(f"[{device['door_name']}] HTTP {r.status_code} | {r.text[:300]}")
         if r.status_code == 200:
             data = r.json()
             events = (data.get("AcsEvent", {})
                          .get("InfoList", []))
             return events
-        else:
-            print(f"[{device['door_name']}] HTTP {r.status_code}")
     except Exception as e:
         print(f"[{device['door_name']}] Xato: {e}")
     return []
