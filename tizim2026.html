@@ -12206,7 +12206,7 @@ async function sendDeptTelegramReport(){
     doc.setFillColor(10,40,60); doc.rect(10,78,W-20,7,'F');
     doc.setFillColor(0,200,160); doc.rect(10,78,3,7,'F');
     doc.setTextColor(255,255,255); doc.setFontSize(9); doc.text('XODIMLAR NATIJALARI',16,83.5);
-    doc.setTextColor(150,200,180); doc.setFontSize(7.5); doc.text('Yuqoridan pastga: eng ko''p → eng kam',W-14,83.5,{align:'right'});
+    doc.setTextColor(150,200,180); doc.setFontSize(7.5); doc.text('Yuqoridan pastga: eng kop → eng kam',W-14,83.5,{align:'right'});
 
     function pctColor(pct){
       if(pct>=100){const t=Math.min((pct-100)/60,1);return [Math.round(240*(1-t)),Math.round(200-80*t),Math.round(40*t)];}
