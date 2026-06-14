@@ -12126,10 +12126,8 @@ async function sendDeptTelegramReport(){
       return Object.entries(data).map(([key, val]) => ({...val, id: key}));
     });
     const [allEnt, allOps] = await Promise.all([fbGet('entries'), fbGet('operations')]);
-
-    // Soat filtri: jn-st / jn-en maydonlaridan olinadi
-    const sessStart = (document.getElementById('jn-st')?.value) || null;
-    const sessEnd   = (document.getElementById('jn-en')?.value) || null;
+    const sessStart = document.getElementById('jn-st')?.value || null;
+    const sessEnd   = document.getElementById('jn-en')?.value || null;
     const entries = allEnt.filter(e => {
       if(e.date !== date || e.dept !== dept) return false;
       if(sessStart && sessEnd){
@@ -12139,167 +12137,130 @@ async function sendDeptTelegramReport(){
       }
       return true;
     });
-
     const oGrp = GRP(allOps);
-    const DEPT_LBL = {tana:'Tana Bo\'limi',astar:'Astar Bo\'limi',montaj:'Montaj Bo\'limi',kamzul:'Kamzul Bo\'limi',shim:'Shim Bo\'limi',pardoz:'Pardoz Dazmol Bo\'limi',qadoq:'Qadoqlash Bo\'limi'};
+    const DEPT_LBL = {tana:"Tana Bo'limi",astar:"Astar Bo'limi",montaj:"Montaj Bo'limi",kamzul:"Kamzul Bo'limi",shim:"Shim Bo'limi",pardoz:"Pardoz Dazmol Bo'limi",qadoq:"Qadoqlash Bo'limi"};
     const deptName = DEPT_LBL[dept] || dept;
-    const sessLabel = sessStart ? (sessStart + '–' + sessEnd) : 'Kunlik (barcha sessiyalar)';
+    const sessLabel = sessStart ? (sessStart+'–'+sessEnd) : 'Barcha sessiyalar';
 
-    // Kirill harflarini qo'llab-quvvatlovchi font yuklash
-    const fontResp = await fetch('https://fonts.gstatic.com/s/roboto/v32/KFOmCnqEu92Fr1Mu4mxK.woff2');
-    // Fallback: font yuklanmasa ham ishlaydi
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
-
-    // Unicode font qo'shish
     try {
       const fontBuf = await fetch('https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/fonts/Roboto/Roboto-Regular.ttf').then(r=>r.arrayBuffer());
-      const u8 = new Uint8Array(fontBuf);
-      let bin=''; u8.forEach(b=>bin+=String.fromCharCode(b));
-      const b64 = btoa(bin);
-      doc.addFileToVFS('Roboto.ttf', b64);
+      const u8 = new Uint8Array(fontBuf); let bin=''; u8.forEach(b=>bin+=String.fromCharCode(b));
+      doc.addFileToVFS('Roboto.ttf', btoa(bin));
       doc.addFont('Roboto.ttf','Roboto','normal');
       doc.setFont('Roboto');
     } catch(e){ doc.setFont('helvetica'); }
+    const fontName = doc.getFont().fontName;
+    const W = doc.internal.pageSize.getWidth();
+    const H = doc.internal.pageSize.getHeight();
 
-    const pageW = doc.internal.pageSize.getWidth();
+    // HEADER
+    doc.setFillColor(10,40,60); doc.rect(0,0,W,52,'F');
+    doc.setFillColor(0,200,160); doc.rect(0,0,5,52,'F');
+    doc.setFillColor(0,170,130); doc.triangle(W-60,0,W,0,W,52,'F');
+    doc.setTextColor(0,200,160); doc.setFontSize(22); doc.text('KAFTIMDA',12,16);
+    doc.setTextColor(255,255,255); doc.setFontSize(11); doc.text('ERP TIZIMI',12,23);
+    doc.setFillColor(0,200,160); doc.roundedRect(10,27,110,9,2,2,'F');
+    doc.setTextColor(10,40,60); doc.setFontSize(10); doc.text(deptName.toUpperCase()+' — HISOBOT',14,33.5);
+    doc.setTextColor(200,230,255); doc.setFontSize(8); doc.text('SANA',W-45,12);
+    doc.setTextColor(255,255,255); doc.setFontSize(13); doc.text(date,W-45,20);
+    doc.setTextColor(200,230,255); doc.setFontSize(8); doc.text('SESSIYA',W-45,28);
+    doc.setTextColor(0,200,160); doc.setFontSize(10); doc.text(sessLabel,W-45,35);
+    doc.setTextColor(180,220,255); doc.setFontSize(7.5); doc.text('Hisobot: '+timeStr,W-45,44);
 
-    // ── HEADER ──
-    doc.setFillColor(0, 105, 92);
-    doc.rect(0, 0, pageW, 38, 'F');
-    doc.setTextColor(255,255,255);
-    doc.setFontSize(20);
-    doc.text('KAFTIMDA ERP', 14, 14);
-    doc.setFontSize(12);
-    doc.text(deptName + ' — Kunlik Hisobot', 14, 23);
-    doc.setFontSize(9);
-    doc.text('Sana: ' + date + '   Sessiya: ' + sessLabel + '   Yozuvlar: ' + entries.length, 14, 32);
-
-    // Gorizontal chiziq
-    doc.setDrawColor(255,255,255);
-    doc.setLineWidth(0.3);
-    doc.line(14, 35, pageW-14, 35);
-    doc.setTextColor(30,30,30);
-
-    // ── XODIMLAR JAMI (sessiyalar bo'yicha guruhlangan) ──
-    const sessByTime = {};
+    // Xodimlar hisoblash
+    const byW = {};
     entries.forEach(e => {
-      const ts = (e.start||'??') + '–' + (e.end||'??');
-      if(!sessByTime[ts]) sessByTime[ts] = [];
-      sessByTime[ts].push(e);
+      if(!byW[e.worker]) byW[e.worker]={qty:0,norm:0,ops:[]};
+      const ov=oGrp[e.op]?GAV(oGrp[e.op],e.date):null;
+      const norm=ov?ov.norm:30;
+      byW[e.worker].qty+=(e.qty||0);
+      byW[e.worker].norm+=norm;
+      if(!byW[e.worker].ops.includes(e.op)) byW[e.worker].ops.push(e.op);
+    });
+    const workers=Object.entries(byW).map(([name,v])=>{
+      const pct=v.norm>0?Math.round(v.qty/v.norm*100):0;
+      return {name,qty:v.qty,norm:v.norm,pct,ops:v.ops.join(', ')};
+    }).sort((a,b)=>b.pct-a.pct);
+
+    const totalQty=workers.reduce((s,w)=>s+w.qty,0);
+    const totalNorm=workers.reduce((s,w)=>s+w.norm,0);
+    const avgPct=totalNorm>0?Math.round(totalQty/totalNorm*100):0;
+    const greenCount=workers.filter(w=>w.pct>=100).length;
+
+    // STAT KARTOCHKALAR
+    const cardW=(W-20)/4-2;
+    [{label:'Xodimlar',value:String(workers.length),color:[0,160,120]},
+     {label:'Jami dona',value:String(totalQty),color:[30,90,160]},
+     {label:"O'rtacha",value:avgPct+'%',color:avgPct>=100?[0,140,80]:avgPct>=80?[180,130,0]:[180,40,40]},
+     {label:"A'lo",value:greenCount+' kishi',color:[0,130,70]}
+    ].forEach((c,i)=>{
+      const cx=10+i*(cardW+2.7);
+      doc.setFillColor(...c.color); doc.roundedRect(cx,56,cardW,18,2,2,'F');
+      doc.setTextColor(255,255,255); doc.setFontSize(14); doc.text(c.value,cx+cardW/2,68,{align:'center'});
+      doc.setFontSize(7); doc.setTextColor(220,240,255); doc.text(c.label.toUpperCase(),cx+cardW/2,72,{align:'center'});
     });
 
-    let startY = 44;
-    Object.entries(sessByTime).sort(([a],[b])=>a.localeCompare(b)).forEach(([ts, sEntries]) => {
-      // Sessiya sarlavhasi
-      doc.setFillColor(236, 246, 255);
-      doc.rect(14, startY-4, pageW-28, 7, 'F');
-      doc.setFontSize(9);
-      doc.setTextColor(0,105,92);
-      doc.text('Sessiya: ' + ts, 16, startY+1);
-      doc.setTextColor(30,30,30);
-      startY += 6;
+    // JADVAL SARLAVHASI
+    doc.setFillColor(10,40,60); doc.rect(10,78,W-20,7,'F');
+    doc.setFillColor(0,200,160); doc.rect(10,78,3,7,'F');
+    doc.setTextColor(255,255,255); doc.setFontSize(9); doc.text('XODIMLAR NATIJALARI',16,83.5);
+    doc.setTextColor(150,200,180); doc.setFontSize(7.5); doc.text('Yuqoridan pastga: eng ko''p → eng kam',W-14,83.5,{align:'right'});
 
-      // Xodimlarni jamlaymiz
-      const byW = {};
-      sEntries.forEach(e => {
-        if(!byW[e.worker]) byW[e.worker] = {qty:0, norm:0, ops:[]};
-        const ov = oGrp[e.op] ? GAV(oGrp[e.op], e.date) : null;
-        const norm = ov ? ov.norm : 30;
-        byW[e.worker].qty += (e.qty||0);
-        byW[e.worker].norm += norm;
-        if(!byW[e.worker].ops.includes(e.op)) byW[e.worker].ops.push(e.op);
-      });
+    function pctColor(pct){
+      if(pct>=100){const t=Math.min((pct-100)/60,1);return [Math.round(240*(1-t)),Math.round(200-80*t),Math.round(40*t)];}
+      const t=pct/100;return [Math.round(180+60*t),Math.round(200*t),0];
+    }
+    function textCol(pct){return (pct>=85&&pct<=115)?[30,20,0]:[255,255,255];}
 
-      // Saralash: yashil > sariq > qizil
-      const workers = Object.entries(byW).map(([name,v]) => {
-        const pct = v.norm > 0 ? Math.round(v.qty/v.norm*100) : 0;
-        return {name, qty:v.qty, norm:v.norm, pct, ops:v.ops.join(', ')};
-      }).sort((a,b) => b.pct - a.pct);
-
-      // Foizga qarab gradient rang hisoblash
-      function pctColor(pct){
-        if(pct >= 100){
-          // 100% → sariq (240,200,0), 150%+ → to'q yashil (0,120,40)
-          const t = Math.min((pct - 100) / 60, 1); // 0..1 (0=100%, 1=160%+)
-          const r = Math.round(240 - 240*t);
-          const g = Math.round(200 + (120-200)*t + 80*t); // 200→160
-          // sariq(240,200,0) → to'q yashil(0,140,40)
-          return [Math.round(240*(1-t)), Math.round(200 - 60*t + (t>0.5?-40:0)), Math.round(t*40)];
-        } else {
-          // 100% → sariq (240,200,0), 0% → to'q qizil (180,0,0)
-          const t = pct / 100; // 0..1 (0=0%, 1=100%)
-          // to'q qizil(180,0,0) → to'q sariq(240,200,0)
-          return [Math.round(180 + 60*t), Math.round(200*t), 0];
+    doc.autoTable({
+      head:[['#','Xodim ismi','Operatsiya','Bajarildi','Norma','Holat']],
+      body:workers.map((w,i)=>[String(i+1),w.name,w.ops,String(w.qty),String(w.norm),w.pct+'%']),
+      startY:87,
+      styles:{fontSize:9.5,cellPadding:3.5,font:fontName,lineColor:[220,230,235],lineWidth:0.2},
+      headStyles:{fillColor:[10,40,60],textColor:[0,200,160],fontStyle:'bold',fontSize:9,cellPadding:3},
+      columnStyles:{0:{cellWidth:10,halign:'center'},1:{cellWidth:52},2:{cellWidth:50},3:{cellWidth:22,halign:'center',fontStyle:'bold'},4:{cellWidth:22,halign:'center'},5:{cellWidth:20,halign:'center',fontStyle:'bold',fontSize:11}},
+      didParseCell:(data)=>{
+        if(data.section==='body'){
+          const w=workers[data.row.index];if(!w)return;
+          data.cell.styles.fillColor=pctColor(w.pct);
+          data.cell.styles.textColor=textCol(w.pct);
+          if(data.column.index===5){data.cell.styles.fontSize=11;data.cell.styles.fontStyle='bold';}
         }
-      }
-      function textColor(pct){
-        // Sariqda qora matn, boshqalarda oq
-        if(pct>=85 && pct<=115) return [40,30,0];
-        return [255,255,255];
-      }
-
-      const summaryBody = workers.map(w => [w.name, w.ops, String(w.qty), String(w.norm), w.pct+'%']);
-
-      doc.autoTable({
-        head:[['Xodim ismi','Operatsiya','Bajarildi','Norma','Holat']],
-        body: summaryBody,
-        startY: startY,
-        styles:{ fontSize:9, cellPadding:3, font: doc.getFont().fontName },
-        headStyles:{ fillColor:[0,90,80], textColor:255, fontStyle:'bold', fontSize:9 },
-        columnStyles:{
-          0:{cellWidth:55},
-          1:{cellWidth:55},
-          2:{cellWidth:22, halign:'center'},
-          3:{cellWidth:22, halign:'center'},
-          4:{cellWidth:22, halign:'center', fontStyle:'bold'}
-        },
-        didParseCell: (data) => {
-          if(data.section==='body'){
-            const w = workers[data.row.index];
-            if(!w) return;
-            data.cell.styles.fillColor = pctColor(w.pct);
-            data.cell.styles.textColor = textColor(w.pct);
-            if(data.column.index===4){
-              data.cell.styles.fontStyle='bold';
-              data.cell.styles.fontSize=10;
-            }
-          }
-        },
-        margin:{left:14, right:14}
-      });
-      startY = doc.lastAutoTable.finalY + 6;
+      },
+      margin:{left:10,right:10}
     });
 
-    // ── FOOTER ──
-    const pageH = doc.internal.pageSize.getHeight();
-    doc.setFillColor(245,245,245);
-    doc.rect(0, pageH-14, pageW, 14, 'F');
-    doc.setFontSize(8);
-    doc.setTextColor(120,120,120);
-    doc.text('KAFTIMDA ERP — kaftimda@gmail.com | +998 91 760 66 66', 14, pageH-6);
-    doc.text('Hisobot vaqti: ' + date + ' ' + timeStr, pageW-55, pageH-6);
+    const afterTable=doc.lastAutoTable.finalY+5;
+    // IZOH
+    doc.setFillColor(248,250,252); doc.roundedRect(10,afterTable+3,W-20,10,2,2,'F');
+    doc.setFillColor(0,140,80); doc.circle(18,afterTable+8,2.5,'F');
+    doc.setTextColor(40,40,40); doc.setFontSize(8); doc.text('Normadan ortiq',23,afterTable+9);
+    doc.setFillColor(220,180,0); doc.circle(78,afterTable+8,2.5,'F');
+    doc.text('Normaga yaqin (80-99%)',83,afterTable+9);
+    doc.setFillColor(200,40,40); doc.circle(150,afterTable+8,2.5,'F');
+    doc.text('Normadan kam',155,afterTable+9);
 
-    // Telegram yuborish
-    const blob = doc.output('blob');
-    const fd = new FormData();
-    fd.append('chat_id', TG_CHAT);
-    fd.append('document', blob, deptName.replace(/ /g,'_')+'_'+date+'.pdf');
-    const totalQty = entries.reduce((s,e)=>s+(e.qty||0),0);
-    const uniqWorkers = [...new Set(entries.map(e=>e.worker))].length;
-    fd.append('caption',
-      '📊 *'+deptName+'* Hisoboti\n'+
-      '📅 Sana: '+date+' | ⏰ '+timeStr+'\n'+
-      '👥 Xodimlar: '+uniqWorkers+'\n'+
-      '📦 Jami bajarildi: '+totalQty+' ta\n'+
-      '📝 Yozuvlar: '+entries.length
-    );
-    const r = await fetch('https://api.telegram.org/bot'+TG_TOKEN+'/sendDocument',{method:'POST',body:fd});
-    const res = await r.json();
+    // FOOTER
+    doc.setFillColor(10,40,60); doc.rect(0,H-18,W,18,'F');
+    doc.setFillColor(0,200,160); doc.rect(0,H-18,W,1.5,'F');
+    doc.setTextColor(0,200,160); doc.setFontSize(9); doc.text('KAFTIMDA ERP',12,H-10);
+    doc.setTextColor(160,200,220); doc.setFontSize(7.5); doc.text('kaftimda@gmail.com  |  +998 91 760 66 66  |  @KAFTIMDA_ERP',12,H-5);
+    doc.setTextColor(100,150,180); doc.text('2026',W-20,H-5);
+
+    const blob=doc.output('blob');
+    const fd=new FormData();
+    fd.append('chat_id',TG_CHAT);
+    fd.append('document',blob,deptName.replace(/ /g,'_')+'_'+date+'.pdf');
+    fd.append('caption','📊 *'+deptName+'* Hisoboti\n📅 '+date+' | ⏰ '+timeStr+'\n🕐 '+sessLabel+'\n👥 '+workers.length+' xodim | 📦 '+totalQty+' ta\n📈 O\'rtacha: '+avgPct+'%');
+    const r=await fetch('https://api.telegram.org/bot'+TG_TOKEN+'/sendDocument',{method:'POST',body:fd});
+    const res=await r.json();
     if(res.ok) alert('✅ Hisobot Telegramga yuborildi!');
     else alert('❌ Xato: '+res.description);
   } catch(e){ alert('❌ Xato: '+e.message); }
 }
+
 
 async function sendTelegramReport(){
   try{
