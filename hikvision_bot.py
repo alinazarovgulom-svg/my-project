@@ -65,17 +65,16 @@ def fetch_events(device):
     auth     = get_auth(device)
     url      = f"{base_url}/ISAPI/AccessControl/AcsEvent?format=json"
 
-    now = datetime.now(timezone.utc)
-    start_time = (now - timedelta(seconds=POLL_INTERVAL + 5)).strftime("%Y-%m-%dT%H:%M:%S+00:00")
-    end_time   = now.strftime("%Y-%m-%dT%H:%M:%S+00:00")
+    tz_uz = timezone(timedelta(hours=5))
+    now = datetime.now(tz_uz)
+    start_time = (now - timedelta(seconds=POLL_INTERVAL + 5)).strftime("%Y-%m-%dT%H:%M:%S+05:00")
+    end_time   = now.strftime("%Y-%m-%dT%H:%M:%S+05:00")
 
     payload = {
         "AcsEventCond": {
             "searchID":             "1",
             "searchResultPosition": 0,
             "maxResults":           20,
-            "major":                5,
-            "minor":                75,
             "startTime":            start_time,
             "endTime":              end_time,
         }
