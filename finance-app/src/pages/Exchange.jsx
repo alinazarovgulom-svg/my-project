@@ -12,14 +12,6 @@ const fmt = (n, c) => {
   return n.toFixed(2)
 }
 
-const getRatesData = (userId) => {
-  try {
-    const raw = localStorage.getItem(`finance_${userId}_rates`)
-    if (!raw) return null
-    return JSON.parse(raw)
-  } catch { return null }
-}
-
 const getRatesHistory = (userId) => {
   try {
     const raw = localStorage.getItem(`finance_${userId}_rates_history`)
@@ -227,7 +219,6 @@ export default function Exchange() {
       <Modal open={rateModal} onClose={() => setRateModal(false)} title="Kurslarni o'zgartirish">
         <div className="flex flex-col gap-3">
           <p className="text-gray-400 text-sm">1 valyuta = ? UZS</p>
-          <button onClick={saveRates} className="btn-primary">Saqlash</button>
           {Object.keys(rates).map(cur => (
             <div key={cur}>
               <label className="text-gray-400 text-xs mb-1 block">{FLAGS[cur]} 1 {cur} = ? UZS</label>
@@ -239,6 +230,7 @@ export default function Exchange() {
               />
             </div>
           ))}
+          <button onClick={saveRates} className="btn-primary mt-2">Saqlash</button>
         </div>
       </Modal>
     </div>

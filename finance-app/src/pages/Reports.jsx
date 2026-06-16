@@ -96,9 +96,10 @@ export default function Reports() {
         headStyles: { fillColor: [79, 142, 247] }
       })
 
-      doc.text('Operatsiyalar', 14, doc.lastAutoTable.finalY + 10)
+      const afterSummary = doc.lastAutoTable?.finalY ?? 70
+      doc.text('Operatsiyalar', 14, afterSummary + 10)
       autoTable(doc, {
-        startY: doc.lastAutoTable.finalY + 13,
+        startY: afterSummary + 13,
         head: [['Sana', 'Tur', 'Kategoriya', 'Izoh', 'Summa']],
         body: filtered.map(t => [
           format(new Date(t.date), 'dd.MM.yyyy'),

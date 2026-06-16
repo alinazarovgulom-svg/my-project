@@ -70,11 +70,13 @@ export default function Debts() {
 
   const handleEditSave = () => {
     if (!editingDebt?.person || !editingDebt?.amount) return
-    const updated = debts.map(d =>
-      d.id === editingDebt.id
-        ? { ...editingDebt, amount: parseFloat(editingDebt.amount), remaining: parseFloat(editingDebt.amount) - (d.amount - d.remaining) }
-        : d
-    )
+    const updated = debts.map(d => {
+      if (d.id !== editingDebt.id) return d
+      const newAmount = parseFloat(editingDebt.amount)
+      const alreadyPaid = d.amount - d.remaining
+      const newRemaining = Math.max(0, newAmount - alreadyPaid)
+      return { ...editingDebt, amount: newAmount, remaining: newRemaining }
+    })
     saveDebts(updated)
     setEditModal(false)
     setEditingDebt(null)

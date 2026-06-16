@@ -125,7 +125,7 @@ export default function Transactions() {
       styles: { fontSize: 9 },
       headStyles: { fillColor: [29, 78, 216] }
     })
-    doc.save('pulsek-tranzaksiyalar.pdf')
+    doc.save('pulbek-tranzaksiyalar.pdf')
     setExportModal(false)
   }
 
@@ -141,7 +141,7 @@ export default function Transactions() {
     const ws = XLSX.utils.json_to_sheet(data)
     const wb = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(wb, ws, 'Tranzaksiyalar')
-    XLSX.writeFile(wb, 'pulsek-tranzaksiyalar.xlsx')
+    XLSX.writeFile(wb, 'pulbek-tranzaksiyalar.xlsx')
     setExportModal(false)
   }
 
@@ -245,8 +245,8 @@ export default function Transactions() {
         {editingTx && (
           <div className="flex flex-col gap-3 pb-4">
             <div className="flex gap-2">
-              <button onClick={() => setEditingTx(t => ({ ...t, type: 'income' }))} className={`flex-1 py-2 rounded-xl text-sm font-medium transition-colors ${editingTx.type === 'income' ? 'bg-green-500 text-white' : 'bg-dark-600 text-gray-400'}`}>Kirim</button>
-              <button onClick={() => setEditingTx(t => ({ ...t, type: 'expense' }))} className={`flex-1 py-2 rounded-xl text-sm font-medium transition-colors ${editingTx.type === 'expense' ? 'bg-red-500 text-white' : 'bg-dark-600 text-gray-400'}`}>Chiqim</button>
+              <button onClick={() => setEditingTx(tx => ({ ...tx, type: 'income', category: INCOME_CATEGORIES[0] }))} className={`flex-1 py-2 rounded-xl text-sm font-medium transition-colors ${editingTx.type === 'income' ? 'bg-green-500 text-white' : 'bg-dark-600 text-gray-400'}`}>Kirim</button>
+              <button onClick={() => setEditingTx(tx => ({ ...tx, type: 'expense', category: EXPENSE_CATEGORIES[0] }))} className={`flex-1 py-2 rounded-xl text-sm font-medium transition-colors ${editingTx.type === 'expense' ? 'bg-red-500 text-white' : 'bg-dark-600 text-gray-400'}`}>Chiqim</button>
             </div>
             <div>
               <label className="text-gray-400 text-xs mb-1 block">Summa</label>
