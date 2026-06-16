@@ -88,7 +88,12 @@ export default function Dashboard() {
               </div>
               <div>
                 <p className="text-blue-200 text-xs">{t('income')}</p>
-                <p className="text-white text-sm font-semibold">{fmt(totalIncome)}</p>
+                {currencyBreakdown.filter(x => x.income > 0).map(({ cur, income: inc }) => (
+                  <p key={cur} className="text-white text-xs font-semibold leading-tight">+{fmt(inc)} {cur}</p>
+                ))}
+                {currencyBreakdown.filter(x => x.income > 0).length === 0 && (
+                  <p className="text-white text-sm font-semibold">{fmt(totalIncome)}</p>
+                )}
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -97,7 +102,12 @@ export default function Dashboard() {
               </div>
               <div>
                 <p className="text-blue-200 text-xs">{t('expense')}</p>
-                <p className="text-white text-sm font-semibold">{fmt(totalExpense)}</p>
+                {currencyBreakdown.filter(x => x.expense > 0).map(({ cur, expense: exp }) => (
+                  <p key={cur} className="text-white text-xs font-semibold leading-tight">-{fmt(exp)} {cur}</p>
+                ))}
+                {currencyBreakdown.filter(x => x.expense > 0).length === 0 && (
+                  <p className="text-white text-sm font-semibold">{fmt(totalExpense)}</p>
+                )}
               </div>
             </div>
           </div>

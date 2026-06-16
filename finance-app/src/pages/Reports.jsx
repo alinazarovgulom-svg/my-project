@@ -20,6 +20,15 @@ export default function Reports() {
   const expense = filtered.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0)
   const net = income - expense
 
+  // Per-currency breakdown
+  const CURRENCIES = ['UZS', 'USD', 'EUR', 'RUB']
+  const FLAGS = { UZS: '🇺🇿', USD: '🇺🇸', EUR: '🇪🇺', RUB: '🇷🇺' }
+  const currencyStats = CURRENCIES.map(cur => {
+    const inc = filtered.filter(t => t.type === 'income' && (t.currency || 'UZS') === cur).reduce((s, t) => s + t.amount, 0)
+    const exp = filtered.filter(t => t.type === 'expense' && (t.currency || 'UZS') === cur).reduce((s, t) => s + t.amount, 0)
+    return { cur, inc, exp }
+  }).filter(x => x.inc > 0 || x.exp > 0)
+
   // Group by category
   const byCategory = filtered.reduce((acc, t) => {
     if (!acc[t.category]) acc[t.category] = { income: 0, expense: 0 }
@@ -154,22 +163,44 @@ export default function Reports() {
       <div className="card">
         <h2 className="text-white font-semibold mb-3">Davr xulosasi</h2>
         <div className="flex flex-col gap-2">
-          <div className="flex items-center justify-between p-3 bg-green-500/10 rounded-xl">
-            <div className="flex items-center gap-2">
-              <TrendingUp size={18} className="text-green-400" />
-              <span className="text-gray-300 text-sm">Jami kirim</span>
+          {/* Income by currency */}
+          <div className="bg-green-500/10 rounded-xl p-3">
+            <div className="flex items-center gap-2 mb-2">
+              <TrendingUp size={16} className="text-green-400" />
+              <span className="text-gray-300 text-sm font-medium">Jami kirim</span>
             </div>
-            <span className="text-green-400 font-bold">{fmt(income)} so'm</span>
+            {currencyStats.filter(x => x.inc > 0).length > 0 ? (
+              currencyStats.filter(x => x.inc > 0).map(({ cur, inc }) => (
+                <div key={cur} className="flex items-center justify-between mt-1">
+                  <span className="text-gray-400 text-xs">{FLAGS[cur]} {cur}</span>
+                  <span className="text-green-400 font-bold text-sm">+{fmt(inc)} {cur}</span>
+                </div>
+              ))
+            ) : (
+              <span className="text-green-400 font-bold">{fmt(income)} so'm</span>
+            )}
           </div>
-          <div className="flex items-center justify-between p-3 bg-red-500/10 rounded-xl">
-            <div className="flex items-center gap-2">
-              <TrendingDown size={18} className="text-red-400" />
-              <span className="text-gray-300 text-sm">Jami chiqim</span>
+
+          {/* Expense by currency */}
+          <div className="bg-red-500/10 rounded-xl p-3">
+            <div className="flex items-center gap-2 mb-2">
+              <TrendingDown size={16} className="text-red-400" />
+              <span className="text-gray-300 text-sm font-medium">Jami chiqim</span>
             </div>
-            <span className="text-red-400 font-bold">{fmt(expense)} so'm</span>
+            {currencyStats.filter(x => x.exp > 0).length > 0 ? (
+              currencyStats.filter(x => x.exp > 0).map(({ cur, exp }) => (
+                <div key={cur} className="flex items-center justify-between mt-1">
+                  <span className="text-gray-400 text-xs">{FLAGS[cur]} {cur}</span>
+                  <span className="text-red-400 font-bold text-sm">-{fmt(exp)} {cur}</span>
+                </div>
+              ))
+            ) : (
+              <span className="text-red-400 font-bold">{fmt(expense)} so'm</span>
+            )}
           </div>
+
           <div className={`flex items-center justify-between p-3 rounded-xl ${net >= 0 ? 'bg-blue-500/10' : 'bg-orange-500/10'}`}>
-            <span className="text-gray-300 text-sm font-medium">Sof foyda</span>
+            <span className="text-gray-300 text-sm font-medium">Sof foyda (UZS)</span>
             <span className={`font-bold ${net >= 0 ? 'text-blue-400' : 'text-orange-400'}`}>{fmt(Math.abs(net))} so'm {net < 0 ? '(zarar)' : ''}</span>
           </div>
           <p className="text-gray-500 text-xs text-center">{filtered.length} ta operatsiya</p>
