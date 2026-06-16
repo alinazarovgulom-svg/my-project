@@ -9,6 +9,7 @@ import Exchange from './pages/Exchange'
 import Reports from './pages/Reports'
 import Settings from './pages/Settings'
 import Categories from './pages/Categories'
+import Family from './pages/Family'
 import './index.css'
 
 function ProtectedLayout() {
@@ -24,6 +25,7 @@ function ProtectedLayout() {
         <Route path="/reports" element={<Reports />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/categories" element={<Categories />} />
+        <Route path="/family" element={<Family />} />
       </Routes>
       <BottomNav />
     </>

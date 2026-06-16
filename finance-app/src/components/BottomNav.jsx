@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { Home, ArrowLeftRight, Users, RefreshCw, BarChart2, Settings } from 'lucide-react'
+import { Home, ArrowLeftRight, Users, RefreshCw, BarChart2, Settings, UsersRound } from 'lucide-react'
 
 const links = [
   { to: '/', icon: Home, label: 'Bosh' },
@@ -7,6 +7,7 @@ const links = [
   { to: '/debts', icon: Users, label: 'Qarzlar' },
   { to: '/exchange', icon: RefreshCw, label: 'Valyuta' },
   { to: '/reports', icon: BarChart2, label: 'Hisobot' },
+  { to: '/family', icon: UsersRound, label: 'Oila' },
   { to: '/settings', icon: Settings, label: 'Sozlama' },
 ]
 
@@ -20,13 +21,15 @@ export default function BottomNav() {
             to={to}
             end={to === '/'}
             className={({ isActive }) =>
-              `flex flex-col items-center gap-0.5 px-2 py-1 rounded-xl transition-colors min-w-0 ${
-                isActive ? 'text-blue-400' : 'text-gray-500'
+              `flex flex-col items-center gap-0.5 px-1 py-1 rounded-xl transition-colors min-w-0 ${
+                isActive
+                  ? (to === '/family' ? 'text-purple-400' : 'text-blue-400')
+                  : 'text-gray-500'
               }`
             }
           >
-            <Icon size={20} />
-            <span className="text-[10px] leading-tight truncate">{label}</span>
+            <Icon size={18} />
+            <span className="text-[9px] leading-tight truncate">{label}</span>
           </NavLink>
         ))}
       </div>
