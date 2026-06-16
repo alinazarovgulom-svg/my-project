@@ -1,4 +1,4 @@
-import { TrendingUp, TrendingDown, Wallet, ArrowRight, Plus, Users } from 'lucide-react'
+import { TrendingUp, TrendingDown, Wallet, ArrowRight, Plus, Users, ArrowLeftRight } from 'lucide-react'
 import { useApp } from '../store/AppContext'
 import { useNavigate } from 'react-router-dom'
 import { format } from 'date-fns'
@@ -48,6 +48,15 @@ export default function Dashboard() {
   }).filter(x => x.income > 0 || x.expense > 0)
 
   const hasMultiCurrency = currencyBreakdown.some(x => x.cur !== 'UZS')
+
+  // Today's confirmed conversions from Exchange page
+  const todayConversions = (() => {
+    try {
+      const today = format(new Date(), 'yyyy-MM-dd')
+      const key = `finance_${user?.id}_conversions_${today}`
+      return JSON.parse(localStorage.getItem(key) || '[]')
+    } catch { return [] }
+  })()
 
   // Family balances
   const memberBalances = family
@@ -132,24 +141,22 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Multi-currency breakdown */}
-      {hasMultiCurrency && (
+      {/* Today's conversions from Exchange page */}
+      {todayConversions.length > 0 && (
         <div className="card">
-          <p className="text-gray-400 text-xs mb-3">💱 Valyutalar bo'yicha (bugungi kurs)</p>
+          <div className="flex items-center gap-2 mb-3">
+            <ArrowLeftRight size={14} className="text-blue-400" />
+            <p className="text-gray-400 text-xs">Bugungi konvertatsiyalar</p>
+          </div>
           <div className="flex flex-col gap-2">
-            {currencyBreakdown.map(({ cur, income, expense }) => (
-              <div key={cur} className="flex items-center justify-between">
+            {todayConversions.map((c, i) => (
+              <div key={i} className="flex items-center justify-between bg-dark-600 rounded-xl px-3 py-2">
                 <div className="flex items-center gap-2">
-                  <span className="text-base">{FLAGS[cur] || '🌐'}</span>
-                  <span className="text-gray-300 text-sm font-medium">{cur}</span>
+                  <span className="text-white text-sm font-medium">{c.amount} {c.from}</span>
+                  <ArrowRight size={12} className="text-gray-500" />
+                  <span className="text-blue-400 text-sm font-medium">{c.result} {c.to}</span>
                 </div>
-                <div className="flex gap-3 text-xs">
-                  {income > 0 && <span className="text-green-400">+{fmt(income)} {cur}</span>}
-                  {expense > 0 && <span className="text-red-400">-{fmt(expense)} {cur}</span>}
-                  {cur !== 'UZS' && (
-                    <span className="text-gray-500">≈ {fmt(toUZS(income - expense, cur))} UZS</span>
-                  )}
-                </div>
+                <span className="text-gray-500 text-xs">{c.time}</span>
               </div>
             ))}
           </div>

@@ -58,7 +58,21 @@ export default function Exchange() {
     return fmt(result, to)
   }
 
-  const swap = () => { setFrom(to); setTo(from); setConfirmed(false) }
+  const handleConfirm = () => {
+    const n = parseFloat(amount)
+    if (!n) return
+    setConfirmed(true)
+
+    // Save this conversion to today's history
+    if (user?.id) {
+      const res = computeResult()
+      const today = format(new Date(), 'yyyy-MM-dd')
+      const key = `finance_${user.id}_conversions_${today}`
+      const existing = JSON.parse(localStorage.getItem(key) || '[]')
+      existing.push({ from, to, amount: n, result: res, time: format(new Date(), 'HH:mm') })
+      localStorage.setItem(key, JSON.stringify(existing))
+    }
+  }
 
   const handleAmountChange = (v) => { setAmount(v); setConfirmed(false) }
 
@@ -167,7 +181,7 @@ export default function Exchange() {
         </div>
 
         <button
-          onClick={() => setConfirmed(true)}
+          onClick={handleConfirm}
           disabled={!amount}
           className="btn-primary disabled:opacity-40"
         >
