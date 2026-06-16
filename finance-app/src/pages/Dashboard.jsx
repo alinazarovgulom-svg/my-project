@@ -22,6 +22,14 @@ export default function Dashboard() {
     return amount * (rates[currency] || 1)
   }
 
+  // Per-currency balance (not converted)
+  const currencyBalances = ['UZS', 'USD', 'EUR', 'RUB'].map(cur => {
+    const bal = transactions
+      .filter(t => (t.currency || 'UZS') === cur)
+      .reduce((s, t) => t.type === 'income' ? s + t.amount : s - t.amount, 0)
+    return { cur, bal }
+  }).filter(x => x.bal !== 0)
+
   // Compute balances with currency conversion
   const balance = transactions.reduce((sum, tx) => {
     const inUZS = toUZS(tx.amount, tx.currency)
@@ -80,7 +88,17 @@ export default function Dashboard() {
         <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full translate-y-8 -translate-x-8" />
         <div className="relative">
           <p className="text-blue-200 text-sm mb-1">{t('balance')}</p>
-          <p className="text-white text-3xl font-bold">{fmt(balance)} <span className="text-lg font-normal">so'm</span></p>
+          {currencyBalances.length > 0 ? (
+            <div className="flex flex-col gap-0.5">
+              {currencyBalances.map(({ cur, bal }) => (
+                <p key={cur} className={`text-white font-bold ${currencyBalances.length === 1 ? 'text-3xl' : 'text-2xl'}`}>
+                  {bal >= 0 ? '' : '-'}{fmt(Math.abs(bal))} <span className="text-base font-normal">{cur}</span>
+                </p>
+              ))}
+            </div>
+          ) : (
+            <p className="text-white text-3xl font-bold">0 <span className="text-lg font-normal">so'm</span></p>
+          )}
           <div className="flex gap-4 mt-4">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-lg bg-green-500/20 flex items-center justify-center">
