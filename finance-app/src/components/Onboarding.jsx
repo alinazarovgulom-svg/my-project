@@ -122,63 +122,24 @@ export default function Onboarding({ onDone }) {
         }
       `}</style>
 
-      {/* Film grain overlay */}
-      {phase >= 1 && phase <= 2 && (
-        <div className="absolute inset-0 pointer-events-none z-10"
-          style={{
-            backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 256 256\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noise\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.9\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noise)\' opacity=\'0.08\'/%3E%3C/svg%3E")',
-            animation: 'filmFlicker 0.1s infinite',
-            opacity: 0.15,
-          }} />
-      )}
-
-      {/* Scanline */}
-      {phase >= 1 && phase <= 2 && (
-        <div className="absolute left-0 right-0 h-8 pointer-events-none z-10"
-          style={{
-            background: 'linear-gradient(transparent, rgba(255,255,255,0.03), transparent)',
-            animation: 'scanline 2s linear infinite',
-          }} />
-      )}
-
-      {/* ── PHASE 1-2: KAFTIMDA presents ── */}
+      {/* ── PHASE 1-2: KAFTIMDA presents — oq fon ── */}
       <div className="absolute inset-0 flex flex-col items-center justify-center z-20"
         style={{
+          background: '#ffffff',
           opacity: phase === 1 ? 1 : 0,
-          transition: phase === 2 ? 'opacity 0.5s ease' : 'opacity 0.8s ease',
+          transition: phase === 2 ? 'opacity 0.6s ease' : 'opacity 0.5s ease',
           pointerEvents: 'none',
         }}>
-        <p className="text-white font-light mb-4"
-          style={{
-            fontSize: '11px',
-            letterSpacing: '0.5em',
-            textTransform: 'uppercase',
-            color: 'rgba(255,255,255,0.4)',
-            animation: phase === 1 ? 'fadeUp 0.8s ease forwards' : 'none',
-          }}>
-          taqdim etadi
-        </p>
         <p style={{
-          fontSize: '22px',
+          fontSize: '38px',
           fontWeight: 900,
-          letterSpacing: '0.35em',
+          letterSpacing: '0.25em',
           textTransform: 'uppercase',
-          color: 'rgba(255,255,255,0.95)',
-          textShadow: '0 0 30px rgba(255,255,255,0.3)',
+          color: '#000000',
           animation: phase === 1 ? 'presentsIn 1s cubic-bezier(0.16,1,0.3,1) forwards' : 'none',
         }}>
           KAFTIMDA
         </p>
-        <div className="mt-6 flex gap-1">
-          {[0,1,2,3,4].map(i => (
-            <div key={i} style={{
-              width: 3, height: 3, borderRadius: '50%',
-              background: 'rgba(255,255,255,0.3)',
-              animation: phase === 1 ? `fadeUp 0.4s ${0.8 + i * 0.1}s ease forwards` : 'none',
-              opacity: 0,
-            }} />
-          ))}
-        </div>
       </div>
 
       {/* ── SHOCKWAVE rings ── */}
