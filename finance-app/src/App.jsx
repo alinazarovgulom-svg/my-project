@@ -46,10 +46,9 @@ function AppRoutes() {
 }
 
 export default function App() {
-  const [onboarded, setOnboarded] = useState(() => !!localStorage.getItem('pulsek_onboarded'))
+  const [onboarded, setOnboarded] = useState(false)
 
   const handleDone = () => {
-    localStorage.setItem('pulsek_onboarded', '1')
     setOnboarded(true)
   }
 
