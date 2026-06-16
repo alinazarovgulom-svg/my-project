@@ -145,8 +145,10 @@ export default function Onboarding({ onDone }) {
       )}
 
       {/* ── PHASE 1-2: KAFTIMDA presents ── */}
-      <div className="absolute inset-0 flex flex-col items-center z-20" style={{ justifyContent: 'center', paddingBottom: '15vh' }}>
+      <div className="absolute inset-0 flex flex-col items-center z-20"
         style={{
+          justifyContent: 'center',
+          paddingBottom: '15vh',
           opacity: phase === 1 ? 1 : 0,
           transition: phase === 2 ? 'opacity 0.5s ease' : 'opacity 0.8s ease',
           pointerEvents: 'none',
