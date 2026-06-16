@@ -121,29 +121,49 @@ export default function Transactions() {
     return m?.fullName || m?.username || 'Noma\'lum'
   }
 
-  const exportPDF = () => {
+  const buildPDF = (list, filename) => {
     const doc = new jsPDF()
     doc.setFontSize(16)
     doc.text('PulBek - Tranzaksiyalar', 14, 20)
     doc.setFontSize(10)
-    doc.text(`Sana: ${format(new Date(), 'dd.MM.yyyy')}`, 14, 28)
+    doc.text(`Chop etilgan: ${format(new Date(), 'dd.MM.yyyy')}`, 14, 28)
+    doc.text(`Jami: ${list.length} ta operatsiya`, 14, 35)
+
     autoTable(doc, {
-      startY: 35,
+      startY: 42,
       head: [['Sana', 'Tur', 'Kategoriya', 'Miqdor', 'Valyuta', 'Izoh']],
-      body: filtered.map(t => [
+      body: list.map(t => [
         format(new Date(t.date), 'dd.MM.yyyy'),
         t.type === 'income' ? 'Kirim' : 'Chiqim',
         t.category,
-        fmt(t.amount),
+        fmt(t.amount, t.currency || 'UZS'),
         t.currency || 'UZS',
         t.note || ''
       ]),
       styles: { fontSize: 9 },
       headStyles: { fillColor: [29, 78, 216] }
     })
-    doc.save('pulbek-tranzaksiyalar.pdf')
+
+    // Umumiy miqdor jadval ostida
+    const currencies = [...new Set(list.map(t => t.currency || 'UZS'))]
+    let y = (doc.lastAutoTable?.finalY ?? 60) + 8
+    doc.setFontSize(10)
+    doc.setFont('helvetica', 'bold')
+    doc.text("Umumiy:", 14, y)
+    currencies.forEach(cur => {
+      const income = list.filter(t => t.type === 'income' && (t.currency || 'UZS') === cur).reduce((s, t) => s + t.amount, 0)
+      const expense = list.filter(t => t.type === 'expense' && (t.currency || 'UZS') === cur).reduce((s, t) => s + t.amount, 0)
+      y += 6
+      doc.setFont('helvetica', 'normal')
+      if (income > 0) doc.text(`  Kirim (${cur}): +${fmt(income, cur)}`, 14, y)
+      if (expense > 0) { y += 5; doc.text(`  Chiqim (${cur}): -${fmt(expense, cur)}`, 14, y) }
+    })
+
+    doc.save(filename)
     setExportModal(false)
   }
+
+  const exportPDF = () => buildPDF(filtered, 'pulbek-tranzaksiyalar.pdf')
 
   const exportExcel = () => {
     const data = filtered.map(t => ({
