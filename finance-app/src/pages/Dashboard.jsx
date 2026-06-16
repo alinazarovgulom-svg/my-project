@@ -181,41 +181,6 @@ export default function Dashboard() {
         </button>
       </div>
 
-      {/* Family Balance */}
-      {family && (
-        <div className="card">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <Users size={16} className="text-purple-400" />
-              <h2 className="font-semibold text-white">{t('familyBalance')}</h2>
-            </div>
-            <button onClick={() => nav('/family')} className="text-purple-400 text-sm flex items-center gap-1">
-              {t('allTx')} <ArrowRight size={14} />
-            </button>
-          </div>
-          <div className="bg-purple-500/10 rounded-xl p-3 mb-3">
-            <p className="text-purple-300 text-xs mb-0.5">{t('familyBalance')}</p>
-            <p className={`text-xl font-bold ${familyTotalBalance >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-              {familyTotalBalance >= 0 ? '+' : '-'}{fmt(familyTotalBalance)} so'm
-            </p>
-          </div>
-          <div className="flex flex-col gap-2">
-            {memberBalances.map(m => (
-              <div key={m.userId} className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center flex-shrink-0">
-                  <span className="text-purple-300 text-xs font-bold">
-                    {(m.fullName || m.username || '?')[0].toUpperCase()}
-                  </span>
-                </div>
-                <p className="text-gray-300 text-sm flex-1 truncate">{m.fullName}</p>
-                <p className={`text-sm font-semibold ${m.balance >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                  {m.balance >= 0 ? '+' : '-'}{fmt(m.balance)} so'm
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Debts Summary */}
       {activeDebts.length > 0 && (
