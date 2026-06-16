@@ -1,7 +1,7 @@
 {
-  "name": "Moliya Boshqaruvi",
-  "short_name": "Moliya",
-  "description": "Shaxsiy moliyaviy boshqaruv tizimi",
+  "name": "PulBek",
+  "short_name": "PulBek",
+  "description": "Shaxsiy va biznes moliyangizni boshqaring",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#111827",

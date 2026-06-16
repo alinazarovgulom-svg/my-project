@@ -47,7 +47,7 @@ export default function Login() {
           <div className="w-16 h-16 rounded-2xl bg-blue-500/20 flex items-center justify-center mb-3">
             <Wallet className="text-blue-400" size={32} />
           </div>
-          <h1 className="text-2xl font-bold text-white">Moliya Ilovasi</h1>
+          <h1 className="text-2xl font-bold text-white">PulBek</h1>
           <p className="text-gray-400 text-sm mt-1">Shaxsiy va biznes moliyangizni boshqaring</p>
         </div>
 
