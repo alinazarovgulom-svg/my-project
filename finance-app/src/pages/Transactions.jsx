@@ -131,60 +131,85 @@ export default function Transactions() {
 
   const buildPDF = async (list, filename) => {
     const currencies = [...new Set(list.map(t => t.currency || 'UZS'))]
-    const totalsHtml = currencies.map(cur => {
-      const income = list.filter(t => t.type === 'income' && (t.currency || 'UZS') === cur).reduce((s, t) => s + t.amount, 0)
-      const expense = list.filter(t => t.type === 'expense' && (t.currency || 'UZS') === cur).reduce((s, t) => s + t.amount, 0)
-      return `${income > 0 ? `<div>Kirim (${cur}): <span style="color:#16a34a">+${fmt(income, cur)}</span></div>` : ''}
-              ${expense > 0 ? `<div>Chiqim (${cur}): <span style="color:#dc2626">-${fmt(expense, cur)}</span></div>` : ''}`
-    }).join('')
-
-    const rows = list.map(t => `
-      <tr>
-        <td>${format(new Date(t.date), 'dd.MM.yyyy')}</td>
-        <td style="color:${t.type === 'income' ? '#16a34a' : '#dc2626'}">${t.type === 'income' ? 'Kirim' : 'Chiqim'}</td>
-        <td>${t.category}</td>
-        <td>${fmt(t.amount, t.currency || 'UZS')}</td>
-        <td>${t.currency || 'UZS'}</td>
-        <td>${t.note || ''}</td>
-      </tr>`).join('')
+    const totalInc = {}
+    const totalExp = {}
+    currencies.forEach(cur => {
+      totalInc[cur] = list.filter(t => t.type === 'income' && (t.currency || 'UZS') === cur).reduce((s, t) => s + t.amount, 0)
+      totalExp[cur] = list.filter(t => t.type === 'expense' && (t.currency || 'UZS') === cur).reduce((s, t) => s + t.amount, 0)
+    })
 
     const el = document.createElement('div')
-    el.style.cssText = 'position:fixed;left:-9999px;top:0;width:794px;background:#fff;padding:40px;font-family:Arial,sans-serif;font-size:13px;color:#111;line-height:1.5'
+    el.style.cssText = 'position:fixed;left:-9999px;top:0;width:794px;background:#f8fafc;font-family:Arial,sans-serif;color:#0f172a;line-height:1.5'
     el.innerHTML = `
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px">
-        <div>
-          <div style="font-size:20px;font-weight:bold;margin-bottom:4px">PulBek — Tranzaksiyalar</div>
-          <div style="color:#555;font-size:12px">Chop etilgan: ${format(new Date(), 'dd.MM.yyyy')} &nbsp;·&nbsp; Jami: ${list.length} ta operatsiya</div>
+      <!-- HEADER -->
+      <div style="background:linear-gradient(135deg,#1e3a8a 0%,#1d4ed8 60%,#2563eb 100%);padding:36px 40px 32px;position:relative;overflow:hidden">
+        <div style="position:absolute;top:-30px;right:-30px;width:180px;height:180px;background:rgba(255,255,255,0.05);border-radius:50%"></div>
+        <div style="position:absolute;bottom:-50px;left:200px;width:120px;height:120px;background:rgba(255,255,255,0.04);border-radius:50%"></div>
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;position:relative">
+          <div>
+            <div style="font-size:11px;font-weight:700;letter-spacing:3px;color:rgba(255,255,255,0.5);text-transform:uppercase;margin-bottom:8px">Moliyaviy hisobot</div>
+            <div style="font-size:32px;font-weight:900;color:#fff;letter-spacing:-0.5px">PulBek</div>
+            <div style="font-size:13px;color:rgba(255,255,255,0.6);margin-top:4px">Tranzaksiyalar ro'yxati</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:10px;font-weight:800;letter-spacing:3px;color:#ffd700;text-transform:uppercase;margin-bottom:6px">by KAFTIMDA</div>
+            <div style="font-size:12px;color:rgba(255,255,255,0.5)">${format(new Date(), 'dd.MM.yyyy')}</div>
+            <div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:2px">${list.length} ta operatsiya</div>
+          </div>
         </div>
-        <div style="font-size:11px;font-weight:bold;letter-spacing:2px;color:#b8860b">by KAFTIMDA</div>
+        <!-- Summary cards -->
+        <div style="display:flex;gap:12px;margin-top:24px">
+          ${currencies.map(cur => `
+          <div style="flex:1;background:rgba(255,255,255,0.1);border-radius:12px;padding:14px 16px;backdrop-filter:blur(10px)">
+            <div style="font-size:10px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">${cur}</div>
+            ${totalInc[cur] > 0 ? `<div style="font-size:13px;color:#86efac;font-weight:700">+${fmt(totalInc[cur], cur)}</div>` : ''}
+            ${totalExp[cur] > 0 ? `<div style="font-size:13px;color:#fca5a5;font-weight:700">-${fmt(totalExp[cur], cur)}</div>` : ''}
+          </div>`).join('')}
+        </div>
       </div>
-      <table style="width:100%;border-collapse:collapse;font-size:12px">
-        <thead>
-          <tr style="background:#1d4ed8;color:#fff">
-            <th style="padding:8px 6px;text-align:left">Sana</th>
-            <th style="padding:8px 6px;text-align:left">Tur</th>
-            <th style="padding:8px 6px;text-align:left">Kategoriya</th>
-            <th style="padding:8px 6px;text-align:right">Miqdor</th>
-            <th style="padding:8px 6px;text-align:left">Valyuta</th>
-            <th style="padding:8px 6px;text-align:left">Izoh</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${list.map((t, i) => `
-          <tr style="background:${i % 2 === 0 ? '#f9fafb' : '#fff'}">
-            <td style="padding:7px 6px;border-bottom:1px solid #e5e7eb">${format(new Date(t.date), 'dd.MM.yyyy')}</td>
-            <td style="padding:7px 6px;border-bottom:1px solid #e5e7eb;color:${t.type === 'income' ? '#16a34a' : '#dc2626'}">${t.type === 'income' ? 'Kirim' : 'Chiqim'}</td>
-            <td style="padding:7px 6px;border-bottom:1px solid #e5e7eb">${t.category}</td>
-            <td style="padding:7px 6px;border-bottom:1px solid #e5e7eb;text-align:right">${fmt(t.amount, t.currency || 'UZS')}</td>
-            <td style="padding:7px 6px;border-bottom:1px solid #e5e7eb">${t.currency || 'UZS'}</td>
-            <td style="padding:7px 6px;border-bottom:1px solid #e5e7eb">${t.note || ''}</td>
-          </tr>`).join('')}
-        </tbody>
-      </table>
-      <div style="margin-top:16px;font-size:12px"><strong>Umumiy:</strong>${totalsHtml}</div>`
+
+      <!-- TABLE -->
+      <div style="padding:24px 40px 40px">
+        <table style="width:100%;border-collapse:collapse;font-size:12px">
+          <thead>
+            <tr>
+              <th style="padding:10px 12px;text-align:left;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#64748b;border-bottom:2px solid #e2e8f0">Sana</th>
+              <th style="padding:10px 12px;text-align:left;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#64748b;border-bottom:2px solid #e2e8f0">Tur</th>
+              <th style="padding:10px 12px;text-align:left;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#64748b;border-bottom:2px solid #e2e8f0">Kategoriya</th>
+              <th style="padding:10px 12px;text-align:right;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#64748b;border-bottom:2px solid #e2e8f0">Miqdor</th>
+              <th style="padding:10px 12px;text-align:left;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#64748b;border-bottom:2px solid #e2e8f0">Izoh</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${list.map((t, i) => `
+            <tr style="background:${i % 2 === 0 ? '#fff' : '#f8fafc'}">
+              <td style="padding:10px 12px;border-bottom:1px solid #f1f5f9;color:#64748b;font-size:11px">${format(new Date(t.date), 'dd.MM.yyyy')}</td>
+              <td style="padding:10px 12px;border-bottom:1px solid #f1f5f9">
+                <span style="display:inline-block;padding:2px 10px;border-radius:20px;font-size:10px;font-weight:700;
+                  background:${t.type === 'income' ? '#dcfce7' : '#fee2e2'};
+                  color:${t.type === 'income' ? '#15803d' : '#b91c1c'}">
+                  ${t.type === 'income' ? '▲ Kirim' : '▼ Chiqim'}
+                </span>
+              </td>
+              <td style="padding:10px 12px;border-bottom:1px solid #f1f5f9;font-weight:600;color:#1e293b">${t.emoji || ''} ${t.category}</td>
+              <td style="padding:10px 12px;border-bottom:1px solid #f1f5f9;text-align:right;font-weight:700;
+                color:${t.type === 'income' ? '#15803d' : '#b91c1c'}">
+                ${t.type === 'income' ? '+' : '-'}${fmt(t.amount, t.currency || 'UZS')} <span style="font-size:10px;font-weight:400;color:#94a3b8">${t.currency || 'UZS'}</span>
+              </td>
+              <td style="padding:10px 12px;border-bottom:1px solid #f1f5f9;color:#94a3b8;font-size:11px">${t.note || '—'}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+
+        <!-- FOOTER -->
+        <div style="margin-top:32px;padding-top:16px;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center">
+          <div style="font-size:10px;color:#cbd5e1">PulBek — Shaxsiy moliya boshqaruvi</div>
+          <div style="font-size:9px;font-weight:800;letter-spacing:2px;color:#b8860b">by KAFTIMDA</div>
+        </div>
+      </div>`
 
     document.body.appendChild(el)
-    const canvas = await html2canvas(el, { scale: 2, useCORS: true })
+    const canvas = await html2canvas(el, { scale: 2, useCORS: true, backgroundColor: '#f8fafc' })
     document.body.removeChild(el)
 
     const imgData = canvas.toDataURL('image/png')
