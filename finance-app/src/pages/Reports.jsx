@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { FileText, Table, TrendingUp, TrendingDown, PieChart } from 'lucide-react'
+import { FileText, Table, TrendingUp, TrendingDown, PieChart, CalendarDays, ChevronDown, ChevronUp } from 'lucide-react'
 import { useApp } from '../store/AppContext'
 import { format, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns'
 
@@ -10,6 +10,7 @@ export default function Reports() {
   const [startDate, setStartDate] = useState(format(startOfMonth(new Date()), 'yyyy-MM-dd'))
   const [endDate, setEndDate] = useState(format(endOfMonth(new Date()), 'yyyy-MM-dd'))
   const [loading, setLoading] = useState(false)
+  const [showDailyBalance, setShowDailyBalance] = useState(false)
 
   const filtered = transactions.filter(t => {
     const d = new Date(t.date)
@@ -21,13 +22,47 @@ export default function Reports() {
   const net = income - expense
 
   // Per-currency breakdown
-  const CURRENCIES = ['UZS', 'USD', 'EUR', 'RUB']
-  const FLAGS = { UZS: '🇺🇿', USD: '🇺🇸', EUR: '🇪🇺', RUB: '🇷🇺' }
   const currencyStats = CURRENCIES.map(cur => {
     const inc = filtered.filter(t => t.type === 'income' && (t.currency || 'UZS') === cur).reduce((s, t) => s + t.amount, 0)
     const exp = filtered.filter(t => t.type === 'expense' && (t.currency || 'UZS') === cur).reduce((s, t) => s + t.amount, 0)
     return { cur, inc, exp }
   }).filter(x => x.inc > 0 || x.exp > 0)
+
+  // Daily cumulative balance across ALL transactions (not just filtered)
+  const CURRENCIES = ['UZS', 'USD', 'EUR', 'RUB']
+  const FLAGS = { UZS: '🇺🇿', USD: '🇺🇸', EUR: '🇪🇺', RUB: '🇷🇺' }
+
+  const dailyBalances = (() => {
+    // Sort all transactions by date ascending
+    const sorted = [...transactions].sort((a, b) => new Date(a.date) - new Date(b.date))
+    // Group by date
+    const byDate = {}
+    sorted.forEach(t => {
+      const d = t.date.split('T')[0]
+      if (!byDate[d]) byDate[d] = []
+      byDate[d].push(t)
+    })
+    // Compute running balance per currency
+    const running = { UZS: 0, USD: 0, EUR: 0, RUB: 0 }
+    return Object.entries(byDate)
+      .filter(([date]) => date >= startDate && date <= endDate)
+      .map(([date, txs]) => {
+        txs.forEach(t => {
+          const cur = t.currency || 'UZS'
+          running[cur] = (running[cur] || 0) + (t.type === 'income' ? t.amount : -t.amount)
+        })
+        const snap = { ...running }
+        const dayIncome = {}
+        const dayExpense = {}
+        txs.forEach(t => {
+          const cur = t.currency || 'UZS'
+          if (t.type === 'income') dayIncome[cur] = (dayIncome[cur] || 0) + t.amount
+          else dayExpense[cur] = (dayExpense[cur] || 0) + t.amount
+        })
+        return { date, balance: snap, dayIncome, dayExpense }
+      })
+      .reverse() // newest first
+  })()
 
   // Group by category
   const byCategory = filtered.reduce((acc, t) => {
@@ -227,6 +262,48 @@ export default function Reports() {
                 </div>
               ))}
           </div>
+        </div>
+      )}
+
+      {/* Daily Balance */}
+      {dailyBalances.length > 0 && (
+        <div className="card">
+          <button onClick={() => setShowDailyBalance(v => !v)} className="flex items-center justify-between w-full">
+            <div className="flex items-center gap-2">
+              <CalendarDays size={16} className="text-blue-400" />
+              <h2 className="text-white font-semibold">Kunlik qoldiq</h2>
+            </div>
+            {showDailyBalance ? <ChevronUp size={16} className="text-gray-400" /> : <ChevronDown size={16} className="text-gray-400" />}
+          </button>
+
+          {showDailyBalance && (
+            <div className="flex flex-col gap-3 mt-3">
+              {dailyBalances.map(({ date, balance, dayIncome, dayExpense }) => {
+                const activeCurs = CURRENCIES.filter(c => balance[c] !== 0 || dayIncome[c] || dayExpense[c])
+                return (
+                  <div key={date} className="bg-dark-600 rounded-xl p-3">
+                    <p className="text-gray-400 text-xs mb-2 font-medium">
+                      {format(new Date(date), 'dd.MM.yyyy')}
+                    </p>
+                    {activeCurs.map(cur => (
+                      <div key={cur} className="flex items-center justify-between mb-1">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-xs">{FLAGS[cur]}</span>
+                          <div className="flex gap-2 text-xs">
+                            {dayIncome[cur] > 0 && <span className="text-green-400">+{fmt(dayIncome[cur])}</span>}
+                            {dayExpense[cur] > 0 && <span className="text-red-400">-{fmt(dayExpense[cur])}</span>}
+                          </div>
+                        </div>
+                        <span className={`text-sm font-bold ${balance[cur] >= 0 ? 'text-white' : 'text-red-400'}`}>
+                          {balance[cur] >= 0 ? '' : '-'}{fmt(Math.abs(balance[cur]))} {cur}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )
+              })}
+            </div>
+          )}
         </div>
       )}
 
