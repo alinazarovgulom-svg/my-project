@@ -1,6 +1,7 @@
-import { createContext, useContext, useState, useEffect, useCallback } from 'react'
+import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react'
 import { getCurrentUser, getData, saveData, getSettings, saveSettings } from './storage'
 import { getUserFamily, getUserFamilyId, getFamily } from './family'
+import { syncToCloud, loadFromCloud, subscribeToCloud } from './sync'
 
 const AppContext = createContext(null)
 
@@ -18,43 +19,92 @@ export function AppProvider({ children }) {
   const [debts, setDebts] = useState([])
   const [settings, setSettingsState] = useState({ rates: { USD: 12700, EUR: 13800, RUB: 140 } })
   const [family, setFamily] = useState(null)
+  const [syncing, setSyncing] = useState(false)
+  const skipCloudUpdate = useRef(false)
 
   const uid = user?.id
 
+  // Boshlang'ich yuklash: avval localStorage, keyin cloud
   useEffect(() => {
-    if (uid) {
-      setTransactions(getData('transactions', uid))
-      setDebts(getData('debts', uid))
-      const s = getSettings(uid)
-      setSettingsState(s.rates ? s : { rates: { USD: 12700, EUR: 13800, RUB: 140 } })
-      setFamily(getUserFamily(uid))
+    if (!uid) return
+
+    // Lokal ma'lumotlarni darhol yuklash
+    setTransactions(getData('transactions', uid))
+    setDebts(getData('debts', uid))
+    const s = getSettings(uid)
+    setSettingsState(s.rates ? s : { rates: { USD: 12700, EUR: 13800, RUB: 140 } })
+    setFamily(getUserFamily(uid))
+
+    // Cloud dan yangi ma'lumot bo'lsa yuklash
+    const loadCloud = async () => {
+      setSyncing(true)
+      const [cloudTx, cloudDebts, cloudSettings] = await Promise.all([
+        loadFromCloud(uid, 'transactions'),
+        loadFromCloud(uid, 'debts'),
+        loadFromCloud(uid, 'settings'),
+      ])
+      if (cloudTx) { setTransactions(cloudTx); saveData('transactions', uid, cloudTx) }
+      if (cloudDebts) { setDebts(cloudDebts); saveData('debts', uid, cloudDebts) }
+      if (cloudSettings?.rates) { setSettingsState(cloudSettings); saveSettings(uid, cloudSettings) }
+      setSyncing(false)
     }
+    loadCloud()
+
+    // Real-vaqt tinglash — boshqa qurilmadan o'zgarish bo'lsa darhol yangilanadi
+    const unsubTx = subscribeToCloud(uid, 'transactions', (data) => {
+      if (skipCloudUpdate.current) return
+      setTransactions(data)
+      saveData('transactions', uid, data)
+    })
+    const unsubDebts = subscribeToCloud(uid, 'debts', (data) => {
+      if (skipCloudUpdate.current) return
+      setDebts(data)
+      saveData('debts', uid, data)
+    })
+    const unsubSettings = subscribeToCloud(uid, 'settings', (data) => {
+      if (skipCloudUpdate.current) return
+      if (data?.rates) { setSettingsState(data); saveSettings(uid, data) }
+    })
+
+    return () => { unsubTx(); unsubDebts(); unsubSettings() }
   }, [uid])
 
   const refreshFamily = useCallback(() => {
     if (uid) {
       const familyId = getUserFamilyId(uid)
-      if (familyId) {
-        setFamily(getFamily(familyId))
-      } else {
-        setFamily(null)
-      }
+      if (familyId) setFamily(getFamily(familyId))
+      else setFamily(null)
     }
   }, [uid])
 
   const saveTransactions = useCallback((data) => {
     setTransactions(data)
-    if (uid) saveData('transactions', uid, data)
+    if (uid) {
+      saveData('transactions', uid, data)
+      skipCloudUpdate.current = true
+      syncToCloud(uid, 'transactions', data).finally(() => {
+        setTimeout(() => { skipCloudUpdate.current = false }, 500)
+      })
+    }
   }, [uid])
 
   const saveDebts = useCallback((data) => {
     setDebts(data)
-    if (uid) saveData('debts', uid, data)
+    if (uid) {
+      saveData('debts', uid, data)
+      skipCloudUpdate.current = true
+      syncToCloud(uid, 'debts', data).finally(() => {
+        setTimeout(() => { skipCloudUpdate.current = false }, 500)
+      })
+    }
   }, [uid])
 
   const updateSettings = useCallback((s) => {
     setSettingsState(s)
-    if (uid) saveSettings(uid, s)
+    if (uid) {
+      saveSettings(uid, s)
+      syncToCloud(uid, 'settings', s)
+    }
   }, [uid])
 
   const balance = transactions.reduce((sum, t) => {
@@ -64,7 +114,6 @@ export function AppProvider({ children }) {
   const totalIncome = transactions.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0)
   const totalExpense = transactions.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0)
 
-  // Determine user's role in the family
   const userRole = family
     ? (family.members.find(m => m.userId === uid)?.role || null)
     : null
@@ -73,7 +122,6 @@ export function AppProvider({ children }) {
   const familyTransactions = family?.transactions || []
   const familyDebts = family?.debts || []
 
-  // Permission helpers
   const canEdit = (ownerId) => {
     if (!userRole) return false
     if (userRole === 'admin') return true
@@ -81,9 +129,7 @@ export function AppProvider({ children }) {
     return false
   }
 
-  const canAdd = () => {
-    return userRole === 'admin' || userRole === 'member'
-  }
+  const canAdd = () => userRole === 'admin' || userRole === 'member'
 
   return (
     <AppContext.Provider value={{
@@ -95,7 +141,8 @@ export function AppProvider({ children }) {
       family, setFamily, refreshFamily,
       userRole, familyMembers,
       familyTransactions, familyDebts,
-      canEdit, canAdd
+      canEdit, canAdd,
+      syncing
     }}>
       {children}
     </AppContext.Provider>
