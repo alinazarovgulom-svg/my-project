@@ -131,6 +131,14 @@ export default function Transactions() {
 
   const buildPDF = (list, filename) => {
     const doc = new jsPDF()
+    // by KAFTIMDA — yuqori o'ng burchak
+    doc.setFontSize(8)
+    doc.setTextColor(180, 134, 11)
+    doc.setFont('helvetica', 'bold')
+    doc.text('by KAFTIMDA', doc.internal.pageSize.getWidth() - 14, 12, { align: 'right' })
+    doc.setTextColor(0, 0, 0)
+    doc.setFont('helvetica', 'normal')
+
     doc.setFontSize(16)
     doc.text('PulBek - Tranzaksiyalar', 14, 20)
     doc.setFontSize(10)
@@ -174,15 +182,17 @@ export default function Transactions() {
   const exportPDF = () => buildPDF(filtered, 'pulbek-tranzaksiyalar.pdf')
 
   const exportExcel = () => {
-    const data = filtered.map(t => ({
-      'Sana': format(new Date(t.date), 'dd.MM.yyyy'),
-      'Tur': t.type === 'income' ? 'Kirim' : 'Chiqim',
-      'Kategoriya': t.category,
-      'Miqdor': t.amount,
-      'Valyuta': t.currency || 'UZS',
-      'Izoh': t.note || ''
-    }))
-    const ws = XLSX.utils.json_to_sheet(data)
+    const header = [['by KAFTIMDA', '', '', '', '', ''], ['PulBek - Tranzaksiyalar', '', '', '', '', ''], [`Chop etilgan: ${format(new Date(), 'dd.MM.yyyy')}`, '', '', '', '', ''], []]
+    const rows = filtered.map(t => [
+      format(new Date(t.date), 'dd.MM.yyyy'),
+      t.type === 'income' ? 'Kirim' : 'Chiqim',
+      t.category,
+      t.amount,
+      t.currency || 'UZS',
+      t.note || ''
+    ])
+    const ws = XLSX.utils.aoa_to_sheet([...header, ['Sana', 'Tur', 'Kategoriya', 'Miqdor', 'Valyuta', 'Izoh'], ...rows])
+    ws['A1'] = { v: 'by KAFTIMDA', t: 's' }
     const wb = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(wb, ws, 'Tranzaksiyalar')
     XLSX.writeFile(wb, 'pulbek-tranzaksiyalar.xlsx')
