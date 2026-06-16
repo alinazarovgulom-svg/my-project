@@ -46,9 +46,10 @@ function AppRoutes() {
 }
 
 export default function App() {
-  const [onboarded, setOnboarded] = useState(false)
+  const [onboarded, setOnboarded] = useState(() => !!sessionStorage.getItem('pulsek_session'))
 
   const handleDone = () => {
+    sessionStorage.setItem('pulsek_session', '1')
     setOnboarded(true)
   }
 
