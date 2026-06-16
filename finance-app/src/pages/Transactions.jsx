@@ -73,14 +73,18 @@ export default function Transactions() {
     setEditModal(true)
   }
 
-  const handleEditSave = () => {
+  const handleEditSave = async () => {
     if (!editingTx?.amount || !editingTx?.category) return
-    const updated = transactions.map(t =>
-      t.id === editingTx.id
-        ? { ...editingTx, amount: parseFloat(editingTx.amount) }
-        : t
-    )
-    saveTransactions(updated)
+    const updatedTx = { ...editingTx, amount: parseFloat(editingTx.amount) }
+    if (isFamily && family) {
+      const { deleteFamilyTransaction: delFT, addFamilyTransaction: addFT } = await import('../store/family')
+      await delFT(family.id, updatedTx.id)
+      await addFT(family.id, updatedTx)
+      refreshFamily()
+    } else {
+      const updated = transactions.map(t => t.id === editingTx.id ? updatedTx : t)
+      saveTransactions(updated)
+    }
     setEditModal(false)
     setEditingTx(null)
   }
@@ -219,7 +223,7 @@ export default function Transactions() {
         ) : (
           filtered.map(t => {
             const showDelete = isFamily ? canEdit(t.userId) : true
-            const canEditTx = !isFamily
+            const canEditTx = !isFamily || canEdit(t.userId)
             const isSelected = selected.has(t.id)
             const toggleSelect = () => setSelected(s => {
               const n = new Set(s)
