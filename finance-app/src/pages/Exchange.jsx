@@ -99,12 +99,8 @@ export default function Exchange() {
   }
 
   const allTx = family ? familyTransactions : transactions
-  const exchangeExpenses = allTx.filter(t => t.category === 'Valyuta ayirboshlash' && t.type === 'expense')
-  const exchangeIncomes = allTx.filter(t => t.category === 'Valyuta ayirboshlash' && t.type === 'income')
-  // Show expense txs + orphaned income txs (no matching expense pair)
-  const expenseIds = new Set(exchangeExpenses.map(t => t.id))
-  const orphanedIncomes = exchangeIncomes.filter(t => !t.pairId || !expenseIds.has(t.pairId))
-  const exchangeTx = [...exchangeExpenses, ...orphanedIncomes]
+  const exchangeTx = allTx
+    .filter(t => t.category === 'Valyuta ayirboshlash' && t.type === 'expense')
     .sort((a, b) => new Date(b.date) - new Date(a.date))
 
   const openModal = () => {
@@ -129,24 +125,17 @@ export default function Exchange() {
           </div>
         ) : (
           exchangeTx.map(tx => {
-            const isOrphanIncome = tx.type === 'income'
-            const pair = isOrphanIncome ? null : allTx.find(t => t.id === tx.pairId || (t.pairId === tx.id && t.type === 'income'))
+            const pair = allTx.find(t => t.category === 'Valyuta ayirboshlash' && t.type === 'income' && t.pairId === tx.pairId)
             return (
               <div key={tx.id} className="card flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-blue-500/15 flex items-center justify-center text-lg flex-shrink-0">
                   💱
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    {isOrphanIncome ? (
-                      <span className="text-green-400 text-sm font-semibold">+{fmt(tx.amount, tx.currency)} {tx.currency}</span>
-                    ) : (
-                      <>
-                        <span className="text-white text-sm font-semibold">{fmt(tx.amount, tx.currency)} {tx.currency}</span>
-                        <ArrowRight size={12} className="text-gray-500 flex-shrink-0" />
-                        {pair && <span className="text-blue-400 text-sm font-semibold">{fmt(pair.amount, pair.currency)} {pair.currency}</span>}
-                      </>
-                    )}
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="text-red-400 text-sm font-semibold">-{fmt(tx.amount, tx.currency)} {tx.currency}</span>
+                    <ArrowRight size={12} className="text-gray-500 flex-shrink-0" />
+                    {pair && <span className="text-green-400 text-sm font-semibold">+{fmt(pair.amount, pair.currency)} {pair.currency}</span>}
                   </div>
                   <p className="text-gray-500 text-xs truncate">{tx.note || format(new Date(tx.date), 'dd.MM.yyyy')}</p>
                   <p className="text-gray-600 text-xs">{format(new Date(tx.date), 'dd.MM.yyyy')}</p>
