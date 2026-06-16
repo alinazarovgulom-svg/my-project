@@ -3,6 +3,8 @@ import { RefreshCw, Settings, ArrowLeftRight, History, Trash2 } from 'lucide-rea
 import { useApp } from '../store/AppContext'
 import Modal from '../components/Modal'
 import { format } from 'date-fns'
+import { generateId } from '../store/storage'
+import { addFamilyTransaction } from '../store/family'
 
 const CURRENCIES = ['UZS', 'USD', 'EUR', 'RUB']
 const FLAGS = { UZS: '🇺🇿', USD: '🇺🇸', EUR: '🇪🇺', RUB: '🇷🇺' }
@@ -20,7 +22,7 @@ const getRatesHistory = (userId) => {
 }
 
 export default function Exchange() {
-  const { settings, updateSettings, user } = useApp()
+  const { settings, updateSettings, user, family, saveTransactions, transactions, familyTransactions, refreshFamily } = useApp()
   const rates = settings.rates || { USD: 12700, EUR: 13800, RUB: 140 }
 
   const [amount, setAmount] = useState('')
@@ -56,13 +58,48 @@ export default function Exchange() {
     if (!n) return
     setConfirmed(true)
 
-    // Save this conversion to today's history
+    const res = parseFloat(computeResult())
+    const today = format(new Date(), 'yyyy-MM-dd')
+
+    // Chiqim (berilgan valyuta) va kirim (olingan valyuta) tranzaksiyalari
+    const txOut = {
+      id: generateId(),
+      type: 'expense',
+      amount: n,
+      currency: from,
+      category: 'Valyuta ayirboshlash',
+      emoji: '💱',
+      note: `${n} ${from} → ${res} ${to}`,
+      date: today,
+      userId: user.id,
+      userName: user.name
+    }
+    const txIn = {
+      id: generateId(),
+      type: 'income',
+      amount: res,
+      currency: to,
+      category: 'Valyuta ayirboshlash',
+      emoji: '💱',
+      note: `${n} ${from} → ${res} ${to}`,
+      date: today,
+      userId: user.id,
+      userName: user.name
+    }
+
+    if (family) {
+      addFamilyTransaction(family.id, txOut)
+        .then(() => addFamilyTransaction(family.id, txIn))
+        .then(() => refreshFamily())
+    } else {
+      saveTransactions([...transactions, txOut, txIn])
+    }
+
+    // Bugungi tarix uchun localStorage ga ham saqlash (dashboard uchun)
     if (user?.id) {
-      const res = computeResult()
-      const today = format(new Date(), 'yyyy-MM-dd')
       const key = `finance_${user.id}_conversions_${today}`
       const existing = JSON.parse(localStorage.getItem(key) || '[]')
-      existing.push({ from, to, amount: n, result: res, time: format(new Date(), 'HH:mm') })
+      existing.push({ from, to, amount: n, result: fmt(res, to), time: format(new Date(), 'HH:mm') })
       localStorage.setItem(key, JSON.stringify(existing))
     }
   }
