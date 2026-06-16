@@ -9,242 +9,297 @@ const FEATURES = [
   { icon: '🔐', text: 'PIN qulfi va xavfsizlik' },
 ]
 
-const TITLE = 'PulBek'
+// Phases:
+// 0 → qora ekran
+// 1 → "KAFTIMDA presents..." chiqadi
+// 2 → "KAFTIMDA presents..." yo'qoladi
+// 3 → logo zoom in portlaydi + vizual zarba
+// 4 → "PulBek" shimmer bilan chiqadi
+// 5 → tagline + features + button
 
 export default function Onboarding({ onDone }) {
   const [phase, setPhase] = useState(0)
-  const [typedTitle, setTypedTitle] = useState('')
+  const [showShockwave, setShowShockwave] = useState(false)
   const [visibleFeatures, setVisibleFeatures] = useState([])
   const [showBtn, setShowBtn] = useState(false)
-  const [particles] = useState(() =>
-    Array.from({ length: 20 }, (_, i) => ({
-      id: i,
-      size: Math.random() * 6 + 3,
-      x: Math.random() * 100,
-      y: Math.random() * 100,
-      duration: Math.random() * 4 + 3,
-      delay: Math.random() * 2,
-      color: i % 3 === 0 ? 'rgba(59,130,246,0.4)' : i % 3 === 1 ? 'rgba(124,58,237,0.4)' : 'rgba(16,185,129,0.3)',
-    }))
-  )
+  const [typedTitle, setTypedTitle] = useState('')
 
   useEffect(() => {
+    const T = (fn, ms) => setTimeout(fn, ms)
     const timers = []
-    timers.push(setTimeout(() => setPhase(1), 300))
-    timers.push(setTimeout(() => setPhase(2), 900))
-    timers.push(setTimeout(() => setPhase(3), 1600))
+
+    timers.push(T(() => setPhase(1), 600))      // "KAFTIMDA presents..."
+    timers.push(T(() => setPhase(2), 2400))     // fade out presents
+    timers.push(T(() => {                        // logo zoom + shockwave
+      setPhase(3)
+      setShowShockwave(true)
+      setTimeout(() => setShowShockwave(false), 1000)
+    }, 3000))
+    timers.push(T(() => setPhase(4), 3600))     // PulBek typewriter
 
     // Typewriter
-    let i = 0
-    const typeTimer = setTimeout(() => {
+    timers.push(T(() => {
+      const title = 'PulBek'
+      let i = 0
       const iv = setInterval(() => {
         i++
-        setTypedTitle(TITLE.slice(0, i))
-        if (i >= TITLE.length) clearInterval(iv)
-      }, 100)
+        setTypedTitle(title.slice(0, i))
+        if (i >= title.length) clearInterval(iv)
+      }, 90)
       timers.push(iv)
-    }, 1600)
-    timers.push(typeTimer)
+    }, 3700))
 
-    // Features
+    timers.push(T(() => setPhase(5), 4600))     // features
+
     FEATURES.forEach((_, idx) => {
-      timers.push(setTimeout(() => {
+      timers.push(T(() => {
         setVisibleFeatures(prev => [...prev, idx])
-      }, 2600 + idx * 150))
+      }, 4800 + idx * 130))
     })
 
-    timers.push(setTimeout(() => setShowBtn(true), 2600 + FEATURES.length * 150 + 300))
+    timers.push(T(() => setShowBtn(true), 4800 + FEATURES.length * 130 + 200))
 
     return () => timers.forEach(t => { clearTimeout(t); clearInterval(t) })
   }, [])
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col overflow-hidden"
-      style={{ background: '#050510' }}>
+    <div className="fixed inset-0 z-50 overflow-hidden flex flex-col"
+      style={{ background: '#000' }}>
 
       <style>{`
-        @keyframes floatUp {
-          0% { transform: translateY(0px) scale(1); opacity: 0.6; }
-          100% { transform: translateY(-40px) scale(1.1); opacity: 0; }
-        }
-        @keyframes pulse-ring {
-          0% { transform: scale(0.8); opacity: 0.8; }
-          100% { transform: scale(2.2); opacity: 0; }
-        }
         @keyframes shimmer {
+          0% { background-position: -300% center; }
+          100% { background-position: 300% center; }
+        }
+        @keyframes shockwave {
+          0% { transform: translate(-50%,-50%) scale(0); opacity: 0.8; }
+          100% { transform: translate(-50%,-50%) scale(6); opacity: 0; }
+        }
+        @keyframes shockwave2 {
+          0% { transform: translate(-50%,-50%) scale(0); opacity: 0.5; }
+          100% { transform: translate(-50%,-50%) scale(4); opacity: 0; }
+        }
+        @keyframes filmFlicker {
+          0%,100% { opacity:1; } 5% { opacity:0.85; } 10% { opacity:1; } 40% { opacity:0.95; } 45% { opacity:1; }
+        }
+        @keyframes scanline {
+          0% { transform: translateY(-100%); }
+          100% { transform: translateY(100vh); }
+        }
+        @keyframes logoPop {
+          0% { transform: scale(0.01); opacity:0; filter: brightness(5); }
+          60% { transform: scale(1.15); opacity:1; filter: brightness(1.5); }
+          80% { transform: scale(0.95); filter: brightness(1); }
+          100% { transform: scale(1); opacity:1; filter: brightness(1); }
+        }
+        @keyframes glowPulse {
+          0%,100% { box-shadow: 0 0 30px rgba(59,130,246,0.5), 0 0 60px rgba(124,58,237,0.3); }
+          50% { box-shadow: 0 0 50px rgba(59,130,246,0.8), 0 0 100px rgba(124,58,237,0.5), 0 0 150px rgba(59,130,246,0.2); }
+        }
+        @keyframes btnShimmer {
           0% { background-position: -200% center; }
           100% { background-position: 200% center; }
         }
-        @keyframes spin-slow {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
+        @keyframes fadeUp {
+          from { opacity:0; transform: translateY(16px); }
+          to { opacity:1; transform: translateY(0); }
         }
-        @keyframes blink {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0; }
+        @keyframes presentsIn {
+          0% { opacity:0; letter-spacing: 0.8em; }
+          100% { opacity:1; letter-spacing: 0.35em; }
         }
-        @keyframes gradient-shift {
-          0% { background-position: 0% 50%; }
-          50% { background-position: 100% 50%; }
-          100% { background-position: 0% 50%; }
+        @keyframes starFloat {
+          0% { transform: translateY(0) scale(1); opacity:0.8; }
+          100% { transform: translateY(-60px) scale(0); opacity:0; }
         }
-        .shimmer-text {
-          background: linear-gradient(90deg, #60a5fa, #ffffff, #a78bfa, #60a5fa);
-          background-size: 200% auto;
+        .shimmer-title {
+          background: linear-gradient(90deg, #93c5fd, #ffffff, #c4b5fd, #ffffff, #93c5fd);
+          background-size: 300% auto;
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           background-clip: text;
-          animation: shimmer 2.5s linear infinite;
-        }
-        .cursor-blink {
-          animation: blink 0.8s ease infinite;
-        }
-        .bg-animated {
-          background: linear-gradient(135deg, #050510, #0a0520, #050510, #0a1525);
-          background-size: 400% 400%;
-          animation: gradient-shift 8s ease infinite;
+          animation: shimmer 2s linear infinite;
         }
       `}</style>
 
-      {/* Animated background */}
-      <div className="absolute inset-0 bg-animated" />
-
-      {/* Grid lines */}
-      <div className="absolute inset-0 opacity-5"
-        style={{
-          backgroundImage: 'linear-gradient(rgba(59,130,246,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(59,130,246,0.5) 1px, transparent 1px)',
-          backgroundSize: '40px 40px',
-          opacity: phase >= 1 ? 0.07 : 0,
-          transition: 'opacity 2s ease'
-        }} />
-
-      {/* Radial glow */}
-      <div className="absolute inset-0 pointer-events-none"
-        style={{
-          background: 'radial-gradient(ellipse 60% 50% at 50% 40%, rgba(59,130,246,0.12) 0%, transparent 70%)',
-          opacity: phase >= 1 ? 1 : 0,
-          transition: 'opacity 1.5s ease'
-        }} />
-      <div className="absolute inset-0 pointer-events-none"
-        style={{
-          background: 'radial-gradient(ellipse 40% 40% at 50% 40%, rgba(124,58,237,0.08) 0%, transparent 70%)',
-          opacity: phase >= 2 ? 1 : 0,
-          transition: 'opacity 1.5s ease 0.5s'
-        }} />
-
-      {/* Floating particles */}
-      {particles.map(p => (
-        <div key={p.id}
-          className="absolute rounded-full pointer-events-none"
+      {/* Film grain overlay */}
+      {phase >= 1 && phase <= 2 && (
+        <div className="absolute inset-0 pointer-events-none z-10"
           style={{
-            width: p.size,
-            height: p.size,
-            left: `${p.x}%`,
-            top: `${p.y}%`,
-            background: p.color,
-            opacity: phase >= 1 ? 1 : 0,
-            animation: `floatUp ${p.duration}s ${p.delay}s ease-in infinite`,
-            transition: 'opacity 1s ease'
+            backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 256 256\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noise\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.9\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noise)\' opacity=\'0.08\'/%3E%3C/svg%3E")',
+            animation: 'filmFlicker 0.1s infinite',
+            opacity: 0.15,
           }} />
-      ))}
+      )}
 
-      {/* Pulse rings behind logo */}
-      <div className="absolute left-1/2 -translate-x-1/2" style={{ top: '18%' }}>
-        {[0, 1, 2].map(i => (
-          <div key={i}
-            className="absolute rounded-full border border-blue-500/20"
-            style={{
-              width: 120, height: 120,
-              top: '50%', left: '50%',
-              transform: 'translate(-50%, -50%)',
-              opacity: phase >= 2 ? 1 : 0,
-              animation: phase >= 2 ? `pulse-ring 2.4s ${i * 0.8}s ease-out infinite` : 'none',
-            }} />
-        ))}
-      </div>
+      {/* Scanline */}
+      {phase >= 1 && phase <= 2 && (
+        <div className="absolute left-0 right-0 h-8 pointer-events-none z-10"
+          style={{
+            background: 'linear-gradient(transparent, rgba(255,255,255,0.03), transparent)',
+            animation: 'scanline 2s linear infinite',
+          }} />
+      )}
 
-      {/* Spinning ring */}
-      <div className="absolute left-1/2 -translate-x-1/2 pointer-events-none"
+      {/* ── PHASE 1-2: KAFTIMDA presents ── */}
+      <div className="absolute inset-0 flex flex-col items-center justify-center z-20"
         style={{
-          top: 'calc(18% - 12px)',
-          width: 120, height: 120,
-          opacity: phase >= 2 ? 1 : 0,
-          transition: 'opacity 0.8s ease',
-          animation: 'spin-slow 8s linear infinite'
+          opacity: phase === 1 ? 1 : 0,
+          transition: phase === 2 ? 'opacity 0.5s ease' : 'opacity 0.8s ease',
+          pointerEvents: 'none',
         }}>
-        <svg viewBox="0 0 120 120" fill="none">
-          <circle cx="60" cy="60" r="56" stroke="url(#ringGrad)" strokeWidth="1.5" strokeDasharray="8 6" />
-          <defs>
-            <linearGradient id="ringGrad" x1="0" y1="0" x2="120" y2="120">
-              <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.8" />
-              <stop offset="50%" stopColor="#7c3aed" stopOpacity="0.4" />
-              <stop offset="100%" stopColor="#3b82f6" stopOpacity="0" />
-            </linearGradient>
-          </defs>
-        </svg>
+        <p className="text-white font-light mb-4"
+          style={{
+            fontSize: '11px',
+            letterSpacing: '0.5em',
+            textTransform: 'uppercase',
+            color: 'rgba(255,255,255,0.4)',
+            animation: phase === 1 ? 'fadeUp 0.8s ease forwards' : 'none',
+          }}>
+          taqdim etadi
+        </p>
+        <p style={{
+          fontSize: '22px',
+          fontWeight: 900,
+          letterSpacing: '0.35em',
+          textTransform: 'uppercase',
+          color: 'rgba(255,255,255,0.95)',
+          textShadow: '0 0 30px rgba(255,255,255,0.3)',
+          animation: phase === 1 ? 'presentsIn 1s cubic-bezier(0.16,1,0.3,1) forwards' : 'none',
+        }}>
+          KAFTIMDA
+        </p>
+        <div className="mt-6 flex gap-1">
+          {[0,1,2,3,4].map(i => (
+            <div key={i} style={{
+              width: 3, height: 3, borderRadius: '50%',
+              background: 'rgba(255,255,255,0.3)',
+              animation: phase === 1 ? `fadeUp 0.4s ${0.8 + i * 0.1}s ease forwards` : 'none',
+              opacity: 0,
+            }} />
+          ))}
+        </div>
       </div>
 
-      <div className="flex-1 flex flex-col items-center justify-center px-6 relative">
+      {/* ── SHOCKWAVE rings ── */}
+      {showShockwave && (
+        <div className="absolute pointer-events-none z-30" style={{ left: '50%', top: '28%' }}>
+          <div style={{
+            position: 'absolute',
+            width: 120, height: 120,
+            border: '2px solid rgba(59,130,246,0.8)',
+            borderRadius: '50%',
+            animation: 'shockwave 0.8s ease-out forwards',
+          }} />
+          <div style={{
+            position: 'absolute',
+            width: 120, height: 120,
+            border: '1px solid rgba(124,58,237,0.6)',
+            borderRadius: '50%',
+            animation: 'shockwave2 0.9s 0.1s ease-out forwards',
+          }} />
+          <div style={{
+            position: 'absolute',
+            width: 120, height: 120,
+            background: 'rgba(255,255,255,0.15)',
+            borderRadius: '50%',
+            animation: 'shockwave 0.6s ease-out forwards',
+          }} />
+        </div>
+      )}
+
+      {/* Stars burst on logo pop */}
+      {phase >= 3 && [...Array(12)].map((_, i) => {
+        const angle = (i / 12) * 360
+        const dist = 80 + Math.random() * 40
+        return (
+          <div key={i}
+            className="absolute pointer-events-none z-30"
+            style={{
+              left: `calc(50% + ${Math.cos(angle * Math.PI / 180) * dist}px)`,
+              top: `calc(28% + ${Math.sin(angle * Math.PI / 180) * dist}px)`,
+              width: 4, height: 4,
+              background: i % 2 === 0 ? '#60a5fa' : '#a78bfa',
+              borderRadius: '50%',
+              animation: 'starFloat 0.8s ease-out forwards',
+              boxShadow: `0 0 6px ${i % 2 === 0 ? '#60a5fa' : '#a78bfa'}`,
+            }} />
+        )
+      })}
+
+      {/* ── PHASE 3+: Main content ── */}
+      <div className="flex-1 flex flex-col items-center justify-center px-6 relative z-20"
+        style={{
+          opacity: phase >= 3 ? 1 : 0,
+          transition: 'opacity 0.3s ease',
+        }}>
+
+        {/* Dark background glow */}
+        <div className="absolute inset-0 pointer-events-none"
+          style={{
+            background: 'radial-gradient(ellipse 70% 60% at 50% 35%, rgba(29,78,216,0.15) 0%, transparent 70%)',
+            opacity: phase >= 4 ? 1 : 0,
+            transition: 'opacity 1.5s ease',
+          }} />
 
         {/* Logo */}
-        <div className="relative mb-5"
-          style={{
-            opacity: phase >= 1 ? 1 : 0,
-            transform: phase >= 1 ? 'scale(1) translateY(0)' : 'scale(0.2) translateY(30px)',
-            transition: 'all 0.9s cubic-bezier(0.34, 1.6, 0.64, 1)',
-          }}>
-          <div className="w-24 h-24 rounded-3xl flex items-center justify-center relative"
+        <div className="relative mb-5">
+          <div className="w-24 h-24 rounded-3xl flex items-center justify-center"
             style={{
               background: 'linear-gradient(135deg, #1d4ed8 0%, #7c3aed 100%)',
-              boxShadow: phase >= 2
-                ? '0 0 0 1px rgba(124,58,237,0.3), 0 0 30px rgba(59,130,246,0.5), 0 0 60px rgba(124,58,237,0.3), 0 20px 40px rgba(0,0,0,0.5)'
-                : '0 8px 30px rgba(59,130,246,0.3)',
-              transition: 'box-shadow 1s ease 0.5s'
+              animation: phase === 3 ? 'logoPop 0.7s cubic-bezier(0.16,1,0.3,1) forwards, glowPulse 3s 0.8s ease-in-out infinite' : 'glowPulse 3s ease-in-out infinite',
             }}>
-            <span className="text-5xl font-black text-white" style={{ textShadow: '0 0 20px rgba(255,255,255,0.5)' }}>₿</span>
+            <span className="text-5xl font-black text-white"
+              style={{ textShadow: '0 0 20px rgba(255,255,255,0.6)' }}>₿</span>
           </div>
           <div className="absolute -bottom-1 -right-1 w-7 h-7 bg-green-400 rounded-full flex items-center justify-center"
             style={{
-              opacity: phase >= 2 ? 1 : 0,
-              transform: phase >= 2 ? 'scale(1) rotate(0deg)' : 'scale(0) rotate(-180deg)',
-              transition: 'all 0.5s cubic-bezier(0.34, 1.6, 0.64, 1) 0.7s',
-              boxShadow: '0 0 12px rgba(74,222,128,0.6)'
+              opacity: phase >= 4 ? 1 : 0,
+              transform: phase >= 4 ? 'scale(1)' : 'scale(0)',
+              transition: 'all 0.5s cubic-bezier(0.34,1.7,0.64,1) 0.3s',
+              boxShadow: '0 0 12px rgba(74,222,128,0.7)',
             }}>
-            <span className="text-sm font-bold text-dark-900">✓</span>
+            <span className="text-sm font-bold" style={{ color: '#000' }}>✓</span>
           </div>
         </div>
 
-        {/* Branding */}
-        <div style={{
-          opacity: phase >= 2 ? 1 : 0,
-          transform: phase >= 2 ? 'translateY(0)' : 'translateY(8px)',
-          transition: 'all 0.6s ease 0.3s'
-        }}>
-          <span className="text-xs font-bold tracking-[0.3em] uppercase"
-            style={{ color: 'rgba(147,197,253,0.7)' }}>by KAFTIMDA</span>
-        </div>
+        {/* by KAFTIMDA */}
+        <p style={{
+          fontSize: '10px',
+          letterSpacing: '0.3em',
+          textTransform: 'uppercase',
+          color: 'rgba(147,197,253,0.7)',
+          fontWeight: 700,
+          opacity: phase >= 4 ? 1 : 0,
+          transition: 'opacity 0.6s ease 0.2s',
+        }}>by KAFTIMDA</p>
 
-        {/* Typewriter title */}
+        {/* Title */}
         <h1 className="text-4xl font-black tracking-tight mb-1 mt-2 min-h-[52px] flex items-center">
-          <span className="shimmer-text">{typedTitle}</span>
-          {typedTitle.length < TITLE.length && (
-            <span className="cursor-blink inline-block w-0.5 h-9 bg-blue-400 ml-1 rounded-full" />
+          {phase >= 4 && (
+            <>
+              <span className="shimmer-title">{typedTitle}</span>
+              {typedTitle.length < 6 && (
+                <span className="inline-block w-0.5 h-9 bg-blue-400 ml-1 rounded-full"
+                  style={{ animation: 'filmFlicker 0.6s infinite' }} />
+              )}
+            </>
           )}
         </h1>
 
         {/* Tagline */}
-        <p className="text-sm text-center mb-6"
-          style={{
-            color: 'rgba(156,163,175,0.9)',
-            opacity: phase >= 3 ? 1 : 0,
-            transform: phase >= 3 ? 'translateY(0)' : 'translateY(10px)',
-            transition: 'all 0.7s ease',
-            letterSpacing: '0.01em'
-          }}>
+        <p style={{
+          fontSize: '13px',
+          color: 'rgba(156,163,175,0.9)',
+          textAlign: 'center',
+          marginBottom: '24px',
+          opacity: phase >= 5 ? 1 : 0,
+          animation: phase >= 5 ? 'fadeUp 0.6s ease forwards' : 'none',
+        }}>
           Shaxsiy moliyangizni oson boshqaring
         </p>
 
-        {/* Features grid */}
+        {/* Features */}
         <div className="w-full grid grid-cols-2 gap-2 mb-6">
           {FEATURES.map((f, i) => (
             <div key={i}
@@ -252,15 +307,9 @@ export default function Onboarding({ onDone }) {
               style={{
                 background: 'rgba(255,255,255,0.04)',
                 border: '1px solid rgba(255,255,255,0.07)',
-                backdropFilter: 'blur(10px)',
                 opacity: visibleFeatures.includes(i) ? 1 : 0,
-                transform: visibleFeatures.includes(i)
-                  ? 'translateY(0) scale(1)'
-                  : 'translateY(24px) scale(0.9)',
-                transition: 'all 0.5s cubic-bezier(0.34, 1.4, 0.64, 1)',
-                boxShadow: visibleFeatures.includes(i)
-                  ? '0 4px 15px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05)'
-                  : 'none'
+                transform: visibleFeatures.includes(i) ? 'translateY(0) scale(1)' : 'translateY(20px) scale(0.92)',
+                transition: 'all 0.45s cubic-bezier(0.34,1.4,0.64,1)',
               }}>
               <span className="text-xl flex-shrink-0">{f.icon}</span>
               <p className="text-xs leading-snug" style={{ color: 'rgba(209,213,219,0.9)' }}>{f.text}</p>
@@ -268,27 +317,22 @@ export default function Onboarding({ onDone }) {
           ))}
         </div>
 
-        {/* CTA Button */}
-        <button
-          onClick={onDone}
+        {/* CTA */}
+        <button onClick={onDone}
           className="w-full py-4 rounded-2xl font-bold text-white text-base relative overflow-hidden active:scale-95"
           style={{
             background: 'linear-gradient(135deg, #1d4ed8 0%, #7c3aed 100%)',
-            backgroundSize: '200% auto',
             opacity: showBtn ? 1 : 0,
             transform: showBtn ? 'translateY(0) scale(1)' : 'translateY(20px) scale(0.95)',
-            transition: 'all 0.6s cubic-bezier(0.34, 1.4, 0.64, 1)',
+            transition: 'all 0.6s cubic-bezier(0.34,1.4,0.64,1)',
             pointerEvents: showBtn ? 'auto' : 'none',
-            boxShadow: showBtn
-              ? '0 0 0 1px rgba(124,58,237,0.4), 0 8px 30px rgba(59,130,246,0.4), 0 20px 40px rgba(124,58,237,0.2)'
-              : 'none',
+            boxShadow: showBtn ? '0 0 30px rgba(59,130,246,0.4), 0 0 60px rgba(124,58,237,0.2)' : 'none',
           }}>
-          {/* Shimmer sweep on button */}
           <span className="absolute inset-0 rounded-2xl pointer-events-none"
             style={{
-              background: 'linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.15) 50%, transparent 60%)',
-              backgroundSize: '200% 100%',
-              animation: showBtn ? 'shimmer 2s 0.5s linear infinite' : 'none'
+              background: 'linear-gradient(105deg, transparent 35%, rgba(255,255,255,0.18) 50%, transparent 65%)',
+              backgroundSize: '300% 100%',
+              animation: showBtn ? 'btnShimmer 2s 0.3s linear infinite' : 'none',
             }} />
           <span className="relative">Boshlash →</span>
         </button>
