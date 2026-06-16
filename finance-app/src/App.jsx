@@ -12,7 +12,7 @@ import Categories from './pages/Categories'
 import Family from './pages/Family'
 import AppLock from './components/AppLock'
 import Onboarding from './components/Onboarding'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import './index.css'
 
 function ProtectedLayout() {
@@ -46,12 +46,21 @@ function AppRoutes() {
 }
 
 export default function App() {
-  const [onboarded, setOnboarded] = useState(() => !!sessionStorage.getItem('pulsek_session'))
+  const [onboarded, setOnboarded] = useState(false)
 
   const handleDone = () => {
-    sessionStorage.setItem('pulsek_session', '1')
     setOnboarded(true)
   }
+
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') {
+        setOnboarded(false)
+      }
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => document.removeEventListener('visibilitychange', onVisible)
+  }, [])
 
   return (
     <BrowserRouter>
