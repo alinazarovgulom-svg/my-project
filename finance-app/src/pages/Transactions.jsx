@@ -9,9 +9,10 @@ import { format } from 'date-fns'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import * as XLSX from 'xlsx'
+import { fmtCur } from '../utils/format'
 
 const EMOJIS = { income: '💰', expense: '💸' }
-const fmt = (n) => new Intl.NumberFormat('uz-UZ').format(Math.round(n))
+const fmt = (n, cur) => fmtCur(n, cur)
 
 const CATEGORY_EMOJIS = {
   'Maosh': '💼', 'Biznes': '🏢', 'Freelance': '💻', 'Investitsiya': '📈', 'Sovg\'a': '🎁', 'Boshqa kirim': '💰',
@@ -205,7 +206,7 @@ export default function Transactions() {
                     </p>
                   </div>
                   <p className={`text-sm font-semibold flex-shrink-0 ${t.type === 'income' ? 'text-green-400' : 'text-red-400'}`}>
-                    {t.type === 'income' ? '+' : '-'}{fmt(t.amount)} {t.currency || 'UZS'}
+                    {t.type === 'income' ? '+' : '-'}{fmt(t.amount, t.currency || 'UZS')} {t.currency || 'UZS'}
                   </p>
                 </div>
               </SwipeableRow>

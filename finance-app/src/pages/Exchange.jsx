@@ -3,14 +3,12 @@ import { RefreshCw, Settings, ArrowLeftRight, History, Trash2 } from 'lucide-rea
 import { useApp } from '../store/AppContext'
 import Modal from '../components/Modal'
 import { format } from 'date-fns'
+import { fmtCur } from '../utils/format'
 
 const CURRENCIES = ['UZS', 'USD', 'EUR', 'RUB']
 const FLAGS = { UZS: '🇺🇿', USD: '🇺🇸', EUR: '🇪🇺', RUB: '🇷🇺' }
 
-const fmt = (n, c) => {
-  if (c === 'UZS') return new Intl.NumberFormat('uz-UZ').format(Math.round(n))
-  return n.toFixed(2)
-}
+const fmt = (n, c) => fmtCur(n, c)
 
 const getRatesHistory = (userId) => {
   try {
