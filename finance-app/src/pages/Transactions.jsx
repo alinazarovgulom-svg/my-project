@@ -27,7 +27,7 @@ export default function Transactions() {
   const [editModal, setEditModal] = useState(false)
   const [editingTx, setEditingTx] = useState(null)
   const [exportModal, setExportModal] = useState(false)
-  const [familyMode, setFamilyMode] = useState(false)
+  const [familyMode, setFamilyMode] = useState(() => !!family)
   const [form, setForm] = useState(defaultForm)
   const [filter, setFilter] = useState('all')
   const [search, setSearch] = useState('')
