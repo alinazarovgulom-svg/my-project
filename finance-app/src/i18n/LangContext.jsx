@@ -1,13 +1,13 @@
 import { createContext, useContext, useState } from 'react'
-import { translations } from './translations'
+import { translations, defaultLang } from './translations'
 
 const LangContext = createContext()
 
 export function LangProvider({ children }) {
-  const [lang, setLangState] = useState(() => localStorage.getItem('pulbek_lang') || 'uz')
+  const [lang, setLangState] = useState(() => localStorage.getItem('pulsek_lang') || defaultLang)
 
   const setLang = (l) => {
-    localStorage.setItem('pulbek_lang', l)
+    localStorage.setItem('pulsek_lang', l)
     setLangState(l)
   }
 
