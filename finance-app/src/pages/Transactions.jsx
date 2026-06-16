@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus, Trash2, Search, TrendingUp, TrendingDown, Users, Download } from 'lucide-react'
+import { Plus, Trash2, Search, TrendingUp, TrendingDown, Download } from 'lucide-react'
 import { useApp, INCOME_CATEGORIES, EXPENSE_CATEGORIES } from '../store/AppContext'
 import Modal from '../components/Modal'
 import SwipeableRow from '../components/SwipeableRow'
@@ -23,11 +23,11 @@ const defaultForm = { type: 'expense', amount: '', category: '', currency: 'UZS'
 
 export default function Transactions() {
   const { transactions, saveTransactions, user, family, familyTransactions, familyMembers, canEdit, canAdd, refreshFamily } = useApp()
+  const isFamily = !!family
   const [modal, setModal] = useState(false)
   const [editModal, setEditModal] = useState(false)
   const [editingTx, setEditingTx] = useState(null)
   const [exportModal, setExportModal] = useState(false)
-  const [familyMode, setFamilyMode] = useState(() => !!family)
   const [form, setForm] = useState(defaultForm)
   const [filter, setFilter] = useState('all')
   const [search, setSearch] = useState('')
@@ -55,7 +55,7 @@ export default function Transactions() {
       userId: user.id,
       userName: user.name
     }
-    if (familyMode && family) {
+    if (isFamily) {
       addFamilyTransaction(family.id, t).then(() => refreshFamily())
     } else {
       saveTransactions([...transactions, t])
@@ -82,14 +82,14 @@ export default function Transactions() {
 
   const handleDelete = (id, isFamily = false) => {
     if (!confirm('O\'chirishni tasdiqlaysizmi?')) return
-    if (isFamily && family) {
+    if (isFamily) {
       deleteFamilyTransaction(family.id, id).then(() => refreshFamily())
     } else {
       saveTransactions(transactions.filter(t => t.id !== id))
     }
   }
 
-  const activeList = familyMode && family ? familyTransactions : transactions
+  const activeList = isFamily ? familyTransactions : transactions
 
   const filtered = activeList
     .filter(t => filter === 'all' || t.type === filter)
@@ -152,15 +152,6 @@ export default function Transactions() {
             <button onClick={() => setExportModal(true)} className="p-2 rounded-xl bg-dark-700 text-gray-400 active:opacity-70">
               <Download size={18} />
             </button>
-            {family && (
-              <button
-                onClick={() => setFamilyMode(f => !f)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-colors ${familyMode ? 'bg-purple-500/20 text-purple-400' : 'bg-dark-600 text-gray-400'}`}
-              >
-                <Users size={14} />
-                Oila
-              </button>
-            )}
           </div>
         </div>
         <div className="relative mb-3">
@@ -184,7 +175,6 @@ export default function Transactions() {
           </div>
         ) : (
           filtered.map(t => {
-            const isFamily = familyMode && family
             const showDelete = isFamily ? canEdit(t.userId) : true
             const canEditTx = !isFamily
             return (
@@ -214,7 +204,7 @@ export default function Transactions() {
         )}
       </div>
 
-      {(!familyMode || canAdd()) && (
+      {(!isFamily || canAdd()) && (
         <div className="fixed bottom-20 right-4 flex flex-col gap-2">
           <button onClick={() => openAdd('income')} className="w-12 h-12 rounded-full bg-green-500 text-white flex items-center justify-center shadow-lg shadow-green-500/30 active:opacity-80">
             <TrendingUp size={20} />
@@ -309,7 +299,7 @@ export default function Transactions() {
             <label className="text-gray-400 text-xs mb-1 block">Sana</label>
             <input className="input-field" type="date" value={form.date} onChange={e => set('date', e.target.value)} />
           </div>
-          {familyMode && family && (
+          {isFamily && (
             <p className="text-purple-400 text-xs bg-purple-500/10 py-2 px-3 rounded-lg">
               Bu tranzaksiya oilaviy rejimga saqlanadi
             </p>
