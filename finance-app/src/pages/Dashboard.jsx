@@ -71,7 +71,7 @@ export default function Dashboard() {
     : []
   const familyTotalBalance = memberBalances.reduce((s, m) => s + m.balance, 0)
 
-  const recent = [...transactions].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5)
+  const recent = [...transactions].filter(t => t.category !== 'Valyuta ayirboshlash').sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5)
 
   const activeDebts = debts.filter(d => d.remaining > 0)
   const myDebts = activeDebts.filter(d => d.direction === 'borrowed')
