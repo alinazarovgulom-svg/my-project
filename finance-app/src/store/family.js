@@ -23,7 +23,9 @@ const getFamilyFromCloud = async (familyId) => {
 const saveFamilyToCloud = async (family) => {
   try {
     await setDoc(doc(db, 'families', family.id), family)
-  } catch (e) {}
+  } catch (e) {
+    console.warn('[family] cloud write failed:', e?.code || e?.message)
+  }
 }
 
 // Lokal cache dan o'qish
@@ -180,6 +182,6 @@ export const subscribeToFamily = (familyId, callback) => {
         callback(data)
       }
     },
-    (err) => { console.warn('[family] listener error:', err?.code) }
+    () => {}
   )
 }

@@ -4,8 +4,9 @@ import { useApp } from '../store/AppContext'
 import Modal from '../components/Modal'
 import { generateId } from '../store/storage'
 import { format, differenceInDays, isToday, isTomorrow, isPast, parseISO } from 'date-fns'
+import { fmtCur } from '../utils/format'
 
-const fmt = (n) => new Intl.NumberFormat('uz-UZ').format(Math.round(n))
+const fmt = (n, cur) => fmtCur(n, cur || 'UZS')
 const CURRENCIES = ['UZS', 'USD', 'EUR', 'RUB']
 
 const defaultForm = {
@@ -175,8 +176,8 @@ export default function Debts() {
                     )}
                     <div className="mt-2">
                       <div className="flex justify-between text-xs mb-1">
-                        <span className="text-gray-500">Qoldi: <span className={isDone ? 'text-green-400' : 'text-white'}>{fmt(d.remaining)} {cur}</span></span>
-                        <span className="text-gray-500">Jami: {fmt(d.amount)} {cur}</span>
+                        <span className="text-gray-500">Qoldi: <span className={isDone ? 'text-green-400' : 'text-white'}>{fmt(d.remaining, cur)} {cur}</span></span>
+                        <span className="text-gray-500">Jami: {fmt(d.amount, cur)} {cur}</span>
                       </div>
                       <div className="w-full bg-dark-600 rounded-full h-1.5">
                         <div className="h-1.5 rounded-full bg-blue-500 transition-all" style={{ width: `${progress}%` }} />
@@ -193,7 +194,7 @@ export default function Debts() {
                         {d.payments.map(p => (
                           <div key={p.id} className="flex justify-between text-xs bg-dark-600 rounded-lg px-2 py-1">
                             <span className="text-gray-400">{format(new Date(p.date), 'dd.MM.yyyy')}</span>
-                            <span className="text-green-400">+{fmt(p.amount)} {cur}</span>
+                            <span className="text-green-400">+{fmt(p.amount, cur)} {cur}</span>
                           </div>
                         ))}
                       </div>
@@ -302,10 +303,10 @@ export default function Debts() {
           <div className="flex flex-col gap-3">
             <div className="bg-dark-600 rounded-xl p-3">
               <p className="text-gray-400 text-sm">{payModal.person}</p>
-              <p className="text-white font-bold">{fmt(payModal.remaining)} {payModal.currency || 'UZS'} qoldi</p>
+              <p className="text-white font-bold">{fmt(payModal.remaining, payModal.currency || 'UZS')} {payModal.currency || 'UZS'} qoldi</p>
             </div>
             <button onClick={() => setPayAmount(String(payModal.remaining))} className="text-blue-400 text-sm text-left">
-              To'liq to'lash ({fmt(payModal.remaining)} {payModal.currency || 'UZS'})
+              To'liq to'lash ({fmt(payModal.remaining, payModal.currency || 'UZS')} {payModal.currency || 'UZS'})
             </button>
             <input className="input-field" type="number" placeholder="To'lov summasi" value={payAmount} onChange={e => setPayAmount(e.target.value)} />
             <button onClick={handlePay} className="btn-primary">To'lash</button>

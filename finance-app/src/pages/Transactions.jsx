@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus, Trash2, Search, TrendingUp, TrendingDown, Download, CheckSquare, Square } from 'lucide-react'
+import { Plus, Trash2, Search, TrendingUp, TrendingDown, Users, Download } from 'lucide-react'
 import { useApp, INCOME_CATEGORIES, EXPENSE_CATEGORIES } from '../store/AppContext'
 import Modal from '../components/Modal'
 import SwipeableRow from '../components/SwipeableRow'
@@ -9,9 +9,10 @@ import { format } from 'date-fns'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import * as XLSX from 'xlsx'
+import { fmtCur } from '../utils/format'
 
 const EMOJIS = { income: '💰', expense: '💸' }
-const fmt = (n) => new Intl.NumberFormat('uz-UZ').format(Math.round(n))
+const fmt = (n, cur) => fmtCur(n, cur)
 
 const CATEGORY_EMOJIS = {
   'Maosh': '💼', 'Biznes': '🏢', 'Freelance': '💻', 'Investitsiya': '📈', 'Sovg\'a': '🎁', 'Boshqa kirim': '💰',
@@ -23,19 +24,14 @@ const defaultForm = { type: 'expense', amount: '', category: '', currency: 'UZS'
 
 export default function Transactions() {
   const { transactions, saveTransactions, user, family, familyTransactions, familyMembers, canEdit, canAdd, refreshFamily } = useApp()
-  const isFamily = !!family
   const [modal, setModal] = useState(false)
   const [editModal, setEditModal] = useState(false)
   const [editingTx, setEditingTx] = useState(null)
   const [exportModal, setExportModal] = useState(false)
+  const [familyMode, setFamilyMode] = useState(false)
   const [form, setForm] = useState(defaultForm)
   const [filter, setFilter] = useState('all')
   const [search, setSearch] = useState('')
-  const [dateFrom, setDateFrom] = useState('')
-  const [dateTo, setDateTo] = useState('')
-  const [catFilter, setCatFilter] = useState('all')
-  const [selectMode, setSelectMode] = useState(false)
-  const [selected, setSelected] = useState(new Set())
   const [customCategories] = useState(() => {
     try {
       const saved = localStorage.getItem(`finance_${user?.id}_categories`)
@@ -60,7 +56,7 @@ export default function Transactions() {
       userId: user.id,
       userName: user.name
     }
-    if (isFamily) {
+    if (familyMode && family) {
       addFamilyTransaction(family.id, t).then(() => refreshFamily())
     } else {
       saveTransactions([...transactions, t])
@@ -73,44 +69,34 @@ export default function Transactions() {
     setEditModal(true)
   }
 
-  const handleEditSave = async () => {
+  const handleEditSave = () => {
     if (!editingTx?.amount || !editingTx?.category) return
-    const updatedTx = { ...editingTx, amount: parseFloat(editingTx.amount) }
-    if (isFamily && family) {
-      const { deleteFamilyTransaction: delFT, addFamilyTransaction: addFT } = await import('../store/family')
-      await delFT(family.id, updatedTx.id)
-      await addFT(family.id, updatedTx)
-      refreshFamily()
-    } else {
-      const updated = transactions.map(t => t.id === editingTx.id ? updatedTx : t)
-      saveTransactions(updated)
-    }
+    const updated = transactions.map(t =>
+      t.id === editingTx.id
+        ? { ...editingTx, amount: parseFloat(editingTx.amount) }
+        : t
+    )
+    saveTransactions(updated)
     setEditModal(false)
     setEditingTx(null)
   }
 
   const handleDelete = (id, isFamily = false) => {
     if (!confirm('O\'chirishni tasdiqlaysizmi?')) return
-    if (isFamily) {
+    if (isFamily && family) {
       deleteFamilyTransaction(family.id, id).then(() => refreshFamily())
     } else {
       saveTransactions(transactions.filter(t => t.id !== id))
     }
   }
 
-  const activeList = isFamily ? familyTransactions : transactions
+  const activeList = (familyMode && family ? familyTransactions : transactions)
+    .filter(t => t.category !== 'Valyuta ayirboshlash')
 
   const filtered = activeList
-    .filter(t => t.category !== 'Valyuta ayirboshlash')
     .filter(t => filter === 'all' || t.type === filter)
-    .filter(t => catFilter === 'all' || t.category === catFilter)
-    .filter(t => !dateFrom || t.date >= dateFrom)
-    .filter(t => !dateTo || t.date <= dateTo)
     .filter(t => !search || t.category.toLowerCase().includes(search.toLowerCase()) || (t.note || '').toLowerCase().includes(search.toLowerCase()))
     .sort((a, b) => new Date(b.date) - new Date(a.date))
-
-  const allCategories = [...new Set(activeList.filter(t => t.category !== 'Valyuta ayirboshlash').map(t => t.category))]
-  const hasFilter = filter !== 'all' || catFilter !== 'all' || dateFrom || dateTo || search
 
   const categories = customCategories || (form.type === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES)
 
@@ -119,16 +105,16 @@ export default function Transactions() {
     return m?.fullName || m?.username || 'Noma\'lum'
   }
 
-  const buildPDF = (list, label) => {
+  const exportPDF = () => {
     const doc = new jsPDF()
     doc.setFontSize(16)
     doc.text('PulBek - Tranzaksiyalar', 14, 20)
-    doc.setFontSize(9)
-    doc.text(`${label} | Chop: ${format(new Date(), 'dd.MM.yyyy')}`, 14, 28)
+    doc.setFontSize(10)
+    doc.text(`Sana: ${format(new Date(), 'dd.MM.yyyy')}`, 14, 28)
     autoTable(doc, {
       startY: 35,
       head: [['Sana', 'Tur', 'Kategoriya', 'Miqdor', 'Valyuta', 'Izoh']],
-      body: list.map(t => [
+      body: filtered.map(t => [
         format(new Date(t.date), 'dd.MM.yyyy'),
         t.type === 'income' ? 'Kirim' : 'Chiqim',
         t.category,
@@ -141,15 +127,6 @@ export default function Transactions() {
     })
     doc.save('pulbek-tranzaksiyalar.pdf')
     setExportModal(false)
-  }
-
-  const exportPDF = () => buildPDF(filtered, `Jami: ${filtered.length} ta`)
-
-  const exportSelectedPDF = () => {
-    const list = filtered.filter(t => selected.has(t.id))
-    buildPDF(list, `Tanlangan: ${list.length} ta`)
-    setSelectMode(false)
-    setSelected(new Set())
   }
 
   const exportExcel = () => {
@@ -174,44 +151,31 @@ export default function Transactions() {
         <div className="flex items-center justify-between mb-3">
           <h1 className="text-xl font-bold text-white">Kirim / Chiqim</h1>
           <div className="flex gap-2">
-            <button
-              onClick={() => { setSelectMode(s => !s); setSelected(new Set()) }}
-              className={`p-2 rounded-xl text-sm font-medium transition-colors ${selectMode ? 'bg-blue-500/20 text-blue-400' : 'bg-dark-700 text-gray-400'}`}
-            >
-              <CheckSquare size={18} />
-            </button>
             <button onClick={() => setExportModal(true)} className="p-2 rounded-xl bg-dark-700 text-gray-400 active:opacity-70">
               <Download size={18} />
             </button>
+            {family && (
+              <button
+                onClick={() => setFamilyMode(f => !f)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-colors ${familyMode ? 'bg-purple-500/20 text-purple-400' : 'bg-dark-600 text-gray-400'}`}
+              >
+                <Users size={14} />
+                Oila
+              </button>
+            )}
           </div>
         </div>
         <div className="relative mb-3">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
           <input className="input-field pl-9 py-2 text-sm" placeholder="Qidirish..." value={search} onChange={e => setSearch(e.target.value)} />
         </div>
-        <div className="flex gap-2 mb-2">
+        <div className="flex gap-2">
           {['all', 'income', 'expense'].map(f => (
             <button key={f} onClick={() => setFilter(f)}
               className={`flex-1 py-2 rounded-xl text-xs font-medium transition-colors ${filter === f ? (f === 'income' ? 'bg-green-500 text-white' : f === 'expense' ? 'bg-red-500 text-white' : 'bg-blue-500 text-white') : 'bg-dark-700 text-gray-400'}`}>
               {f === 'all' ? 'Barchasi' : f === 'income' ? 'Kirim' : 'Chiqim'}
             </button>
           ))}
-        </div>
-        <div className="flex gap-2 mb-2">
-          <input type="date" className="input-field flex-1 py-1.5 text-xs" value={dateFrom} onChange={e => setDateFrom(e.target.value)} />
-          <input type="date" className="input-field flex-1 py-1.5 text-xs" value={dateTo} onChange={e => setDateTo(e.target.value)} />
-        </div>
-        <div className="flex items-center gap-2">
-          <select className="input-field flex-1 py-1.5 text-xs" value={catFilter} onChange={e => setCatFilter(e.target.value)}>
-            <option value="all">Barcha kategoriyalar</option>
-            {allCategories.map(c => <option key={c} value={c}>{c}</option>)}
-          </select>
-          {hasFilter && (
-            <button onClick={() => { setFilter('all'); setCatFilter('all'); setDateFrom(''); setDateTo(''); setSearch('') }}
-              className="px-3 py-2 rounded-xl bg-red-500/15 text-red-400 text-xs font-medium whitespace-nowrap active:opacity-70">
-              Tozalash
-            </button>
-          )}
         </div>
       </div>
 
@@ -222,31 +186,10 @@ export default function Transactions() {
           </div>
         ) : (
           filtered.map(t => {
+            const isFamily = familyMode && family
             const showDelete = isFamily ? canEdit(t.userId) : true
-            const canEditTx = !isFamily || canEdit(t.userId)
-            const isSelected = selected.has(t.id)
-            const toggleSelect = () => setSelected(s => {
-              const n = new Set(s)
-              n.has(t.id) ? n.delete(t.id) : n.add(t.id)
-              return n
-            })
-            return selectMode ? (
-              <button key={t.id} onClick={toggleSelect} className={`card flex items-center gap-3 w-full text-left transition-colors ${isSelected ? 'border border-blue-500/50 bg-blue-500/5' : ''}`}>
-                <div className="flex-shrink-0 text-blue-400">
-                  {isSelected ? <CheckSquare size={20} /> : <Square size={20} className="text-gray-600" />}
-                </div>
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0 ${t.type === 'income' ? 'bg-green-500/15' : 'bg-red-500/15'}`}>
-                  {t.emoji}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-white text-sm font-medium truncate">{t.category}</p>
-                  <p className="text-gray-500 text-xs">{t.note ? `${t.note} · ` : ''}{format(new Date(t.date), 'dd.MM.yyyy')}</p>
-                </div>
-                <p className={`text-sm font-semibold flex-shrink-0 ${t.type === 'income' ? 'text-green-400' : 'text-red-400'}`}>
-                  {t.type === 'income' ? '+' : '-'}{fmt(t.amount)} {t.currency || 'UZS'}
-                </p>
-              </button>
-            ) : (
+            const canEditTx = !isFamily
+            return (
               <SwipeableRow
                 key={t.id}
                 onDelete={showDelete ? () => handleDelete(t.id, isFamily) : null}
@@ -264,7 +207,7 @@ export default function Transactions() {
                     </p>
                   </div>
                   <p className={`text-sm font-semibold flex-shrink-0 ${t.type === 'income' ? 'text-green-400' : 'text-red-400'}`}>
-                    {t.type === 'income' ? '+' : '-'}{fmt(t.amount)} {t.currency || 'UZS'}
+                    {t.type === 'income' ? '+' : '-'}{fmt(t.amount, t.currency || 'UZS')} {t.currency || 'UZS'}
                   </p>
                 </div>
               </SwipeableRow>
@@ -273,35 +216,7 @@ export default function Transactions() {
         )}
       </div>
 
-      {/* Tanlash rejimida pastki panel */}
-      {selectMode && (
-        <div className="fixed bottom-20 left-4 right-4 z-20 flex gap-2">
-          <button
-            onClick={() => { setSelectMode(false); setSelected(new Set()) }}
-            className="flex-1 py-3 rounded-xl bg-dark-600 text-gray-300 text-sm font-medium"
-          >
-            Bekor qilish
-          </button>
-          <button
-            onClick={() => {
-              const all = filtered.map(t => t.id)
-              setSelected(new Set(all))
-            }}
-            className="flex-1 py-3 rounded-xl bg-dark-600 text-blue-400 text-sm font-medium"
-          >
-            Barchasini belgilash
-          </button>
-          <button
-            disabled={selected.size === 0}
-            onClick={exportSelectedPDF}
-            className="flex-1 py-3 rounded-xl bg-blue-500 text-white text-sm font-medium disabled:opacity-40"
-          >
-            PDF ({selected.size})
-          </button>
-        </div>
-      )}
-
-      {(!isFamily || canAdd()) && !selectMode && (
+      {(!familyMode || canAdd()) && (
         <div className="fixed bottom-20 right-4 flex flex-col gap-2">
           <button onClick={() => openAdd('income')} className="w-12 h-12 rounded-full bg-green-500 text-white flex items-center justify-center shadow-lg shadow-green-500/30 active:opacity-80">
             <TrendingUp size={20} />
@@ -312,17 +227,14 @@ export default function Transactions() {
         </div>
       )}
 
-
       {/* Export Modal */}
-      <Modal open={exportModal} onClose={() => setExportModal(false)} title="Yuklab olish">
-        <div className="flex flex-col gap-3 pb-2">
-          <div className="bg-dark-600 rounded-xl px-4 py-3">
-            <p className="text-gray-400 text-xs mb-1">Yuklanadigan ma'lumotlar</p>
-            <p className="text-white text-sm font-semibold">{filtered.length} ta tranzaksiya</p>
-            {hasFilter && <p className="text-blue-400 text-xs mt-1">Filtr o'rnatilgan ✓</p>}
-          </div>
+      <Modal open={exportModal} onClose={() => setExportModal(false)} title="Ma'lumotlarni yuklash">
+        <div className="flex flex-col gap-3">
+          <p className="text-gray-400 text-sm">
+            {filtered.length} ta {search || filter !== 'all' ? 'filtrlangan' : ''} tranzaksiya yuklanadi
+          </p>
           <button onClick={exportPDF} className="btn-primary">📄 PDF yuklab olish</button>
-          <button onClick={exportExcel} className="bg-green-600 text-white py-3 rounded-xl font-semibold">
+          <button onClick={exportExcel} className="bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl font-semibold transition-colors">
             📊 Excel yuklab olish
           </button>
         </div>
@@ -399,7 +311,7 @@ export default function Transactions() {
             <label className="text-gray-400 text-xs mb-1 block">Sana</label>
             <input className="input-field" type="date" value={form.date} onChange={e => set('date', e.target.value)} />
           </div>
-          {isFamily && (
+          {familyMode && family && (
             <p className="text-purple-400 text-xs bg-purple-500/10 py-2 px-3 rounded-lg">
               Bu tranzaksiya oilaviy rejimga saqlanadi
             </p>

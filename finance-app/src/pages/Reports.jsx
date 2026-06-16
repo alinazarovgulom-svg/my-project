@@ -2,8 +2,9 @@ import { useState } from 'react'
 import { FileText, Table, TrendingUp, TrendingDown, PieChart, CalendarDays, ChevronDown, ChevronUp } from 'lucide-react'
 import { useApp } from '../store/AppContext'
 import { format, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns'
+import { fmtCur } from '../utils/format'
 
-const fmt = (n) => new Intl.NumberFormat('uz-UZ').format(Math.round(n))
+const fmt = (n, cur) => fmtCur(n, cur || 'UZS')
 
 export default function Reports() {
   const { transactions: personalTx, familyTransactions, family, debts, user } = useApp()
@@ -210,7 +211,7 @@ export default function Reports() {
               currencyStats.filter(x => x.inc > 0).map(({ cur, inc }) => (
                 <div key={cur} className="flex items-center justify-between mt-1">
                   <span className="text-gray-400 text-xs">{FLAGS[cur]} {cur}</span>
-                  <span className="text-green-400 font-bold text-sm">+{fmt(inc)} {cur}</span>
+                  <span className="text-green-400 font-bold text-sm">+{fmt(inc, cur)} {cur}</span>
                 </div>
               ))
             ) : (
@@ -228,7 +229,7 @@ export default function Reports() {
               currencyStats.filter(x => x.exp > 0).map(({ cur, exp }) => (
                 <div key={cur} className="flex items-center justify-between mt-1">
                   <span className="text-gray-400 text-xs">{FLAGS[cur]} {cur}</span>
-                  <span className="text-red-400 font-bold text-sm">-{fmt(exp)} {cur}</span>
+                  <span className="text-red-400 font-bold text-sm">-{fmt(exp, cur)} {cur}</span>
                 </div>
               ))
             ) : (
@@ -292,12 +293,12 @@ export default function Reports() {
                         <div className="flex items-center gap-1.5">
                           <span className="text-xs">{FLAGS[cur]}</span>
                           <div className="flex gap-2 text-xs">
-                            {dayIncome[cur] > 0 && <span className="text-green-400">+{fmt(dayIncome[cur])}</span>}
-                            {dayExpense[cur] > 0 && <span className="text-red-400">-{fmt(dayExpense[cur])}</span>}
+                            {dayIncome[cur] > 0 && <span className="text-green-400">+{fmt(dayIncome[cur], cur)}</span>}
+                            {dayExpense[cur] > 0 && <span className="text-red-400">-{fmt(dayExpense[cur], cur)}</span>}
                           </div>
                         </div>
                         <span className={`text-sm font-bold ${balance[cur] >= 0 ? 'text-white' : 'text-red-400'}`}>
-                          {balance[cur] >= 0 ? '' : '-'}{fmt(Math.abs(balance[cur]))} {cur}
+                          {balance[cur] >= 0 ? '' : '-'}{fmt(Math.abs(balance[cur]), cur)} {cur}
                         </span>
                       </div>
                     ))}

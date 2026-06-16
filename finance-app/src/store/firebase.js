@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app'
-import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from 'firebase/firestore'
+import { getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from 'firebase/firestore'
 
 const firebaseConfig = {
   apiKey: "AIzaSyASH72RruqIiBlZLAMrO2H6deV1eO2bpqs",
@@ -13,6 +13,7 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig)
 
+// Oflayn rejim + ko'p tab qo'llab-quvvatlash
 export const db = initializeFirestore(app, {
   localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
 })

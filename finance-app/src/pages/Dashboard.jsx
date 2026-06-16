@@ -5,8 +5,9 @@ import { format } from 'date-fns'
 import { uz } from 'date-fns/locale'
 import { getData } from '../store/storage'
 import { useLang } from '../i18n/LangContext'
+import { fmtCur } from '../utils/format'
 
-const fmt = (n) => new Intl.NumberFormat('uz-UZ').format(Math.abs(Math.round(n)))
+const fmt = (n, cur) => fmtCur(n, cur)
 
 const FLAGS = { UZS: '🇺🇿', USD: '🇺🇸', EUR: '🇪🇺', RUB: '🇷🇺' }
 
@@ -73,7 +74,7 @@ export default function Dashboard() {
     : []
   const familyTotalBalance = memberBalances.reduce((s, m) => s + m.balance, 0)
 
-  const recent = [...transactions].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5)
+  const recent = [...transactions].filter(t => t.category !== 'Valyuta ayirboshlash').sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5)
 
   const activeDebts = debts.filter(d => d.remaining > 0)
   const myDebts = activeDebts.filter(d => d.direction === 'borrowed')
@@ -103,7 +104,7 @@ export default function Dashboard() {
             <div className="flex flex-col gap-0.5">
               {currencyBalances.map(({ cur, bal }) => (
                 <p key={cur} className={`text-white font-bold ${currencyBalances.length === 1 ? 'text-3xl' : 'text-2xl'}`}>
-                  {bal >= 0 ? '' : '-'}{fmt(Math.abs(bal))} <span className="text-base font-normal">{cur}</span>
+                  {bal >= 0 ? '' : '-'}{fmt(Math.abs(bal), cur)} <span className="text-base font-normal">{cur}</span>
                 </p>
               ))}
             </div>
@@ -118,7 +119,7 @@ export default function Dashboard() {
               <div>
                 <p className="text-blue-200 text-xs">{t('income')}</p>
                 {currencyBreakdown.filter(x => x.income > 0).map(({ cur, income: inc }) => (
-                  <p key={cur} className="text-white text-xs font-semibold leading-tight">+{fmt(inc)} {cur}</p>
+                  <p key={cur} className="text-white text-xs font-semibold leading-tight">+{fmt(inc, cur)} {cur}</p>
                 ))}
                 {currencyBreakdown.filter(x => x.income > 0).length === 0 && (
                   <p className="text-white text-sm font-semibold">{fmt(totalIncome)}</p>
@@ -132,7 +133,7 @@ export default function Dashboard() {
               <div>
                 <p className="text-blue-200 text-xs">{t('expense')}</p>
                 {currencyBreakdown.filter(x => x.expense > 0).map(({ cur, expense: exp }) => (
-                  <p key={cur} className="text-white text-xs font-semibold leading-tight">-{fmt(exp)} {cur}</p>
+                  <p key={cur} className="text-white text-xs font-semibold leading-tight">-{fmt(exp, cur)} {cur}</p>
                 ))}
                 {currencyBreakdown.filter(x => x.expense > 0).length === 0 && (
                   <p className="text-white text-sm font-semibold">{fmt(totalExpense)}</p>
@@ -234,7 +235,7 @@ export default function Dashboard() {
                   <p className="text-gray-500 text-xs">{tx.note || format(new Date(tx.date), 'dd.MM.yyyy')}</p>
                 </div>
                 <p className={`text-sm font-semibold whitespace-nowrap ${tx.type === 'income' ? 'text-green-400' : 'text-red-400'}`}>
-                  {tx.type === 'income' ? '+' : '-'}{fmt(tx.amount)} {tx.currency || 'UZS'}
+                  {tx.type === 'income' ? '+' : '-'}{fmt(tx.amount, tx.currency || 'UZS')} {tx.currency || 'UZS'}
                 </p>
               </div>
             ))}

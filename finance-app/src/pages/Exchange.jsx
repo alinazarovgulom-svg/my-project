@@ -1,217 +1,213 @@
 import { useState } from 'react'
-import { ArrowLeftRight, Plus, Trash2 } from 'lucide-react'
+import { Plus, Trash2, ArrowRight, ArrowLeftRight } from 'lucide-react'
 import { useApp } from '../store/AppContext'
 import Modal from '../components/Modal'
-import SwipeableRow from '../components/SwipeableRow'
 import { format } from 'date-fns'
 import { generateId } from '../store/storage'
-import { addFamilyTransaction, deleteFamilyTransaction } from '../store/family'
+import { fmtCur } from '../utils/format'
 
 const CURRENCIES = ['UZS', 'USD', 'EUR', 'RUB']
 const FLAGS = { UZS: '🇺🇿', USD: '🇺🇸', EUR: '🇪🇺', RUB: '🇷🇺' }
-const fmt = (n, c) => {
-  if (!c || c === 'UZS') return new Intl.NumberFormat('uz-UZ').format(Math.round(n))
-  return Number(n).toLocaleString('en-US', { maximumFractionDigits: 4 })
-}
-
-const defaultForm = {
-  from: 'USD',
-  to: 'UZS',
-  fromAmount: '',
-  rate: '',
-  note: '',
-  date: new Date().toISOString().split('T')[0]
-}
+const fmt = (n, c) => fmtCur(n, c)
 
 export default function Exchange() {
-  const { user, family, transactions, saveTransactions, familyTransactions, refreshFamily } = useApp()
-  const [modal, setModal] = useState(false)
-  const [form, setForm] = useState(defaultForm)
-  const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
+  const { settings, updateSettings, user, transactions, saveTransactions, family, familyTransactions, refreshFamily } = useApp()
+  const rates = settings?.rates || { USD: 12700, EUR: 13800, RUB: 140 }
 
-  // Barcha valyuta ayirboshlash tranzaksiyalari
-  const allTx = family ? familyTransactions : transactions
-  const exchanges = allTx
-    .filter(t => t.category === 'Valyuta ayirboshlash' && t.type === 'expense')
-    .sort((a, b) => new Date(b.date) - new Date(a.date))
+  const [modal, setModal] = useState(false)
+  const [form, setForm] = useState({
+    from: 'USD', to: 'UZS', fromAmount: '', rate: '', note: '',
+    date: new Date().toISOString().split('T')[0]
+  })
+
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
   const toAmount = () => {
     const n = parseFloat(form.fromAmount)
     const r = parseFloat(form.rate)
-    if (!n || !r) return ''
-    if (form.from === 'UZS') return fmt(n / r, form.to)
-    return fmt(n * r, form.to)
+    if (!n || !r) return null
+    if (form.from === 'UZS') return n / r
+    if (form.to === 'UZS') return n * r
+    // cross: both non-UZS — convert via UZS
+    const inUZS = n * (rates[form.from] || 1)
+    return inUZS / (rates[form.to] || 1)
   }
 
-  const handleSave = () => {
+  const computedTo = toAmount()
+
+  const handleSave = async () => {
     const n = parseFloat(form.fromAmount)
-    const r = parseFloat(form.rate)
-    if (!n || !r) return
+    if (!n || n <= 0) return
+    const toAmt = toAmount()
+    if (!toAmt || toAmt <= 0) return
 
-    const toAmt = parseFloat(form.from === 'UZS' ? n / r : n * r)
-    const noteText = form.note ? `${form.note} | Kurs: ${r}` : `Kurs: ${r}`
-
+    const pairId = generateId()
     const txOut = {
       id: generateId(),
       type: 'expense',
       amount: n,
       currency: form.from,
       category: 'Valyuta ayirboshlash',
-      emoji: '💱',
-      note: noteText,
+      note: form.note || `${fmt(n, form.from)} ${form.from} → ${fmt(toAmt, form.to)} ${form.to}`,
       date: form.date,
-      userId: user.id,
-      userName: user.name,
-      pairId: null
+      pairId,
+      emoji: '💱'
     }
-    const pairId = generateId()
-    txOut.pairId = pairId
-
     const txIn = {
-      id: pairId,
+      id: generateId(),
       type: 'income',
       amount: toAmt,
       currency: form.to,
       category: 'Valyuta ayirboshlash',
-      emoji: '💱',
-      note: noteText,
+      note: form.note || `${fmt(n, form.from)} ${form.from} → ${fmt(toAmt, form.to)} ${form.to}`,
       date: form.date,
-      userId: user.id,
-      userName: user.name,
-      pairId: txOut.id
+      pairId,
+      emoji: '💱'
     }
 
     if (family) {
-      addFamilyTransaction(family.id, txOut)
-        .then(() => addFamilyTransaction(family.id, txIn))
-        .then(() => refreshFamily())
+      const { addFamilyTransaction } = await import('../store/family')
+      await addFamilyTransaction(family.id, txOut)
+      await addFamilyTransaction(family.id, txIn)
+      refreshFamily()
     } else {
       saveTransactions([...transactions, txOut, txIn])
     }
 
     setModal(false)
-    setForm(defaultForm)
+    setForm({ from: 'USD', to: 'UZS', fromAmount: '', rate: '', note: '', date: new Date().toISOString().split('T')[0] })
   }
 
-  const handleDelete = (tx) => {
+  const handleDelete = async (tx) => {
     if (!confirm('O\'chirishni tasdiqlaysizmi?')) return
-    // Juft tranzaksiyani ham o'chirish (pairId orqali)
     if (family) {
-      deleteFamilyTransaction(family.id, tx.id)
-        .then(() => tx.pairId ? deleteFamilyTransaction(family.id, tx.pairId) : null)
-        .then(() => refreshFamily())
+      const { deleteFamilyTransaction } = await import('../store/family')
+      const pair = familyTransactions.filter(t => t.pairId === tx.pairId)
+      for (const t of pair) await deleteFamilyTransaction(family.id, t.id)
+      refreshFamily()
     } else {
-      const idsToRemove = new Set([tx.id, tx.pairId].filter(Boolean))
-      saveTransactions(transactions.filter(t => !idsToRemove.has(t.id)))
+      saveTransactions(transactions.filter(t => t.pairId !== tx.pairId))
     }
   }
 
+  const allTx = family ? familyTransactions : transactions
+  const exchangeTx = allTx
+    .filter(t => t.category === 'Valyuta ayirboshlash' && t.type === 'expense')
+    .sort((a, b) => new Date(b.date) - new Date(a.date))
+
+  const openModal = () => {
+    const defaultRate = form.from !== 'UZS' ? (rates[form.from] || '') : form.to !== 'UZS' ? (rates[form.to] || '') : ''
+    setForm({ from: 'USD', to: 'UZS', fromAmount: '', rate: String(defaultRate), note: '', date: new Date().toISOString().split('T')[0] })
+    setModal(true)
+  }
+
   return (
-    <div className="flex flex-col min-h-dvh pb-24">
-      <div className="sticky top-0 z-10 bg-dark-900 px-4 pt-4 pb-3">
+    <div className="flex flex-col pb-24 min-h-dvh">
+      <div className="px-4 pt-4 pb-3">
         <h1 className="text-xl font-bold text-white">Valyuta ayirboshlash</h1>
       </div>
 
-      <div className="flex-1 px-4 flex flex-col gap-2 mt-2">
-        {exchanges.length === 0 ? (
+      {/* Exchange list */}
+      <div className="flex-1 px-4 flex flex-col gap-2">
+        {exchangeTx.length === 0 ? (
           <div className="card text-center py-10 mt-4">
             <p className="text-4xl mb-2">💱</p>
-            <p className="text-gray-500 text-sm">Hali ayirboshlash yo'q</p>
+            <p className="text-gray-500 text-sm">Ayirboshlashlar yo'q</p>
+            <p className="text-gray-600 text-xs mt-1">+ tugmasini bosib qo'shing</p>
           </div>
         ) : (
-          exchanges.map(tx => {
-            // Juft (kirim) tranzaksiyani topish
-            const pair = allTx.find(t => t.id === tx.pairId || t.pairId === tx.id && t.type === 'income')
+          exchangeTx.map(tx => {
+            const pair = allTx.find(t => t.pairId === tx.pairId && t.type === 'income')
             return (
-              <SwipeableRow key={tx.id} onDelete={() => handleDelete(tx)}>
-                <div className="card flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-blue-500/15 flex items-center justify-center text-lg flex-shrink-0">
-                    💱
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-red-400 text-sm font-semibold">-{fmt(tx.amount, tx.currency)} {tx.currency}</span>
-                      <ArrowLeftRight size={12} className="text-gray-500 flex-shrink-0" />
-                      {pair && <span className="text-green-400 text-sm font-semibold">+{fmt(pair.amount, pair.currency)} {pair.currency}</span>}
-                    </div>
-                    <p className="text-gray-500 text-xs truncate">
-                      {tx.note ? `${tx.note} · ` : ''}{format(new Date(tx.date), 'dd.MM.yyyy')}
-                    </p>
-                  </div>
+              <div key={tx.id} className="card flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-blue-500/15 flex items-center justify-center text-lg flex-shrink-0">
+                  💱
                 </div>
-              </SwipeableRow>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-white text-sm font-semibold">{fmt(tx.amount, tx.currency)} {tx.currency}</span>
+                    <ArrowRight size={12} className="text-gray-500 flex-shrink-0" />
+                    {pair && <span className="text-blue-400 text-sm font-semibold">{fmt(pair.amount, pair.currency)} {pair.currency}</span>}
+                  </div>
+                  <p className="text-gray-500 text-xs truncate">{tx.note || format(new Date(tx.date), 'dd.MM.yyyy')}</p>
+                  <p className="text-gray-600 text-xs">{format(new Date(tx.date), 'dd.MM.yyyy')}</p>
+                </div>
+                <button onClick={() => handleDelete(tx)} className="p-2 text-gray-600 active:text-red-400 flex-shrink-0">
+                  <Trash2 size={16} />
+                </button>
+              </div>
             )
           })
         )}
       </div>
 
-      {/* Qo'shish tugmasi */}
+      {/* FAB */}
       <button
-        onClick={() => { setForm(defaultForm); setModal(true) }}
-        className="fixed bottom-20 right-4 w-14 h-14 rounded-full bg-blue-500 text-white flex items-center justify-center shadow-lg shadow-blue-500/30 active:opacity-80"
+        onClick={openModal}
+        className="fixed bottom-20 right-4 w-14 h-14 rounded-full bg-blue-500 flex items-center justify-center shadow-lg active:opacity-80 z-10"
       >
-        <Plus size={24} />
+        <Plus size={24} className="text-white" />
       </button>
 
-      {/* Modal */}
+      {/* Add Modal */}
       <Modal open={modal} onClose={() => setModal(false)} title="Valyuta ayirboshlash">
-        <div className="flex flex-col gap-3 pb-4">
+        <div className="flex flex-col gap-3">
+          {/* From / To */}
           <div className="flex items-center gap-3">
             <div className="flex-1">
-              <label className="text-gray-400 text-xs mb-1 block">Berilayotgan valyuta</label>
-              <select className="input-field" value={form.from} onChange={e => set('from', e.target.value)}>
+              <label className="text-gray-400 text-xs mb-1 block">Dan</label>
+              <select className="input-field" value={form.from} onChange={e => { set('from', e.target.value); set('rate', '') }}>
                 {CURRENCIES.map(c => <option key={c} value={c}>{FLAGS[c]} {c}</option>)}
               </select>
             </div>
-            <button
-              onClick={() => setForm(f => ({ ...f, from: f.to, to: f.from }))}
-              className="mt-5 w-10 h-10 rounded-xl bg-dark-600 flex items-center justify-center text-blue-400 flex-shrink-0"
-            >
+            <button onClick={() => setForm(f => ({ ...f, from: f.to, to: f.from, rate: '' }))}
+              className="mt-5 w-10 h-10 rounded-xl bg-dark-600 flex items-center justify-center text-blue-400 flex-shrink-0">
               <ArrowLeftRight size={18} />
             </button>
             <div className="flex-1">
-              <label className="text-gray-400 text-xs mb-1 block">Olinayotgan valyuta</label>
-              <select className="input-field" value={form.to} onChange={e => set('to', e.target.value)}>
+              <label className="text-gray-400 text-xs mb-1 block">Ga</label>
+              <select className="input-field" value={form.to} onChange={e => { set('to', e.target.value); set('rate', '') }}>
                 {CURRENCIES.map(c => <option key={c} value={c}>{FLAGS[c]} {c}</option>)}
               </select>
             </div>
           </div>
 
+          {/* Amount */}
           <div>
-            <label className="text-gray-400 text-xs mb-1 block">Miqdor ({form.from})</label>
+            <label className="text-gray-400 text-xs mb-1 block">Summa ({form.from})</label>
             <input className="input-field" type="number" placeholder="0" value={form.fromAmount} onChange={e => set('fromAmount', e.target.value)} />
           </div>
 
+          {/* Rate */}
           <div>
             <label className="text-gray-400 text-xs mb-1 block">
-              Kurs (1 {form.from === 'UZS' ? form.to : form.from} = ? {form.from === 'UZS' ? form.from : form.to})
+              Kurs {form.from !== 'UZS' && form.to !== 'UZS' ? `(1 ${form.from} = ? ${form.to})` : form.from === 'UZS' ? `(1 ${form.to} = ? UZS)` : `(1 ${form.from} = ? UZS)`}
             </label>
-            <input className="input-field" type="number" placeholder="0" value={form.rate} onChange={e => set('rate', e.target.value)} />
+            <input className="input-field" type="number" placeholder="Kursni kiriting..." value={form.rate} onChange={e => set('rate', e.target.value)} />
           </div>
 
-          {toAmount() && (
-            <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl px-4 py-3 flex items-center justify-between">
-              <span className="text-gray-400 text-sm">{form.fromAmount} {form.from} =</span>
-              <span className="text-blue-400 text-lg font-bold">{toAmount()} {form.to}</span>
+          {/* Preview */}
+          {computedTo !== null && form.fromAmount && (
+            <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-3 text-center">
+              <p className="text-gray-400 text-sm">{form.fromAmount} {form.from} =</p>
+              <p className="text-blue-400 text-2xl font-bold">{fmt(computedTo, form.to)} <span className="text-base">{form.to}</span></p>
             </div>
           )}
 
+          {/* Note */}
           <div>
             <label className="text-gray-400 text-xs mb-1 block">Izoh (ixtiyoriy)</label>
             <input className="input-field" placeholder="Izoh..." value={form.note} onChange={e => set('note', e.target.value)} />
           </div>
 
+          {/* Date */}
           <div>
             <label className="text-gray-400 text-xs mb-1 block">Sana</label>
             <input className="input-field" type="date" value={form.date} onChange={e => set('date', e.target.value)} />
           </div>
 
-          <button
-            onClick={handleSave}
-            disabled={!form.fromAmount || !form.rate}
-            className="btn-primary mt-2 disabled:opacity-40"
-          >
-            Saqlash
+          <button onClick={handleSave} disabled={!form.fromAmount || !form.rate} className="btn-primary disabled:opacity-40">
+            Tasdiqlash
           </button>
         </div>
       </Modal>

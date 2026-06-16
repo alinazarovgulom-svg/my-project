@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react'
 import { getCurrentUser, getData, saveData, getSettings, saveSettings } from './storage'
-import { getUserFamily, getUserFamilyId, getFamily, subscribeToFamily } from './family'
+import { getUserFamily, getUserFamilyId, getFamily, getFamilyAsync, subscribeToFamily } from './family'
 import { syncToCloud, loadFromCloud, subscribeToCloud } from './sync'
 
 const AppContext = createContext(null)
@@ -70,12 +70,16 @@ export function AppProvider({ children }) {
     return () => { unsubTx(); unsubDebts(); unsubSettings() }
   }, [uid])
 
-  // Oila real-vaqt sinxronizatsiyasi
+  // Oila real-vaqt sinxronizatsiyasi — har qanday a'zo o'zgartirganda darhol yangilanadi
   useEffect(() => {
     if (!familyId) { setFamily(null); return }
+    // Avval localStorage dan darhol ko'rsatish
     const local = getFamily(familyId)
     if (local) setFamily(local)
-    const unsub = subscribeToFamily(familyId, (data) => setFamily(data))
+    // Keyin Firestore dan real-vaqt tinglash
+    const unsub = subscribeToFamily(familyId, (data) => {
+      setFamily(data)
+    })
     return () => unsub()
   }, [familyId])
 
