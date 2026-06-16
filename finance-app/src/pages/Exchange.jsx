@@ -86,13 +86,18 @@ export default function Exchange() {
       for (const t of pair) await deleteFamilyTransaction(family.id, t.id)
       refreshFamily()
     } else {
-      saveTransactions(transactions.filter(t => t.pairId !== tx.pairId))
+      const idsToRemove = new Set([tx.id, tx.pairId].filter(Boolean))
+      saveTransactions(transactions.filter(t => !idsToRemove.has(t.id) && !idsToRemove.has(t.pairId)))
     }
   }
 
   const allTx = family ? familyTransactions : transactions
-  const exchangeTx = allTx
-    .filter(t => t.category === 'Valyuta ayirboshlash' && t.type === 'expense')
+  const exchangeExpenses = allTx.filter(t => t.category === 'Valyuta ayirboshlash' && t.type === 'expense')
+  const exchangeIncomes = allTx.filter(t => t.category === 'Valyuta ayirboshlash' && t.type === 'income')
+  // Show expense txs + orphaned income txs (no matching expense pair)
+  const expenseIds = new Set(exchangeExpenses.map(t => t.id))
+  const orphanedIncomes = exchangeIncomes.filter(t => !t.pairId || !expenseIds.has(t.pairId))
+  const exchangeTx = [...exchangeExpenses, ...orphanedIncomes]
     .sort((a, b) => new Date(b.date) - new Date(a.date))
 
   const openModal = () => {
