@@ -5,13 +5,8 @@ import { syncToCloud, loadFromCloud, subscribeToCloud } from './sync'
 
 const AppContext = createContext(null)
 
-export const INCOME_CATEGORIES = [
-  'Maosh', 'Biznes', 'Freelance', 'Investitsiya', 'Sovg\'a', 'Boshqa kirim'
-]
-export const EXPENSE_CATEGORIES = [
-  'Oziq-ovqat', 'Transport', 'Uy-joy', 'Kiyim', 'Sog\'liq', 'Ta\'lim',
-  'Ko\'ngilochar', 'Kommunal', 'Telefon/Internet', 'Boshqa chiqim'
-]
+export const INCOME_CATEGORIES = []
+export const EXPENSE_CATEGORIES = []
 
 export function AppProvider({ children }) {
   const [user, setUser] = useState(getCurrentUser)

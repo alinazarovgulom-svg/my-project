@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Plus, Trash2, Search, TrendingUp, TrendingDown, Users, Download } from 'lucide-react'
 import { useApp, INCOME_CATEGORIES, EXPENSE_CATEGORIES } from '../store/AppContext'
 import Modal from '../components/Modal'
@@ -24,6 +25,7 @@ const defaultForm = { type: 'expense', amount: '', category: '', currency: 'UZS'
 
 export default function Transactions() {
   const { transactions, saveTransactions, user, family, familyTransactions, familyMembers, canEdit, canAdd, refreshFamily, getCurrencyBalance } = useApp()
+  const nav = useNavigate()
   const [modal, setModal] = useState(false)
   const [editModal, setEditModal] = useState(false)
   const [editingTx, setEditingTx] = useState(null)
@@ -43,7 +45,12 @@ export default function Transactions() {
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
   const openAdd = (type = 'expense') => {
-    setForm({ ...defaultForm, type, category: type === 'income' ? INCOME_CATEGORIES[0] : EXPENSE_CATEGORIES[0] })
+    const cats = customCategories || []
+    if (cats.length === 0) {
+      nav('/categories')
+      return
+    }
+    setForm({ ...defaultForm, type, category: cats[0] || '' })
     setModal(true)
   }
 

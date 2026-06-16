@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Trash2, Plus, Pencil, Check, X } from 'lucide-react'
 import { useApp } from '../store/AppContext'
 
-const DEFAULT_CATEGORIES = ['Maosh', 'Oziq-ovqat', 'Transport', 'Kommunal', 'Kiyim', "Sog'liq", "Ta'lim", "Do'st/Oila", 'Biznes', 'Boshqa']
+const DEFAULT_CATEGORIES = []
 
 export default function Categories() {
   const { user } = useApp()
