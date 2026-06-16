@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus, Trash2, Search, TrendingUp, TrendingDown, Download } from 'lucide-react'
+import { Plus, Trash2, Search, TrendingUp, TrendingDown, Download, CheckSquare, Square } from 'lucide-react'
 import { useApp, INCOME_CATEGORIES, EXPENSE_CATEGORIES } from '../store/AppContext'
 import Modal from '../components/Modal'
 import SwipeableRow from '../components/SwipeableRow'
@@ -34,6 +34,8 @@ export default function Transactions() {
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   const [catFilter, setCatFilter] = useState('all')
+  const [selectMode, setSelectMode] = useState(false)
+  const [selected, setSelected] = useState(new Set())
   const [customCategories] = useState(() => {
     try {
       const saved = localStorage.getItem(`finance_${user?.id}_categories`)
@@ -113,23 +115,16 @@ export default function Transactions() {
     return m?.fullName || m?.username || 'Noma\'lum'
   }
 
-  const exportPDF = () => {
+  const buildPDF = (list, label) => {
     const doc = new jsPDF()
     doc.setFontSize(16)
     doc.text('PulBek - Tranzaksiyalar', 14, 20)
     doc.setFontSize(9)
-    const filterInfo = [
-      filter !== 'all' ? (filter === 'income' ? 'Kirim' : 'Chiqim') : '',
-      catFilter !== 'all' ? catFilter : '',
-      dateFrom ? `${dateFrom}` : '',
-      dateTo ? `— ${dateTo}` : '',
-    ].filter(Boolean).join(' | ')
-    if (filterInfo) doc.text(`Filtr: ${filterInfo}`, 14, 28)
-    doc.text(`Jami: ${filtered.length} ta | Chop: ${format(new Date(), 'dd.MM.yyyy')}`, 14, filterInfo ? 34 : 28)
+    doc.text(`${label} | Chop: ${format(new Date(), 'dd.MM.yyyy')}`, 14, 28)
     autoTable(doc, {
-      startY: filterInfo ? 40 : 35,
+      startY: 35,
       head: [['Sana', 'Tur', 'Kategoriya', 'Miqdor', 'Valyuta', 'Izoh']],
-      body: filtered.map(t => [
+      body: list.map(t => [
         format(new Date(t.date), 'dd.MM.yyyy'),
         t.type === 'income' ? 'Kirim' : 'Chiqim',
         t.category,
@@ -142,6 +137,15 @@ export default function Transactions() {
     })
     doc.save('pulbek-tranzaksiyalar.pdf')
     setExportModal(false)
+  }
+
+  const exportPDF = () => buildPDF(filtered, `Jami: ${filtered.length} ta`)
+
+  const exportSelectedPDF = () => {
+    const list = filtered.filter(t => selected.has(t.id))
+    buildPDF(list, `Tanlangan: ${list.length} ta`)
+    setSelectMode(false)
+    setSelected(new Set())
   }
 
   const exportExcel = () => {
@@ -166,6 +170,12 @@ export default function Transactions() {
         <div className="flex items-center justify-between mb-3">
           <h1 className="text-xl font-bold text-white">Kirim / Chiqim</h1>
           <div className="flex gap-2">
+            <button
+              onClick={() => { setSelectMode(s => !s); setSelected(new Set()) }}
+              className={`p-2 rounded-xl text-sm font-medium transition-colors ${selectMode ? 'bg-blue-500/20 text-blue-400' : 'bg-dark-700 text-gray-400'}`}
+            >
+              <CheckSquare size={18} />
+            </button>
             <button onClick={() => setExportModal(true)} className="p-2 rounded-xl bg-dark-700 text-gray-400 active:opacity-70">
               <Download size={18} />
             </button>
@@ -210,7 +220,29 @@ export default function Transactions() {
           filtered.map(t => {
             const showDelete = isFamily ? canEdit(t.userId) : true
             const canEditTx = !isFamily
-            return (
+            const isSelected = selected.has(t.id)
+            const toggleSelect = () => setSelected(s => {
+              const n = new Set(s)
+              n.has(t.id) ? n.delete(t.id) : n.add(t.id)
+              return n
+            })
+            return selectMode ? (
+              <button key={t.id} onClick={toggleSelect} className={`card flex items-center gap-3 w-full text-left transition-colors ${isSelected ? 'border border-blue-500/50 bg-blue-500/5' : ''}`}>
+                <div className="flex-shrink-0 text-blue-400">
+                  {isSelected ? <CheckSquare size={20} /> : <Square size={20} className="text-gray-600" />}
+                </div>
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0 ${t.type === 'income' ? 'bg-green-500/15' : 'bg-red-500/15'}`}>
+                  {t.emoji}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-white text-sm font-medium truncate">{t.category}</p>
+                  <p className="text-gray-500 text-xs">{t.note ? `${t.note} · ` : ''}{format(new Date(t.date), 'dd.MM.yyyy')}</p>
+                </div>
+                <p className={`text-sm font-semibold flex-shrink-0 ${t.type === 'income' ? 'text-green-400' : 'text-red-400'}`}>
+                  {t.type === 'income' ? '+' : '-'}{fmt(t.amount)} {t.currency || 'UZS'}
+                </p>
+              </button>
+            ) : (
               <SwipeableRow
                 key={t.id}
                 onDelete={showDelete ? () => handleDelete(t.id, isFamily) : null}
@@ -237,7 +269,35 @@ export default function Transactions() {
         )}
       </div>
 
-      {(!isFamily || canAdd()) && (
+      {/* Tanlash rejimida pastki panel */}
+      {selectMode && (
+        <div className="fixed bottom-20 left-4 right-4 z-20 flex gap-2">
+          <button
+            onClick={() => { setSelectMode(false); setSelected(new Set()) }}
+            className="flex-1 py-3 rounded-xl bg-dark-600 text-gray-300 text-sm font-medium"
+          >
+            Bekor qilish
+          </button>
+          <button
+            onClick={() => {
+              const all = filtered.map(t => t.id)
+              setSelected(new Set(all))
+            }}
+            className="flex-1 py-3 rounded-xl bg-dark-600 text-blue-400 text-sm font-medium"
+          >
+            Barchasini belgilash
+          </button>
+          <button
+            disabled={selected.size === 0}
+            onClick={exportSelectedPDF}
+            className="flex-1 py-3 rounded-xl bg-blue-500 text-white text-sm font-medium disabled:opacity-40"
+          >
+            PDF ({selected.size})
+          </button>
+        </div>
+      )}
+
+      {(!isFamily || canAdd()) && !selectMode && (
         <div className="fixed bottom-20 right-4 flex flex-col gap-2">
           <button onClick={() => openAdd('income')} className="w-12 h-12 rounded-full bg-green-500 text-white flex items-center justify-center shadow-lg shadow-green-500/30 active:opacity-80">
             <TrendingUp size={20} />
@@ -247,6 +307,7 @@ export default function Transactions() {
           </button>
         </div>
       )}
+
 
       {/* Export Modal */}
       <Modal open={exportModal} onClose={() => setExportModal(false)} title="Yuklab olish">
