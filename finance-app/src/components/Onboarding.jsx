@@ -66,7 +66,7 @@ export default function Onboarding({ onDone }) {
   }, [])
 
   return (
-    <div className="fixed inset-0 z-50 overflow-hidden flex flex-col"
+    <div className="fixed inset-0 z-[200] overflow-hidden flex flex-col"
       style={{ background: '#000' }}>
 
       <style>{`
