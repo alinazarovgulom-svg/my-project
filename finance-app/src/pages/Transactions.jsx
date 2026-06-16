@@ -23,7 +23,7 @@ const CATEGORY_EMOJIS = {
 const defaultForm = { type: 'expense', amount: '', category: '', currency: 'UZS', note: '', date: new Date().toISOString().split('T')[0] }
 
 export default function Transactions() {
-  const { transactions, saveTransactions, user, family, familyTransactions, familyMembers, canEdit, canAdd, refreshFamily } = useApp()
+  const { transactions, saveTransactions, user, family, familyTransactions, familyMembers, canEdit, canAdd, refreshFamily, getCurrencyBalance } = useApp()
   const [modal, setModal] = useState(false)
   const [editModal, setEditModal] = useState(false)
   const [editingTx, setEditingTx] = useState(null)
@@ -32,6 +32,7 @@ export default function Transactions() {
   const [form, setForm] = useState(defaultForm)
   const [filter, setFilter] = useState('all')
   const [search, setSearch] = useState('')
+  const [balanceError, setBalanceError] = useState('')
   const [customCategories] = useState(() => {
     try {
       const saved = localStorage.getItem(`finance_${user?.id}_categories`)
@@ -48,6 +49,14 @@ export default function Transactions() {
 
   const handleSave = () => {
     if (!form.amount || !form.category) return
+    setBalanceError('')
+    if (form.type === 'expense') {
+      const curBal = getCurrencyBalance(form.currency || 'UZS')
+      if (parseFloat(form.amount) > curBal) {
+        setBalanceError(`Yetarli mablag' yo'q. ${form.currency || 'UZS'} balansi: ${new Intl.NumberFormat('uz-UZ').format(Math.round(curBal))}`)
+        return
+      }
+    }
     const t = {
       id: generateId(),
       ...form,
@@ -277,7 +286,7 @@ export default function Transactions() {
         )}
       </Modal>
 
-      <Modal open={modal} onClose={() => setModal(false)} title={form.type === 'income' ? 'Kirim qo\'shish' : 'Chiqim qo\'shish'}>
+      <Modal open={modal} onClose={() => { setModal(false); setBalanceError('') }} title={form.type === 'income' ? 'Kirim qo\'shish' : 'Chiqim qo\'shish'}>
         <div className="flex flex-col gap-3 pb-4">
           <div className="flex gap-2">
             <button onClick={() => set('type', 'income')} className={`flex-1 py-2 rounded-xl text-sm font-medium transition-colors ${form.type === 'income' ? 'bg-green-500 text-white' : 'bg-dark-600 text-gray-400'}`}>
@@ -316,6 +325,7 @@ export default function Transactions() {
               Bu tranzaksiya oilaviy rejimga saqlanadi
             </p>
           )}
+          {balanceError && <p className="text-red-400 text-sm bg-red-500/10 py-2 px-3 rounded-lg">{balanceError}</p>}
           <button onClick={handleSave} className="btn-primary mt-2">Saqlash</button>
         </div>
       </Modal>

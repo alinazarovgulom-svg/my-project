@@ -11,10 +11,11 @@ const FLAGS = { UZS: '🇺🇿', USD: '🇺🇸', EUR: '🇪🇺', RUB: '🇷�
 const fmt = (n, c) => fmtCur(n, c)
 
 export default function Exchange() {
-  const { settings, updateSettings, user, transactions, saveTransactions, family, familyTransactions, refreshFamily } = useApp()
+  const { settings, updateSettings, user, transactions, saveTransactions, family, familyTransactions, refreshFamily, getCurrencyBalance } = useApp()
   const rates = settings?.rates || { USD: 12700, EUR: 13800, RUB: 140 }
 
   const [modal, setModal] = useState(false)
+  const [balanceError, setBalanceError] = useState('')
   const [form, setForm] = useState({
     from: 'USD', to: 'UZS', fromAmount: '', rate: '', note: '',
     date: new Date().toISOString().split('T')[0]
@@ -40,6 +41,12 @@ export default function Exchange() {
     if (!n || n <= 0) return
     const toAmt = toAmount()
     if (!toAmt || toAmt <= 0) return
+    setBalanceError('')
+    const curBal = getCurrencyBalance(form.from)
+    if (n > curBal) {
+      setBalanceError(`Yetarli mablag' yo'q. ${form.from} balansi: ${new Intl.NumberFormat('uz-UZ').format(Math.max(0, curBal))}`)
+      return
+    }
 
     const pairId = generateId()
     const txOut = {
@@ -211,6 +218,7 @@ export default function Exchange() {
             <input className="input-field" type="date" value={form.date} onChange={e => set('date', e.target.value)} />
           </div>
 
+          {balanceError && <p className="text-red-400 text-sm bg-red-500/10 py-2 px-3 rounded-lg">{balanceError}</p>}
           <button onClick={handleSave} disabled={!form.fromAmount || !form.rate} className="btn-primary disabled:opacity-40">
             Tasdiqlash
           </button>

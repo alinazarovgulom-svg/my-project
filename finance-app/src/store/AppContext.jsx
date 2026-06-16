@@ -144,6 +144,12 @@ export function AppProvider({ children }) {
 
   const canAdd = () => userRole === 'admin' || userRole === 'member'
 
+  const allActiveTx = family ? familyTransactions : transactions
+  const getCurrencyBalance = (currency = 'UZS') =>
+    allActiveTx
+      .filter(t => (t.currency || 'UZS') === currency)
+      .reduce((s, t) => t.type === 'income' ? s + t.amount : s - t.amount, 0)
+
   return (
     <AppContext.Provider value={{
       user, setUser,
@@ -155,6 +161,7 @@ export function AppProvider({ children }) {
       userRole, familyMembers,
       familyTransactions, familyDebts,
       canEdit, canAdd,
+      getCurrencyBalance,
       syncing
     }}>
       {children}

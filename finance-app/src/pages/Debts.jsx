@@ -24,7 +24,7 @@ function getDueDateWarning(debt) {
 }
 
 export default function Debts() {
-  const { debts, saveDebts } = useApp()
+  const { debts, saveDebts, getCurrencyBalance } = useApp()
   const [modal, setModal] = useState(false)
   const [payModal, setPayModal] = useState(null)
   const [editModal, setEditModal] = useState(false)
@@ -33,12 +33,21 @@ export default function Debts() {
   const [payAmount, setPayAmount] = useState('')
   const [expanded, setExpanded] = useState({})
   const [filter, setFilter] = useState('all')
+  const [balanceError, setBalanceError] = useState('')
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
   const handleAdd = () => {
     if (!form.person || !form.amount) return
+    setBalanceError('')
     const amount = parseFloat(form.amount)
+    if (form.direction === 'lent') {
+      const curBal = getCurrencyBalance(form.currency || 'UZS')
+      if (amount > curBal) {
+        setBalanceError(`Yetarli mablag' yo'q. ${form.currency || 'UZS'} balansi: ${new Intl.NumberFormat('uz-UZ').format(Math.max(0, curBal))}`)
+        return
+      }
+    }
     const debt = { id: generateId(), ...form, amount, remaining: amount, payments: [] }
     saveDebts([...debts, debt])
     setModal(false)
@@ -252,6 +261,7 @@ export default function Debts() {
             <label className="text-gray-400 text-xs mb-1 block">Qaytarish sanasi (ixtiyoriy)</label>
             <input className="input-field" type="date" value={form.dueDate} onChange={e => set('dueDate', e.target.value)} />
           </div>
+          {balanceError && <p className="text-red-400 text-sm bg-red-500/10 py-2 px-3 rounded-lg">{balanceError}</p>}
           <button onClick={handleAdd} className="btn-primary mt-2">Saqlash</button>
         </div>
       </Modal>
