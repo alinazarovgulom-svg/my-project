@@ -92,19 +92,6 @@ export default function Settings() {
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="card">
-        <h2 className="text-gray-400 text-sm mb-3">Statistika</h2>
-        <div className="grid grid-cols-3 gap-2">
-          {stats.map(s => (
-            <div key={s.label} className="bg-dark-600 rounded-xl p-3 text-center">
-              <p className="text-white text-xl font-bold">{s.value}</p>
-              <p className="text-gray-500 text-xs leading-tight mt-1">{s.label}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-
       {/* Actions */}
       <div className="card flex flex-col gap-0 p-0 overflow-hidden">
         {isAdmin && (
