@@ -111,6 +111,11 @@ export default function Onboarding({ onDone }) {
           0% { opacity:0; letter-spacing: 0.8em; }
           100% { opacity:1; letter-spacing: 0.35em; }
         }
+        @keyframes kaftimda-shine {
+          0%   { background-position: -200% center; }
+          50%  { background-position: 200% center; }
+          100% { background-position: -200% center; }
+        }
         @keyframes starFloat {
           0% { transform: translateY(0) scale(1); opacity:0.8; }
           100% { transform: translateY(-60px) scale(0); opacity:0; }
@@ -158,7 +163,7 @@ export default function Onboarding({ onDone }) {
           fontWeight: 400,
           letterSpacing: '0.4em',
           textTransform: 'uppercase',
-          color: 'rgba(255,255,255,0.4)',
+          color: '#b8860b',
           marginBottom: '10px',
           animation: phase === 1 ? 'fadeUp 0.8s ease forwards' : 'none',
         }}>
@@ -169,9 +174,12 @@ export default function Onboarding({ onDone }) {
           fontWeight: 900,
           letterSpacing: '0.35em',
           textTransform: 'uppercase',
-          color: 'rgba(255,255,255,0.95)',
-          textShadow: '0 0 30px rgba(255,255,255,0.3)',
-          animation: phase === 1 ? 'presentsIn 1s cubic-bezier(0.16,1,0.3,1) forwards' : 'none',
+          background: 'linear-gradient(90deg, #b8860b, #ffd700, #ffe066, #ffd700, #b8860b)',
+          backgroundSize: '300% auto',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          backgroundClip: 'text',
+          animation: phase === 1 ? 'presentsIn 1s cubic-bezier(0.16,1,0.3,1) forwards, kaftimda-shine 3s ease-in-out infinite' : 'none',
         }}>
           KAFTIMDA
         </p>
