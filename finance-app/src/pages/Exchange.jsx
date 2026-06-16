@@ -33,6 +33,12 @@ export default function Exchange() {
   const [ratesForm, setRatesForm] = useState({ ...rates })
   const [showHistory, setShowHistory] = useState(false)
   const [historyKey, setHistoryKey] = useState(0)
+  const [todayLog, setTodayLog] = useState(() => {
+    try {
+      const key = `finance_${user?.id}_conversions_${format(new Date(), 'yyyy-MM-dd')}`
+      return JSON.parse(localStorage.getItem(key) || '[]')
+    } catch { return [] }
+  })
 
   const history = getRatesHistory(user?.id)
 
@@ -95,13 +101,16 @@ export default function Exchange() {
       saveTransactions([...transactions, txOut, txIn])
     }
 
-    // Bugungi tarix uchun localStorage ga ham saqlash (dashboard uchun)
+    // Bugungi tarix uchun saqlash
     if (user?.id) {
       const key = `finance_${user.id}_conversions_${today}`
       const existing = JSON.parse(localStorage.getItem(key) || '[]')
-      existing.push({ from, to, amount: n, result: fmt(res, to), time: format(new Date(), 'HH:mm') })
-      localStorage.setItem(key, JSON.stringify(existing))
+      const entry = { from, to, amount: n, result: fmt(res, to), time: format(new Date(), 'HH:mm') }
+      const updated = [...existing, entry]
+      localStorage.setItem(key, JSON.stringify(updated))
+      setTodayLog(updated)
     }
+    setAmount('')
   }
 
   const handleAmountChange = (v) => { setAmount(v); setConfirmed(false) }
@@ -251,6 +260,25 @@ export default function Exchange() {
           ))}
         </div>
       </div>
+
+      {/* Today's confirmed conversions log */}
+      {todayLog.length > 0 && (
+        <div className="card">
+          <p className="text-gray-400 text-xs mb-3">Bugungi ayirboshlashlar</p>
+          <div className="flex flex-col gap-2">
+            {todayLog.map((c, i) => (
+              <div key={i} className="flex items-center justify-between bg-dark-600 rounded-xl px-3 py-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-white text-sm font-medium">{c.amount} {c.from}</span>
+                  <ArrowLeftRight size={12} className="text-gray-500" />
+                  <span className="text-green-400 text-sm font-medium">{c.result} {c.to}</span>
+                </div>
+                <span className="text-gray-500 text-xs">{c.time}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Rates Modal */}
       <Modal open={rateModal} onClose={() => setRateModal(false)} title="Kurslarni o'zgartirish">
