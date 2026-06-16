@@ -17,6 +17,9 @@ export default function Reports() {
     return isWithinInterval(d, { start: new Date(startDate), end: new Date(endDate) })
   })
 
+  const CURRENCIES = ['UZS', 'USD', 'EUR', 'RUB']
+  const FLAGS = { UZS: '🇺🇿', USD: '🇺🇸', EUR: '🇪🇺', RUB: '🇷🇺' }
+
   const income = filtered.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0)
   const expense = filtered.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0)
   const net = income - expense
@@ -29,9 +32,6 @@ export default function Reports() {
   }).filter(x => x.inc > 0 || x.exp > 0)
 
   // Daily cumulative balance across ALL transactions (not just filtered)
-  const CURRENCIES = ['UZS', 'USD', 'EUR', 'RUB']
-  const FLAGS = { UZS: '🇺🇿', USD: '🇺🇸', EUR: '🇪🇺', RUB: '🇷🇺' }
-
   const dailyBalances = (() => {
     // Sort all transactions by date ascending
     const sorted = [...transactions].sort((a, b) => new Date(a.date) - new Date(b.date))
