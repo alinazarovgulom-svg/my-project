@@ -15,7 +15,9 @@ export default function Dashboard() {
   const { t } = useLang()
   const nav = useNavigate()
 
-  const transactions = (family ? familyTransactions : personalTx).filter(t => t.category !== 'Valyuta ayirboshlash')
+  const allTx = family ? familyTransactions : personalTx
+  const transactions = allTx // balans uchun hamma tranzaksiya (valyuta ham)
+  const recentTx = allTx.filter(t => t.category !== 'Valyuta ayirboshlash') // ro'yxat uchun
 
   const rates = settings?.rates || { USD: 12700, EUR: 13800, RUB: 140 }
 
@@ -73,7 +75,7 @@ export default function Dashboard() {
     : []
   const familyTotalBalance = memberBalances.reduce((s, m) => s + m.balance, 0)
 
-  const recent = [...transactions].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5)
+  const recent = [...recentTx].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5)
 
   const activeDebts = debts.filter(d => d.remaining > 0)
   const myDebts = activeDebts.filter(d => d.direction === 'borrowed')
