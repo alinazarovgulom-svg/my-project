@@ -15,7 +15,7 @@ export default function Dashboard() {
   const { t } = useLang()
   const nav = useNavigate()
 
-  const transactions = family ? familyTransactions : personalTx
+  const transactions = (family ? familyTransactions : personalTx).filter(t => t.category !== 'Valyuta ayirboshlash')
 
   const rates = settings?.rates || { USD: 12700, EUR: 13800, RUB: 140 }
 

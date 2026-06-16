@@ -92,6 +92,7 @@ export default function Transactions() {
   const activeList = isFamily ? familyTransactions : transactions
 
   const filtered = activeList
+    .filter(t => t.category !== 'Valyuta ayirboshlash')
     .filter(t => filter === 'all' || t.type === filter)
     .filter(t => !search || t.category.toLowerCase().includes(search.toLowerCase()) || (t.note || '').toLowerCase().includes(search.toLowerCase()))
     .sort((a, b) => new Date(b.date) - new Date(a.date))
