@@ -1,0 +1,147 @@
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { LogOut, Lock, User, Eye, EyeOff, Trash2, Info } from 'lucide-react'
+import { useApp } from '../store/AppContext'
+import { getUsers, saveUsers, hashPassword, setCurrentUser } from '../store/storage'
+import Modal from '../components/Modal'
+
+export default function Settings() {
+  const { user, setUser, transactions, debts } = useApp()
+  const nav = useNavigate()
+  const [passModal, setPassModal] = useState(false)
+  const [form, setForm] = useState({ current: '', newPass: '', confirm: '' })
+  const [showPass, setShowPass] = useState({})
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
+
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
+
+  const handleLogout = () => {
+    if (confirm('Chiqishni tasdiqlaysizmi?')) {
+      setCurrentUser(null)
+      setUser(null)
+      nav('/login')
+    }
+  }
+
+  const handleChangePass = () => {
+    setError(''); setSuccess('')
+    if (!form.current || !form.newPass || !form.confirm) return setError('Barcha maydonlarni to\'ldiring')
+    if (form.newPass.length < 4) return setError('Yangi parol kamida 4 belgi bo\'lsin')
+    if (form.newPass !== form.confirm) return setError('Parollar mos kelmaydi')
+
+    const users = getUsers()
+    const idx = users.findIndex(u => u.id === user.id)
+    if (idx === -1 || users[idx].password !== hashPassword(form.current)) return setError('Joriy parol noto\'g\'ri')
+
+    users[idx] = { ...users[idx], password: hashPassword(form.newPass) }
+    saveUsers(users)
+    setCurrentUser(users[idx])
+    setSuccess('Parol muvaffaqiyatli o\'zgartirildi!')
+    setForm({ current: '', newPass: '', confirm: '' })
+    setTimeout(() => setPassModal(false), 1500)
+  }
+
+  const showField = (k) => setShowPass(s => ({ ...s, [k]: !s[k] }))
+
+  const stats = [
+    { label: 'Jami operatsiyalar', value: transactions.length, color: 'blue' },
+    { label: 'Jami qarzlar', value: debts.length, color: 'purple' },
+    { label: 'Faol qarzlar', value: debts.filter(d => d.remaining > 0).length, color: 'orange' },
+  ]
+
+  return (
+    <div className="flex flex-col px-4 pt-4 pb-24 gap-4">
+      <h1 className="text-xl font-bold text-white">Sozlamalar</h1>
+
+      {/* Profile */}
+      <div className="card flex items-center gap-4">
+        <div className="w-14 h-14 rounded-2xl bg-blue-500/20 flex items-center justify-center">
+          <span className="text-2xl">👤</span>
+        </div>
+        <div>
+          <p className="text-white font-bold text-lg">{user?.name}</p>
+          <p className="text-gray-400 text-sm">@{user?.username}</p>
+        </div>
+      </div>
+
+      {/* Stats */}
+      <div className="card">
+        <h2 className="text-gray-400 text-sm mb-3">Statistika</h2>
+        <div className="grid grid-cols-3 gap-2">
+          {stats.map(s => (
+            <div key={s.label} className="bg-dark-600 rounded-xl p-3 text-center">
+              <p className="text-white text-xl font-bold">{s.value}</p>
+              <p className="text-gray-500 text-xs leading-tight mt-1">{s.label}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Actions */}
+      <div className="card flex flex-col gap-0 p-0 overflow-hidden">
+        <button onClick={() => { setPassModal(true); setError(''); setSuccess(''); setForm({ current: '', newPass: '', confirm: '' }) }}
+          className="flex items-center gap-3 px-4 py-4 active:bg-dark-600 transition-colors text-left w-full">
+          <div className="w-9 h-9 rounded-xl bg-yellow-500/15 flex items-center justify-center">
+            <Lock size={18} className="text-yellow-400" />
+          </div>
+          <div>
+            <p className="text-white text-sm font-medium">Parolni o'zgartirish</p>
+            <p className="text-gray-500 text-xs">Xavfsizlik uchun o'zgartiring</p>
+          </div>
+        </button>
+
+        <div className="h-px bg-white/5 mx-4" />
+
+        <button onClick={handleLogout}
+          className="flex items-center gap-3 px-4 py-4 active:bg-dark-600 transition-colors text-left w-full">
+          <div className="w-9 h-9 rounded-xl bg-red-500/15 flex items-center justify-center">
+            <LogOut size={18} className="text-red-400" />
+          </div>
+          <div>
+            <p className="text-red-400 text-sm font-medium">Chiqish</p>
+            <p className="text-gray-500 text-xs">Akkauntdan chiqish</p>
+          </div>
+        </button>
+      </div>
+
+      {/* App Info */}
+      <div className="card">
+        <div className="flex items-center gap-2 mb-2">
+          <Info size={16} className="text-gray-500" />
+          <h2 className="text-gray-400 text-sm">Ilova haqida</h2>
+        </div>
+        <p className="text-gray-500 text-xs leading-relaxed">
+          Moliya Ilovasi v1.0 — Shaxsiy va biznes moliyangizni offline rejimda boshqaring.
+          Ma'lumotlar qurilmangizda saqlanadi.
+        </p>
+      </div>
+
+      {/* Password Change Modal */}
+      <Modal open={passModal} onClose={() => setPassModal(false)} title="Parolni o'zgartirish">
+        <div className="flex flex-col gap-3">
+          {['current', 'newPass', 'confirm'].map((field, i) => (
+            <div key={field} className="relative">
+              <label className="text-gray-400 text-xs mb-1 block">
+                {field === 'current' ? 'Joriy parol' : field === 'newPass' ? 'Yangi parol' : 'Yangi parolni tasdiqlang'}
+              </label>
+              <input
+                className="input-field pr-12"
+                type={showPass[field] ? 'text' : 'password'}
+                value={form[field]}
+                onChange={e => set(field, e.target.value)}
+                autoComplete="off"
+              />
+              <button type="button" onClick={() => showField(field)} className="absolute right-3 bottom-3 text-gray-500 p-0.5">
+                {showPass[field] ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
+          ))}
+          {error && <p className="text-red-400 text-sm bg-red-500/10 py-2 px-3 rounded-lg">{error}</p>}
+          {success && <p className="text-green-400 text-sm bg-green-500/10 py-2 px-3 rounded-lg">{success}</p>}
+          <button onClick={handleChangePass} className="btn-primary mt-2">O'zgartirish</button>
+        </div>
+      </Modal>
+    </div>
+  )
+}
