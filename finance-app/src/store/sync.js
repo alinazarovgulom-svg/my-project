@@ -13,7 +13,7 @@ export const syncToCloud = async (userId, key, data) => {
       updatedAt: serverTimestamp()
     })
   } catch (e) {
-    // Oflayn — keyinroq avtomatik yuboriladi
+    console.warn('[sync] cloud write failed:', key, e?.code || e?.message)
   }
 }
 
