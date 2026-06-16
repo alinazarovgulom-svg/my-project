@@ -148,18 +148,19 @@ export default function Onboarding({ onDone }) {
           transition: phase === 2 ? 'opacity 0.5s ease' : 'opacity 0.8s ease',
           pointerEvents: 'none',
         }}>
-        <p className="text-white font-light mb-4"
-          style={{
-            fontSize: '11px',
-            letterSpacing: '0.5em',
-            textTransform: 'uppercase',
-            color: 'rgba(255,255,255,0.4)',
-            animation: phase === 1 ? 'fadeUp 0.8s ease forwards' : 'none',
-          }}>
-          taqdim etadi
+        <p style={{
+          fontSize: '13px',
+          fontWeight: 400,
+          letterSpacing: '0.4em',
+          textTransform: 'uppercase',
+          color: 'rgba(255,255,255,0.4)',
+          marginBottom: '10px',
+          animation: phase === 1 ? 'fadeUp 0.8s ease forwards' : 'none',
+        }}>
+          by
         </p>
         <p style={{
-          fontSize: '22px',
+          fontSize: '32px',
           fontWeight: 900,
           letterSpacing: '0.35em',
           textTransform: 'uppercase',
