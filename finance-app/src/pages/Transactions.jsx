@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Plus, Trash2, Search, TrendingUp, TrendingDown, Users, Download } from 'lucide-react'
+import { Plus, Trash2, Search, TrendingUp, TrendingDown, Users, Download, AlertTriangle } from 'lucide-react'
 import { useApp, INCOME_CATEGORIES, EXPENSE_CATEGORIES } from '../store/AppContext'
 import Modal from '../components/Modal'
 import SwipeableRow from '../components/SwipeableRow'
@@ -24,12 +24,13 @@ const CATEGORY_EMOJIS = {
 const defaultForm = { type: 'expense', amount: '', category: '', currency: 'UZS', note: '', date: new Date().toISOString().split('T')[0] }
 
 export default function Transactions() {
-  const { transactions, saveTransactions, user, family, familyTransactions, familyMembers, canEdit, canAdd, refreshFamily, getCurrencyBalance } = useApp()
+  const { transactions, saveTransactions, softDeleteTransactions, user, family, familyTransactions, familyMembers, canEdit, canAdd, refreshFamily, getCurrencyBalance } = useApp()
   const nav = useNavigate()
   const [modal, setModal] = useState(false)
   const [editModal, setEditModal] = useState(false)
   const [editingTx, setEditingTx] = useState(null)
   const [exportModal, setExportModal] = useState(false)
+  const [deleteConfirm, setDeleteConfirm] = useState(null) // { id, isFamily, label }
   const [familyMode, setFamilyMode] = useState(false)
   const [form, setForm] = useState(defaultForm)
   const [filter, setFilter] = useState('all')
@@ -98,12 +99,19 @@ export default function Transactions() {
   }
 
   const handleDelete = (id, isFamily = false) => {
-    if (!confirm('O\'chirishni tasdiqlaysizmi?')) return
+    const tx = (familyMode && family ? familyTransactions : transactions).find(t => t.id === id)
+    setDeleteConfirm({ id, isFamily, label: tx?.category || '' })
+  }
+
+  const confirmDelete = () => {
+    if (!deleteConfirm) return
+    const { id, isFamily } = deleteConfirm
     if (isFamily && family) {
       deleteFamilyTransaction(family.id, id).then(() => refreshFamily())
     } else {
-      saveTransactions(transactions.filter(t => t.id !== id))
+      softDeleteTransactions([id])
     }
+    setDeleteConfirm(null)
   }
 
   const activeList = (familyMode && family ? familyTransactions : transactions)
@@ -311,6 +319,23 @@ export default function Transactions() {
             <button onClick={handleEditSave} className="btn-primary mt-2">Saqlash</button>
           </div>
         )}
+      </Modal>
+
+      {/* Delete Confirm Modal */}
+      <Modal open={!!deleteConfirm} onClose={() => setDeleteConfirm(null)} title="O'chirishni tasdiqlang">
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center gap-3 bg-orange-500/10 border border-orange-500/20 rounded-xl p-3">
+            <AlertTriangle size={20} className="text-orange-400 flex-shrink-0" />
+            <div>
+              <p className="text-white text-sm font-medium">{deleteConfirm?.label}</p>
+              <p className="text-gray-400 text-xs mt-0.5">O'chirilgan tranzaksiya 30 kun ichida tiklanishi mumkin</p>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <button onClick={() => setDeleteConfirm(null)} className="flex-1 py-3 rounded-xl bg-dark-600 text-gray-300 text-sm font-medium">Bekor qilish</button>
+            <button onClick={confirmDelete} className="flex-1 py-3 rounded-xl bg-red-500/20 border border-red-500/30 text-red-400 text-sm font-medium">O'chirish</button>
+          </div>
+        </div>
       </Modal>
 
       <Modal open={modal} onClose={() => { setModal(false); setBalanceError('') }} title={form.type === 'income' ? 'Kirim qo\'shish' : 'Chiqim qo\'shish'}>

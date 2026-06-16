@@ -12,6 +12,7 @@ import Categories from './pages/Categories'
 import Family from './pages/Family'
 import AppLock from './components/AppLock'
 import Onboarding from './components/Onboarding'
+import Trash from './pages/Trash'
 import { useState, useEffect, useRef } from 'react'
 import './index.css'
 
@@ -29,6 +30,7 @@ function ProtectedLayout() {
         <Route path="/settings" element={<Settings />} />
         <Route path="/categories" element={<Categories />} />
         <Route path="/family" element={<Family />} />
+        <Route path="/trash" element={<Trash />} />
       </Routes>
       <BottomNav />
     </>

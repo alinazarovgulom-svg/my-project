@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus, Trash2, ArrowRight, ArrowLeftRight } from 'lucide-react'
+import { Plus, Trash2, ArrowRight, ArrowLeftRight, AlertTriangle } from 'lucide-react'
 import { useApp } from '../store/AppContext'
 import Modal from '../components/Modal'
 import { format } from 'date-fns'
@@ -11,7 +11,7 @@ const FLAGS = { UZS: '🇺🇿', USD: '🇺🇸', EUR: '🇪🇺', RUB: '🇷�
 const fmt = (n, c) => fmtCur(n, c)
 
 export default function Exchange() {
-  const { settings, updateSettings, user, transactions, saveTransactions, family, familyTransactions, refreshFamily, getCurrencyBalance } = useApp()
+  const { settings, updateSettings, user, transactions, saveTransactions, softDeleteTransactions, family, familyTransactions, refreshFamily, getCurrencyBalance } = useApp()
   const rates = settings?.rates || { USD: 12700, EUR: 13800, RUB: 140 }
 
   const [modal, setModal] = useState(false)
@@ -85,16 +85,23 @@ export default function Exchange() {
     setForm({ from: 'USD', to: 'UZS', fromAmount: '', rate: '', note: '', date: new Date().toISOString().split('T')[0] })
   }
 
-  const handleDelete = async (tx) => {
-    if (!confirm('O\'chirishni tasdiqlaysizmi?')) return
+  const [deleteConfirm, setDeleteConfirm] = useState(null)
+
+  const handleDelete = (tx) => setDeleteConfirm(tx)
+
+  const confirmDelete = async () => {
+    const tx = deleteConfirm
+    setDeleteConfirm(null)
+    if (!tx) return
     if (family) {
       const { deleteFamilyTransaction } = await import('../store/family')
       const pair = familyTransactions.filter(t => t.pairId === tx.pairId)
       for (const t of pair) await deleteFamilyTransaction(family.id, t.id)
       refreshFamily()
     } else {
-      const idsToRemove = new Set([tx.id, tx.pairId].filter(Boolean))
-      saveTransactions(transactions.filter(t => !idsToRemove.has(t.id) && !idsToRemove.has(t.pairId)))
+      const pairTx = transactions.find(t => t.category === 'Valyuta ayirboshlash' && t.type === 'income' && t.pairId === tx.pairId)
+      const ids = [tx.id, pairTx?.id].filter(Boolean)
+      softDeleteTransactions(ids)
     }
   }
 
@@ -156,6 +163,20 @@ export default function Exchange() {
       >
         <Plus size={24} className="text-white" />
       </button>
+
+      {/* Delete Confirm Modal */}
+      <Modal open={!!deleteConfirm} onClose={() => setDeleteConfirm(null)} title="O'chirishni tasdiqlang">
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center gap-3 bg-orange-500/10 border border-orange-500/20 rounded-xl p-3">
+            <AlertTriangle size={20} className="text-orange-400 flex-shrink-0" />
+            <p className="text-gray-300 text-sm">30 kun ichida tiklanishi mumkin</p>
+          </div>
+          <div className="flex gap-2">
+            <button onClick={() => setDeleteConfirm(null)} className="flex-1 py-3 rounded-xl bg-dark-600 text-gray-300 text-sm font-medium">Bekor qilish</button>
+            <button onClick={confirmDelete} className="flex-1 py-3 rounded-xl bg-red-500/20 border border-red-500/30 text-red-400 text-sm font-medium">O'chirish</button>
+          </div>
+        </div>
+      </Modal>
 
       {/* Add Modal */}
       <Modal open={modal} onClose={() => setModal(false)} title="Valyuta ayirboshlash">

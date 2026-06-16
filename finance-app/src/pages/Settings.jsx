@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { LogOut, Lock, User, Eye, EyeOff, Info, Tag, Globe, KeyRound } from 'lucide-react'
+import { LogOut, Lock, User, Eye, EyeOff, Info, Tag, Globe, KeyRound, Trash2 } from 'lucide-react'
 import { useApp } from '../store/AppContext'
 import { getUsers, saveUsers, hashPassword, setCurrentUser } from '../store/storage'
 import Modal from '../components/Modal'
@@ -131,6 +131,19 @@ export default function Settings() {
           <div>
             <p className="text-white text-sm font-medium">PIN qulfini {hasPin ? 'o\'zgartirish' : 'o\'rnatish'}</p>
             <p className="text-gray-500 text-xs">{hasPin ? 'PIN faol — ilovani qulflaydi' : 'Ilovani PIN bilan qulflash'}</p>
+          </div>
+        </button>
+
+        <div className="h-px bg-white/5 mx-4" />
+
+        <button onClick={() => nav('/trash')}
+          className="flex items-center gap-3 px-4 py-4 active:bg-dark-600 transition-colors text-left w-full">
+          <div className="w-9 h-9 rounded-xl bg-orange-500/15 flex items-center justify-center">
+            <Trash2 size={18} className="text-orange-400" />
+          </div>
+          <div>
+            <p className="text-white text-sm font-medium">Arxiv</p>
+            <p className="text-gray-500 text-xs">O'chirilgan tranzaksiyalar (30 kun)</p>
           </div>
         </button>
 
