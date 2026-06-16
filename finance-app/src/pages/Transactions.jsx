@@ -8,7 +8,7 @@ import { generateId } from '../store/storage'
 import { addFamilyTransaction, deleteFamilyTransaction } from '../store/family'
 import { format } from 'date-fns'
 import jsPDF from 'jspdf'
-import autoTable from 'jspdf-autotable'
+import html2canvas from 'html2canvas'
 import * as XLSX from 'xlsx'
 import { fmtCur } from '../utils/format'
 
@@ -129,52 +129,75 @@ export default function Transactions() {
     return m?.fullName || m?.username || 'Noma\'lum'
   }
 
-  const buildPDF = (list, filename) => {
-    const doc = new jsPDF()
-    // by KAFTIMDA — yuqori o'ng burchak
-    doc.setFontSize(8)
-    doc.setTextColor(180, 134, 11)
-    doc.setFont('helvetica', 'bold')
-    doc.text('by KAFTIMDA', doc.internal.pageSize.getWidth() - 14, 12, { align: 'right' })
-    doc.setTextColor(0, 0, 0)
-    doc.setFont('helvetica', 'normal')
-
-    doc.setFontSize(16)
-    doc.text('PulBek - Tranzaksiyalar', 14, 20)
-    doc.setFontSize(10)
-    doc.text(`Chop etilgan: ${format(new Date(), 'dd.MM.yyyy')}`, 14, 28)
-    doc.text(`Jami: ${list.length} ta operatsiya`, 14, 35)
-
-    autoTable(doc, {
-      startY: 42,
-      head: [['Sana', 'Tur', 'Kategoriya', 'Miqdor', 'Valyuta', 'Izoh']],
-      body: list.map(t => [
-        format(new Date(t.date), 'dd.MM.yyyy'),
-        t.type === 'income' ? 'Kirim' : 'Chiqim',
-        t.category,
-        fmt(t.amount, t.currency || 'UZS'),
-        t.currency || 'UZS',
-        t.note || ''
-      ]),
-      styles: { fontSize: 9 },
-      headStyles: { fillColor: [29, 78, 216] }
-    })
-
-    // Umumiy miqdor jadval ostida
+  const buildPDF = async (list, filename) => {
     const currencies = [...new Set(list.map(t => t.currency || 'UZS'))]
-    let y = (doc.lastAutoTable?.finalY ?? 60) + 8
-    doc.setFontSize(10)
-    doc.setFont('helvetica', 'bold')
-    doc.text("Umumiy:", 14, y)
-    currencies.forEach(cur => {
+    const totalsHtml = currencies.map(cur => {
       const income = list.filter(t => t.type === 'income' && (t.currency || 'UZS') === cur).reduce((s, t) => s + t.amount, 0)
       const expense = list.filter(t => t.type === 'expense' && (t.currency || 'UZS') === cur).reduce((s, t) => s + t.amount, 0)
-      y += 6
-      doc.setFont('helvetica', 'normal')
-      if (income > 0) doc.text(`  Kirim (${cur}): +${fmt(income, cur)}`, 14, y)
-      if (expense > 0) { y += 5; doc.text(`  Chiqim (${cur}): -${fmt(expense, cur)}`, 14, y) }
-    })
+      return `${income > 0 ? `<div>Kirim (${cur}): <span style="color:#16a34a">+${fmt(income, cur)}</span></div>` : ''}
+              ${expense > 0 ? `<div>Chiqim (${cur}): <span style="color:#dc2626">-${fmt(expense, cur)}</span></div>` : ''}`
+    }).join('')
 
+    const rows = list.map(t => `
+      <tr>
+        <td>${format(new Date(t.date), 'dd.MM.yyyy')}</td>
+        <td style="color:${t.type === 'income' ? '#16a34a' : '#dc2626'}">${t.type === 'income' ? 'Kirim' : 'Chiqim'}</td>
+        <td>${t.category}</td>
+        <td>${fmt(t.amount, t.currency || 'UZS')}</td>
+        <td>${t.currency || 'UZS'}</td>
+        <td>${t.note || ''}</td>
+      </tr>`).join('')
+
+    const el = document.createElement('div')
+    el.style.cssText = 'position:fixed;left:-9999px;top:0;width:794px;background:#fff;padding:40px;font-family:Arial,sans-serif;font-size:13px;color:#111;line-height:1.5'
+    el.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px">
+        <div>
+          <div style="font-size:20px;font-weight:bold;margin-bottom:4px">PulBek — Tranzaksiyalar</div>
+          <div style="color:#555;font-size:12px">Chop etilgan: ${format(new Date(), 'dd.MM.yyyy')} &nbsp;·&nbsp; Jami: ${list.length} ta operatsiya</div>
+        </div>
+        <div style="font-size:11px;font-weight:bold;letter-spacing:2px;color:#b8860b">by KAFTIMDA</div>
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-size:12px">
+        <thead>
+          <tr style="background:#1d4ed8;color:#fff">
+            <th style="padding:8px 6px;text-align:left">Sana</th>
+            <th style="padding:8px 6px;text-align:left">Tur</th>
+            <th style="padding:8px 6px;text-align:left">Kategoriya</th>
+            <th style="padding:8px 6px;text-align:right">Miqdor</th>
+            <th style="padding:8px 6px;text-align:left">Valyuta</th>
+            <th style="padding:8px 6px;text-align:left">Izoh</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${list.map((t, i) => `
+          <tr style="background:${i % 2 === 0 ? '#f9fafb' : '#fff'}">
+            <td style="padding:7px 6px;border-bottom:1px solid #e5e7eb">${format(new Date(t.date), 'dd.MM.yyyy')}</td>
+            <td style="padding:7px 6px;border-bottom:1px solid #e5e7eb;color:${t.type === 'income' ? '#16a34a' : '#dc2626'}">${t.type === 'income' ? 'Kirim' : 'Chiqim'}</td>
+            <td style="padding:7px 6px;border-bottom:1px solid #e5e7eb">${t.category}</td>
+            <td style="padding:7px 6px;border-bottom:1px solid #e5e7eb;text-align:right">${fmt(t.amount, t.currency || 'UZS')}</td>
+            <td style="padding:7px 6px;border-bottom:1px solid #e5e7eb">${t.currency || 'UZS'}</td>
+            <td style="padding:7px 6px;border-bottom:1px solid #e5e7eb">${t.note || ''}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+      <div style="margin-top:16px;font-size:12px"><strong>Umumiy:</strong>${totalsHtml}</div>`
+
+    document.body.appendChild(el)
+    const canvas = await html2canvas(el, { scale: 2, useCORS: true })
+    document.body.removeChild(el)
+
+    const imgData = canvas.toDataURL('image/png')
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
+    const pageW = doc.internal.pageSize.getWidth()
+    const pageH = doc.internal.pageSize.getHeight()
+    const imgH = (canvas.height * pageW) / canvas.width
+    let y = 0
+    while (y < imgH) {
+      if (y > 0) doc.addPage()
+      doc.addImage(imgData, 'PNG', 0, -y, pageW, imgH)
+      y += pageH
+    }
     doc.save(filename)
     setExportModal(false)
   }
