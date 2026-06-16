@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Trash2, Plus } from 'lucide-react'
+import { Trash2, Plus, Pencil, Check, X } from 'lucide-react'
 import { useApp } from '../store/AppContext'
 
 const DEFAULT_CATEGORIES = ['Maosh', 'Oziq-ovqat', 'Transport', 'Kommunal', 'Kiyim', "Sog'liq", "Ta'lim", "Do'st/Oila", 'Biznes', 'Boshqa']
@@ -15,6 +15,8 @@ export default function Categories() {
     } catch { return DEFAULT_CATEGORIES }
   })
   const [newCat, setNewCat] = useState('')
+  const [editingIdx, setEditingIdx] = useState(null)
+  const [editValue, setEditValue] = useState('')
 
   useEffect(() => {
     localStorage.setItem(storageKey, JSON.stringify(categories))
@@ -28,10 +30,25 @@ export default function Categories() {
   }
 
   const handleDelete = (cat) => {
-    if (DEFAULT_CATEGORIES.includes(cat)) {
-      if (!confirm(`"${cat}" standart kategoriya. O'chirishni tasdiqlaysizmi?`)) return
-    }
+    if (!confirm(`"${cat}" o'chirilsinmi?`)) return
     setCategories(categories.filter(c => c !== cat))
+  }
+
+  const startEdit = (i) => {
+    setEditingIdx(i)
+    setEditValue(categories[i])
+  }
+
+  const saveEdit = () => {
+    const trimmed = editValue.trim()
+    if (!trimmed || (categories.includes(trimmed) && categories[editingIdx] !== trimmed)) {
+      setEditingIdx(null)
+      return
+    }
+    const updated = [...categories]
+    updated[editingIdx] = trimmed
+    setCategories(updated)
+    setEditingIdx(null)
   }
 
   const handleReset = () => {
@@ -64,13 +81,36 @@ export default function Categories() {
           <p className="text-gray-500 text-center py-6 text-sm">Kategoriyalar yo'q</p>
         ) : (
           categories.map((cat, i) => (
-            <div key={cat}>
+            <div key={i}>
               {i > 0 && <div className="h-px bg-white/5 mx-4" />}
-              <div className="flex items-center gap-3 px-4 py-3">
-                <span className="flex-1 text-white text-sm">{cat}</span>
-                <button onClick={() => handleDelete(cat)} className="p-1.5 rounded-lg bg-dark-600 text-gray-500 active:text-red-400">
-                  <Trash2 size={14} />
-                </button>
+              <div className="flex items-center gap-2 px-4 py-3">
+                {editingIdx === i ? (
+                  <>
+                    <input
+                      className="input-field flex-1 py-1.5 text-sm"
+                      value={editValue}
+                      onChange={e => setEditValue(e.target.value)}
+                      onKeyDown={e => { if (e.key === 'Enter') saveEdit(); if (e.key === 'Escape') setEditingIdx(null) }}
+                      autoFocus
+                    />
+                    <button onClick={saveEdit} className="p-1.5 rounded-lg bg-green-500/20 text-green-400 active:opacity-70">
+                      <Check size={14} />
+                    </button>
+                    <button onClick={() => setEditingIdx(null)} className="p-1.5 rounded-lg bg-dark-600 text-gray-500 active:opacity-70">
+                      <X size={14} />
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <span className="flex-1 text-white text-sm">{cat}</span>
+                    <button onClick={() => startEdit(i)} className="p-1.5 rounded-lg bg-dark-600 text-gray-500 active:text-blue-400">
+                      <Pencil size={14} />
+                    </button>
+                    <button onClick={() => handleDelete(cat)} className="p-1.5 rounded-lg bg-dark-600 text-gray-500 active:text-red-400">
+                      <Trash2 size={14} />
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           ))
