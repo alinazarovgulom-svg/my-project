@@ -11,11 +11,11 @@ export default function Modal({ open, onClose, title, children }) {
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center" onClick={onClose}>
+    <div className="fixed inset-0 z-[150] flex items-end justify-center" onClick={onClose}>
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
       <div
         className="relative w-full max-w-[480px] bg-dark-800 rounded-t-3xl flex flex-col"
-        style={{ maxHeight: '75dvh' }}
+        style={{ maxHeight: '75dvh', marginBottom: 'calc(64px + env(safe-area-inset-bottom, 0px))' }}
         onClick={e => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-5 pt-5 pb-3 flex-shrink-0">
@@ -24,7 +24,7 @@ export default function Modal({ open, onClose, title, children }) {
             <X size={18} />
           </button>
         </div>
-        <div className="overflow-y-auto px-5 flex flex-col gap-3" style={{ paddingBottom: 'calc(24px + env(safe-area-inset-bottom, 0px))' }}>
+        <div className="overflow-y-auto px-5 pb-6 flex flex-col gap-3">
           {children}
         </div>
       </div>
