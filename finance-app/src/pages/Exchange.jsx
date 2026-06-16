@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { RefreshCw, Settings, ArrowLeftRight, History } from 'lucide-react'
+import { RefreshCw, Settings, ArrowLeftRight, History, Trash2 } from 'lucide-react'
 import { useApp } from '../store/AppContext'
 import Modal from '../components/Modal'
 import { format } from 'date-fns'
@@ -10,14 +10,6 @@ const FLAGS = { UZS: '🇺🇿', USD: '🇺🇸', EUR: '🇪🇺', RUB: '🇷�
 const fmt = (n, c) => {
   if (c === 'UZS') return new Intl.NumberFormat('uz-UZ').format(Math.round(n))
   return n.toFixed(2)
-}
-
-const getRatesData = (userId) => {
-  try {
-    const raw = localStorage.getItem(`finance_${userId}_rates`)
-    if (!raw) return null
-    return JSON.parse(raw)
-  } catch { return null }
 }
 
 const getRatesHistory = (userId) => {
@@ -38,6 +30,7 @@ export default function Exchange() {
   const [rateModal, setRateModal] = useState(false)
   const [ratesForm, setRatesForm] = useState({ ...rates })
   const [showHistory, setShowHistory] = useState(false)
+  const [historyKey, setHistoryKey] = useState(0)
 
   const history = getRatesHistory(user?.id)
 
@@ -75,6 +68,15 @@ export default function Exchange() {
   }
 
   const handleAmountChange = (v) => { setAmount(v); setConfirmed(false) }
+
+  const swap = () => { setFrom(to); setTo(from); setConfirmed(false) }
+
+  const deleteHistory = (idx) => {
+    const hist = getRatesHistory(user.id)
+    hist.splice(idx, 1)
+    localStorage.setItem(`finance_${user.id}_rates_history`, JSON.stringify(hist))
+    setHistoryKey(k => k + 1)
+  }
 
   const saveRates = () => {
     const newRates = { USD: parseFloat(ratesForm.USD), EUR: parseFloat(ratesForm.EUR), RUB: parseFloat(ratesForm.RUB) }
@@ -132,7 +134,10 @@ export default function Exchange() {
           <div className="flex flex-col gap-3">
             {history.map((h, i) => (
               <div key={i}>
-                <p className="text-gray-500 text-xs mb-1">{h.date}</p>
+                <div className="flex items-center justify-between mb-1">
+                  <p className="text-gray-500 text-xs">{h.date}</p>
+                  <button onClick={() => deleteHistory(i)} className="p-1 text-gray-600 active:text-red-400"><Trash2 size={12} /></button>
+                </div>
                 <div className="flex gap-3">
                   {Object.entries(h.rates).map(([cur, rate]) => (
                     <div key={cur} className="flex-1 bg-dark-600 rounded-lg p-2 text-center">
@@ -214,7 +219,6 @@ export default function Exchange() {
       <Modal open={rateModal} onClose={() => setRateModal(false)} title="Kurslarni o'zgartirish">
         <div className="flex flex-col gap-3">
           <p className="text-gray-400 text-sm">1 valyuta = ? UZS</p>
-          <button onClick={saveRates} className="btn-primary">Saqlash</button>
           {Object.keys(rates).map(cur => (
             <div key={cur}>
               <label className="text-gray-400 text-xs mb-1 block">{FLAGS[cur]} 1 {cur} = ? UZS</label>
@@ -226,6 +230,7 @@ export default function Exchange() {
               />
             </div>
           ))}
+          <button onClick={saveRates} className="btn-primary mt-2">Saqlash</button>
         </div>
       </Modal>
     </div>

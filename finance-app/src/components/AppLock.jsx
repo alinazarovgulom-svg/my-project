@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useApp } from '../store/AppContext'
 
-export default function AppLock({ children }) {
+export default function AppLock({ children, onUnlock }) {
   const { user } = useApp()
   const [locked, setLocked] = useState(false)
   const [pin, setPin] = useState('')
@@ -37,6 +37,7 @@ export default function AppLock({ children }) {
       if (next === savedPin) {
         setLocked(false)
         setPin('')
+        onUnlock?.()
       } else {
         setError('PIN noto\'g\'ri')
         setTimeout(() => setPin(''), 600)

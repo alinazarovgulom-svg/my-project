@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus, ChevronDown, ChevronUp, Trash2, AlertTriangle } from 'lucide-react'
+import { Plus, ChevronDown, ChevronUp, Trash2, AlertTriangle, Pencil } from 'lucide-react'
 import { useApp } from '../store/AppContext'
 import Modal from '../components/Modal'
 import { generateId } from '../store/storage'
@@ -26,6 +26,8 @@ export default function Debts() {
   const { debts, saveDebts } = useApp()
   const [modal, setModal] = useState(false)
   const [payModal, setPayModal] = useState(null)
+  const [editModal, setEditModal] = useState(false)
+  const [editingDebt, setEditingDebt] = useState(null)
   const [form, setForm] = useState(defaultForm)
   const [payAmount, setPayAmount] = useState('')
   const [expanded, setExpanded] = useState({})
@@ -59,6 +61,25 @@ export default function Debts() {
   const handleDelete = (id) => {
     if (confirm('O\'chirishni tasdiqlaysizmi?'))
       saveDebts(debts.filter(d => d.id !== id))
+  }
+
+  const openEdit = (debt) => {
+    setEditingDebt({ ...debt, amount: String(debt.amount) })
+    setEditModal(true)
+  }
+
+  const handleEditSave = () => {
+    if (!editingDebt?.person || !editingDebt?.amount) return
+    const updated = debts.map(d => {
+      if (d.id !== editingDebt.id) return d
+      const newAmount = parseFloat(editingDebt.amount)
+      const alreadyPaid = d.amount - d.remaining
+      const newRemaining = Math.max(0, newAmount - alreadyPaid)
+      return { ...editingDebt, amount: newAmount, remaining: newRemaining }
+    })
+    saveDebts(updated)
+    setEditModal(false)
+    setEditingDebt(null)
   }
 
   const filtered = debts
@@ -138,6 +159,9 @@ export default function Debts() {
                             To'lash
                           </button>
                         )}
+                        <button onClick={() => openEdit(d)} className="p-1 text-gray-600 active:text-blue-400">
+                          <Pencil size={14} />
+                        </button>
                         <button onClick={() => handleDelete(d.id)} className="p-1 text-gray-600 active:text-red-400">
                           <Trash2 size={14} />
                         </button>
@@ -229,6 +253,47 @@ export default function Debts() {
           </div>
           <button onClick={handleAdd} className="btn-primary mt-2">Saqlash</button>
         </div>
+      </Modal>
+
+      {/* Edit Modal */}
+      <Modal open={editModal} onClose={() => { setEditModal(false); setEditingDebt(null) }} title="Qarzni tahrirlash">
+        {editingDebt && (
+          <div className="flex flex-col gap-3 pb-4">
+            <div className="flex gap-2">
+              <button onClick={() => setEditingDebt(d => ({ ...d, direction: 'borrowed' }))} className={`flex-1 py-2 rounded-xl text-sm font-medium transition-colors ${editingDebt.direction === 'borrowed' ? 'bg-red-500 text-white' : 'bg-dark-600 text-gray-400'}`}>Qarz oldim</button>
+              <button onClick={() => setEditingDebt(d => ({ ...d, direction: 'lent' }))} className={`flex-1 py-2 rounded-xl text-sm font-medium transition-colors ${editingDebt.direction === 'lent' ? 'bg-green-500 text-white' : 'bg-dark-600 text-gray-400'}`}>Qarz berdim</button>
+            </div>
+            <div>
+              <label className="text-gray-400 text-xs mb-1 block">Shaxs ismi</label>
+              <input className="input-field" placeholder="Kim bilan..." value={editingDebt.person} onChange={e => setEditingDebt(d => ({ ...d, person: e.target.value }))} />
+            </div>
+            <div className="flex gap-2">
+              <div className="flex-1">
+                <label className="text-gray-400 text-xs mb-1 block">Summa</label>
+                <input className="input-field" type="number" placeholder="0" value={editingDebt.amount} onChange={e => setEditingDebt(d => ({ ...d, amount: e.target.value }))} />
+              </div>
+              <div className="w-28">
+                <label className="text-gray-400 text-xs mb-1 block">Valyuta</label>
+                <select className="input-field" value={editingDebt.currency || 'UZS'} onChange={e => setEditingDebt(d => ({ ...d, currency: e.target.value }))}>
+                  {CURRENCIES.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+            </div>
+            <div>
+              <label className="text-gray-400 text-xs mb-1 block">Izoh</label>
+              <input className="input-field" placeholder="Izoh..." value={editingDebt.note || ''} onChange={e => setEditingDebt(d => ({ ...d, note: e.target.value }))} />
+            </div>
+            <div>
+              <label className="text-gray-400 text-xs mb-1 block">Sana</label>
+              <input className="input-field" type="date" value={editingDebt.date} onChange={e => setEditingDebt(d => ({ ...d, date: e.target.value }))} />
+            </div>
+            <div>
+              <label className="text-gray-400 text-xs mb-1 block">Qaytarish sanasi</label>
+              <input className="input-field" type="date" value={editingDebt.dueDate || ''} onChange={e => setEditingDebt(d => ({ ...d, dueDate: e.target.value }))} />
+            </div>
+            <button onClick={handleEditSave} className="btn-primary mt-2">Saqlash</button>
+          </div>
+        )}
       </Modal>
 
       {/* Pay Modal */}

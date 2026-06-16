@@ -12,7 +12,7 @@ import Categories from './pages/Categories'
 import Family from './pages/Family'
 import AppLock from './components/AppLock'
 import Onboarding from './components/Onboarding'
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import './index.css'
 
 function ProtectedLayout() {
@@ -46,18 +46,31 @@ function AppRoutes() {
 }
 
 export default function App() {
-  const [onboarded, setOnboarded] = useState(() => !!localStorage.getItem('pulsek_onboarded'))
+  const [showSplash, setShowSplash] = useState(true)
+  const wasHidden = useRef(false)
 
-  const handleDone = () => {
-    localStorage.setItem('pulsek_onboarded', '1')
-    setOnboarded(true)
-  }
+  useEffect(() => {
+    const handler = () => {
+      if (document.hidden) {
+        wasHidden.current = true
+      } else if (wasHidden.current) {
+        wasHidden.current = false
+        // Only show splash if no PIN lock is active (AppLock handles that case)
+        const users = Object.keys(localStorage).filter(k => k.startsWith('finance_pin_'))
+        if (users.length === 0) {
+          setShowSplash(true)
+        }
+      }
+    }
+    document.addEventListener('visibilitychange', handler)
+    return () => document.removeEventListener('visibilitychange', handler)
+  }, [])
 
   return (
     <BrowserRouter>
       <AppProvider>
-        {!onboarded && <Onboarding onDone={handleDone} />}
-        <AppLock>
+        {showSplash && <Onboarding onDone={() => setShowSplash(false)} />}
+        <AppLock onUnlock={() => setShowSplash(false)}>
           <AppRoutes />
         </AppLock>
       </AppProvider>

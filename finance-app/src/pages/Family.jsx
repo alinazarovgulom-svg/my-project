@@ -112,7 +112,7 @@ export default function Family() {
               <label className="text-gray-400 text-xs mb-1 block">Guruh nomi</label>
               <input
                 className="input-field"
-                placeholder="Masalan: Xasanov oilasi"
+                placeholder="Guruh nomini kiriting"
                 value={familyName}
                 onChange={e => setFamilyName(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleCreate()}

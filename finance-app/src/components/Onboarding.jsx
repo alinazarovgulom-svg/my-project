@@ -38,15 +38,15 @@ export default function Onboarding({ onDone }) {
     timers.push(T(() => setPhase(4), 3600))     // PulBek typewriter
 
     // Typewriter
+    let typewriterIv = null
     timers.push(T(() => {
       const title = 'PulBek'
       let i = 0
-      const iv = setInterval(() => {
+      typewriterIv = setInterval(() => {
         i++
         setTypedTitle(title.slice(0, i))
-        if (i >= title.length) clearInterval(iv)
+        if (i >= title.length) clearInterval(typewriterIv)
       }, 90)
-      timers.push(iv)
     }, 3700))
 
     timers.push(T(() => setPhase(5), 4600))     // features
@@ -59,7 +59,10 @@ export default function Onboarding({ onDone }) {
 
     timers.push(T(() => setShowBtn(true), 4800 + FEATURES.length * 130 + 200))
 
-    return () => timers.forEach(t => { clearTimeout(t); clearInterval(t) })
+    return () => {
+      timers.forEach(t => { clearTimeout(t); clearInterval(t) })
+      if (typewriterIv) clearInterval(typewriterIv)
+    }
   }, [])
 
   return (
