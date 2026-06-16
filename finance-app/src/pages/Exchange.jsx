@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { RefreshCw, Settings, ArrowLeftRight, History } from 'lucide-react'
+import { RefreshCw, Settings, ArrowLeftRight, History, Trash2 } from 'lucide-react'
 import { useApp } from '../store/AppContext'
 import Modal from '../components/Modal'
 import { format } from 'date-fns'
@@ -76,6 +76,15 @@ export default function Exchange() {
 
   const handleAmountChange = (v) => { setAmount(v); setConfirmed(false) }
 
+  const swap = () => { setFrom(to); setTo(from); setConfirmed(false) }
+
+  const deleteHistory = (idx) => {
+    const hist = getRatesHistory(user.id)
+    hist.splice(idx, 1)
+    localStorage.setItem(`finance_${user.id}_rates_history`, JSON.stringify(hist))
+    window.location.reload()
+  }
+
   const saveRates = () => {
     const newRates = { USD: parseFloat(ratesForm.USD), EUR: parseFloat(ratesForm.EUR), RUB: parseFloat(ratesForm.RUB) }
     updateSettings({ ...settings, rates: newRates })
@@ -132,7 +141,10 @@ export default function Exchange() {
           <div className="flex flex-col gap-3">
             {history.map((h, i) => (
               <div key={i}>
-                <p className="text-gray-500 text-xs mb-1">{h.date}</p>
+                <div className="flex items-center justify-between mb-1">
+                  <p className="text-gray-500 text-xs">{h.date}</p>
+                  <button onClick={() => deleteHistory(i)} className="p-1 text-gray-600 active:text-red-400"><Trash2 size={12} /></button>
+                </div>
                 <div className="flex gap-3">
                   {Object.entries(h.rates).map(([cur, rate]) => (
                     <div key={cur} className="flex-1 bg-dark-600 rounded-lg p-2 text-center">
