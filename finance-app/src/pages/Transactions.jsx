@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Plus, Trash2, Search, TrendingUp, TrendingDown, Users, Download, AlertTriangle, SlidersHorizontal, X } from 'lucide-react'
+import { Plus, Trash2, Search, TrendingUp, TrendingDown, Users, Download, AlertTriangle, SlidersHorizontal, X, CheckSquare, Square } from 'lucide-react'
 import { useApp, INCOME_CATEGORIES, EXPENSE_CATEGORIES } from '../store/AppContext'
 import Modal from '../components/Modal'
 import SwipeableRow from '../components/SwipeableRow'
@@ -29,7 +29,9 @@ export default function Transactions() {
   const [editModal, setEditModal] = useState(false)
   const [editingTx, setEditingTx] = useState(null)
   const [exportModal, setExportModal] = useState(false)
-  const [deleteConfirm, setDeleteConfirm] = useState(null) // { id, isFamily, label }
+  const [deleteConfirm, setDeleteConfirm] = useState(null)
+  const [selectMode, setSelectMode] = useState(false)
+  const [selected, setSelected] = useState(new Set())
   const [familyMode, setFamilyMode] = useState(false)
   const [form, setForm] = useState(defaultForm)
   const [filter, setFilter] = useState('all')
@@ -166,17 +168,36 @@ export default function Transactions() {
         <div className="flex items-center justify-between mb-3">
           <h1 className="text-xl font-bold text-white">Kirim / Chiqim</h1>
           <div className="flex gap-2">
-            <button onClick={() => setExportModal(true)} className="p-2 rounded-xl bg-dark-700 text-gray-400 active:opacity-70">
-              <Download size={18} />
-            </button>
-            {family && (
-              <button
-                onClick={() => setFamilyMode(f => !f)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-colors ${familyMode ? 'bg-purple-500/20 text-purple-400' : 'bg-dark-600 text-gray-400'}`}
-              >
-                <Users size={14} />
-                Oila
-              </button>
+            {!selectMode ? (
+              <>
+                <button onClick={() => setExportModal(true)} className="p-2 rounded-xl bg-dark-700 text-gray-400 active:opacity-70">
+                  <Download size={18} />
+                </button>
+                <button onClick={() => { setSelectMode(true); setSelected(new Set()) }}
+                  className="p-2 rounded-xl bg-dark-700 text-gray-400 active:opacity-70">
+                  <CheckSquare size={18} />
+                </button>
+                {family && (
+                  <button onClick={() => setFamilyMode(f => !f)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-colors ${familyMode ? 'bg-purple-500/20 text-purple-400' : 'bg-dark-600 text-gray-400'}`}>
+                    <Users size={14} />
+                    Oila
+                  </button>
+                )}
+              </>
+            ) : (
+              <div className="flex items-center gap-2">
+                <button onClick={() => {
+                  if (selected.size === filtered.length) setSelected(new Set())
+                  else setSelected(new Set(filtered.map(t => t.id)))
+                }} className="text-xs text-blue-400 px-3 py-1.5 rounded-xl bg-blue-500/10">
+                  {selected.size === filtered.length ? 'Hammasini olib tashlash' : `Hammasini tanlash (${filtered.length})`}
+                </button>
+                <button onClick={() => { setSelectMode(false); setSelected(new Set()) }}
+                  className="p-2 rounded-xl bg-dark-700 text-gray-400">
+                  <X size={18} />
+                </button>
+              </div>
             )}
           </div>
         </div>
@@ -246,6 +267,31 @@ export default function Transactions() {
             const isFamily = familyMode && family
             const showDelete = isFamily ? canEdit(t.userId) : true
             const canEditTx = !isFamily
+            const isSelected = selected.has(t.id)
+            if (selectMode) return (
+              <div key={t.id} onClick={() => setSelected(s => {
+                const n = new Set(s)
+                n.has(t.id) ? n.delete(t.id) : n.add(t.id)
+                return n
+              })}
+                className={`card flex items-center gap-3 cursor-pointer transition-all ${isSelected ? 'border border-blue-500/50 bg-blue-500/5' : ''}`}>
+                <div className="flex-shrink-0">
+                  {isSelected
+                    ? <CheckSquare size={20} className="text-blue-400" />
+                    : <Square size={20} className="text-gray-600" />}
+                </div>
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0 ${t.type === 'income' ? 'bg-green-500/15' : 'bg-red-500/15'}`}>
+                  {t.emoji}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-white text-sm font-medium truncate">{t.category}</p>
+                  <p className="text-gray-500 text-xs">{t.note ? `${t.note} · ` : ''}{format(new Date(t.date), 'dd.MM.yyyy')}</p>
+                </div>
+                <p className={`text-sm font-semibold flex-shrink-0 ${t.type === 'income' ? 'text-green-400' : 'text-red-400'}`}>
+                  {t.type === 'income' ? '+' : '-'}{fmt(t.amount, t.currency || 'UZS')} {t.currency || 'UZS'}
+                </p>
+              </div>
+            )
             return (
               <SwipeableRow
                 key={t.id}
@@ -273,7 +319,37 @@ export default function Transactions() {
         )}
       </div>
 
-      {(!familyMode || canAdd()) && (
+      {selectMode && selected.size > 0 && (
+        <div className="fixed bottom-20 left-0 right-0 px-4 z-20">
+          <div className="bg-dark-800 border border-blue-500/20 rounded-2xl p-3 flex items-center gap-3 shadow-xl">
+            <div className="flex-1">
+              <p className="text-white text-sm font-semibold">{selected.size} ta tanlandi</p>
+              <p className="text-gray-500 text-xs">Yuklab olish turini tanlang</p>
+            </div>
+            <button onClick={async () => {
+              const list = filtered.filter(t => selected.has(t.id))
+              await exportTransactionsPDF(list, 'tanlangan-tranzaksiyalar.pdf')
+            }} className="px-4 py-2 rounded-xl bg-red-500/20 border border-red-500/30 text-red-400 text-sm font-semibold">
+              PDF
+            </button>
+            <button onClick={() => {
+              const list = filtered.filter(t => selected.has(t.id))
+              const ws = XLSX.utils.aoa_to_sheet([
+                ['by KAFTIMDA'], ['PulBek - Tanlangan tranzaksiyalar'], [],
+                ['Sana', 'Tur', 'Kategoriya', 'Miqdor', 'Valyuta', 'Izoh'],
+                ...list.map(t => [format(new Date(t.date), 'dd.MM.yyyy'), t.type === 'income' ? 'Kirim' : 'Chiqim', t.category, t.amount, t.currency || 'UZS', t.note || ''])
+              ])
+              const wb = XLSX.utils.book_new()
+              XLSX.utils.book_append_sheet(wb, ws, 'Tanlangan')
+              XLSX.writeFile(wb, 'tanlangan-tranzaksiyalar.xlsx')
+            }} className="px-4 py-2 rounded-xl bg-green-500/20 border border-green-500/30 text-green-400 text-sm font-semibold">
+              Excel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {(!familyMode || canAdd()) && !selectMode && (
         <div className="fixed bottom-20 right-4 flex flex-col gap-2">
           <button onClick={() => openAdd('income')} className="w-12 h-12 rounded-full bg-green-500 text-white flex items-center justify-center shadow-lg shadow-green-500/30 active:opacity-80">
             <TrendingUp size={20} />
