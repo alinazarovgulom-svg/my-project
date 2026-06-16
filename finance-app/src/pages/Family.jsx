@@ -29,19 +29,19 @@ export default function Family() {
   const [error, setError] = useState('')
   const [copied, setCopied] = useState(false)
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     if (!familyName.trim()) return setError('Guruh nomini kiriting')
-    createFamily(user.id, user.username, user.name, familyName.trim())
+    await createFamily(user.id, user.username, user.name, familyName.trim())
     refreshFamily()
     setCreateModal(false)
     setFamilyName('')
     setError('')
   }
 
-  const handleJoin = () => {
+  const handleJoin = async () => {
     const code = joinCode.trim().toUpperCase()
     if (!code) return setError('Kodni kiriting')
-    const result = joinFamily(code, user.id, user.username, user.name)
+    const result = await joinFamily(code, user.id, user.username, user.name)
     if (result.error) return setError(result.error)
     refreshFamily()
     setJoinModal(false)
@@ -49,9 +49,9 @@ export default function Family() {
     setError('')
   }
 
-  const handleLeave = () => {
+  const handleLeave = async () => {
     if (!confirm('Guruhdan chiqishni tasdiqlaysizmi?')) return
-    leaveFamily(family.id, user.id)
+    await leaveFamily(family.id, user.id)
     refreshFamily()
   }
 
@@ -61,15 +61,15 @@ export default function Family() {
     setTimeout(() => setCopied(false), 2000)
   }
 
-  const handleRoleChange = (targetUserId, newRole) => {
-    updateMemberRole(family.id, targetUserId, newRole, user.id)
+  const handleRoleChange = async (targetUserId, newRole) => {
+    await updateMemberRole(family.id, targetUserId, newRole, user.id)
     refreshFamily()
     setRoleModal(null)
   }
 
-  const handleRemoveMember = (targetUserId) => {
+  const handleRemoveMember = async (targetUserId) => {
     if (!confirm('Bu a\'zoni guruhdan chiqarishni tasdiqlaysizmi?')) return
-    removeMember(family.id, targetUserId, user.id)
+    await removeMember(family.id, targetUserId, user.id)
     refreshFamily()
     setRoleModal(null)
   }
