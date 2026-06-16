@@ -31,6 +31,9 @@ export default function Transactions() {
   const [form, setForm] = useState(defaultForm)
   const [filter, setFilter] = useState('all')
   const [search, setSearch] = useState('')
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
+  const [catFilter, setCatFilter] = useState('all')
   const [customCategories] = useState(() => {
     try {
       const saved = localStorage.getItem(`finance_${user?.id}_categories`)
@@ -94,8 +97,14 @@ export default function Transactions() {
   const filtered = activeList
     .filter(t => t.category !== 'Valyuta ayirboshlash')
     .filter(t => filter === 'all' || t.type === filter)
+    .filter(t => catFilter === 'all' || t.category === catFilter)
+    .filter(t => !dateFrom || t.date >= dateFrom)
+    .filter(t => !dateTo || t.date <= dateTo)
     .filter(t => !search || t.category.toLowerCase().includes(search.toLowerCase()) || (t.note || '').toLowerCase().includes(search.toLowerCase()))
     .sort((a, b) => new Date(b.date) - new Date(a.date))
+
+  const allCategories = [...new Set(activeList.filter(t => t.category !== 'Valyuta ayirboshlash').map(t => t.category))]
+  const hasFilter = filter !== 'all' || catFilter !== 'all' || dateFrom || dateTo || search
 
   const categories = customCategories || (form.type === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES)
 
@@ -108,10 +117,17 @@ export default function Transactions() {
     const doc = new jsPDF()
     doc.setFontSize(16)
     doc.text('PulBek - Tranzaksiyalar', 14, 20)
-    doc.setFontSize(10)
-    doc.text(`Sana: ${format(new Date(), 'dd.MM.yyyy')}`, 14, 28)
+    doc.setFontSize(9)
+    const filterInfo = [
+      filter !== 'all' ? (filter === 'income' ? 'Kirim' : 'Chiqim') : '',
+      catFilter !== 'all' ? catFilter : '',
+      dateFrom ? `${dateFrom}` : '',
+      dateTo ? `— ${dateTo}` : '',
+    ].filter(Boolean).join(' | ')
+    if (filterInfo) doc.text(`Filtr: ${filterInfo}`, 14, 28)
+    doc.text(`Jami: ${filtered.length} ta | Chop: ${format(new Date(), 'dd.MM.yyyy')}`, 14, filterInfo ? 34 : 28)
     autoTable(doc, {
-      startY: 35,
+      startY: filterInfo ? 40 : 35,
       head: [['Sana', 'Tur', 'Kategoriya', 'Miqdor', 'Valyuta', 'Izoh']],
       body: filtered.map(t => [
         format(new Date(t.date), 'dd.MM.yyyy'),
@@ -159,13 +175,29 @@ export default function Transactions() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
           <input className="input-field pl-9 py-2 text-sm" placeholder="Qidirish..." value={search} onChange={e => setSearch(e.target.value)} />
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 mb-2">
           {['all', 'income', 'expense'].map(f => (
             <button key={f} onClick={() => setFilter(f)}
               className={`flex-1 py-2 rounded-xl text-xs font-medium transition-colors ${filter === f ? (f === 'income' ? 'bg-green-500 text-white' : f === 'expense' ? 'bg-red-500 text-white' : 'bg-blue-500 text-white') : 'bg-dark-700 text-gray-400'}`}>
               {f === 'all' ? 'Barchasi' : f === 'income' ? 'Kirim' : 'Chiqim'}
             </button>
           ))}
+        </div>
+        <div className="flex gap-2 mb-2">
+          <input type="date" className="input-field flex-1 py-1.5 text-xs" value={dateFrom} onChange={e => setDateFrom(e.target.value)} />
+          <input type="date" className="input-field flex-1 py-1.5 text-xs" value={dateTo} onChange={e => setDateTo(e.target.value)} />
+        </div>
+        <div className="flex items-center gap-2">
+          <select className="input-field flex-1 py-1.5 text-xs" value={catFilter} onChange={e => setCatFilter(e.target.value)}>
+            <option value="all">Barcha kategoriyalar</option>
+            {allCategories.map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
+          {hasFilter && (
+            <button onClick={() => { setFilter('all'); setCatFilter('all'); setDateFrom(''); setDateTo(''); setSearch('') }}
+              className="px-3 py-2 rounded-xl bg-red-500/15 text-red-400 text-xs font-medium whitespace-nowrap active:opacity-70">
+              Tozalash
+            </button>
+          )}
         </div>
       </div>
 
@@ -217,13 +249,15 @@ export default function Transactions() {
       )}
 
       {/* Export Modal */}
-      <Modal open={exportModal} onClose={() => setExportModal(false)} title="Ma'lumotlarni yuklash">
-        <div className="flex flex-col gap-3">
-          <p className="text-gray-400 text-sm">
-            {filtered.length} ta {search || filter !== 'all' ? 'filtrlangan' : ''} tranzaksiya yuklanadi
-          </p>
+      <Modal open={exportModal} onClose={() => setExportModal(false)} title="Yuklab olish">
+        <div className="flex flex-col gap-3 pb-2">
+          <div className="bg-dark-600 rounded-xl px-4 py-3">
+            <p className="text-gray-400 text-xs mb-1">Yuklanadigan ma'lumotlar</p>
+            <p className="text-white text-sm font-semibold">{filtered.length} ta tranzaksiya</p>
+            {hasFilter && <p className="text-blue-400 text-xs mt-1">Filtr o'rnatilgan ✓</p>}
+          </div>
           <button onClick={exportPDF} className="btn-primary">📄 PDF yuklab olish</button>
-          <button onClick={exportExcel} className="bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl font-semibold transition-colors">
+          <button onClick={exportExcel} className="bg-green-600 text-white py-3 rounded-xl font-semibold">
             📊 Excel yuklab olish
           </button>
         </div>
