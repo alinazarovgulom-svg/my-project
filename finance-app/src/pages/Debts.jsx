@@ -157,7 +157,7 @@ export default function Debts() {
 
       {/* Add Modal */}
       <Modal open={modal} onClose={() => setModal(false)} title="Qarz qo'shish">
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3 pb-4">
           <div className="flex gap-2">
             <button onClick={() => set('direction', 'borrowed')} className={`flex-1 py-2 rounded-xl text-sm font-medium transition-colors ${form.direction === 'borrowed' ? 'bg-red-500 text-white' : 'bg-dark-600 text-gray-400'}`}>
               Qarz oldim

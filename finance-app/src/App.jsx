@@ -8,6 +8,7 @@ import Debts from './pages/Debts'
 import Exchange from './pages/Exchange'
 import Reports from './pages/Reports'
 import Settings from './pages/Settings'
+import Categories from './pages/Categories'
 import './index.css'
 
 function ProtectedLayout() {
@@ -22,6 +23,7 @@ function ProtectedLayout() {
         <Route path="/exchange" element={<Exchange />} />
         <Route path="/reports" element={<Reports />} />
         <Route path="/settings" element={<Settings />} />
+        <Route path="/categories" element={<Categories />} />
       </Routes>
       <BottomNav />
     </>

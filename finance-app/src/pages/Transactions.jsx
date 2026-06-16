@@ -14,14 +14,20 @@ const CATEGORY_EMOJIS = {
   'Ko\'ngilochar': '🎮', 'Kommunal': '💡', 'Telefon/Internet': '📱', 'Boshqa chiqim': '💸'
 }
 
-const defaultForm = { type: 'expense', amount: '', category: '', note: '', date: new Date().toISOString().split('T')[0] }
+const defaultForm = { type: 'expense', amount: '', category: '', currency: 'UZS', note: '', date: new Date().toISOString().split('T')[0] }
 
 export default function Transactions() {
-  const { transactions, saveTransactions } = useApp()
+  const { transactions, saveTransactions, user } = useApp()
   const [modal, setModal] = useState(false)
   const [form, setForm] = useState(defaultForm)
   const [filter, setFilter] = useState('all')
   const [search, setSearch] = useState('')
+  const [customCategories] = useState(() => {
+    try {
+      const saved = localStorage.getItem(`finance_${user?.id}_categories`)
+      return saved ? JSON.parse(saved) : null
+    } catch { return null }
+  })
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
@@ -52,7 +58,7 @@ export default function Transactions() {
     .filter(t => !search || t.category.toLowerCase().includes(search.toLowerCase()) || (t.note || '').toLowerCase().includes(search.toLowerCase()))
     .sort((a, b) => new Date(b.date) - new Date(a.date))
 
-  const categories = form.type === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES
+  const categories = customCategories || (form.type === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES)
 
   return (
     <div className="flex flex-col min-h-dvh pb-24">
@@ -89,7 +95,7 @@ export default function Transactions() {
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">
                 <p className={`text-sm font-semibold ${t.type === 'income' ? 'text-green-400' : 'text-red-400'}`}>
-                  {t.type === 'income' ? '+' : '-'}{fmt(t.amount)}
+                  {t.type === 'income' ? '+' : '-'}{fmt(t.amount)} {t.currency || 'UZS'}
                 </p>
                 <button onClick={() => handleDelete(t.id)} className="p-1.5 rounded-lg bg-dark-600 text-gray-500 active:text-red-400">
                   <Trash2 size={14} />
@@ -111,7 +117,7 @@ export default function Transactions() {
       </div>
 
       <Modal open={modal} onClose={() => setModal(false)} title={form.type === 'income' ? 'Kirim qo\'shish' : 'Chiqim qo\'shish'}>
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3 pb-4">
           <div className="flex gap-2">
             <button onClick={() => set('type', 'income')} className={`flex-1 py-2 rounded-xl text-sm font-medium transition-colors ${form.type === 'income' ? 'bg-green-500 text-white' : 'bg-dark-600 text-gray-400'}`}>
               Kirim
@@ -123,6 +129,12 @@ export default function Transactions() {
           <div>
             <label className="text-gray-400 text-xs mb-1 block">Summa (so'm)</label>
             <input className="input-field" type="number" placeholder="0" value={form.amount} onChange={e => set('amount', e.target.value)} />
+          </div>
+          <div>
+            <label className="text-gray-400 text-xs mb-1 block">Valyuta</label>
+            <select className="input-field" value={form.currency} onChange={e => set('currency', e.target.value)}>
+              {['UZS', 'USD', 'EUR', 'RUB'].map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
           </div>
           <div>
             <label className="text-gray-400 text-xs mb-1 block">Kategoriya</label>

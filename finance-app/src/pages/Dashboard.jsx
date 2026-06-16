@@ -130,7 +130,7 @@ export default function Dashboard() {
                   <p className="text-gray-500 text-xs">{t.note || format(new Date(t.date), 'dd.MM.yyyy')}</p>
                 </div>
                 <p className={`text-sm font-semibold whitespace-nowrap ${t.type === 'income' ? 'text-green-400' : 'text-red-400'}`}>
-                  {t.type === 'income' ? '+' : '-'}{fmt(t.amount)}
+                  {t.type === 'income' ? '+' : '-'}{fmt(t.amount)} {t.currency || 'UZS'}
                 </p>
               </div>
             ))}
