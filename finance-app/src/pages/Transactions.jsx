@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Plus, Trash2, Search, TrendingUp, TrendingDown, Users, Download, AlertTriangle } from 'lucide-react'
+import { Plus, Trash2, Search, TrendingUp, TrendingDown, Users, Download, AlertTriangle, SlidersHorizontal, X } from 'lucide-react'
 import { useApp, INCOME_CATEGORIES, EXPENSE_CATEGORIES } from '../store/AppContext'
 import Modal from '../components/Modal'
 import SwipeableRow from '../components/SwipeableRow'
@@ -34,6 +34,10 @@ export default function Transactions() {
   const [form, setForm] = useState(defaultForm)
   const [filter, setFilter] = useState('all')
   const [search, setSearch] = useState('')
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
+  const [currencyFilter, setCurrencyFilter] = useState('all')
+  const [showFilters, setShowFilters] = useState(false)
   const [balanceError, setBalanceError] = useState('')
   const [customCategories] = useState(() => {
     try {
@@ -116,9 +120,14 @@ export default function Transactions() {
   const activeList = (familyMode && family ? familyTransactions : transactions)
     .filter(t => t.category !== 'Valyuta ayirboshlash')
 
+  const activeFilterCount = [dateFrom, dateTo, currencyFilter !== 'all'].filter(Boolean).length
+
   const filtered = activeList
     .filter(t => filter === 'all' || t.type === filter)
     .filter(t => !search || t.category.toLowerCase().includes(search.toLowerCase()) || (t.note || '').toLowerCase().includes(search.toLowerCase()))
+    .filter(t => !dateFrom || t.date >= dateFrom)
+    .filter(t => !dateTo || t.date <= dateTo)
+    .filter(t => currencyFilter === 'all' || (t.currency || 'UZS') === currencyFilter)
     .sort((a, b) => new Date(b.date) - new Date(a.date))
 
   const categories = customCategories || (form.type === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES)
@@ -171,10 +180,52 @@ export default function Transactions() {
             )}
           </div>
         </div>
-        <div className="relative mb-3">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
-          <input className="input-field pl-9 py-2 text-sm" placeholder="Qidirish..." value={search} onChange={e => setSearch(e.target.value)} />
+        <div className="flex gap-2 mb-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
+            <input className="input-field pl-9 py-2 text-sm w-full" placeholder="Qidirish..." value={search} onChange={e => setSearch(e.target.value)} />
+          </div>
+          <button onClick={() => setShowFilters(f => !f)}
+            className={`relative p-2.5 rounded-xl text-sm font-medium transition-colors flex items-center justify-center ${showFilters || activeFilterCount > 0 ? 'bg-blue-500/20 text-blue-400' : 'bg-dark-700 text-gray-400'}`}>
+            <SlidersHorizontal size={18} />
+            {activeFilterCount > 0 && (
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 rounded-full text-[9px] text-white flex items-center justify-center font-bold">{activeFilterCount}</span>
+            )}
+          </button>
         </div>
+
+        {showFilters && (
+          <div className="bg-dark-700 rounded-xl p-3 mb-3 flex flex-col gap-2">
+            <div className="flex gap-2">
+              <div className="flex-1">
+                <label className="text-gray-500 text-[10px] mb-1 block">Dan</label>
+                <input type="date" className="input-field py-1.5 text-sm" value={dateFrom} onChange={e => setDateFrom(e.target.value)} />
+              </div>
+              <div className="flex-1">
+                <label className="text-gray-500 text-[10px] mb-1 block">Gacha</label>
+                <input type="date" className="input-field py-1.5 text-sm" value={dateTo} onChange={e => setDateTo(e.target.value)} />
+              </div>
+            </div>
+            <div>
+              <label className="text-gray-500 text-[10px] mb-1 block">Valyuta</label>
+              <div className="flex gap-1.5">
+                {['all', 'UZS', 'USD', 'EUR', 'RUB'].map(c => (
+                  <button key={c} onClick={() => setCurrencyFilter(c)}
+                    className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-colors ${currencyFilter === c ? 'bg-blue-500 text-white' : 'bg-dark-600 text-gray-400'}`}>
+                    {c === 'all' ? 'Bari' : c}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {activeFilterCount > 0 && (
+              <button onClick={() => { setDateFrom(''); setDateTo(''); setCurrencyFilter('all') }}
+                className="flex items-center justify-center gap-1.5 text-xs text-red-400 py-1">
+                <X size={12} /> Filtrlarni tozalash
+              </button>
+            )}
+          </div>
+        )}
+
         <div className="flex gap-2">
           {['all', 'income', 'expense'].map(f => (
             <button key={f} onClick={() => setFilter(f)}
