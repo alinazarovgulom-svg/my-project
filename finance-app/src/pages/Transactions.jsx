@@ -7,10 +7,9 @@ import SwipeableRow from '../components/SwipeableRow'
 import { generateId } from '../store/storage'
 import { addFamilyTransaction, deleteFamilyTransaction } from '../store/family'
 import { format } from 'date-fns'
-import jsPDF from 'jspdf'
-import html2canvas from 'html2canvas'
 import * as XLSX from 'xlsx'
 import { fmtCur } from '../utils/format'
+import { exportTransactionsPDF } from '../utils/pdfExport'
 
 const EMOJIS = { income: '💰', expense: '💸' }
 const fmt = (n, cur) => fmtCur(n, cur)
@@ -129,105 +128,10 @@ export default function Transactions() {
     return m?.fullName || m?.username || 'Noma\'lum'
   }
 
-  const buildPDF = async (list, filename) => {
-    const currencies = [...new Set(list.map(t => t.currency || 'UZS'))]
-    const totalInc = {}
-    const totalExp = {}
-    currencies.forEach(cur => {
-      totalInc[cur] = list.filter(t => t.type === 'income' && (t.currency || 'UZS') === cur).reduce((s, t) => s + t.amount, 0)
-      totalExp[cur] = list.filter(t => t.type === 'expense' && (t.currency || 'UZS') === cur).reduce((s, t) => s + t.amount, 0)
-    })
-
-    const el = document.createElement('div')
-    el.style.cssText = 'position:fixed;left:-9999px;top:0;width:794px;background:#f8fafc;font-family:Arial,sans-serif;color:#0f172a;line-height:1.5'
-    el.innerHTML = `
-      <!-- HEADER -->
-      <div style="background:linear-gradient(135deg,#1e3a8a 0%,#1d4ed8 60%,#2563eb 100%);padding:36px 40px 32px;position:relative;overflow:hidden">
-        <div style="position:absolute;top:-30px;right:-30px;width:180px;height:180px;background:rgba(255,255,255,0.05);border-radius:50%"></div>
-        <div style="position:absolute;bottom:-50px;left:200px;width:120px;height:120px;background:rgba(255,255,255,0.04);border-radius:50%"></div>
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;position:relative">
-          <div>
-            <div style="font-size:11px;font-weight:700;letter-spacing:3px;color:rgba(255,255,255,0.5);text-transform:uppercase;margin-bottom:8px">Moliyaviy hisobot</div>
-            <div style="font-size:32px;font-weight:900;color:#fff;letter-spacing:-0.5px">PulBek</div>
-            <div style="font-size:13px;color:rgba(255,255,255,0.6);margin-top:4px">Tranzaksiyalar ro'yxati</div>
-          </div>
-          <div style="text-align:right">
-            <div style="font-size:10px;font-weight:800;letter-spacing:3px;color:#ffd700;text-transform:uppercase;margin-bottom:6px">by KAFTIMDA</div>
-            <div style="font-size:12px;color:rgba(255,255,255,0.5)">${format(new Date(), 'dd.MM.yyyy HH:mm')}</div>
-            <div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:2px">${list.length} ta operatsiya</div>
-          </div>
-        </div>
-        <!-- Summary cards -->
-        <div style="display:flex;gap:12px;margin-top:24px">
-          ${currencies.map(cur => `
-          <div style="flex:1;background:rgba(255,255,255,0.1);border-radius:12px;padding:14px 16px;backdrop-filter:blur(10px)">
-            <div style="font-size:10px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">${cur}</div>
-            ${totalInc[cur] > 0 ? `<div style="font-size:13px;color:#86efac;font-weight:700">+${fmt(totalInc[cur], cur)}</div>` : ''}
-            ${totalExp[cur] > 0 ? `<div style="font-size:13px;color:#fca5a5;font-weight:700">-${fmt(totalExp[cur], cur)}</div>` : ''}
-          </div>`).join('')}
-        </div>
-      </div>
-
-      <!-- TABLE -->
-      <div style="padding:24px 40px 40px">
-        <table style="width:100%;border-collapse:collapse;font-size:12px">
-          <thead>
-            <tr>
-              <th style="padding:10px 12px;text-align:left;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#64748b;border-bottom:2px solid #e2e8f0">Sana</th>
-              <th style="padding:10px 12px;text-align:left;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#64748b;border-bottom:2px solid #e2e8f0">Tur</th>
-              <th style="padding:10px 12px;text-align:left;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#64748b;border-bottom:2px solid #e2e8f0">Kategoriya</th>
-              <th style="padding:10px 12px;text-align:right;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#64748b;border-bottom:2px solid #e2e8f0">Miqdor</th>
-              <th style="padding:10px 12px;text-align:left;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#64748b;border-bottom:2px solid #e2e8f0">Izoh</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${list.map((t, i) => `
-            <tr style="background:${i % 2 === 0 ? '#fff' : '#f8fafc'}">
-              <td style="padding:10px 12px;border-bottom:1px solid #f1f5f9;color:#64748b;font-size:11px">${format(new Date(t.date), 'dd.MM.yyyy')}</td>
-              <td style="padding:10px 12px;border-bottom:1px solid #f1f5f9">
-                <span style="display:inline-block;padding:2px 10px;border-radius:20px;font-size:10px;font-weight:700;
-                  background:${t.type === 'income' ? '#dcfce7' : '#fee2e2'};
-                  color:${t.type === 'income' ? '#15803d' : '#b91c1c'}">
-                  ${t.type === 'income' ? '▲ Kirim' : '▼ Chiqim'}
-                </span>
-              </td>
-              <td style="padding:10px 12px;border-bottom:1px solid #f1f5f9;font-weight:600;color:#1e293b">${t.emoji || ''} ${t.category}</td>
-              <td style="padding:10px 12px;border-bottom:1px solid #f1f5f9;text-align:right;font-weight:700;
-                color:${t.type === 'income' ? '#15803d' : '#b91c1c'}">
-                ${t.type === 'income' ? '+' : '-'}${fmt(t.amount, t.currency || 'UZS')} <span style="font-size:10px;font-weight:400;color:#94a3b8">${t.currency || 'UZS'}</span>
-              </td>
-              <td style="padding:10px 12px;border-bottom:1px solid #f1f5f9;color:#94a3b8;font-size:11px">${t.note || '—'}</td>
-            </tr>`).join('')}
-          </tbody>
-        </table>
-
-        <!-- FOOTER -->
-        <div style="margin-top:32px;padding-top:16px;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center">
-          <div style="font-size:10px;color:#cbd5e1">PulBek — Shaxsiy moliya boshqaruvi</div>
-          <div style="font-size:9px;font-weight:800;letter-spacing:2px;color:#b8860b">by KAFTIMDA</div>
-        </div>
-      </div>`
-
-    document.body.appendChild(el)
-    const canvas = await html2canvas(el, { scale: 2, useCORS: true, backgroundColor: '#f8fafc' })
-    document.body.removeChild(el)
-
-    const imgData = canvas.toDataURL('image/png')
-    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
-    const pageW = doc.internal.pageSize.getWidth()
-    const pageH = doc.internal.pageSize.getHeight()
-    const imgH = (canvas.height * pageW) / canvas.width
-    let y = 0
-    while (y < imgH) {
-      if (y > 0) doc.addPage()
-      doc.addImage(imgData, 'PNG', 0, -y, pageW, imgH)
-      y += pageH
-    }
-    doc.save(filename)
+  const exportPDF = async () => {
+    await exportTransactionsPDF(filtered, 'pulbek-tranzaksiyalar.pdf')
     setExportModal(false)
   }
-
-  const exportPDF = () => buildPDF(filtered, 'pulbek-tranzaksiyalar.pdf')
 
   const exportExcel = () => {
     const header = [['by KAFTIMDA', '', '', '', '', ''], ['PulBek - Tranzaksiyalar', '', '', '', '', ''], [`Chop etilgan: ${format(new Date(), 'dd.MM.yyyy')}`, '', '', '', '', ''], []]
