@@ -1,17 +1,20 @@
 import { NavLink } from 'react-router-dom'
 import { Home, ArrowLeftRight, Users, RefreshCw, BarChart2, Settings, UsersRound } from 'lucide-react'
-
-const links = [
-  { to: '/', icon: Home, label: 'Bosh' },
-  { to: '/transactions', icon: ArrowLeftRight, label: 'Kirim/Chiqim' },
-  { to: '/debts', icon: Users, label: 'Qarzlar' },
-  { to: '/exchange', icon: RefreshCw, label: 'Valyuta' },
-  { to: '/reports', icon: BarChart2, label: 'Hisobot' },
-  { to: '/family', icon: UsersRound, label: 'Oila' },
-  { to: '/settings', icon: Settings, label: 'Sozlama' },
-]
+import { useLang } from '../i18n/LangContext'
 
 export default function BottomNav() {
+  const { t } = useLang()
+
+  const links = [
+    { to: '/', icon: Home, label: t('home') },
+    { to: '/transactions', icon: ArrowLeftRight, label: t('incomeExpense') },
+    { to: '/debts', icon: Users, label: t('debts') },
+    { to: '/exchange', icon: RefreshCw, label: t('exchange') },
+    { to: '/reports', icon: BarChart2, label: t('reports') },
+    { to: '/family', icon: UsersRound, label: t('family') },
+    { to: '/settings', icon: Settings, label: t('settings') },
+  ]
+
   return (
     <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] bg-dark-800 border-t border-white/5 z-50">
       <div className="flex items-center justify-around px-1 py-2 pb-safe">

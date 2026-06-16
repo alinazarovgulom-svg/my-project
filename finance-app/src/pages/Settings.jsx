@@ -1,12 +1,14 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { LogOut, Lock, User, Eye, EyeOff, Trash2, Info, Tag } from 'lucide-react'
+import { LogOut, Lock, User, Eye, EyeOff, Trash2, Info, Tag, Globe } from 'lucide-react'
 import { useApp } from '../store/AppContext'
 import { getUsers, saveUsers, hashPassword, setCurrentUser } from '../store/storage'
 import Modal from '../components/Modal'
+import { useLang } from '../i18n/LangContext'
 
 export default function Settings() {
   const { user, setUser, transactions, debts, userRole } = useApp()
+  const { t, lang, setLang } = useLang()
   const nav = useNavigate()
   // Only admin (or user not in a family) can access categories
   const isAdmin = !userRole || userRole === 'admin'
@@ -123,15 +125,31 @@ export default function Settings() {
         </button>
       </div>
 
+      {/* Language selector */}
+      <div className="card">
+        <div className="flex items-center gap-2 mb-3">
+          <Globe size={16} className="text-gray-500" />
+          <h2 className="text-gray-400 text-sm">{t('language')}</h2>
+        </div>
+        <div className="flex gap-2">
+          {[['uz','🇺🇿','O\'zbek'],['ru','🇷🇺','Русский'],['en','🇬🇧','English']].map(([l, flag, label]) => (
+            <button key={l} onClick={() => setLang(l)}
+              className={`flex-1 py-2 rounded-xl text-sm font-medium transition-all flex flex-col items-center gap-0.5 ${lang === l ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' : 'bg-dark-600 text-gray-500'}`}>
+              <span className="text-lg">{flag}</span>
+              <span className="text-xs">{label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* App Info */}
       <div className="card">
         <div className="flex items-center gap-2 mb-2">
           <Info size={16} className="text-gray-500" />
-          <h2 className="text-gray-400 text-sm">Ilova haqida</h2>
+          <h2 className="text-gray-400 text-sm">{t('appInfo')}</h2>
         </div>
         <p className="text-gray-500 text-xs leading-relaxed">
-          Moliya Ilovasi v1.0 — Shaxsiy va biznes moliyangizni offline rejimda boshqaring.
-          Ma'lumotlar qurilmangizda saqlanadi.
+          {t('appVersion')} — {t('tagline')}
         </p>
       </div>
 
