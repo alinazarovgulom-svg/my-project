@@ -11,9 +11,11 @@ const fmt = (n) => new Intl.NumberFormat('uz-UZ').format(Math.abs(Math.round(n))
 const FLAGS = { UZS: '🇺🇿', USD: '🇺🇸', EUR: '🇪🇺', RUB: '🇷🇺' }
 
 export default function Dashboard() {
-  const { user, transactions, debts, family, familyMembers, settings } = useApp()
+  const { user, transactions: personalTx, debts, family, familyTransactions, familyMembers, settings } = useApp()
   const { t } = useLang()
   const nav = useNavigate()
+
+  const transactions = family ? familyTransactions : personalTx
 
   const rates = settings?.rates || { USD: 12700, EUR: 13800, RUB: 140 }
 
@@ -61,7 +63,7 @@ export default function Dashboard() {
   // Family balances
   const memberBalances = family
     ? familyMembers.map(m => {
-        const memberTx = getData('transactions', m.userId)
+        const memberTx = familyTransactions.filter(tx => tx.userId === m.userId)
         const bal = memberTx.reduce((sum, tx) => {
           const inUZS = toUZS(tx.amount, tx.currency)
           return tx.type === 'income' ? sum + inUZS : sum - inUZS

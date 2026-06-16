@@ -7,7 +7,8 @@ import Modal from '../components/Modal'
 import { useLang } from '../i18n/LangContext'
 
 export default function Settings() {
-  const { user, setUser, transactions, debts, userRole } = useApp()
+  const { user, setUser, transactions: personalTx, familyTransactions, family, debts, userRole } = useApp()
+  const transactions = family ? familyTransactions : personalTx
   const { t, lang, setLang } = useLang()
   const nav = useNavigate()
   // Only admin (or user not in a family) can access categories
