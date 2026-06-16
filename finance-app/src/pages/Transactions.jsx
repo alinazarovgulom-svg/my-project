@@ -153,7 +153,7 @@ export default function Transactions() {
           </div>
           <div style="text-align:right">
             <div style="font-size:10px;font-weight:800;letter-spacing:3px;color:#ffd700;text-transform:uppercase;margin-bottom:6px">by KAFTIMDA</div>
-            <div style="font-size:12px;color:rgba(255,255,255,0.5)">${format(new Date(), 'dd.MM.yyyy')}</div>
+            <div style="font-size:12px;color:rgba(255,255,255,0.5)">${format(new Date(), 'dd.MM.yyyy HH:mm')}</div>
             <div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:2px">${list.length} ta operatsiya</div>
           </div>
         </div>
