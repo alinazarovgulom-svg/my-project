@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Plus, Trash2, Search, TrendingUp, TrendingDown, Users, Download } from 'lucide-react'
 import { useApp, INCOME_CATEGORIES, EXPENSE_CATEGORIES } from '../store/AppContext'
 import Modal from '../components/Modal'
+import SwipeableRow from '../components/SwipeableRow'
 import { generateId } from '../store/storage'
 import { addFamilyTransaction, deleteFamilyTransaction } from '../store/family'
 import { format } from 'date-fns'
@@ -23,6 +24,8 @@ const defaultForm = { type: 'expense', amount: '', category: '', currency: 'UZS'
 export default function Transactions() {
   const { transactions, saveTransactions, user, family, familyTransactions, familyMembers, canEdit, canAdd, refreshFamily } = useApp()
   const [modal, setModal] = useState(false)
+  const [editModal, setEditModal] = useState(false)
+  const [editingTx, setEditingTx] = useState(null)
   const [exportModal, setExportModal] = useState(false)
   const [familyMode, setFamilyMode] = useState(false)
   const [form, setForm] = useState(defaultForm)
@@ -59,6 +62,23 @@ export default function Transactions() {
       saveTransactions([...transactions, t])
     }
     setModal(false)
+  }
+
+  const openEdit = (tx) => {
+    setEditingTx({ ...tx })
+    setEditModal(true)
+  }
+
+  const handleEditSave = () => {
+    if (!editingTx?.amount || !editingTx?.category) return
+    const updated = transactions.map(t =>
+      t.id === editingTx.id
+        ? { ...editingTx, amount: parseFloat(editingTx.amount) }
+        : t
+    )
+    saveTransactions(updated)
+    setEditModal(false)
+    setEditingTx(null)
   }
 
   const handleDelete = (id, isFamily = false) => {
@@ -168,29 +188,29 @@ export default function Transactions() {
           filtered.map(t => {
             const isFamily = familyMode && family
             const showDelete = isFamily ? canEdit(t.userId) : true
+            const canEditTx = !isFamily
             return (
-              <div key={t.id} className="card flex items-center gap-3">
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0 ${t.type === 'income' ? 'bg-green-500/15' : 'bg-red-500/15'}`}>
-                  {t.emoji}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-white text-sm font-medium truncate">{t.category}</p>
-                  <p className="text-gray-500 text-xs">
-                    {isFamily && t.userId ? `${getMemberName(t.userId)} · ` : ''}
-                    {t.note ? `${t.note} · ` : ''}{format(new Date(t.date), 'dd.MM.yyyy')}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <p className={`text-sm font-semibold ${t.type === 'income' ? 'text-green-400' : 'text-red-400'}`}>
+              <SwipeableRow
+                key={t.id}
+                onDelete={showDelete ? () => handleDelete(t.id, isFamily) : null}
+                onEdit={canEditTx ? () => openEdit(t) : null}
+              >
+                <div className="card flex items-center gap-3">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0 ${t.type === 'income' ? 'bg-green-500/15' : 'bg-red-500/15'}`}>
+                    {t.emoji}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white text-sm font-medium truncate">{t.category}</p>
+                    <p className="text-gray-500 text-xs">
+                      {isFamily && t.userId ? `${getMemberName(t.userId)} · ` : ''}
+                      {t.note ? `${t.note} · ` : ''}{format(new Date(t.date), 'dd.MM.yyyy')}
+                    </p>
+                  </div>
+                  <p className={`text-sm font-semibold flex-shrink-0 ${t.type === 'income' ? 'text-green-400' : 'text-red-400'}`}>
                     {t.type === 'income' ? '+' : '-'}{fmt(t.amount)} {t.currency || 'UZS'}
                   </p>
-                  {showDelete && (
-                    <button onClick={() => handleDelete(t.id, isFamily)} className="p-1.5 rounded-lg bg-dark-600 text-gray-500 active:text-red-400">
-                      <Trash2 size={14} />
-                    </button>
-                  )}
                 </div>
-              </div>
+              </SwipeableRow>
             )
           })
         )}
@@ -218,6 +238,43 @@ export default function Transactions() {
             📊 Excel yuklab olish
           </button>
         </div>
+      </Modal>
+
+      {/* Edit Modal */}
+      <Modal open={editModal} onClose={() => { setEditModal(false); setEditingTx(null) }} title="Tahrirlash">
+        {editingTx && (
+          <div className="flex flex-col gap-3 pb-4">
+            <div className="flex gap-2">
+              <button onClick={() => setEditingTx(t => ({ ...t, type: 'income' }))} className={`flex-1 py-2 rounded-xl text-sm font-medium transition-colors ${editingTx.type === 'income' ? 'bg-green-500 text-white' : 'bg-dark-600 text-gray-400'}`}>Kirim</button>
+              <button onClick={() => setEditingTx(t => ({ ...t, type: 'expense' }))} className={`flex-1 py-2 rounded-xl text-sm font-medium transition-colors ${editingTx.type === 'expense' ? 'bg-red-500 text-white' : 'bg-dark-600 text-gray-400'}`}>Chiqim</button>
+            </div>
+            <div>
+              <label className="text-gray-400 text-xs mb-1 block">Summa</label>
+              <input className="input-field" type="number" placeholder="0" value={editingTx.amount} onChange={e => setEditingTx(t => ({ ...t, amount: e.target.value }))} />
+            </div>
+            <div>
+              <label className="text-gray-400 text-xs mb-1 block">Valyuta</label>
+              <select className="input-field" value={editingTx.currency || 'UZS'} onChange={e => setEditingTx(t => ({ ...t, currency: e.target.value }))}>
+                {['UZS', 'USD', 'EUR', 'RUB'].map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="text-gray-400 text-xs mb-1 block">Kategoriya</label>
+              <select className="input-field" value={editingTx.category} onChange={e => setEditingTx(t => ({ ...t, category: e.target.value }))}>
+                {(editingTx.type === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES).map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="text-gray-400 text-xs mb-1 block">Izoh (ixtiyoriy)</label>
+              <input className="input-field" placeholder="Izoh..." value={editingTx.note || ''} onChange={e => setEditingTx(t => ({ ...t, note: e.target.value }))} />
+            </div>
+            <div>
+              <label className="text-gray-400 text-xs mb-1 block">Sana</label>
+              <input className="input-field" type="date" value={editingTx.date} onChange={e => setEditingTx(t => ({ ...t, date: e.target.value }))} />
+            </div>
+            <button onClick={handleEditSave} className="btn-primary mt-2">Saqlash</button>
+          </div>
+        )}
       </Modal>
 
       <Modal open={modal} onClose={() => setModal(false)} title={form.type === 'income' ? 'Kirim qo\'shish' : 'Chiqim qo\'shish'}>
