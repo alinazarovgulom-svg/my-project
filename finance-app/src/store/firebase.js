@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app'
-import { getFirestore, enableIndexedDbPersistence } from 'firebase/firestore'
+import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from 'firebase/firestore'
 
 const firebaseConfig = {
   apiKey: "AIzaSyASH72RruqIiBlZLAMrO2H6deV1eO2bpqs",
@@ -12,7 +12,7 @@ const firebaseConfig = {
 }
 
 const app = initializeApp(firebaseConfig)
-export const db = getFirestore(app)
 
-// Oflayn rejimni yoqish
-enableIndexedDbPersistence(db).catch(() => {})
+export const db = initializeFirestore(app, {
+  localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
+})

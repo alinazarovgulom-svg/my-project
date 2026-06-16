@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react'
 import { getCurrentUser, getData, saveData, getSettings, saveSettings } from './storage'
-import { getUserFamily, getUserFamilyId, getFamily } from './family'
+import { getUserFamily, getUserFamilyId, getFamily, subscribeToFamily } from './family'
 import { syncToCloud, loadFromCloud, subscribeToCloud } from './sync'
 
 const AppContext = createContext(null)
@@ -19,6 +19,7 @@ export function AppProvider({ children }) {
   const [debts, setDebts] = useState([])
   const [settings, setSettingsState] = useState({ rates: { USD: 12700, EUR: 13800, RUB: 140 } })
   const [family, setFamily] = useState(null)
+  const [familyId, setFamilyId] = useState(() => getUserFamilyId(user?.id))
   const [syncing, setSyncing] = useState(false)
   const skipCloudUpdate = useRef(false)
 
@@ -69,11 +70,19 @@ export function AppProvider({ children }) {
     return () => { unsubTx(); unsubDebts(); unsubSettings() }
   }, [uid])
 
+  // Oila real-vaqt sinxronizatsiyasi
+  useEffect(() => {
+    if (!familyId) { setFamily(null); return }
+    const local = getFamily(familyId)
+    if (local) setFamily(local)
+    const unsub = subscribeToFamily(familyId, (data) => setFamily(data))
+    return () => unsub()
+  }, [familyId])
+
   const refreshFamily = useCallback(() => {
     if (uid) {
-      const familyId = getUserFamilyId(uid)
-      if (familyId) setFamily(getFamily(familyId))
-      else setFamily(null)
+      const fid = getUserFamilyId(uid)
+      setFamilyId(fid || null)
     }
   }, [uid])
 

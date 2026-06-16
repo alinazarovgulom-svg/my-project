@@ -1,7 +1,6 @@
 import { db } from './firebase'
 import {
-  doc, setDoc, getDoc, updateDoc, deleteDoc,
-  arrayUnion, arrayRemove, serverTimestamp
+  doc, setDoc, getDoc, deleteDoc, onSnapshot, serverTimestamp
 } from 'firebase/firestore'
 
 const FAMILY_PREFIX = 'finance_family_'
@@ -168,4 +167,19 @@ export const addFamilyDebt = async (familyId, debt) => {
   family.debts = [...(family.debts || []), debt]
   saveFamilyLocal(family)
   await saveFamilyToCloud(family)
+}
+
+export const subscribeToFamily = (familyId, callback) => {
+  if (!familyId) return () => {}
+  return onSnapshot(
+    doc(db, 'families', familyId),
+    (snap) => {
+      if (snap.exists()) {
+        const data = snap.data()
+        saveFamilyLocal(data)
+        callback(data)
+      }
+    },
+    (err) => { console.warn('[family] listener error:', err?.code) }
+  )
 }
