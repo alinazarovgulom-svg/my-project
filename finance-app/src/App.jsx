@@ -11,6 +11,8 @@ import Settings from './pages/Settings'
 import Categories from './pages/Categories'
 import Family from './pages/Family'
 import AppLock from './components/AppLock'
+import Onboarding from './components/Onboarding'
+import { useState } from 'react'
 import './index.css'
 
 function ProtectedLayout() {
@@ -44,9 +46,17 @@ function AppRoutes() {
 }
 
 export default function App() {
+  const [onboarded, setOnboarded] = useState(() => !!localStorage.getItem('pulsek_onboarded'))
+
+  const handleDone = () => {
+    localStorage.setItem('pulsek_onboarded', '1')
+    setOnboarded(true)
+  }
+
   return (
     <BrowserRouter>
       <AppProvider>
+        {!onboarded && <Onboarding onDone={handleDone} />}
         <AppLock>
           <AppRoutes />
         </AppLock>
