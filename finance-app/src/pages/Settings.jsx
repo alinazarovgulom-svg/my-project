@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { LogOut, Lock, User, Eye, EyeOff, Trash2, Info, Tag, Globe } from 'lucide-react'
+import { LogOut, Lock, User, Eye, EyeOff, Info, Tag, Globe, KeyRound } from 'lucide-react'
 import { useApp } from '../store/AppContext'
 import { getUsers, saveUsers, hashPassword, setCurrentUser } from '../store/storage'
 import Modal from '../components/Modal'
@@ -13,10 +13,15 @@ export default function Settings() {
   // Only admin (or user not in a family) can access categories
   const isAdmin = !userRole || userRole === 'admin'
   const [passModal, setPassModal] = useState(false)
+  const [pinModal, setPinModal] = useState(false)
   const [form, setForm] = useState({ current: '', newPass: '', confirm: '' })
+  const [pinForm, setPinForm] = useState({ pin: '', confirm: '' })
   const [showPass, setShowPass] = useState({})
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const [pinError, setPinError] = useState('')
+  const [pinSuccess, setPinSuccess] = useState('')
+  const hasPin = user?.id ? !!localStorage.getItem(`finance_pin_${user.id}`) : false
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
@@ -47,6 +52,23 @@ export default function Settings() {
   }
 
   const showField = (k) => setShowPass(s => ({ ...s, [k]: !s[k] }))
+
+  const handleSetPin = () => {
+    setPinError(''); setPinSuccess('')
+    if (pinForm.pin.length !== 4 || !/^\d{4}$/.test(pinForm.pin)) return setPinError('PIN 4 raqamdan iborat bo\'lishi kerak')
+    if (pinForm.pin !== pinForm.confirm) return setPinError('PIN lar mos kelmaydi')
+    localStorage.setItem(`finance_pin_${user.id}`, pinForm.pin)
+    setPinSuccess('PIN muvaffaqiyatli o\'rnatildi!')
+    setPinForm({ pin: '', confirm: '' })
+    setTimeout(() => setPinModal(false), 1200)
+  }
+
+  const handleRemovePin = () => {
+    if (user?.id) {
+      localStorage.removeItem(`finance_pin_${user.id}`)
+      setPinModal(false)
+    }
+  }
 
   const stats = [
     { label: 'Jami operatsiyalar', value: transactions.length, color: 'blue' },
@@ -113,6 +135,19 @@ export default function Settings() {
 
         <div className="h-px bg-white/5 mx-4" />
 
+        <button onClick={() => { setPinModal(true); setPinError(''); setPinSuccess(''); setPinForm({ pin: '', confirm: '' }) }}
+          className="flex items-center gap-3 px-4 py-4 active:bg-dark-600 transition-colors text-left w-full">
+          <div className="w-9 h-9 rounded-xl bg-purple-500/15 flex items-center justify-center">
+            <KeyRound size={18} className="text-purple-400" />
+          </div>
+          <div>
+            <p className="text-white text-sm font-medium">PIN qulfini {hasPin ? 'o\'zgartirish' : 'o\'rnatish'}</p>
+            <p className="text-gray-500 text-xs">{hasPin ? 'PIN faol — ilovani qulflaydi' : 'Ilovani PIN bilan qulflash'}</p>
+          </div>
+        </button>
+
+        <div className="h-px bg-white/5 mx-4" />
+
         <button onClick={handleLogout}
           className="flex items-center gap-3 px-4 py-4 active:bg-dark-600 transition-colors text-left w-full">
           <div className="w-9 h-9 rounded-xl bg-red-500/15 flex items-center justify-center">
@@ -152,6 +187,24 @@ export default function Settings() {
           {t('appVersion')} — {t('tagline')}
         </p>
       </div>
+
+      {/* PIN Modal */}
+      <Modal open={pinModal} onClose={() => setPinModal(false)} title="PIN o'rnatish">
+        <div className="flex flex-col gap-3">
+          <div>
+            <label className="text-gray-400 text-xs mb-1 block">Yangi PIN (4 raqam)</label>
+            <input className="input-field tracking-widest text-lg" type="password" inputMode="numeric" maxLength={4} placeholder="••••" value={pinForm.pin} onChange={e => setPinForm(f => ({ ...f, pin: e.target.value }))} />
+          </div>
+          <div>
+            <label className="text-gray-400 text-xs mb-1 block">Tasdiqlash</label>
+            <input className="input-field tracking-widest text-lg" type="password" inputMode="numeric" maxLength={4} placeholder="••••" value={pinForm.confirm} onChange={e => setPinForm(f => ({ ...f, confirm: e.target.value }))} />
+          </div>
+          {pinError && <p className="text-red-400 text-sm bg-red-500/10 py-2 px-3 rounded-lg">{pinError}</p>}
+          {pinSuccess && <p className="text-green-400 text-sm bg-green-500/10 py-2 px-3 rounded-lg">{pinSuccess}</p>}
+          <button onClick={handleSetPin} className="btn-primary">Saqlash</button>
+          {hasPin && <button onClick={handleRemovePin} className="text-red-400 text-sm py-2">PIN ni o'chirish</button>}
+        </div>
+      </Modal>
 
       {/* Password Change Modal */}
       <Modal open={passModal} onClose={() => setPassModal(false)} title="Parolni o'zgartirish">

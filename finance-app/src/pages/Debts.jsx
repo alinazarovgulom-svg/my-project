@@ -1,13 +1,26 @@
 import { useState } from 'react'
-import { Plus, ChevronDown, ChevronUp, DollarSign, Check, Trash2 } from 'lucide-react'
+import { Plus, ChevronDown, ChevronUp, Trash2, AlertTriangle } from 'lucide-react'
 import { useApp } from '../store/AppContext'
 import Modal from '../components/Modal'
 import { generateId } from '../store/storage'
-import { format } from 'date-fns'
+import { format, differenceInDays, isToday, isTomorrow, isPast, parseISO } from 'date-fns'
 
 const fmt = (n) => new Intl.NumberFormat('uz-UZ').format(Math.round(n))
+const CURRENCIES = ['UZS', 'USD', 'EUR', 'RUB']
 
-const defaultForm = { direction: 'borrowed', person: '', amount: '', note: '', date: new Date().toISOString().split('T')[0] }
+const defaultForm = {
+  direction: 'borrowed', person: '', amount: '', currency: 'UZS',
+  note: '', date: new Date().toISOString().split('T')[0], dueDate: ''
+}
+
+function getDueDateWarning(debt) {
+  if (debt.remaining <= 0 || !debt.dueDate) return null
+  const due = parseISO(debt.dueDate)
+  if (isPast(due) && !isToday(due)) return { level: 'red', msg: `🔴 ${debt.person} ga qarz muddati o'tib ketdi!` }
+  if (isToday(due)) return { level: 'orange', msg: `⚠ ${debt.person} ga qarz bugun qaytarilishi kerak!` }
+  if (isTomorrow(due)) return { level: 'orange', msg: `⚠ ${debt.person} ga qarz ertaga qaytarilishi kerak! (1 kun qoldi)` }
+  return null
+}
 
 export default function Debts() {
   const { debts, saveDebts } = useApp()
@@ -55,22 +68,35 @@ export default function Debts() {
   const borrowed = debts.filter(d => d.direction === 'borrowed' && d.remaining > 0)
   const lent = debts.filter(d => d.direction === 'lent' && d.remaining > 0)
 
+  // Collect all warnings
+  const warnings = debts.filter(d => d.remaining > 0).map(d => getDueDateWarning(d)).filter(Boolean)
+
   return (
     <div className="flex flex-col min-h-dvh pb-24">
       <div className="sticky top-0 z-10 bg-dark-900 px-4 pt-4 pb-3">
         <h1 className="text-xl font-bold text-white mb-3">Qarzlar</h1>
 
+        {/* Warnings */}
+        {warnings.length > 0 && (
+          <div className="flex flex-col gap-2 mb-3">
+            {warnings.map((w, i) => (
+              <div key={i} className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium ${w.level === 'red' ? 'bg-red-500/15 text-red-400' : 'bg-orange-500/15 text-orange-400'}`}>
+                <AlertTriangle size={14} className="flex-shrink-0" />
+                <span>{w.msg}</span>
+              </div>
+            ))}
+          </div>
+        )}
+
         {/* Summary */}
         <div className="grid grid-cols-2 gap-2 mb-3">
           <div className="bg-red-500/10 rounded-xl p-3">
             <p className="text-red-400 text-xs">Men qarzman</p>
-            <p className="text-white font-bold">{fmt(borrowed.reduce((s, d) => s + d.remaining, 0))} so'm</p>
-            <p className="text-gray-500 text-xs">{borrowed.length} ta</p>
+            <p className="text-white font-bold text-sm">{borrowed.length} ta</p>
           </div>
           <div className="bg-green-500/10 rounded-xl p-3">
             <p className="text-green-400 text-xs">Menga qarz</p>
-            <p className="text-white font-bold">{fmt(lent.reduce((s, d) => s + d.remaining, 0))} so'm</p>
-            <p className="text-gray-500 text-xs">{lent.length} ta</p>
+            <p className="text-white font-bold text-sm">{lent.length} ta</p>
           </div>
         </div>
 
@@ -93,8 +119,10 @@ export default function Debts() {
             const isOpen = expanded[d.id]
             const progress = d.amount > 0 ? ((d.amount - d.remaining) / d.amount) * 100 : 100
             const isDone = d.remaining <= 0
+            const warn = getDueDateWarning(d)
+            const cur = d.currency || 'UZS'
             return (
-              <div key={d.id} className="card">
+              <div key={d.id} className={`card ${warn?.level === 'red' ? 'border border-red-500/30' : warn?.level === 'orange' ? 'border border-orange-500/30' : ''}`}>
                 <div className="flex items-start gap-3">
                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${d.direction === 'borrowed' ? 'bg-red-500/15' : 'bg-green-500/15'}`}>
                     <span className="text-lg">{d.direction === 'borrowed' ? '⬇️' : '⬆️'}</span>
@@ -116,10 +144,15 @@ export default function Debts() {
                       </div>
                     </div>
                     <p className="text-gray-400 text-xs">{d.note || format(new Date(d.date), 'dd.MM.yyyy')}</p>
+                    {d.dueDate && (
+                      <p className={`text-xs mt-0.5 ${warn ? (warn.level === 'red' ? 'text-red-400' : 'text-orange-400') : 'text-gray-500'}`}>
+                        📅 Qaytarish: {format(parseISO(d.dueDate), 'dd.MM.yyyy')}
+                      </p>
+                    )}
                     <div className="mt-2">
                       <div className="flex justify-between text-xs mb-1">
-                        <span className="text-gray-500">Qoldi: <span className={isDone ? 'text-green-400' : 'text-white'}>{fmt(d.remaining)} so'm</span></span>
-                        <span className="text-gray-500">Jami: {fmt(d.amount)} so'm</span>
+                        <span className="text-gray-500">Qoldi: <span className={isDone ? 'text-green-400' : 'text-white'}>{fmt(d.remaining)} {cur}</span></span>
+                        <span className="text-gray-500">Jami: {fmt(d.amount)} {cur}</span>
                       </div>
                       <div className="w-full bg-dark-600 rounded-full h-1.5">
                         <div className="h-1.5 rounded-full bg-blue-500 transition-all" style={{ width: `${progress}%` }} />
@@ -136,7 +169,7 @@ export default function Debts() {
                         {d.payments.map(p => (
                           <div key={p.id} className="flex justify-between text-xs bg-dark-600 rounded-lg px-2 py-1">
                             <span className="text-gray-400">{format(new Date(p.date), 'dd.MM.yyyy')}</span>
-                            <span className="text-green-400">+{fmt(p.amount)} so'm</span>
+                            <span className="text-green-400">+{fmt(p.amount)} {cur}</span>
                           </div>
                         ))}
                       </div>
@@ -170,9 +203,17 @@ export default function Debts() {
             <label className="text-gray-400 text-xs mb-1 block">Shaxs ismi</label>
             <input className="input-field" placeholder="Kim bilan..." value={form.person} onChange={e => set('person', e.target.value)} />
           </div>
-          <div>
-            <label className="text-gray-400 text-xs mb-1 block">Summa (so'm)</label>
-            <input className="input-field" type="number" placeholder="0" value={form.amount} onChange={e => set('amount', e.target.value)} />
+          <div className="flex gap-2">
+            <div className="flex-1">
+              <label className="text-gray-400 text-xs mb-1 block">Summa</label>
+              <input className="input-field" type="number" placeholder="0" value={form.amount} onChange={e => set('amount', e.target.value)} />
+            </div>
+            <div className="w-28">
+              <label className="text-gray-400 text-xs mb-1 block">Valyuta</label>
+              <select className="input-field" value={form.currency} onChange={e => set('currency', e.target.value)}>
+                {CURRENCIES.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
           </div>
           <div>
             <label className="text-gray-400 text-xs mb-1 block">Izoh</label>
@@ -181,6 +222,10 @@ export default function Debts() {
           <div>
             <label className="text-gray-400 text-xs mb-1 block">Sana</label>
             <input className="input-field" type="date" value={form.date} onChange={e => set('date', e.target.value)} />
+          </div>
+          <div>
+            <label className="text-gray-400 text-xs mb-1 block">Qaytarish sanasi (ixtiyoriy)</label>
+            <input className="input-field" type="date" value={form.dueDate} onChange={e => set('dueDate', e.target.value)} />
           </div>
           <button onClick={handleAdd} className="btn-primary mt-2">Saqlash</button>
         </div>
@@ -192,10 +237,10 @@ export default function Debts() {
           <div className="flex flex-col gap-3">
             <div className="bg-dark-600 rounded-xl p-3">
               <p className="text-gray-400 text-sm">{payModal.person}</p>
-              <p className="text-white font-bold">{fmt(payModal.remaining)} so'm qoldi</p>
+              <p className="text-white font-bold">{fmt(payModal.remaining)} {payModal.currency || 'UZS'} qoldi</p>
             </div>
             <button onClick={() => setPayAmount(String(payModal.remaining))} className="text-blue-400 text-sm text-left">
-              To'liq to'lash ({fmt(payModal.remaining)} so'm)
+              To'liq to'lash ({fmt(payModal.remaining)} {payModal.currency || 'UZS'})
             </button>
             <input className="input-field" type="number" placeholder="To'lov summasi" value={payAmount} onChange={e => setPayAmount(e.target.value)} />
             <button onClick={handlePay} className="btn-primary">To'lash</button>

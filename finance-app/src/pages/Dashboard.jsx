@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { TrendingUp, TrendingDown, Wallet, ArrowRight, Plus, Users } from 'lucide-react'
 import { useApp } from '../store/AppContext'
 import { useNavigate } from 'react-router-dom'
@@ -9,16 +8,47 @@ import { useLang } from '../i18n/LangContext'
 
 const fmt = (n) => new Intl.NumberFormat('uz-UZ').format(Math.abs(Math.round(n)))
 
+const FLAGS = { UZS: '🇺🇿', USD: '🇺🇸', EUR: '🇪🇺', RUB: '🇷🇺' }
+
 export default function Dashboard() {
-  const { user, balance, totalIncome, totalExpense, transactions, debts, family, familyMembers } = useApp()
+  const { user, transactions, debts, family, familyMembers, settings } = useApp()
   const { t } = useLang()
   const nav = useNavigate()
 
-  // Compute per-member balance for family section
+  const rates = settings?.rates || { USD: 12700, EUR: 13800, RUB: 140 }
+
+  const toUZS = (amount, currency) => {
+    if (!currency || currency === 'UZS') return amount
+    return amount * (rates[currency] || 1)
+  }
+
+  // Compute balances with currency conversion
+  const balance = transactions.reduce((sum, tx) => {
+    const inUZS = toUZS(tx.amount, tx.currency)
+    return tx.type === 'income' ? sum + inUZS : sum - inUZS
+  }, 0)
+
+  const totalIncome = transactions.filter(t => t.type === 'income').reduce((s, t) => s + toUZS(t.amount, t.currency), 0)
+  const totalExpense = transactions.filter(t => t.type === 'expense').reduce((s, t) => s + toUZS(t.amount, t.currency), 0)
+
+  // Currency breakdown
+  const currencies = ['UZS', 'USD', 'EUR', 'RUB']
+  const currencyBreakdown = currencies.map(cur => {
+    const income = transactions.filter(t => t.type === 'income' && (t.currency || 'UZS') === cur).reduce((s, t) => s + t.amount, 0)
+    const expense = transactions.filter(t => t.type === 'expense' && (t.currency || 'UZS') === cur).reduce((s, t) => s + t.amount, 0)
+    return { cur, income, expense }
+  }).filter(x => x.income > 0 || x.expense > 0)
+
+  const hasMultiCurrency = currencyBreakdown.some(x => x.cur !== 'UZS')
+
+  // Family balances
   const memberBalances = family
     ? familyMembers.map(m => {
         const memberTx = getData('transactions', m.userId)
-        const bal = memberTx.reduce((sum, tx) => tx.type === 'income' ? sum + tx.amount : sum - tx.amount, 0)
+        const bal = memberTx.reduce((sum, tx) => {
+          const inUZS = toUZS(tx.amount, tx.currency)
+          return tx.type === 'income' ? sum + inUZS : sum - inUZS
+        }, 0)
         return { ...m, balance: bal }
       })
     : []
@@ -73,6 +103,30 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
+      {/* Multi-currency breakdown */}
+      {hasMultiCurrency && (
+        <div className="card">
+          <p className="text-gray-400 text-xs mb-3">💱 Valyutalar bo'yicha (bugungi kurs)</p>
+          <div className="flex flex-col gap-2">
+            {currencyBreakdown.map(({ cur, income, expense }) => (
+              <div key={cur} className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-base">{FLAGS[cur] || '🌐'}</span>
+                  <span className="text-gray-300 text-sm font-medium">{cur}</span>
+                </div>
+                <div className="flex gap-3 text-xs">
+                  {income > 0 && <span className="text-green-400">+{fmt(income)} {cur}</span>}
+                  {expense > 0 && <span className="text-red-400">-{fmt(expense)} {cur}</span>}
+                  {cur !== 'UZS' && (
+                    <span className="text-gray-500">≈ {fmt(toUZS(income - expense, cur))} UZS</span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Quick Actions */}
       <div className="grid grid-cols-2 gap-3">
@@ -140,14 +194,12 @@ export default function Dashboard() {
               <div className="flex-1 bg-red-500/10 rounded-xl p-3">
                 <p className="text-red-400 text-xs mb-1">{t('myDebts')}</p>
                 <p className="text-white font-semibold text-sm">{myDebts.length} ta qarz</p>
-                <p className="text-red-300 text-xs">{fmt(myDebts.reduce((s, d) => s + d.remaining, 0))} so'm</p>
               </div>
             )}
             {theirDebts.length > 0 && (
               <div className="flex-1 bg-green-500/10 rounded-xl p-3">
                 <p className="text-green-400 text-xs mb-1">{t('theyOwe')}</p>
                 <p className="text-white font-semibold text-sm">{theirDebts.length} ta qarz</p>
-                <p className="text-green-300 text-xs">{fmt(theirDebts.reduce((s, d) => s + d.remaining, 0))} so'm</p>
               </div>
             )}
           </div>

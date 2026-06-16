@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { RefreshCw, Settings, ArrowLeftRight } from 'lucide-react'
+import { RefreshCw, Settings, ArrowLeftRight, History } from 'lucide-react'
 import { useApp } from '../store/AppContext'
 import Modal from '../components/Modal'
+import { format } from 'date-fns'
 
 const CURRENCIES = ['UZS', 'USD', 'EUR', 'RUB']
 const FLAGS = { UZS: '🇺🇿', USD: '🇺🇸', EUR: '🇪🇺', RUB: '🇷🇺' }
@@ -11,15 +12,34 @@ const fmt = (n, c) => {
   return n.toFixed(2)
 }
 
+const getRatesData = (userId) => {
+  try {
+    const raw = localStorage.getItem(`finance_${userId}_rates`)
+    if (!raw) return null
+    return JSON.parse(raw)
+  } catch { return null }
+}
+
+const getRatesHistory = (userId) => {
+  try {
+    const raw = localStorage.getItem(`finance_${userId}_rates_history`)
+    return raw ? JSON.parse(raw) : []
+  } catch { return [] }
+}
+
 export default function Exchange() {
-  const { settings, updateSettings } = useApp()
+  const { settings, updateSettings, user } = useApp()
   const rates = settings.rates || { USD: 12700, EUR: 13800, RUB: 140 }
 
   const [amount, setAmount] = useState('')
   const [from, setFrom] = useState('USD')
   const [to, setTo] = useState('UZS')
+  const [confirmed, setConfirmed] = useState(false)
   const [rateModal, setRateModal] = useState(false)
   const [ratesForm, setRatesForm] = useState({ ...rates })
+  const [showHistory, setShowHistory] = useState(false)
+
+  const history = getRatesHistory(user?.id)
 
   const toUZS = (val, cur) => {
     if (cur === 'UZS') return val
@@ -30,7 +50,7 @@ export default function Exchange() {
     return val / (rates[cur] || 1)
   }
 
-  const convert = () => {
+  const computeResult = () => {
     const n = parseFloat(amount)
     if (!n) return ''
     const inUZS = toUZS(n, from)
@@ -38,27 +58,46 @@ export default function Exchange() {
     return fmt(result, to)
   }
 
-  const swap = () => { setFrom(to); setTo(from) }
+  const swap = () => { setFrom(to); setTo(from); setConfirmed(false) }
+
+  const handleAmountChange = (v) => { setAmount(v); setConfirmed(false) }
 
   const saveRates = () => {
-    updateSettings({ ...settings, rates: { USD: parseFloat(ratesForm.USD), EUR: parseFloat(ratesForm.EUR), RUB: parseFloat(ratesForm.RUB) } })
+    const newRates = { USD: parseFloat(ratesForm.USD), EUR: parseFloat(ratesForm.EUR), RUB: parseFloat(ratesForm.RUB) }
+    updateSettings({ ...settings, rates: newRates })
+
+    if (user?.id) {
+      const today = format(new Date(), 'yyyy-MM-dd')
+      const ratesData = { rates: newRates, date: today }
+      localStorage.setItem(`finance_${user.id}_rates`, JSON.stringify(ratesData))
+
+      const hist = getRatesHistory(user.id)
+      const filtered = hist.filter(h => h.date !== today)
+      const newHist = [ratesData, ...filtered].slice(0, 7)
+      localStorage.setItem(`finance_${user.id}_rates_history`, JSON.stringify(newHist))
+    }
     setRateModal(false)
   }
 
-  const result = convert()
+  const result = confirmed ? computeResult() : ''
 
   return (
     <div className="flex flex-col px-4 pt-4 pb-24 gap-4">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold text-white">Valyuta ayirboshlash</h1>
-        <button onClick={() => { setRatesForm({ ...rates }); setRateModal(true) }} className="p-2 rounded-xl bg-dark-700 text-gray-400">
-          <Settings size={18} />
-        </button>
+        <div className="flex gap-2">
+          <button onClick={() => setShowHistory(v => !v)} className="p-2 rounded-xl bg-dark-700 text-gray-400">
+            <History size={18} />
+          </button>
+          <button onClick={() => { setRatesForm({ ...rates }); setRateModal(true) }} className="p-2 rounded-xl bg-dark-700 text-gray-400">
+            <Settings size={18} />
+          </button>
+        </div>
       </div>
 
       {/* Rates Display */}
       <div className="card">
-        <p className="text-gray-400 text-xs mb-3">Joriy kurslar (1 so'm)</p>
+        <p className="text-gray-400 text-xs mb-3">Joriy kurslar</p>
         <div className="flex flex-col gap-2">
           {Object.entries(rates).map(([cur, rate]) => (
             <div key={cur} className="flex items-center justify-between">
@@ -72,6 +111,28 @@ export default function Exchange() {
         </div>
       </div>
 
+      {/* Rate History */}
+      {showHistory && history.length > 0 && (
+        <div className="card">
+          <p className="text-gray-400 text-xs mb-3">Kurs tarixi (so'nggi 7 kun)</p>
+          <div className="flex flex-col gap-3">
+            {history.map((h, i) => (
+              <div key={i}>
+                <p className="text-gray-500 text-xs mb-1">{h.date}</p>
+                <div className="flex gap-3">
+                  {Object.entries(h.rates).map(([cur, rate]) => (
+                    <div key={cur} className="flex-1 bg-dark-600 rounded-lg p-2 text-center">
+                      <p className="text-gray-400 text-xs">{FLAGS[cur]} {cur}</p>
+                      <p className="text-white text-xs font-semibold">{new Intl.NumberFormat('uz-UZ').format(rate)}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Converter */}
       <div className="card flex flex-col gap-4">
         <h2 className="text-white font-semibold">Konvertatsiya</h2>
@@ -83,14 +144,14 @@ export default function Exchange() {
             type="number"
             placeholder="0"
             value={amount}
-            onChange={e => setAmount(e.target.value)}
+            onChange={e => handleAmountChange(e.target.value)}
           />
         </div>
 
         <div className="flex items-center gap-3">
           <div className="flex-1">
             <label className="text-gray-400 text-xs mb-1 block">Dan</label>
-            <select className="input-field" value={from} onChange={e => setFrom(e.target.value)}>
+            <select className="input-field" value={from} onChange={e => { setFrom(e.target.value); setConfirmed(false) }}>
               {CURRENCIES.map(c => <option key={c} value={c}>{FLAGS[c]} {c}</option>)}
             </select>
           </div>
@@ -99,11 +160,19 @@ export default function Exchange() {
           </button>
           <div className="flex-1">
             <label className="text-gray-400 text-xs mb-1 block">Ga</label>
-            <select className="input-field" value={to} onChange={e => setTo(e.target.value)}>
+            <select className="input-field" value={to} onChange={e => { setTo(e.target.value); setConfirmed(false) }}>
               {CURRENCIES.map(c => <option key={c} value={c}>{FLAGS[c]} {c}</option>)}
             </select>
           </div>
         </div>
+
+        <button
+          onClick={() => setConfirmed(true)}
+          disabled={!amount}
+          className="btn-primary disabled:opacity-40"
+        >
+          Tasdiqlash
+        </button>
 
         {result && (
           <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 text-center">
@@ -115,10 +184,10 @@ export default function Exchange() {
 
       {/* Quick conversions */}
       <div className="card">
-        <p className="text-gray-400 text-xs mb-3">Tez konvertatsiya (1 USD uchun)</p>
+        <p className="text-gray-400 text-xs mb-3">Tez konvertatsiya (USD)</p>
         <div className="grid grid-cols-2 gap-2">
           {[100, 500, 1000, 5000].map(n => (
-            <button key={n} onClick={() => { setAmount(String(n)); setFrom('USD'); setTo('UZS') }}
+            <button key={n} onClick={() => { setAmount(String(n)); setFrom('USD'); setTo('UZS'); setConfirmed(false) }}
               className="bg-dark-600 rounded-xl p-3 text-left active:opacity-70">
               <p className="text-gray-400 text-xs">{n} USD</p>
               <p className="text-white text-sm font-semibold">{new Intl.NumberFormat('uz-UZ').format(n * rates.USD)} UZS</p>
@@ -131,6 +200,7 @@ export default function Exchange() {
       <Modal open={rateModal} onClose={() => setRateModal(false)} title="Kurslarni o'zgartirish">
         <div className="flex flex-col gap-3">
           <p className="text-gray-400 text-sm">1 valyuta = ? UZS</p>
+          <button onClick={saveRates} className="btn-primary">Saqlash</button>
           {Object.keys(rates).map(cur => (
             <div key={cur}>
               <label className="text-gray-400 text-xs mb-1 block">{FLAGS[cur]} 1 {cur} = ? UZS</label>
@@ -142,7 +212,6 @@ export default function Exchange() {
               />
             </div>
           ))}
-          <button onClick={saveRates} className="btn-primary mt-2">Saqlash</button>
         </div>
       </Modal>
     </div>

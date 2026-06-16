@@ -1,10 +1,13 @@
 import { useState } from 'react'
-import { Plus, Trash2, Search, TrendingUp, TrendingDown, Users } from 'lucide-react'
+import { Plus, Trash2, Search, TrendingUp, TrendingDown, Users, Download } from 'lucide-react'
 import { useApp, INCOME_CATEGORIES, EXPENSE_CATEGORIES } from '../store/AppContext'
 import Modal from '../components/Modal'
 import { generateId } from '../store/storage'
 import { addFamilyTransaction, deleteFamilyTransaction } from '../store/family'
 import { format } from 'date-fns'
+import jsPDF from 'jspdf'
+import autoTable from 'jspdf-autotable'
+import * as XLSX from 'xlsx'
 
 const EMOJIS = { income: '💰', expense: '💸' }
 const fmt = (n) => new Intl.NumberFormat('uz-UZ').format(Math.round(n))
@@ -20,6 +23,7 @@ const defaultForm = { type: 'expense', amount: '', category: '', currency: 'UZS'
 export default function Transactions() {
   const { transactions, saveTransactions, user, family, familyTransactions, familyMembers, canEdit, canAdd, refreshFamily } = useApp()
   const [modal, setModal] = useState(false)
+  const [exportModal, setExportModal] = useState(false)
   const [familyMode, setFamilyMode] = useState(false)
   const [form, setForm] = useState(defaultForm)
   const [filter, setFilter] = useState('all')
@@ -57,7 +61,7 @@ export default function Transactions() {
     setModal(false)
   }
 
-  const handleDelete = (id, isFamily = false, ownerId = null) => {
+  const handleDelete = (id, isFamily = false) => {
     if (!confirm('O\'chirishni tasdiqlaysizmi?')) return
     if (isFamily && family) {
       deleteFamilyTransaction(family.id, id)
@@ -67,7 +71,6 @@ export default function Transactions() {
     }
   }
 
-  // Determine which list to show
   const activeList = familyMode && family ? familyTransactions : transactions
 
   const filtered = activeList
@@ -82,22 +85,65 @@ export default function Transactions() {
     return m?.fullName || m?.username || 'Noma\'lum'
   }
 
+  const exportPDF = () => {
+    const doc = new jsPDF()
+    doc.setFontSize(16)
+    doc.text('PulBek - Tranzaksiyalar', 14, 20)
+    doc.setFontSize(10)
+    doc.text(`Sana: ${format(new Date(), 'dd.MM.yyyy')}`, 14, 28)
+    autoTable(doc, {
+      startY: 35,
+      head: [['Sana', 'Tur', 'Kategoriya', 'Miqdor', 'Valyuta', 'Izoh']],
+      body: filtered.map(t => [
+        format(new Date(t.date), 'dd.MM.yyyy'),
+        t.type === 'income' ? 'Kirim' : 'Chiqim',
+        t.category,
+        fmt(t.amount),
+        t.currency || 'UZS',
+        t.note || ''
+      ]),
+      styles: { fontSize: 9 },
+      headStyles: { fillColor: [29, 78, 216] }
+    })
+    doc.save('pulsek-tranzaksiyalar.pdf')
+    setExportModal(false)
+  }
+
+  const exportExcel = () => {
+    const data = filtered.map(t => ({
+      'Sana': format(new Date(t.date), 'dd.MM.yyyy'),
+      'Tur': t.type === 'income' ? 'Kirim' : 'Chiqim',
+      'Kategoriya': t.category,
+      'Miqdor': t.amount,
+      'Valyuta': t.currency || 'UZS',
+      'Izoh': t.note || ''
+    }))
+    const ws = XLSX.utils.json_to_sheet(data)
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, 'Tranzaksiyalar')
+    XLSX.writeFile(wb, 'pulsek-tranzaksiyalar.xlsx')
+    setExportModal(false)
+  }
+
   return (
     <div className="flex flex-col min-h-dvh pb-24">
       <div className="sticky top-0 z-10 bg-dark-900 px-4 pt-4 pb-3">
         <div className="flex items-center justify-between mb-3">
           <h1 className="text-xl font-bold text-white">Kirim / Chiqim</h1>
-          {family && (
-            <button
-              onClick={() => setFamilyMode(f => !f)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-colors ${
-                familyMode ? 'bg-purple-500/20 text-purple-400' : 'bg-dark-600 text-gray-400'
-              }`}
-            >
-              <Users size={14} />
-              Oila
+          <div className="flex gap-2">
+            <button onClick={() => setExportModal(true)} className="p-2 rounded-xl bg-dark-700 text-gray-400 active:opacity-70">
+              <Download size={18} />
             </button>
-          )}
+            {family && (
+              <button
+                onClick={() => setFamilyMode(f => !f)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-colors ${familyMode ? 'bg-purple-500/20 text-purple-400' : 'bg-dark-600 text-gray-400'}`}
+              >
+                <Users size={14} />
+                Oila
+              </button>
+            )}
+          </div>
         </div>
         <div className="relative mb-3">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
@@ -139,7 +185,7 @@ export default function Transactions() {
                     {t.type === 'income' ? '+' : '-'}{fmt(t.amount)} {t.currency || 'UZS'}
                   </p>
                   {showDelete && (
-                    <button onClick={() => handleDelete(t.id, isFamily, t.userId)} className="p-1.5 rounded-lg bg-dark-600 text-gray-500 active:text-red-400">
+                    <button onClick={() => handleDelete(t.id, isFamily)} className="p-1.5 rounded-lg bg-dark-600 text-gray-500 active:text-red-400">
                       <Trash2 size={14} />
                     </button>
                   )}
@@ -150,7 +196,6 @@ export default function Transactions() {
         )}
       </div>
 
-      {/* FABs — only shown when canAdd or not in family mode */}
       {(!familyMode || canAdd()) && (
         <div className="fixed bottom-20 right-4 flex flex-col gap-2">
           <button onClick={() => openAdd('income')} className="w-12 h-12 rounded-full bg-green-500 text-white flex items-center justify-center shadow-lg shadow-green-500/30 active:opacity-80">
@@ -161,6 +206,19 @@ export default function Transactions() {
           </button>
         </div>
       )}
+
+      {/* Export Modal */}
+      <Modal open={exportModal} onClose={() => setExportModal(false)} title="Ma'lumotlarni yuklash">
+        <div className="flex flex-col gap-3">
+          <p className="text-gray-400 text-sm">
+            {filtered.length} ta {search || filter !== 'all' ? 'filtrlangan' : ''} tranzaksiya yuklanadi
+          </p>
+          <button onClick={exportPDF} className="btn-primary">📄 PDF yuklab olish</button>
+          <button onClick={exportExcel} className="bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl font-semibold transition-colors">
+            📊 Excel yuklab olish
+          </button>
+        </div>
+      </Modal>
 
       <Modal open={modal} onClose={() => setModal(false)} title={form.type === 'income' ? 'Kirim qo\'shish' : 'Chiqim qo\'shish'}>
         <div className="flex flex-col gap-3 pb-4">
@@ -173,7 +231,7 @@ export default function Transactions() {
             </button>
           </div>
           <div>
-            <label className="text-gray-400 text-xs mb-1 block">Summa (so'm)</label>
+            <label className="text-gray-400 text-xs mb-1 block">Summa</label>
             <input className="input-field" type="number" placeholder="0" value={form.amount} onChange={e => set('amount', e.target.value)} />
           </div>
           <div>

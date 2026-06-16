@@ -10,6 +10,7 @@ import Reports from './pages/Reports'
 import Settings from './pages/Settings'
 import Categories from './pages/Categories'
 import Family from './pages/Family'
+import AppLock from './components/AppLock'
 import './index.css'
 
 function ProtectedLayout() {
@@ -46,7 +47,9 @@ export default function App() {
   return (
     <BrowserRouter>
       <AppProvider>
-        <AppRoutes />
+        <AppLock>
+          <AppRoutes />
+        </AppLock>
       </AppProvider>
     </BrowserRouter>
   )
