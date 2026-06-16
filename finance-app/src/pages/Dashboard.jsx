@@ -54,14 +54,15 @@ export default function Dashboard() {
 
   const hasMultiCurrency = currencyBreakdown.some(x => x.cur !== 'UZS')
 
-  // Today's confirmed conversions from Exchange page
-  const todayConversions = (() => {
-    try {
-      const today = format(new Date(), 'yyyy-MM-dd')
-      const key = `finance_${user?.id}_conversions_${today}`
-      return JSON.parse(localStorage.getItem(key) || '[]')
-    } catch { return [] }
-  })()
+  // Bugungi konvertatsiyalar — transactions dan (expense qismi)
+  const today = format(new Date(), 'yyyy-MM-dd')
+  const todayExchanges = allTx
+    .filter(t => t.category === 'Valyuta ayirboshlash' && t.type === 'expense' && t.date?.startsWith(today))
+    .map(txOut => {
+      const txIn = allTx.find(t => t.pairId === txOut.pairId && t.type === 'income')
+      return txIn ? { from: txOut.currency, fromAmt: txOut.amount, to: txIn.currency, toAmt: txIn.amount } : null
+    })
+    .filter(Boolean)
 
   // Family balances
   const memberBalances = family
@@ -146,22 +147,21 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Today's conversions from Exchange page */}
-      {todayConversions.length > 0 && (
+      {/* Today's conversions */}
+      {todayExchanges.length > 0 && (
         <div className="card">
           <div className="flex items-center gap-2 mb-3">
             <ArrowLeftRight size={14} className="text-blue-400" />
             <p className="text-gray-400 text-xs">Bugungi konvertatsiyalar</p>
           </div>
           <div className="flex flex-col gap-2">
-            {todayConversions.map((c, i) => (
+            {todayExchanges.map((c, i) => (
               <div key={i} className="flex items-center justify-between bg-dark-600 rounded-xl px-3 py-2">
                 <div className="flex items-center gap-2">
-                  <span className="text-white text-sm font-medium">{c.amount} {c.from}</span>
+                  <span className="text-red-400 text-sm font-medium">-{fmt(c.fromAmt, c.from)} {c.from}</span>
                   <ArrowRight size={12} className="text-gray-500" />
-                  <span className="text-blue-400 text-sm font-medium">{c.result} {c.to}</span>
+                  <span className="text-green-400 text-sm font-medium">+{fmt(c.toAmt, c.to)} {c.to}</span>
                 </div>
-                <span className="text-gray-500 text-xs">{c.time}</span>
               </div>
             ))}
           </div>
