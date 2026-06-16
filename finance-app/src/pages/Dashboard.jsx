@@ -92,7 +92,22 @@ export default function Dashboard() {
           <h1 className="text-xl font-bold text-white">{user?.name} 👋</h1>
         </div>
         <div className="text-right flex flex-col items-end gap-0.5">
-          <span className="text-[10px] font-bold tracking-widest text-blue-400/60 uppercase">by KAFTIMDA</span>
+          <span className="kaftimda-gold text-[10px] font-bold tracking-widest uppercase">by KAFTIMDA</span>
+          <style>{`
+            @keyframes kaftimda-shine {
+              0%   { background-position: -200% center; opacity: 0.7; }
+              40%  { background-position: 200% center; opacity: 1; }
+              100% { background-position: 200% center; opacity: 0.7; }
+            }
+            .kaftimda-gold {
+              background: linear-gradient(90deg, #b8860b, #ffd700, #ffe066, #ffd700, #b8860b);
+              background-size: 300% auto;
+              -webkit-background-clip: text;
+              -webkit-text-fill-color: transparent;
+              background-clip: text;
+              animation: kaftimda-shine 5s ease-in-out infinite;
+            }
+          `}</style>
           <p className="text-gray-500 text-xs">{format(new Date(), 'dd MMM yyyy', { locale: uz })}</p>
         </div>
       </div>
