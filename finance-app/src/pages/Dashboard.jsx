@@ -5,18 +5,20 @@ import { useNavigate } from 'react-router-dom'
 import { format } from 'date-fns'
 import { uz } from 'date-fns/locale'
 import { getData } from '../store/storage'
+import { useLang } from '../i18n/LangContext'
 
 const fmt = (n) => new Intl.NumberFormat('uz-UZ').format(Math.abs(Math.round(n)))
 
 export default function Dashboard() {
   const { user, balance, totalIncome, totalExpense, transactions, debts, family, familyMembers } = useApp()
+  const { t } = useLang()
   const nav = useNavigate()
 
   // Compute per-member balance for family section
   const memberBalances = family
     ? familyMembers.map(m => {
         const memberTx = getData('transactions', m.userId)
-        const bal = memberTx.reduce((sum, t) => t.type === 'income' ? sum + t.amount : sum - t.amount, 0)
+        const bal = memberTx.reduce((sum, tx) => tx.type === 'income' ? sum + tx.amount : sum - tx.amount, 0)
         return { ...m, balance: bal }
       })
     : []
@@ -33,7 +35,7 @@ export default function Dashboard() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-gray-400 text-sm">Salom,</p>
+          <p className="text-gray-400 text-sm">{t('hello')}</p>
           <h1 className="text-xl font-bold text-white">{user?.name} 👋</h1>
         </div>
         <div className="text-right flex flex-col items-end gap-0.5">
@@ -47,7 +49,7 @@ export default function Dashboard() {
         <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-8 translate-x-8" />
         <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full translate-y-8 -translate-x-8" />
         <div className="relative">
-          <p className="text-blue-200 text-sm mb-1">Joriy balans</p>
+          <p className="text-blue-200 text-sm mb-1">{t('balance')}</p>
           <p className="text-white text-3xl font-bold">{fmt(balance)} <span className="text-lg font-normal">so'm</span></p>
           <div className="flex gap-4 mt-4">
             <div className="flex items-center gap-2">
@@ -55,7 +57,7 @@ export default function Dashboard() {
                 <TrendingUp size={16} className="text-green-400" />
               </div>
               <div>
-                <p className="text-blue-200 text-xs">Kirim</p>
+                <p className="text-blue-200 text-xs">{t('income')}</p>
                 <p className="text-white text-sm font-semibold">{fmt(totalIncome)}</p>
               </div>
             </div>
@@ -64,7 +66,7 @@ export default function Dashboard() {
                 <TrendingDown size={16} className="text-red-400" />
               </div>
               <div>
-                <p className="text-blue-200 text-xs">Chiqim</p>
+                <p className="text-blue-200 text-xs">{t('expense')}</p>
                 <p className="text-white text-sm font-semibold">{fmt(totalExpense)}</p>
               </div>
             </div>
@@ -78,13 +80,13 @@ export default function Dashboard() {
           <div className="w-10 h-10 rounded-xl bg-green-500/20 flex items-center justify-center">
             <Plus size={20} className="text-green-400" />
           </div>
-          <span className="text-sm font-medium text-white">Kirim qo'sh</span>
+          <span className="text-sm font-medium text-white">{t('addIncome')}</span>
         </button>
         <button onClick={() => nav('/transactions')} className="card flex items-center gap-3 active:opacity-70 transition-opacity">
           <div className="w-10 h-10 rounded-xl bg-red-500/20 flex items-center justify-center">
             <Plus size={20} className="text-red-400" />
           </div>
-          <span className="text-sm font-medium text-white">Chiqim qo'sh</span>
+          <span className="text-sm font-medium text-white">{t('addExpense')}</span>
         </button>
       </div>
 
@@ -94,14 +96,14 @@ export default function Dashboard() {
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <Users size={16} className="text-purple-400" />
-              <h2 className="font-semibold text-white">Oilaviy balans</h2>
+              <h2 className="font-semibold text-white">{t('familyBalance')}</h2>
             </div>
             <button onClick={() => nav('/family')} className="text-purple-400 text-sm flex items-center gap-1">
-              Barchasi <ArrowRight size={14} />
+              {t('allTx')} <ArrowRight size={14} />
             </button>
           </div>
           <div className="bg-purple-500/10 rounded-xl p-3 mb-3">
-            <p className="text-purple-300 text-xs mb-0.5">Jami oilaviy balans</p>
+            <p className="text-purple-300 text-xs mb-0.5">{t('familyBalance')}</p>
             <p className={`text-xl font-bold ${familyTotalBalance >= 0 ? 'text-green-400' : 'text-red-400'}`}>
               {familyTotalBalance >= 0 ? '+' : '-'}{fmt(familyTotalBalance)} so'm
             </p>
@@ -128,22 +130,22 @@ export default function Dashboard() {
       {activeDebts.length > 0 && (
         <div className="card">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="font-semibold text-white">Faol qarzlar</h2>
+            <h2 className="font-semibold text-white">{t('activeDebts')}</h2>
             <button onClick={() => nav('/debts')} className="text-blue-400 text-sm flex items-center gap-1">
-              Barchasi <ArrowRight size={14} />
+              {t('allTx')} <ArrowRight size={14} />
             </button>
           </div>
           <div className="flex gap-3">
             {myDebts.length > 0 && (
               <div className="flex-1 bg-red-500/10 rounded-xl p-3">
-                <p className="text-red-400 text-xs mb-1">Men qarzman</p>
+                <p className="text-red-400 text-xs mb-1">{t('myDebts')}</p>
                 <p className="text-white font-semibold text-sm">{myDebts.length} ta qarz</p>
                 <p className="text-red-300 text-xs">{fmt(myDebts.reduce((s, d) => s + d.remaining, 0))} so'm</p>
               </div>
             )}
             {theirDebts.length > 0 && (
               <div className="flex-1 bg-green-500/10 rounded-xl p-3">
-                <p className="text-green-400 text-xs mb-1">Menga qarz</p>
+                <p className="text-green-400 text-xs mb-1">{t('theyOwe')}</p>
                 <p className="text-white font-semibold text-sm">{theirDebts.length} ta qarz</p>
                 <p className="text-green-300 text-xs">{fmt(theirDebts.reduce((s, d) => s + d.remaining, 0))} so'm</p>
               </div>
@@ -155,30 +157,30 @@ export default function Dashboard() {
       {/* Recent Transactions */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="font-semibold text-white">So'nggi operatsiyalar</h2>
+          <h2 className="font-semibold text-white">{t('recentTx')}</h2>
           <button onClick={() => nav('/transactions')} className="text-blue-400 text-sm flex items-center gap-1">
-            Barchasi <ArrowRight size={14} />
+            {t('allTx')} <ArrowRight size={14} />
           </button>
         </div>
         {recent.length === 0 ? (
           <div className="card text-center py-8">
             <Wallet size={32} className="text-gray-600 mx-auto mb-2" />
-            <p className="text-gray-500 text-sm">Hali operatsiyalar yo'q</p>
+            <p className="text-gray-500 text-sm">{t('noTransactions')}</p>
             <p className="text-gray-600 text-xs mt-1">Birinchi operatsiyangizni qo'shing</p>
           </div>
         ) : (
           <div className="flex flex-col gap-2">
-            {recent.map(t => (
-              <div key={t.id} className="card flex items-center gap-3">
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg ${t.type === 'income' ? 'bg-green-500/15' : 'bg-red-500/15'}`}>
-                  {t.emoji || (t.type === 'income' ? '💰' : '💸')}
+            {recent.map(tx => (
+              <div key={tx.id} className="card flex items-center gap-3">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg ${tx.type === 'income' ? 'bg-green-500/15' : 'bg-red-500/15'}`}>
+                  {tx.emoji || (tx.type === 'income' ? '💰' : '💸')}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-white text-sm font-medium truncate">{t.category}</p>
-                  <p className="text-gray-500 text-xs">{t.note || format(new Date(t.date), 'dd.MM.yyyy')}</p>
+                  <p className="text-white text-sm font-medium truncate">{tx.category}</p>
+                  <p className="text-gray-500 text-xs">{tx.note || format(new Date(tx.date), 'dd.MM.yyyy')}</p>
                 </div>
-                <p className={`text-sm font-semibold whitespace-nowrap ${t.type === 'income' ? 'text-green-400' : 'text-red-400'}`}>
-                  {t.type === 'income' ? '+' : '-'}{fmt(t.amount)} {t.currency || 'UZS'}
+                <p className={`text-sm font-semibold whitespace-nowrap ${tx.type === 'income' ? 'text-green-400' : 'text-red-400'}`}>
+                  {tx.type === 'income' ? '+' : '-'}{fmt(tx.amount)} {tx.currency || 'UZS'}
                 </p>
               </div>
             ))}
