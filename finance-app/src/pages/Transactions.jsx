@@ -56,8 +56,7 @@ export default function Transactions() {
       userName: user.name
     }
     if (familyMode && family) {
-      addFamilyTransaction(family.id, t)
-      refreshFamily()
+      addFamilyTransaction(family.id, t).then(() => refreshFamily())
     } else {
       saveTransactions([...transactions, t])
     }
@@ -84,8 +83,7 @@ export default function Transactions() {
   const handleDelete = (id, isFamily = false) => {
     if (!confirm('O\'chirishni tasdiqlaysizmi?')) return
     if (isFamily && family) {
-      deleteFamilyTransaction(family.id, id)
-      refreshFamily()
+      deleteFamilyTransaction(family.id, id).then(() => refreshFamily())
     } else {
       saveTransactions(transactions.filter(t => t.id !== id))
     }
