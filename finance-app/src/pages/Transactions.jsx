@@ -90,7 +90,8 @@ export default function Transactions() {
     }
   }
 
-  const activeList = familyMode && family ? familyTransactions : transactions
+  const activeList = (familyMode && family ? familyTransactions : transactions)
+    .filter(t => t.category !== 'Valyuta ayirboshlash')
 
   const filtered = activeList
     .filter(t => filter === 'all' || t.type === filter)
