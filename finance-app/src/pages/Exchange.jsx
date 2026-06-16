@@ -38,6 +38,7 @@ export default function Exchange() {
   const [rateModal, setRateModal] = useState(false)
   const [ratesForm, setRatesForm] = useState({ ...rates })
   const [showHistory, setShowHistory] = useState(false)
+  const [historyKey, setHistoryKey] = useState(0)
 
   const history = getRatesHistory(user?.id)
 
@@ -82,7 +83,7 @@ export default function Exchange() {
     const hist = getRatesHistory(user.id)
     hist.splice(idx, 1)
     localStorage.setItem(`finance_${user.id}_rates_history`, JSON.stringify(hist))
-    window.location.reload()
+    setHistoryKey(k => k + 1)
   }
 
   const saveRates = () => {
