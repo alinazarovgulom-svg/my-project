@@ -1,22 +1,30 @@
+import { useState } from 'react'
 import { useApp } from '../store/AppContext'
-import { RotateCcw, Trash2, ArrowLeft } from 'lucide-react'
-import { format, formatDistanceToNow } from 'date-fns'
-import { uz } from 'date-fns/locale'
+import { RotateCcw, Trash2, ArrowLeft, AlertTriangle } from 'lucide-react'
+import { format } from 'date-fns'
 import { useNavigate } from 'react-router-dom'
 import { fmtCur } from '../utils/format'
+import Modal from '../components/Modal'
 
 const fmt = (n, cur) => fmtCur(n, cur)
 
 export default function Trash() {
   const { trash, restoreTransaction, permanentDelete } = useApp()
   const nav = useNavigate()
+  const [confirm, setConfirm] = useState(null) // { type: 'restore'|'delete', tx }
 
   const sorted = [...trash].sort((a, b) => new Date(b.deletedAt) - new Date(a.deletedAt))
 
   const daysLeft = (deletedAt) => {
     const exp = new Date(deletedAt).getTime() + 30 * 24 * 60 * 60 * 1000
-    const days = Math.ceil((exp - Date.now()) / (1000 * 60 * 60 * 24))
-    return days
+    return Math.ceil((exp - Date.now()) / (1000 * 60 * 60 * 24))
+  }
+
+  const handleConfirm = () => {
+    if (!confirm) return
+    if (confirm.type === 'restore') restoreTransaction(confirm.tx.id)
+    else permanentDelete(confirm.tx.id)
+    setConfirm(null)
   }
 
   return (
@@ -53,10 +61,10 @@ export default function Trash() {
                   {tx.type === 'income' ? '+' : '-'}{fmt(tx.amount, tx.currency || 'UZS')} {tx.currency || 'UZS'}
                 </p>
                 <div className="flex flex-col gap-1">
-                  <button onClick={() => restoreTransaction(tx.id)} className="p-2 text-blue-400 active:opacity-70">
+                  <button onClick={() => setConfirm({ type: 'restore', tx })} className="p-2 text-blue-400 active:opacity-70">
                     <RotateCcw size={16} />
                   </button>
-                  <button onClick={() => permanentDelete(tx.id)} className="p-2 text-gray-600 active:text-red-400">
+                  <button onClick={() => setConfirm({ type: 'delete', tx })} className="p-2 text-gray-600 active:text-red-400">
                     <Trash2 size={16} />
                   </button>
                 </div>
@@ -65,6 +73,32 @@ export default function Trash() {
           })}
         </div>
       )}
+
+      <Modal open={!!confirm} onClose={() => setConfirm(null)}
+        title={confirm?.type === 'restore' ? 'Tiklashni tasdiqlang' : 'O\'chirishni tasdiqlang'}>
+        <div className="flex flex-col gap-4">
+          <div className={`flex items-center gap-3 rounded-xl p-3 border ${confirm?.type === 'restore' ? 'bg-blue-500/10 border-blue-500/20' : 'bg-red-500/10 border-red-500/20'}`}>
+            <AlertTriangle size={20} className={confirm?.type === 'restore' ? 'text-blue-400 flex-shrink-0' : 'text-red-400 flex-shrink-0'} />
+            <div>
+              <p className="text-white text-sm font-medium">{confirm?.tx?.category}</p>
+              <p className="text-gray-400 text-xs mt-0.5">
+                {confirm?.type === 'restore'
+                  ? 'Bu tranzaksiya balansga qaytariladi'
+                  : 'Bu amal qaytarib bo\'lmaydi — tranzaksiya butunlay o\'chadi'}
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <button onClick={() => setConfirm(null)} className="flex-1 py-3 rounded-xl bg-dark-600 text-gray-300 text-sm font-medium">
+              Bekor qilish
+            </button>
+            <button onClick={handleConfirm}
+              className={`flex-1 py-3 rounded-xl text-sm font-medium ${confirm?.type === 'restore' ? 'bg-blue-500/20 border border-blue-500/30 text-blue-400' : 'bg-red-500/20 border border-red-500/30 text-red-400'}`}>
+              {confirm?.type === 'restore' ? 'Tiklash' : 'O\'chirish'}
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   )
 }
