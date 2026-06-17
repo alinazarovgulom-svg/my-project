@@ -65,10 +65,12 @@ export default function Reports() {
       .reverse() // newest first
   })()
 
-  // Group by category
-  const byCategory = filtered.reduce((acc, t) => {
-    if (!acc[t.category]) acc[t.category] = { income: 0, expense: 0 }
-    acc[t.category][t.type] += t.amount
+  // Group by category — per currency
+  const byCategoryCur = filtered.reduce((acc, t) => {
+    const cur = t.currency || 'UZS'
+    if (!acc[t.category]) acc[t.category] = {}
+    if (!acc[t.category][cur]) acc[t.category][cur] = { income: 0, expense: 0 }
+    acc[t.category][cur][t.type] += t.amount
     return acc
   }, {})
 
@@ -236,30 +238,46 @@ export default function Reports() {
             )}
           </div>
 
-          <div className={`flex items-center justify-between p-3 rounded-xl ${net >= 0 ? 'bg-blue-500/10' : 'bg-orange-500/10'}`}>
-            <span className="text-gray-300 text-sm font-medium">Sof foyda (UZS)</span>
-            <span className={`font-bold ${net >= 0 ? 'text-blue-400' : 'text-orange-400'}`}>{fmt(Math.abs(net))} so'm {net < 0 ? '(zarar)' : ''}</span>
+          <div className="bg-blue-500/10 rounded-xl p-3">
+            <p className="text-gray-400 text-xs mb-1">Qoldiq (davr bo'yicha)</p>
+            <div className="flex flex-col gap-0.5">
+              {currencyStats.map(({ cur, inc, exp }) => {
+                const bal = inc - exp
+                if (bal === 0) return null
+                return (
+                  <div key={cur} className="flex items-center justify-between">
+                    <span className="text-gray-400 text-xs">{cur}</span>
+                    <span className={`font-bold text-sm ${bal >= 0 ? 'text-blue-400' : 'text-orange-400'}`}>
+                      {bal >= 0 ? '+' : ''}{fmt(bal, cur)} {cur}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
           </div>
           <p className="text-gray-500 text-xs text-center">{filtered.length} ta operatsiya</p>
         </div>
       </div>
 
       {/* By Category */}
-      {Object.keys(byCategory).length > 0 && (
+      {Object.keys(byCategoryCur).length > 0 && (
         <div className="card">
           <h2 className="text-white font-semibold mb-3 flex items-center gap-2">
             <PieChart size={16} className="text-blue-400" />
             Kategoriyalar bo'yicha
           </h2>
           <div className="flex flex-col gap-2">
-            {Object.entries(byCategory)
-              .sort((a, b) => (b[1].income + b[1].expense) - (a[1].income + a[1].expense))
-              .map(([cat, vals]) => (
+            {Object.entries(byCategoryCur)
+              .map(([cat, curData]) => (
                 <div key={cat} className="flex items-center justify-between">
                   <span className="text-gray-300 text-sm">{cat}</span>
                   <div className="text-right">
-                    {vals.income > 0 && <p className="text-green-400 text-xs">+{fmt(vals.income)}</p>}
-                    {vals.expense > 0 && <p className="text-red-400 text-xs">-{fmt(vals.expense)}</p>}
+                    {Object.entries(curData).map(([cur, vals]) => (
+                      <div key={cur}>
+                        {vals.income > 0 && <p className="text-green-400 text-xs">+{fmt(vals.income, cur)} {cur}</p>}
+                        {vals.expense > 0 && <p className="text-red-400 text-xs">-{fmt(vals.expense, cur)} {cur}</p>}
+                      </div>
+                    ))}
                   </div>
                 </div>
               ))}
