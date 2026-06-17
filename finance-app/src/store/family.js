@@ -61,7 +61,7 @@ export const getUserFamilyId = (userId) => {
   return localStorage.getItem(USER_FAMILY_KEY(userId))
 }
 
-export const createFamily = async (userId, username, fullName, familyName) => {
+export const createFamily = async (userId, username, fullName, familyName, personalTransactions = [], personalDebts = []) => {
   const familyId = generateFamilyCode()
   const family = {
     id: familyId,
@@ -71,8 +71,8 @@ export const createFamily = async (userId, username, fullName, familyName) => {
     members: [
       { userId, username, fullName, role: 'admin', joinedAt: new Date().toISOString() }
     ],
-    transactions: [],
-    debts: []
+    transactions: personalTransactions,
+    debts: personalDebts
   }
   saveFamilyLocal(family)
   localStorage.setItem(USER_FAMILY_KEY(userId), familyId)
@@ -80,7 +80,7 @@ export const createFamily = async (userId, username, fullName, familyName) => {
   return familyId
 }
 
-export const joinFamily = async (code, userId, username, fullName) => {
+export const joinFamily = async (code, userId, username, fullName, personalTransactions = [], personalDebts = []) => {
   // Avval clouddan qidirish
   let family = await getFamilyFromCloud(code)
   if (!family) family = getFamilyLocal(code)
@@ -90,6 +90,13 @@ export const joinFamily = async (code, userId, username, fullName) => {
   if (alreadyMember) return { error: 'Siz allaqachon bu guruh a\'zosisiz' }
 
   family.members.push({ userId, username, fullName, role: 'member', joinedAt: new Date().toISOString() })
+  // Shaxsiy tranzaksiyalarni guruh tranzaksiyalariga birlashtirish
+  const existingIds = new Set((family.transactions || []).map(t => t.id))
+  const newTx = personalTransactions.filter(t => !existingIds.has(t.id))
+  family.transactions = [...(family.transactions || []), ...newTx]
+  const existingDebtIds = new Set((family.debts || []).map(d => d.id))
+  const newDebts = personalDebts.filter(d => !existingDebtIds.has(d.id))
+  family.debts = [...(family.debts || []), ...newDebts]
   saveFamilyLocal(family)
   localStorage.setItem(USER_FAMILY_KEY(userId), code)
   await saveFamilyToCloud(family)
