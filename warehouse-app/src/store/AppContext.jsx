@@ -1,8 +1,10 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react'
-import { getCurrentUser, getData, saveData, getObjData, saveObjData } from './storage'
+import { getCurrentUser, getData, saveData } from './storage'
 import { getUserTeam, getUserTeamId, getTeam, subscribeToTeam } from './family'
 import { syncToCloud, loadFromCloud, subscribeToCloud } from './sync'
 import { checkLowStock } from '../utils/notifications'
+import { db } from './firebase'
+import { waitForPendingWrites } from 'firebase/firestore'
 
 const AppContext = createContext(null)
 
@@ -13,6 +15,8 @@ export const DEFAULT_CATEGORIES = [
 
 export const UNITS = ['dona', 'kg', 'g', 'litr', 'ml', 'metr', 'sm', 'quti', 'paket', 'to\'plam']
 
+const PENDING_KEY = (uid) => `wh_pending_${uid}`
+
 export function AppProvider({ children }) {
   const [user, setUser] = useState(getCurrentUser)
   const [products, setProducts] = useState([])
@@ -20,9 +24,67 @@ export function AppProvider({ children }) {
   const [team, setTeam] = useState(null)
   const [teamId, setTeamId] = useState(() => getUserTeamId(getCurrentUser()?.id))
   const [syncing, setSyncing] = useState(false)
+  // Oflayn holat
+  const [online, setOnline] = useState(() => navigator.onLine)
+  const [pendingCount, setPendingCount] = useState(0)
+  const [syncPhase, setSyncPhase] = useState(null) // 'syncing' | 'done' | null
   const skipCloudUpdate = useRef(false)
+  const wasOffline = useRef(false)
 
   const uid = user?.id
+
+  // Tarmoq holatini kuzatish
+  useEffect(() => {
+    const loadPending = () => {
+      if (uid) {
+        const n = parseInt(localStorage.getItem(PENDING_KEY(uid)) || '0')
+        setPendingCount(n)
+      }
+    }
+
+    const handleOnline = async () => {
+      setOnline(true)
+      if (!wasOffline.current) return
+      wasOffline.current = false
+
+      // Faqat kutayotgan o'zgarishlar bo'lsa sinxronlash boshlash
+      const pending = parseInt(localStorage.getItem(PENDING_KEY(uid)) || '0')
+      if (pending === 0) return
+
+      setSyncPhase('syncing')
+      try {
+        await waitForPendingWrites(db)
+        // Firebase o'z-o'zidan yuborgach localStorage ni ham yangilash
+        localStorage.setItem(PENDING_KEY(uid), '0')
+        setPendingCount(0)
+        setSyncPhase('done')
+      } catch {
+        setSyncPhase('done')
+      }
+      setTimeout(() => setSyncPhase(null), 3000)
+    }
+
+    const handleOffline = () => {
+      setOnline(false)
+      wasOffline.current = true
+    }
+
+    window.addEventListener('online', handleOnline)
+    window.addEventListener('offline', handleOffline)
+    loadPending()
+    return () => {
+      window.removeEventListener('online', handleOnline)
+      window.removeEventListener('offline', handleOffline)
+    }
+  }, [uid])
+
+  // Oflayn paytda yozilgan o'zgarishlar sonini oshirish
+  const incrementPending = useCallback(() => {
+    if (!uid || navigator.onLine) return
+    const n = parseInt(localStorage.getItem(PENDING_KEY(uid)) || '0') + 1
+    localStorage.setItem(PENDING_KEY(uid), String(n))
+    setPendingCount(n)
+  }, [uid])
 
   useEffect(() => {
     if (!uid) return
@@ -64,33 +126,31 @@ export function AppProvider({ children }) {
   }, [teamId])
 
   const refreshTeam = useCallback(() => {
-    if (uid) {
-      const tid = getUserTeamId(uid)
-      setTeamId(tid || null)
-    }
+    if (uid) setTeamId(getUserTeamId(uid) || null)
   }, [uid])
 
   const saveProducts = useCallback((data) => {
     setProducts(data)
     if (uid) {
       saveData('products', uid, data)
+      incrementPending()
       skipCloudUpdate.current = true
       syncToCloud(uid, 'products', data).finally(() => {
         setTimeout(() => { skipCloudUpdate.current = false }, 500)
       })
     }
-  }, [uid])
+  }, [uid, incrementPending])
 
   const saveMovements = useCallback((data, currentProducts) => {
     setMovements(data)
     if (uid) {
       saveData('movements', uid, data)
+      incrementPending()
       skipCloudUpdate.current = true
       syncToCloud(uid, 'movements', data).finally(() => {
         setTimeout(() => { skipCloudUpdate.current = false }, 500)
       })
     }
-    // Chiqim saqlanganidan keyin kam qoldiqni tekshirish
     const prods = currentProducts || []
     if (prods.length > 0) {
       const map = {}
@@ -101,9 +161,8 @@ export function AppProvider({ children }) {
       })
       checkLowStock(prods, Object.values(map))
     }
-  }, [uid])
+  }, [uid, incrementPending])
 
-  // Joriy qoldiqni hisoblash (mahsulot bo'yicha)
   const getInventory = useCallback((allMovements = movements) => {
     const map = {}
     allMovements.forEach(mv => {
@@ -143,7 +202,6 @@ export function AppProvider({ children }) {
   }
   const canAdd = () => userRole === 'admin' || userRole === 'member'
 
-  // Jamoa rejimida jamoa harakatlari + shaxsiy mahsulotlardan qoldiq
   const getTeamInventory = useCallback(() => {
     if (!team) return []
     return getInventory(teamMovements)
@@ -158,7 +216,8 @@ export function AppProvider({ children }) {
       teamId, teamMembers, teamMovements,
       userRole, canEdit, canAdd,
       getInventory, getTeamInventory,
-      syncing
+      syncing,
+      online, pendingCount, syncPhase
     }}>
       {children}
     </AppContext.Provider>

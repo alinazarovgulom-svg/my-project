@@ -4,6 +4,8 @@ import { LangProvider } from './i18n/LangContext'
 import BottomNav from './components/BottomNav'
 import AppLock from './components/AppLock'
 import Onboarding from './components/Onboarding'
+import OfflineBanner from './components/OfflineBanner'
+import SyncToast from './components/SyncToast'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import Products from './pages/Products'
@@ -17,10 +19,12 @@ import { useState, useEffect, useRef } from 'react'
 import './index.css'
 
 function ProtectedLayout() {
-  const { user } = useApp()
+  const { user, online, pendingCount, syncPhase } = useApp()
   if (!user) return <Navigate to="/login" replace />
   return (
     <>
+      {!online && <OfflineBanner pendingCount={pendingCount} />}
+      {online && syncPhase && <SyncToast phase={syncPhase} />}
       <Routes>
         <Route path="/" element={<Dashboard />} />
         <Route path="/products" element={<Products />} />
