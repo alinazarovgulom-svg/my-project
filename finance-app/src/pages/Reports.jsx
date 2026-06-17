@@ -82,7 +82,6 @@ export default function Reports() {
         startDate,
         endDate,
         userName: user?.name || '',
-        byCategory,
         currencyStats,
         filename: `hisobot_${startDate}_${endDate}.pdf`
       })

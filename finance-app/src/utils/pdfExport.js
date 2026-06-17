@@ -128,7 +128,7 @@ export const exportTransactionsPDF = async (list, filename = 'pulbek-tranzaksiya
 }
 
 // ─── Reports PDF ────────────────────────────────────────────────
-export const exportReportPDF = async ({ filtered, startDate, endDate, userName, byCategory, currencyStats, filename }) => {
+export const exportReportPDF = async ({ filtered, startDate, endDate, userName, currencyStats, filename }) => {
   const summaryCards = currencyStats.map(({ cur, inc, exp }) => ({
     label: cur,
     lines: [
@@ -137,15 +137,32 @@ export const exportReportPDF = async ({ filtered, startDate, endDate, userName, 
     ]
   }))
 
+  // Kategoriya jadvali — har valyuta alohida
+  const currencies = [...new Set(filtered.map(t => t.currency || 'UZS'))]
+  const byCatCur = {}
+  filtered.forEach(t => {
+    const cur = t.currency || 'UZS'
+    if (!byCatCur[t.category]) byCatCur[t.category] = {}
+    if (!byCatCur[t.category][cur]) byCatCur[t.category][cur] = { income: 0, expense: 0 }
+    byCatCur[t.category][cur][t.type] += t.amount
+  })
+
   const catColumns = [
     { label: 'Kategoriya' },
-    { label: 'Kirim', align: 'right' },
-    { label: 'Chiqim', align: 'right' },
+    ...currencies.flatMap(cur => [
+      { label: `Kirim (${cur})`, align: 'right' },
+      { label: `Chiqim (${cur})`, align: 'right' },
+    ])
   ]
-  const catRows = Object.entries(byCategory).map(([cat, v]) => [
+  const catRows = Object.entries(byCatCur).map(([cat, curData]) => [
     `<span style="font-weight:600;color:#1e293b">${cat}</span>`,
-    { html: v.income > 0 ? `<span style="color:#15803d;font-weight:700">+${fmt(v.income)}</span>` : '—', align: 'right' },
-    { html: v.expense > 0 ? `<span style="color:#b91c1c;font-weight:700">-${fmt(v.expense)}</span>` : '—', align: 'right' },
+    ...currencies.flatMap(cur => {
+      const v = curData[cur] || { income: 0, expense: 0 }
+      return [
+        { html: v.income > 0 ? `<span style="color:#15803d;font-weight:700">+${fmt(v.income, cur)}</span>` : '<span style="color:#cbd5e1">—</span>', align: 'right' },
+        { html: v.expense > 0 ? `<span style="color:#b91c1c;font-weight:700">-${fmt(v.expense, cur)}</span>` : '<span style="color:#cbd5e1">—</span>', align: 'right' },
+      ]
+    })
   ])
 
   const txColumns = [
