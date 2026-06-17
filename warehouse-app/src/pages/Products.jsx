@@ -1,12 +1,16 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useApp } from '../store/AppContext'
 import { useLang } from '../i18n/LangContext'
 import { fmtNum } from '../utils/format'
 import { generateId } from '../store/storage'
 import { DEFAULT_CATEGORIES, UNITS } from '../store/AppContext'
+import { downloadTemplate, parseExcelFile } from '../utils/excelImport'
 import Modal from '../components/Modal'
 import SwipeableRow from '../components/SwipeableRow'
-import { Package, Plus, Search, ChevronDown } from 'lucide-react'
+import {
+  Package, Plus, Search, FileSpreadsheet,
+  Download, Upload, CheckCircle, XCircle, AlertCircle, ChevronDown, ChevronUp
+} from 'lucide-react'
 
 const emptyForm = () => ({
   name: '', category: DEFAULT_CATEGORIES[0], unit: 'dona',
@@ -18,8 +22,16 @@ export default function Products() {
   const { t } = useLang()
   const [search, setSearch] = useState('')
   const [modalOpen, setModalOpen] = useState(false)
+  const [importModal, setImportModal] = useState(false)
   const [form, setForm] = useState(emptyForm())
   const [editId, setEditId] = useState(null)
+
+  // Import holati
+  const [importing, setImporting] = useState(false)
+  const [importResult, setImportResult] = useState(null) // { products, errors }
+  const [showErrors, setShowErrors] = useState(false)
+  const [importDone, setImportDone] = useState(false)
+  const fileRef = useRef(null)
 
   const set = k => e => setForm(f => ({ ...f, [k]: e.target.value }))
 
@@ -30,7 +42,11 @@ export default function Products() {
 
   const openAdd = () => { setForm(emptyForm()); setEditId(null); setModalOpen(true) }
   const openEdit = (p) => {
-    setForm({ name: p.name, category: p.category, unit: p.unit, purchasePrice: p.purchasePrice, salePrice: p.salePrice, minStock: p.minStock || '', barcode: p.barcode || '', note: p.note || '' })
+    setForm({
+      name: p.name, category: p.category, unit: p.unit,
+      purchasePrice: p.purchasePrice, salePrice: p.salePrice,
+      minStock: p.minStock || '', barcode: p.barcode || '', note: p.note || ''
+    })
     setEditId(p.id); setModalOpen(true)
   }
 
@@ -61,13 +77,59 @@ export default function Products() {
     saveProducts(products.filter(p => p.id !== id))
   }
 
+  // --- Import ---
+  const openImport = () => {
+    setImportResult(null)
+    setImportDone(false)
+    setShowErrors(false)
+    setImportModal(true)
+  }
+
+  const handleFileChange = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setImporting(true)
+    setImportResult(null)
+    setImportDone(false)
+    try {
+      const result = await parseExcelFile(file, user?.id)
+      setImportResult(result)
+    } catch (err) {
+      setImportResult({ products: [], errors: [err.message] })
+    }
+    setImporting(false)
+    e.target.value = ''
+  }
+
+  const handleImportConfirm = () => {
+    if (!importResult?.products?.length) return
+    // Allaqachon mavjud nomlarni o'tkazib yuborish (nom bo'yicha tekshiruv)
+    const existingNames = new Set(products.map(p => p.name.toLowerCase()))
+    const newOnes = importResult.products.filter(p => !existingNames.has(p.name.toLowerCase()))
+    const duplicates = importResult.products.length - newOnes.length
+    saveProducts([...products, ...newOnes])
+    setImportDone(true)
+    setImportResult(r => ({ ...r, duplicates, imported: newOnes.length }))
+  }
+
   return (
     <div className="min-h-screen bg-slate-950 pb-24">
-      <div className="bg-slate-900 px-5 pt-14 pb-4 flex items-center justify-between">
-        <h1 className="text-white text-xl font-bold">{t('products')}</h1>
-        <button onClick={openAdd} className="w-10 h-10 rounded-xl bg-primary-500 flex items-center justify-center shadow-lg shadow-primary-500/20">
-          <Plus size={20} className="text-white" />
-        </button>
+      {/* Header */}
+      <div className="bg-slate-900 px-5 pt-14 pb-4">
+        <div className="flex items-center justify-between mb-1">
+          <h1 className="text-white text-xl font-bold">{t('products')}</h1>
+          <div className="flex items-center gap-2">
+            <button onClick={openImport}
+              className="w-10 h-10 rounded-xl bg-slate-700 flex items-center justify-center">
+              <FileSpreadsheet size={18} className="text-primary-400" />
+            </button>
+            <button onClick={openAdd}
+              className="w-10 h-10 rounded-xl bg-primary-500 flex items-center justify-center shadow-lg shadow-primary-500/20">
+              <Plus size={20} className="text-white" />
+            </button>
+          </div>
+        </div>
+        <p className="text-slate-500 text-xs">{products.length} ta mahsulot</p>
       </div>
 
       <div className="px-4 py-3">
@@ -81,7 +143,18 @@ export default function Products() {
           <div className="flex flex-col items-center justify-center py-20">
             <Package size={48} className="text-slate-700 mb-3" />
             <p className="text-slate-500 text-sm">{search ? t('notFound') : t('noProducts')}</p>
-            {!search && <button onClick={openAdd} className="mt-4 px-6 py-2.5 bg-primary-500 text-white rounded-xl text-sm font-medium">{t('addProduct')}</button>}
+            {!search && (
+              <div className="flex gap-3 mt-4">
+                <button onClick={openAdd}
+                  className="px-5 py-2.5 bg-primary-500 text-white rounded-xl text-sm font-medium">
+                  {t('addProduct')}
+                </button>
+                <button onClick={openImport}
+                  className="px-5 py-2.5 bg-slate-700 text-slate-300 rounded-xl text-sm font-medium flex items-center gap-2">
+                  <FileSpreadsheet size={14} /> Excel import
+                </button>
+              </div>
+            )}
           </div>
         ) : (
           <div>
@@ -108,21 +181,19 @@ export default function Products() {
         )}
       </div>
 
+      {/* Mahsulot qo'shish / tahrirlash modali */}
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={editId ? t('editProduct') : t('addProduct')}>
         <div className="space-y-3 pb-4">
           <input value={form.name} onChange={set('name')} placeholder={t('productName')}
             className="w-full bg-slate-800 border border-slate-700/50 rounded-xl px-4 py-3 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-primary-500/40" />
-
           <select value={form.category} onChange={set('category')}
             className="w-full bg-slate-800 border border-slate-700/50 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-primary-500/40">
             {DEFAULT_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
           </select>
-
           <select value={form.unit} onChange={set('unit')}
             className="w-full bg-slate-800 border border-slate-700/50 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-primary-500/40">
             {UNITS.map(u => <option key={u} value={u}>{u}</option>)}
           </select>
-
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-slate-400 text-xs mb-1 block">{t('purchasePrice')}</label>
@@ -135,7 +206,6 @@ export default function Products() {
                 className="w-full bg-slate-800 border border-slate-700/50 rounded-xl px-4 py-3 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-primary-500/40" />
             </div>
           </div>
-
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-slate-400 text-xs mb-1 block">{t('minStock')}</label>
@@ -148,14 +218,169 @@ export default function Products() {
                 className="w-full bg-slate-800 border border-slate-700/50 rounded-xl px-4 py-3 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-primary-500/40" />
             </div>
           </div>
-
           <textarea value={form.note} onChange={set('note')} placeholder={t('note')} rows={2}
             className="w-full bg-slate-800 border border-slate-700/50 rounded-xl px-4 py-3 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-primary-500/40 resize-none" />
-
           <button onClick={handleSave}
             className="w-full bg-primary-500 text-white font-semibold py-3.5 rounded-xl shadow-lg shadow-primary-500/20 active:scale-95 transition-all">
             {t('save')}
           </button>
+        </div>
+      </Modal>
+
+      {/* Excel import modali */}
+      <Modal open={importModal} onClose={() => setImportModal(false)} title="Excel import">
+        <div className="space-y-4 pb-4">
+
+          {/* Shablon yuklab olish */}
+          <button onClick={downloadTemplate}
+            className="w-full flex items-center gap-3 bg-slate-800/60 border border-slate-700/40 rounded-xl px-4 py-3.5 active:scale-95 transition-all">
+            <div className="w-9 h-9 rounded-xl bg-primary-500/20 flex items-center justify-center flex-shrink-0">
+              <Download size={18} className="text-primary-400" />
+            </div>
+            <div className="text-left">
+              <p className="text-white text-sm font-medium">Shablon yuklab olish</p>
+              <p className="text-slate-400 text-xs">Excel shablonni oching va to'ldiring</p>
+            </div>
+          </button>
+
+          <div className="flex items-center gap-3">
+            <div className="flex-1 h-px bg-slate-700" />
+            <span className="text-slate-500 text-xs">keyin</span>
+            <div className="flex-1 h-px bg-slate-700" />
+          </div>
+
+          {/* Fayl yuklash */}
+          <input ref={fileRef} type="file"
+            accept=".xlsx,.xls,.csv"
+            onChange={handleFileChange}
+            className="hidden" />
+
+          {!importResult && !importing && (
+            <button onClick={() => fileRef.current?.click()}
+              className="w-full flex items-center gap-3 bg-primary-500/10 border-2 border-dashed border-primary-500/30 rounded-xl px-4 py-5 active:scale-95 transition-all">
+              <div className="w-9 h-9 rounded-xl bg-primary-500/20 flex items-center justify-center flex-shrink-0">
+                <Upload size={18} className="text-primary-400" />
+              </div>
+              <div className="text-left">
+                <p className="text-primary-400 text-sm font-medium">Excel fayl yuklash</p>
+                <p className="text-slate-400 text-xs">.xlsx, .xls yoki .csv</p>
+              </div>
+            </button>
+          )}
+
+          {importing && (
+            <div className="flex items-center justify-center gap-3 py-6">
+              <div className="w-5 h-5 border-2 border-primary-400 border-t-transparent rounded-full animate-spin" />
+              <p className="text-slate-300 text-sm">O'qilmoqda...</p>
+            </div>
+          )}
+
+          {/* Natija */}
+          {importResult && !importDone && (
+            <div className="space-y-3">
+              {/* Muvaffaqiyatli */}
+              <div className="bg-primary-500/10 border border-primary-500/20 rounded-xl px-4 py-3 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <CheckCircle size={18} className="text-primary-400" />
+                  <span className="text-white text-sm">Tayyor mahsulotlar</span>
+                </div>
+                <span className="text-primary-400 font-bold text-lg">{importResult.products.length}</span>
+              </div>
+
+              {/* Xatolar */}
+              {importResult.errors.length > 0 && (
+                <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl overflow-hidden">
+                  <button onClick={() => setShowErrors(s => !s)}
+                    className="w-full px-4 py-3 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <AlertCircle size={18} className="text-amber-400" />
+                      <span className="text-white text-sm">Xatolar</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-amber-400 font-bold">{importResult.errors.length}</span>
+                      {showErrors ? <ChevronUp size={16} className="text-slate-400" /> : <ChevronDown size={16} className="text-slate-400" />}
+                    </div>
+                  </button>
+                  {showErrors && (
+                    <div className="border-t border-amber-500/20 px-4 py-3 space-y-1.5 max-h-40 overflow-y-auto">
+                      {importResult.errors.map((err, i) => (
+                        <p key={i} className="text-amber-300 text-xs flex items-start gap-2">
+                          <XCircle size={12} className="flex-shrink-0 mt-0.5" /> {err}
+                        </p>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Preview — birinchi 3 ta */}
+              {importResult.products.length > 0 && (
+                <div className="bg-slate-800/40 rounded-xl overflow-hidden">
+                  <p className="text-slate-400 text-xs px-4 py-2 border-b border-slate-700/50">Ko'rinish (dastlabki 3 ta)</p>
+                  {importResult.products.slice(0, 3).map((p, i) => (
+                    <div key={i} className={`px-4 py-2.5 flex justify-between items-center ${i > 0 ? 'border-t border-slate-700/30' : ''}`}>
+                      <div>
+                        <p className="text-white text-sm">{p.name}</p>
+                        <p className="text-slate-400 text-xs">{p.category} · {p.unit}</p>
+                      </div>
+                      <p className="text-primary-400 text-sm font-medium">{fmtNum(p.purchasePrice)} so'm</p>
+                    </div>
+                  ))}
+                  {importResult.products.length > 3 && (
+                    <p className="text-slate-500 text-xs px-4 py-2 border-t border-slate-700/30">
+                      ... va yana {importResult.products.length - 3} ta
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {importResult.products.length > 0 ? (
+                <button onClick={handleImportConfirm}
+                  className="w-full bg-primary-500 text-white font-semibold py-3.5 rounded-xl active:scale-95 transition-all">
+                  {importResult.products.length} ta mahsulot import qilish
+                </button>
+              ) : (
+                <button onClick={() => { setImportResult(null); fileRef.current?.click() }}
+                  className="w-full bg-slate-700 text-slate-300 py-3.5 rounded-xl text-sm">
+                  Boshqa fayl tanlash
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Import tugadi */}
+          {importDone && importResult && (
+            <div className="space-y-3">
+              <div className="flex flex-col items-center py-6 gap-3">
+                <div className="w-16 h-16 rounded-2xl bg-primary-500/20 flex items-center justify-center">
+                  <CheckCircle size={32} className="text-primary-400" />
+                </div>
+                <p className="text-white font-semibold text-lg">Import tugadi!</p>
+                <div className="flex gap-4 text-center">
+                  <div>
+                    <p className="text-primary-400 font-bold text-2xl">{importResult.imported}</p>
+                    <p className="text-slate-400 text-xs">qo'shildi</p>
+                  </div>
+                  {importResult.duplicates > 0 && (
+                    <div>
+                      <p className="text-slate-400 font-bold text-2xl">{importResult.duplicates}</p>
+                      <p className="text-slate-400 text-xs">takror (o'tkazildi)</p>
+                    </div>
+                  )}
+                  {importResult.errors.length > 0 && (
+                    <div>
+                      <p className="text-amber-400 font-bold text-2xl">{importResult.errors.length}</p>
+                      <p className="text-slate-400 text-xs">xato</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <button onClick={() => setImportModal(false)}
+                className="w-full bg-primary-500 text-white font-semibold py-3.5 rounded-xl active:scale-95 transition-all">
+                Yopish
+              </button>
+            </div>
+          )}
         </div>
       </Modal>
     </div>
