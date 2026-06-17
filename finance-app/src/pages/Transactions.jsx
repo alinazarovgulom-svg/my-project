@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus, Trash2, Search, TrendingUp, TrendingDown, Users, Download } from 'lucide-react'
+import { Plus, Trash2, Search, TrendingUp, TrendingDown, Users, Download, SlidersHorizontal } from 'lucide-react'
 import { useApp, INCOME_CATEGORIES, EXPENSE_CATEGORIES } from '../store/AppContext'
 import Modal from '../components/Modal'
 import SwipeableRow from '../components/SwipeableRow'
@@ -20,7 +20,8 @@ const CATEGORY_EMOJIS = {
   'Ko\'ngilochar': '🎮', 'Kommunal': '💡', 'Telefon/Internet': '📱', 'Boshqa chiqim': '💸'
 }
 
-const defaultForm = { type: 'expense', amount: '', category: '', currency: 'UZS', note: '', date: new Date().toISOString().slice(0, 16) }
+const localNow = () => { const d = new Date(); return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16) }
+const defaultForm = { type: 'expense', amount: '', category: '', currency: 'UZS', note: '', date: localNow() }
 
 export default function Transactions() {
   const { transactions, saveTransactions, user, family, familyTransactions, familyMembers, canEdit, canAdd, refreshFamily } = useApp()
@@ -33,6 +34,10 @@ export default function Transactions() {
   const [extraAmounts, setExtraAmounts] = useState([])
   const [filter, setFilter] = useState('all')
   const [search, setSearch] = useState('')
+  const [showFilter, setShowFilter] = useState(false)
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
+  const [currencyFilter, setCurrencyFilter] = useState('all')
   const [customCategories] = useState(() => {
     try {
       const saved = localStorage.getItem(`finance_${user?.id}_categories`)
@@ -43,7 +48,7 @@ export default function Transactions() {
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
   const openAdd = (type = 'expense') => {
-    setForm({ ...defaultForm, type, category: type === 'income' ? INCOME_CATEGORIES[0] : EXPENSE_CATEGORIES[0] })
+    setForm({ ...defaultForm, date: localNow(), type, category: type === 'income' ? INCOME_CATEGORIES[0] : EXPENSE_CATEGORIES[0] })
     setExtraAmounts([])
     setModal(true)
   }
@@ -105,7 +110,12 @@ export default function Transactions() {
   const filtered = activeList
     .filter(t => filter === 'all' || t.type === filter)
     .filter(t => !search || t.category.toLowerCase().includes(search.toLowerCase()) || (t.note || '').toLowerCase().includes(search.toLowerCase()))
+    .filter(t => !dateFrom || t.date.slice(0, 10) >= dateFrom)
+    .filter(t => !dateTo || t.date.slice(0, 10) <= dateTo)
+    .filter(t => currencyFilter === 'all' || (t.currency || 'UZS') === currencyFilter)
     .sort((a, b) => new Date(b.date) - new Date(a.date))
+
+  const activeFilterCount = [dateFrom, dateTo, currencyFilter !== 'all'].filter(Boolean).length
 
   const categories = customCategories || (form.type === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES)
 
@@ -163,6 +173,10 @@ export default function Transactions() {
             <button onClick={() => setExportModal(true)} className="p-2 rounded-xl bg-dark-700 text-gray-400 active:opacity-70">
               <Download size={18} />
             </button>
+            <button onClick={() => setShowFilter(f => !f)} className={`relative p-2 rounded-xl active:opacity-70 ${showFilter || activeFilterCount > 0 ? 'bg-blue-500/20 text-blue-400' : 'bg-dark-700 text-gray-400'}`}>
+              <SlidersHorizontal size={18} />
+              {activeFilterCount > 0 && <span className="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 rounded-full text-white text-[10px] flex items-center justify-center">{activeFilterCount}</span>}
+            </button>
             {family && (
               <button
                 onClick={() => setFamilyMode(f => !f)}
@@ -186,6 +200,33 @@ export default function Transactions() {
             </button>
           ))}
         </div>
+        {showFilter && (
+          <div className="mt-3 flex flex-col gap-2 bg-dark-800 rounded-xl p-3">
+            <div className="flex gap-2">
+              <div className="flex-1">
+                <label className="text-gray-500 text-xs mb-1 block">Dan</label>
+                <input className="input-field text-xs py-1.5" type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} />
+              </div>
+              <div className="flex-1">
+                <label className="text-gray-500 text-xs mb-1 block">Gacha</label>
+                <input className="input-field text-xs py-1.5" type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} />
+              </div>
+            </div>
+            <div className="flex gap-2">
+              {['all', 'UZS', 'USD', 'EUR', 'RUB'].map(c => (
+                <button key={c} onClick={() => setCurrencyFilter(c)}
+                  className={`flex-1 py-1.5 rounded-lg text-xs font-medium ${currencyFilter === c ? 'bg-blue-500 text-white' : 'bg-dark-600 text-gray-400'}`}>
+                  {c === 'all' ? 'Barchasi' : c}
+                </button>
+              ))}
+            </div>
+            {activeFilterCount > 0 && (
+              <button onClick={() => { setDateFrom(''); setDateTo(''); setCurrencyFilter('all') }} className="text-xs text-red-400 text-center">
+                Filtrni tozalash
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="flex-1 px-4 flex flex-col gap-2">
