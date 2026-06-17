@@ -3,7 +3,7 @@ import { Plus, ChevronDown, ChevronUp, Trash2, AlertTriangle, Pencil } from 'luc
 import { useApp } from '../store/AppContext'
 import Modal from '../components/Modal'
 import { generateId } from '../store/storage'
-import { addFamilyDebt, deleteFamilyDebt, updateFamilyDebt } from '../store/family'
+import { addFamilyDebt, deleteFamilyDebt, updateFamilyDebt, addFamilyTransaction } from '../store/family'
 import { format, differenceInDays, isToday, isTomorrow, isPast, parseISO } from 'date-fns'
 import { fmtCur } from '../utils/format'
 
@@ -25,7 +25,7 @@ function getDueDateWarning(debt) {
 }
 
 export default function Debts() {
-  const { debts, saveDebts, family, familyDebts } = useApp()
+  const { debts, saveDebts, transactions, saveTransactions, user, family, familyDebts } = useApp()
   const activeDebts = family ? familyDebts : debts
   const [modal, setModal] = useState(false)
   const [payModal, setPayModal] = useState(null)
@@ -38,14 +38,35 @@ export default function Debts() {
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
+  const createTx = (type, amount, currency, note, date) => ({
+    id: generateId(),
+    type,
+    amount,
+    currency,
+    category: 'Qarz',
+    emoji: type === 'income' ? '💵' : '💸',
+    note,
+    date,
+    userId: user?.id,
+    userName: user?.name,
+  })
+
   const handleAdd = () => {
     if (!form.person || !form.amount) return
     const amount = parseFloat(form.amount)
     const debt = { id: generateId(), ...form, amount, remaining: amount, payments: [] }
+    // Qarz oldim → kirim (pul keldi), Qarz berdim → chiqim (pul ketdi)
+    const txType = form.direction === 'borrowed' ? 'income' : 'expense'
+    const txNote = form.direction === 'borrowed'
+      ? `Qarz olindi: ${form.person}${form.note ? ' · ' + form.note : ''}`
+      : `Qarz berildi: ${form.person}${form.note ? ' · ' + form.note : ''}`
+    const tx = createTx(txType, amount, form.currency, txNote, form.date)
     if (family) {
       addFamilyDebt(family.id, debt)
+      addFamilyTransaction(family.id, tx)
     } else {
       saveDebts([...debts, debt])
+      saveTransactions([...transactions, tx])
     }
     setModal(false)
     setForm(defaultForm)
@@ -55,12 +76,21 @@ export default function Debts() {
     const amount = parseFloat(payAmount)
     if (!amount || amount <= 0) return
     const paid = Math.min(amount, payModal.remaining)
-    const payments = [...payModal.payments, { id: generateId(), amount: paid, date: new Date().toISOString().split('T')[0] }]
+    const today = new Date().toISOString().split('T')[0]
+    const payments = [...payModal.payments, { id: generateId(), amount: paid, date: today }]
     const updatedDebt = { ...payModal, remaining: payModal.remaining - paid, payments }
+    // To'lov: Qarz oldim to'lovi → chiqim, Qarz berdim to'lovi → kirim
+    const txType = payModal.direction === 'borrowed' ? 'expense' : 'income'
+    const txNote = payModal.direction === 'borrowed'
+      ? `Qarz qaytarildi: ${payModal.person}`
+      : `Qarz qaytib keldi: ${payModal.person}`
+    const tx = createTx(txType, paid, payModal.currency || 'UZS', txNote, today)
     if (family) {
       updateFamilyDebt(family.id, updatedDebt)
+      addFamilyTransaction(family.id, tx)
     } else {
       saveDebts(debts.map(d => d.id === payModal.id ? updatedDebt : d))
+      saveTransactions([...transactions, tx])
     }
     setPayModal(null)
     setPayAmount('')
