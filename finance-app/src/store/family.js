@@ -80,7 +80,7 @@ export const createFamily = async (userId, username, fullName, familyName, perso
   return familyId
 }
 
-export const joinFamily = async (code, userId, username, fullName, personalTransactions = [], personalDebts = []) => {
+export const joinFamily = async (code, userId, username, fullName) => {
   // Avval clouddan qidirish
   let family = await getFamilyFromCloud(code)
   if (!family) family = getFamilyLocal(code)
@@ -89,14 +89,8 @@ export const joinFamily = async (code, userId, username, fullName, personalTrans
   const alreadyMember = family.members.find(m => m.userId === userId)
   if (alreadyMember) return { error: 'Siz allaqachon bu guruh a\'zosisiz' }
 
+  // Faqat a'zo qo'shiladi — shaxsiy ma'lumotlari guruhga o'tmaydi
   family.members.push({ userId, username, fullName, role: 'member', joinedAt: new Date().toISOString() })
-  // Shaxsiy tranzaksiyalarni guruh tranzaksiyalariga birlashtirish
-  const existingIds = new Set((family.transactions || []).map(t => t.id))
-  const newTx = personalTransactions.filter(t => !existingIds.has(t.id))
-  family.transactions = [...(family.transactions || []), ...newTx]
-  const existingDebtIds = new Set((family.debts || []).map(d => d.id))
-  const newDebts = personalDebts.filter(d => !existingDebtIds.has(d.id))
-  family.debts = [...(family.debts || []), ...newDebts]
   saveFamilyLocal(family)
   localStorage.setItem(USER_FAMILY_KEY(userId), code)
   await saveFamilyToCloud(family)

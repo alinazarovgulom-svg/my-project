@@ -41,7 +41,7 @@ export default function Family() {
   const handleJoin = async () => {
     const code = joinCode.trim().toUpperCase()
     if (!code) return setError('Kodni kiriting')
-    const result = await joinFamily(code, user.id, user.username, user.name, transactions, debts)
+    const result = await joinFamily(code, user.id, user.username, user.name)
     if (result.error) return setError(result.error)
     refreshFamily()
     setJoinModal(false)
