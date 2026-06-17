@@ -1,0 +1,54 @@
+{
+  "expo": {
+    "name": "Omborchi",
+    "slug": "omborchi",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1A1A2E"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.kaftimda.omborchi",
+      "infoPlist": {
+        "NSFaceIDUsageDescription": "Ilovaga kirish uchun Face ID ishlatiladi",
+        "NSCameraUsageDescription": "Xomashyo rasmi olish uchun kamera ishlatiladi",
+        "NSPhotoLibraryUsageDescription": "Xomashyo rasmi tanlash uchun galereya ishlatiladi"
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#1A1A2E"
+      },
+      "package": "com.kaftimda.omborchi",
+      "permissions": [
+        "USE_BIOMETRIC",
+        "USE_FINGERPRINT",
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "RECEIVE_BOOT_COMPLETED",
+        "VIBRATE"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-notifications",
+      "expo-local-authentication",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Xomashyo rasmi tanlash uchun ruxsat bering",
+          "cameraPermission": "Xomashyo rasmi olish uchun ruxsat bering"
+        }
+      ]
+    ]
+  }
+}
