@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../store/AppContext'
 import { useLang } from '../i18n/LangContext'
 import { getUsers, saveUsers, hashPassword, setCurrentUser } from '../store/storage'
-import { User, Lock, LogOut, Globe, Info, ChevronRight, Shield, Package, Boxes, ArrowRight } from 'lucide-react'
+import { requestPermission, isGranted } from '../utils/notifications'
+import { Lock, LogOut, Globe, Info, ChevronRight, Shield, Package, Boxes, Bell, BellOff } from 'lucide-react'
 import Modal from '../components/Modal'
 
 export default function Settings() {
@@ -17,9 +18,14 @@ export default function Settings() {
   const [pinForm, setPinForm] = useState('')
   const [passError, setPassError] = useState('')
   const [passOk, setPassOk] = useState(false)
+  const [notifGranted, setNotifGranted] = useState(isGranted())
+  const [notifUnsupported, setNotifUnsupported] = useState(!('Notification' in window))
+
+  useEffect(() => {
+    setNotifGranted(isGranted())
+  }, [])
 
   const setPF = k => e => setPassForm(f => ({ ...f, [k]: e.target.value }))
-
   const hasPin = !!localStorage.getItem(`wh_pin_${user?.id}`)
 
   const handleChangePassword = () => {
@@ -29,8 +35,7 @@ export default function Settings() {
     const users = getUsers()
     const u = users.find(u => u.id === user?.id)
     if (!u || u.passwordHash !== hashPassword(passForm.current)) { setPassError('Joriy parol noto\'g\'ri'); return }
-    const updated = users.map(u => u.id === user?.id ? { ...u, passwordHash: hashPassword(passForm.newPass) } : u)
-    saveUsers(updated)
+    saveUsers(users.map(u => u.id === user?.id ? { ...u, passwordHash: hashPassword(passForm.newPass) } : u))
     setPassOk(true)
     setPassError('')
     setTimeout(() => { setPassModal(false); setPassOk(false); setPassForm({ current: '', newPass: '', confirm: '' }) }, 1500)
@@ -47,6 +52,17 @@ export default function Settings() {
   const handleRemovePIN = () => {
     localStorage.removeItem(`wh_pin_${user?.id}`)
     setPinModal(false)
+  }
+
+  const handleNotifToggle = async () => {
+    if (notifGranted) {
+      // Brauzer ruxsatni qaytarib ololmaymiz — faqat tushuntiramiz
+      alert('Bildirishnomalarni o\'chirish uchun brauzer sozlamalariga kiring.')
+      return
+    }
+    const granted = await requestPermission()
+    setNotifGranted(granted)
+    if (!granted) alert('Brauzer ruxsat bermadi. Brauzer sozlamalaridan yoqing.')
   }
 
   const handleLogout = () => {
@@ -93,14 +109,41 @@ export default function Settings() {
           </div>
         </div>
 
+        {/* Notification toggle */}
+        {!notifUnsupported && (
+          <button onClick={handleNotifToggle}
+            className={`w-full flex items-center justify-between px-5 py-4 rounded-2xl border transition-all active:scale-95 ${
+              notifGranted
+                ? 'bg-primary-500/10 border-primary-500/20'
+                : 'bg-slate-800/60 border-slate-700/30'
+            }`}>
+            <div className="flex items-center gap-3">
+              {notifGranted
+                ? <Bell size={20} className="text-primary-400" />
+                : <BellOff size={20} className="text-slate-400" />}
+              <div className="text-left">
+                <p className={`text-sm font-medium ${notifGranted ? 'text-primary-400' : 'text-white'}`}>
+                  Bildirishnomalar
+                </p>
+                <p className="text-slate-400 text-xs">
+                  {notifGranted ? 'Yoqilgan — kam qoldiqda xabar keladi' : 'O\'chirilgan — bosing va yoqing'}
+                </p>
+              </div>
+            </div>
+            <div className={`w-12 h-6 rounded-full transition-all relative ${notifGranted ? 'bg-primary-500' : 'bg-slate-600'}`}>
+              <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${notifGranted ? 'left-7' : 'left-1'}`} />
+            </div>
+          </button>
+        )}
+
         {/* Actions */}
         <div className="bg-slate-800/60 rounded-2xl border border-slate-700/30 overflow-hidden">
           {[
             { icon: Lock, label: t('changePassword'), onClick: () => setPassModal(true) },
             { icon: Shield, label: t('pinLock') + (hasPin ? ' ✓' : ''), onClick: () => setPinModal(true) },
-            { icon: ArrowRight, label: t('products'), onClick: () => navigate('/products') },
-            { icon: Users2, label: t('teamMode'), onClick: () => navigate('/team') },
-          ].filter(Boolean).map(({ icon: Icon, label, onClick }, i, arr) => (
+            { icon: Package, label: t('products'), onClick: () => navigate('/products') },
+            { icon: UsersIcon, label: t('teamMode'), onClick: () => navigate('/team') },
+          ].map(({ icon: Icon, label, onClick }, i, arr) => (
             <button key={i} onClick={onClick}
               className={`w-full flex items-center justify-between px-5 py-4 active:bg-slate-700/40 transition-colors ${i < arr.length - 1 ? 'border-b border-slate-700/30' : ''}`}>
               <div className="flex items-center gap-3">
@@ -119,7 +162,7 @@ export default function Settings() {
             <span className="text-white text-sm">{t('language')}</span>
           </div>
           <div className="flex gap-2">
-            {[['uz','O\'zbek'],['ru','Русский'],['en','English']].map(([l, label]) => (
+            {[['uz',"O'zbek"],['ru','Русский'],['en','English']].map(([l, label]) => (
               <button key={l} onClick={() => changeLang(l)}
                 className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-all ${lang === l ? 'bg-primary-500 text-white' : 'bg-slate-700 text-slate-400'}`}>
                 {label}
@@ -166,7 +209,8 @@ export default function Settings() {
       <Modal open={pinModal} onClose={() => { setPinModal(false); setPinForm('') }} title={t('pinLock')}>
         <div className="space-y-4 pb-4">
           <p className="text-slate-400 text-sm">4 raqamli PIN o'rnating</p>
-          <input type="password" inputMode="numeric" maxLength={4} value={pinForm} onChange={e => setPinForm(e.target.value.replace(/\D/g, '').slice(0, 4))}
+          <input type="password" inputMode="numeric" maxLength={4} value={pinForm}
+            onChange={e => setPinForm(e.target.value.replace(/\D/g, '').slice(0, 4))}
             placeholder="••••"
             className="w-full bg-slate-800 border border-slate-700/50 rounded-xl px-4 py-3 text-white text-2xl text-center tracking-[0.5em] placeholder-slate-500 focus:outline-none focus:border-primary-500/40" />
           <button onClick={handleSetPIN} disabled={pinForm.length !== 4}
@@ -185,7 +229,7 @@ export default function Settings() {
   )
 }
 
-function Users2({ size, className }) {
+function UsersIcon({ size, className }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={className}>
       <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>

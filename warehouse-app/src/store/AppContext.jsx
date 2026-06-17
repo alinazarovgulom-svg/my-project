@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, useCallback, useRef } f
 import { getCurrentUser, getData, saveData, getObjData, saveObjData } from './storage'
 import { getUserTeam, getUserTeamId, getTeam, subscribeToTeam } from './family'
 import { syncToCloud, loadFromCloud, subscribeToCloud } from './sync'
+import { checkLowStock } from '../utils/notifications'
 
 const AppContext = createContext(null)
 
@@ -80,7 +81,7 @@ export function AppProvider({ children }) {
     }
   }, [uid])
 
-  const saveMovements = useCallback((data) => {
+  const saveMovements = useCallback((data, currentProducts) => {
     setMovements(data)
     if (uid) {
       saveData('movements', uid, data)
@@ -88,6 +89,17 @@ export function AppProvider({ children }) {
       syncToCloud(uid, 'movements', data).finally(() => {
         setTimeout(() => { skipCloudUpdate.current = false }, 500)
       })
+    }
+    // Chiqim saqlanganidan keyin kam qoldiqni tekshirish
+    const prods = currentProducts || []
+    if (prods.length > 0) {
+      const map = {}
+      data.forEach(mv => {
+        if (!map[mv.productId]) map[mv.productId] = { productId: mv.productId, quantity: 0, unit: mv.unit }
+        if (mv.type === 'kirim') map[mv.productId].quantity += mv.quantity
+        else map[mv.productId].quantity -= mv.quantity
+      })
+      checkLowStock(prods, Object.values(map))
     }
   }, [uid])
 

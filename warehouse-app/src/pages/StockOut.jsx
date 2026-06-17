@@ -78,7 +78,7 @@ export default function StockOut() {
     if (isTeam && teamId) {
       await addTeamMovement(teamId, mv)
     } else {
-      saveMovements([...movements, mv])
+      saveMovements([...movements, mv], products)
     }
     setModalOpen(false)
   }
