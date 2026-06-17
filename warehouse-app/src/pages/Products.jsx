@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import { useApp } from '../store/AppContext'
 import { useLang } from '../i18n/LangContext'
 import { fmtNum } from '../utils/format'
@@ -10,12 +10,33 @@ import Modal from '../components/Modal'
 import SwipeableRow from '../components/SwipeableRow'
 import {
   Package, Plus, Search, FileSpreadsheet,
-  Download, Upload, CheckCircle, XCircle, AlertCircle, ChevronDown, ChevronUp
+  Download, Upload, CheckCircle, XCircle, AlertCircle, ChevronDown, ChevronUp, Camera, X
 } from 'lucide-react'
 
 const emptyForm = () => ({
   name: '', category: DEFAULT_CATEGORIES[0], unit: 'dona',
-  purchasePrice: '', salePrice: '', minStock: '', barcode: '', note: ''
+  purchasePrice: '', salePrice: '', minStock: '', barcode: '', note: '', image: ''
+})
+
+const compressImage = (file) => new Promise((resolve) => {
+  const reader = new FileReader()
+  reader.onload = e => {
+    const img = new Image()
+    img.onload = () => {
+      const MAX = 600
+      let { width, height } = img
+      if (width > MAX || height > MAX) {
+        if (width > height) { height = Math.round(height * MAX / width); width = MAX }
+        else { width = Math.round(width * MAX / height); height = MAX }
+      }
+      const canvas = document.createElement('canvas')
+      canvas.width = width; canvas.height = height
+      canvas.getContext('2d').drawImage(img, 0, 0, width, height)
+      resolve(canvas.toDataURL('image/jpeg', 0.72))
+    }
+    img.src = e.target.result
+  }
+  reader.readAsDataURL(file)
 })
 
 export default function Products() {
@@ -33,6 +54,15 @@ export default function Products() {
   const [showErrors, setShowErrors] = useState(false)
   const [importDone, setImportDone] = useState(false)
   const fileRef = useRef(null)
+  const imageRef = useRef(null)
+
+  const handleImageChange = useCallback(async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const compressed = await compressImage(file)
+    setForm(f => ({ ...f, image: compressed }))
+    e.target.value = ''
+  }, [])
 
   const set = k => e => setForm(f => ({ ...f, [k]: e.target.value }))
 
@@ -46,7 +76,8 @@ export default function Products() {
     setForm({
       name: p.name, category: p.category, unit: p.unit,
       purchasePrice: p.purchasePrice, salePrice: p.salePrice,
-      minStock: p.minStock || '', barcode: p.barcode || '', note: p.note || ''
+      minStock: p.minStock || '', barcode: p.barcode || '', note: p.note || '',
+      image: p.image || ''
     })
     setEditId(p.id); setModalOpen(true)
   }
@@ -58,7 +89,8 @@ export default function Products() {
         ...p, ...form,
         purchasePrice: Number(form.purchasePrice) || 0,
         salePrice: Number(form.salePrice) || 0,
-        minStock: Number(form.minStock) || 0
+        minStock: Number(form.minStock) || 0,
+        image: form.image || p.image || ''
       } : p))
       await addLogEntry(user?.id, {
         action: 'mahsulot_tahrirlandi',
@@ -192,19 +224,25 @@ export default function Products() {
             {filtered.map(p => (
               <SwipeableRow key={p.id} onEdit={() => openEdit(p)} onDelete={() => handleDelete(p.id)}>
                 <div className="bg-slate-800/60 rounded-xl px-4 py-3.5 border border-slate-700/30">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-white font-medium text-sm truncate">{p.name}</p>
-                      <p className="text-slate-400 text-xs mt-0.5">{p.category} · {p.unit}</p>
-                    </div>
-                    <div className="text-right ml-3">
-                      <p className="text-primary-400 text-sm font-semibold">{fmtNum(p.purchasePrice)} so'm</p>
-                      {p.salePrice > 0 && <p className="text-slate-400 text-xs">{fmtNum(p.salePrice)} so'm</p>}
+                  <div className="flex items-center gap-3">
+                    {p.image
+                      ? <img src={p.image} alt={p.name} className="w-12 h-12 rounded-xl object-cover flex-shrink-0" />
+                      : <div className="w-12 h-12 rounded-xl bg-slate-700/60 flex items-center justify-center flex-shrink-0">
+                          <Package size={20} className="text-slate-500" />
+                        </div>
+                    }
+                    <div className="flex-1 min-w-0 flex items-center justify-between">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-white font-medium text-sm truncate">{p.name}</p>
+                        <p className="text-slate-400 text-xs mt-0.5">{p.category} · {p.unit}</p>
+                        {p.minStock > 0 && <p className="text-slate-500 text-xs mt-0.5">Min: {p.minStock} {p.unit}</p>}
+                      </div>
+                      <div className="text-right ml-3">
+                        <p className="text-primary-400 text-sm font-semibold">{fmtNum(p.purchasePrice)} so'm</p>
+                        {p.salePrice > 0 && <p className="text-slate-400 text-xs">{fmtNum(p.salePrice)} so'm</p>}
+                      </div>
                     </div>
                   </div>
-                  {p.minStock > 0 && (
-                    <p className="text-slate-500 text-xs mt-1.5">Min: {p.minStock} {p.unit}</p>
-                  )}
                 </div>
               </SwipeableRow>
             ))}
@@ -251,6 +289,25 @@ export default function Products() {
           </div>
           <textarea value={form.note} onChange={set('note')} placeholder={t('note')} rows={2}
             className="w-full bg-slate-800 border border-slate-700/50 rounded-xl px-4 py-3 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-primary-500/40 resize-none" />
+
+          {/* Rasm */}
+          <input ref={imageRef} type="file" accept="image/*" capture="environment" onChange={handleImageChange} className="hidden" />
+          {form.image ? (
+            <div className="relative">
+              <img src={form.image} alt="preview" className="w-full h-40 object-cover rounded-xl" />
+              <button onClick={() => setForm(f => ({ ...f, image: '' }))}
+                className="absolute top-2 right-2 w-7 h-7 bg-slate-900/80 rounded-full flex items-center justify-center">
+                <X size={14} className="text-white" />
+              </button>
+            </div>
+          ) : (
+            <button onClick={() => imageRef.current?.click()}
+              className="w-full flex items-center gap-3 bg-slate-800/60 border border-dashed border-slate-600 rounded-xl px-4 py-3 active:scale-95 transition-all">
+              <Camera size={18} className="text-slate-400" />
+              <span className="text-slate-400 text-sm">Rasm qo'shish (ixtiyoriy)</span>
+            </button>
+          )}
+
           <button onClick={handleSave}
             className="w-full bg-primary-500 text-white font-semibold py-3.5 rounded-xl shadow-lg shadow-primary-500/20 active:scale-95 transition-all">
             {t('save')}

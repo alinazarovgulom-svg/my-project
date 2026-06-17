@@ -19,7 +19,7 @@ const emptyForm = (products) => ({
 })
 
 export default function StockIn() {
-  const { user, products, movements, saveMovements, team, teamId, teamMovements, canAdd } = useApp()
+  const { user, products, movements, saveMovements, team, teamId, teamMovements, perm } = useApp()
   const { t } = useLang()
   const [search, setSearch] = useState('')
   const [modalOpen, setModalOpen] = useState(false)
@@ -28,6 +28,7 @@ export default function StockIn() {
 
   const isTeam = teamMode && !!team
   const activeMovements = isTeam ? teamMovements : movements
+  const p = perm(isTeam)
 
   const set = k => e => setForm(f => ({ ...f, [k]: e.target.value }))
 
@@ -109,10 +110,12 @@ export default function StockIn() {
       <div className="bg-slate-900 px-5 pt-14 pb-4">
         <div className="flex items-center justify-between mb-3">
           <h1 className="text-white text-xl font-bold">{t('stockIn')}</h1>
-          <button onClick={openAdd}
-            className="w-10 h-10 rounded-xl bg-primary-500 flex items-center justify-center shadow-lg shadow-primary-500/20">
-            <PackagePlus size={20} className="text-white" />
-          </button>
+          {p.canAdd && (
+            <button onClick={openAdd}
+              className="w-10 h-10 rounded-xl bg-primary-500 flex items-center justify-center shadow-lg shadow-primary-500/20">
+              <PackagePlus size={20} className="text-white" />
+            </button>
+          )}
         </div>
 
         {team && (
@@ -144,7 +147,7 @@ export default function StockIn() {
         ) : (
           <div>
             {filtered.map(mv => (
-              <SwipeableRow key={mv.id} onDelete={() => handleDelete(mv)}>
+              <SwipeableRow key={mv.id} onDelete={p.canDelete ? () => handleDelete(mv) : undefined}>
                 <div className="bg-slate-800/60 rounded-xl px-4 py-3.5 border border-primary-500/10">
                   <div className="flex items-start justify-between">
                     <div className="flex-1 min-w-0">

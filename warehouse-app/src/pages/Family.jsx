@@ -5,7 +5,7 @@ import { createTeam, joinTeam, leaveTeam, updateMemberRole, removeMember } from 
 import { Users, Plus, LogIn, Copy, LogOut, Shield, Eye, UserCheck, Trash2 } from 'lucide-react'
 import Modal from '../components/Modal'
 
-const ROLES = ['admin', 'member', 'viewer']
+const ROLES = ['admin', 'manager', 'viewer']
 
 export default function Family() {
   const { user, team, teamId, userRole, refreshTeam } = useApp()
@@ -64,6 +64,7 @@ export default function Family() {
   const roleIcon = (role) => {
     if (role === 'admin') return <Shield size={14} className="text-primary-400" />
     if (role === 'viewer') return <Eye size={14} className="text-slate-400" />
+    if (role === 'manager') return <UserCheck size={14} className="text-blue-400" />
     return <UserCheck size={14} className="text-blue-400" />
   }
 

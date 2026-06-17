@@ -194,13 +194,20 @@ export function AppProvider({ children }) {
   const teamMembers = team?.members || []
   const teamMovements = team?.movements || []
 
+  const perm = (isTeam) => {
+    if (!isTeam) return { canAdd: true, canEdit: true, canDelete: true }
+    if (!userRole) return { canAdd: false, canEdit: false, canDelete: false }
+    if (userRole === 'admin') return { canAdd: true, canEdit: true, canDelete: true }
+    if (userRole === 'manager') return { canAdd: true, canEdit: true, canDelete: false }
+    return { canAdd: false, canEdit: false, canDelete: false }
+  }
   const canEdit = (ownerId) => {
     if (!userRole) return false
     if (userRole === 'admin') return true
-    if (userRole === 'member' && ownerId === uid) return true
+    if ((userRole === 'member' || userRole === 'manager') && ownerId === uid) return true
     return false
   }
-  const canAdd = () => userRole === 'admin' || userRole === 'member'
+  const canAdd = () => userRole === 'admin' || userRole === 'manager' || userRole === 'member'
 
   const getTeamInventory = useCallback(() => {
     if (!team) return []
@@ -214,7 +221,7 @@ export function AppProvider({ children }) {
       movements, saveMovements,
       team, setTeam, refreshTeam,
       teamId, teamMembers, teamMovements,
-      userRole, canEdit, canAdd,
+      userRole, perm, canEdit, canAdd,
       getInventory, getTeamInventory,
       syncing,
       online, pendingCount, syncPhase
