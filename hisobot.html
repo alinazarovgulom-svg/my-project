@@ -1,0 +1,1318 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Xodimlar Hisoboti</title>
+<link rel="manifest" href="hisobot-manifest.json">
+<meta name="theme-color" content="#1e293b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Hisobot">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%2300d9a3'/><text y='.9em' font-size='70'>📊</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+:root{
+  --bg:#0f172a;--card:#1e293b;--card2:#263352;
+  --acc:#00d9a3;--acc2:#0ea5e9;--red:#f87171;--yellow:#fbbf24;
+  --txt:#f1f5f9;--txt2:#94a3b8;--txt3:#64748b;
+  --bor:rgba(255,255,255,0.08);
+  --shadow:0 4px 24px rgba(0,0,0,0.4);
+  --rad:16px;
+}
+html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Plus Jakarta Sans',system-ui,sans-serif;overflow-x:hidden;}
+
+/* ── LAYOUT ── */
+.app{display:flex;flex-direction:column;height:100dvh;max-width:480px;margin:0 auto;position:relative;}
+.screen{display:none;flex:1;flex-direction:column;overflow:hidden;}
+.screen.active{display:flex;}
+
+/* ── HEADER ── */
+.header{padding:16px 20px 12px;background:var(--card);border-bottom:1px solid var(--bor);flex-shrink:0;}
+.header-row{display:flex;align-items:center;justify-content:space-between;}
+.header-title{font-size:18px;font-weight:700;}
+.header-sub{font-size:12px;color:var(--txt3);margin-top:2px;}
+.icon-btn{width:40px;height:40px;border-radius:12px;background:rgba(255,255,255,0.06);border:1px solid var(--bor);color:var(--txt2);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s;}
+.icon-btn:active{background:rgba(255,255,255,0.12);}
+
+/* ── SCROLL CONTENT ── */
+.scroll{flex:1;overflow-y:auto;padding:16px 20px;-webkit-overflow-scrolling:touch;}
+.scroll::-webkit-scrollbar{display:none;}
+
+/* ── BOTTOM NAV ── */
+.bottom-nav{display:flex;background:var(--card);border-top:1px solid var(--bor);flex-shrink:0;padding-bottom:env(safe-area-inset-bottom);}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 4px;cursor:pointer;transition:.2s;gap:4px;border:none;background:none;color:var(--txt3);}
+.nav-item.active{color:var(--acc);}
+.nav-item:active{opacity:.7;}
+.nav-icon{font-size:22px;line-height:1;}
+.nav-label{font-size:10px;font-weight:600;}
+
+/* ── CARDS ── */
+.card{background:var(--card);border:1px solid var(--bor);border-radius:var(--rad);padding:16px;margin-bottom:12px;}
+.card-title{font-size:13px;font-weight:600;color:var(--txt2);margin-bottom:12px;text-transform:uppercase;letter-spacing:.5px;}
+
+/* ── FORM ── */
+.form-group{margin-bottom:16px;}
+label{display:block;font-size:13px;font-weight:600;color:var(--txt2);margin-bottom:6px;}
+.label-required::after{content:' *';color:var(--red);}
+input,select,textarea{
+  width:100%;background:rgba(255,255,255,0.05);border:1.5px solid var(--bor);
+  border-radius:12px;padding:13px 16px;color:var(--txt);font-size:16px;
+  font-family:inherit;outline:none;transition:.2s;-webkit-appearance:none;appearance:none;
+}
+input:focus,select:focus,textarea:focus{border-color:var(--acc);background:rgba(0,217,163,0.05);}
+input::placeholder,textarea::placeholder{color:var(--txt3);}
+select option{background:#1e293b;color:var(--txt);}
+textarea{resize:none;min-height:80px;}
+
+.input-money{position:relative;}
+.input-money input{padding-right:60px;}
+.input-money .currency{position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--txt3);font-size:13px;font-weight:600;pointer-events:none;}
+
+/* ── BUTTONS ── */
+.btn{width:100%;border:none;border-radius:14px;padding:15px 20px;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;transition:.25s;display:flex;align-items:center;justify-content:center;gap:8px;}
+.btn:active{transform:scale(.97);}
+.btn-primary{background:linear-gradient(135deg,var(--acc),#00b88b);color:#0f172a;}
+.btn-secondary{background:rgba(255,255,255,0.07);border:1px solid var(--bor);color:var(--txt);}
+.btn-danger{background:rgba(248,113,113,0.12);border:1px solid rgba(248,113,113,0.3);color:var(--red);}
+.btn-google{background:#fff;color:#1f2937;gap:12px;}
+.btn-google img{width:20px;height:20px;}
+.btn-disabled{opacity:.5;pointer-events:none;}
+
+/* ── TOAST ── */
+#toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--card2);border:1px solid var(--bor);border-radius:14px;padding:12px 20px;font-size:14px;font-weight:600;white-space:nowrap;opacity:0;transition:.3s;z-index:9999;pointer-events:none;box-shadow:var(--shadow);}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+#toast.success{border-color:var(--acc);color:var(--acc);}
+#toast.error{border-color:var(--red);color:var(--red);}
+
+/* ── SETUP SCREEN ── */
+.setup-hero{text-align:center;padding:40px 0 32px;}
+.setup-icon{font-size:64px;margin-bottom:16px;}
+.setup-title{font-size:24px;font-weight:800;margin-bottom:8px;}
+.setup-desc{color:var(--txt2);font-size:14px;line-height:1.6;}
+.setup-step{display:flex;align-items:flex-start;gap:12px;margin-bottom:16px;}
+.step-num{width:28px;height:28px;border-radius:50%;background:var(--acc);color:#0f172a;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;}
+.step-text{font-size:13px;color:var(--txt2);line-height:1.5;}
+.step-text strong{color:var(--txt);}
+.guide-link{color:var(--acc);text-decoration:none;font-weight:600;}
+
+/* ── LOGIN SCREEN ── */
+.login-hero{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;text-align:center;}
+.login-icon{font-size:72px;margin-bottom:24px;}
+.login-title{font-size:26px;font-weight:800;margin-bottom:8px;}
+.login-desc{color:var(--txt2);font-size:15px;line-height:1.6;margin-bottom:32px;}
+.login-info{background:rgba(0,217,163,0.08);border:1px solid rgba(0,217,163,0.2);border-radius:12px;padding:14px 16px;text-align:left;margin-bottom:24px;width:100%;}
+.login-info p{font-size:13px;color:var(--txt2);line-height:1.5;}
+.login-info strong{color:var(--acc);}
+
+/* ── DASHBOARD ── */
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;}
+.stat-card{background:var(--card);border:1px solid var(--bor);border-radius:var(--rad);padding:14px;text-align:center;}
+.stat-value{font-size:20px;font-weight:800;color:var(--acc);}
+.stat-label{font-size:11px;color:var(--txt3);margin-top:4px;font-weight:600;}
+.quick-btn-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.quick-btn{background:var(--card);border:1px solid var(--bor);border-radius:var(--rad);padding:16px;cursor:pointer;transition:.2s;text-align:center;}
+.quick-btn:active{background:var(--card2);}
+.quick-btn-icon{font-size:28px;margin-bottom:8px;}
+.quick-btn-text{font-size:13px;font-weight:600;color:var(--txt2);}
+
+/* ── HISTORY LIST ── */
+.entry-card{background:var(--card);border:1px solid var(--bor);border-radius:var(--rad);padding:14px 16px;margin-bottom:10px;}
+.entry-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.entry-name{font-size:15px;font-weight:700;}
+.entry-date{font-size:12px;color:var(--txt3);font-weight:600;}
+.entry-amounts{display:flex;gap:12px;}
+.amount-tag{font-size:13px;font-weight:600;padding:4px 10px;border-radius:8px;}
+.amount-salary{background:rgba(0,217,163,0.12);color:var(--acc);}
+.amount-avans{background:rgba(251,191,36,0.12);color:var(--yellow);}
+.amount-total{background:rgba(14,165,233,0.12);color:var(--acc2);}
+.entry-note{font-size:12px;color:var(--txt3);margin-top:8px;padding-top:8px;border-top:1px solid var(--bor);}
+.empty-state{text-align:center;padding:60px 20px;color:var(--txt3);}
+.empty-icon{font-size:48px;margin-bottom:12px;}
+.empty-text{font-size:14px;}
+
+/* ── SETTINGS SCREEN ── */
+.setting-item{background:var(--card);border:1px solid var(--bor);border-radius:var(--rad);padding:16px;margin-bottom:10px;cursor:pointer;transition:.2s;}
+.setting-item:active{background:var(--card2);}
+.setting-header{display:flex;align-items:center;justify-content:space-between;}
+.setting-left{display:flex;align-items:center;gap:12px;}
+.setting-icon{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;}
+.setting-label{font-size:15px;font-weight:600;}
+.setting-value{font-size:12px;color:var(--txt3);margin-top:2px;}
+.setting-arrow{color:var(--txt3);font-size:18px;}
+
+/* ── MODAL ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1000;align-items:flex-end;backdrop-filter:blur(4px);}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--card);border-radius:24px 24px 0 0;padding:24px 20px calc(24px + env(safe-area-inset-bottom));width:100%;max-height:80vh;overflow-y:auto;}
+.modal-handle{width:40px;height:4px;border-radius:2px;background:var(--bor);margin:0 auto 20px;}
+.modal-title{font-size:18px;font-weight:800;margin-bottom:20px;}
+.tag-list{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;}
+.tag{background:rgba(255,255,255,0.06);border:1px solid var(--bor);border-radius:20px;padding:7px 14px;font-size:13px;font-weight:600;cursor:pointer;transition:.2s;}
+.tag:active,.tag.selected{background:rgba(0,217,163,0.15);border-color:var(--acc);color:var(--acc);}
+.tag-delete{margin-left:4px;opacity:.5;}
+
+/* ── LOADING ── */
+.spinner{width:36px;height:36px;border:3px solid rgba(255,255,255,0.1);border-top-color:var(--acc);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loading-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100dvh;gap:16px;}
+.loading-text{color:var(--txt2);font-size:14px;}
+
+/* ── BADGES ── */
+.badge{display:inline-block;background:rgba(0,217,163,0.15);color:var(--acc);border-radius:20px;padding:2px 10px;font-size:11px;font-weight:700;margin-left:8px;}
+.badge-red{background:rgba(248,113,113,0.15);color:var(--red);}
+
+/* ── DIVIDER ── */
+.divider{height:1px;background:var(--bor);margin:16px 0;}
+
+/* ── USER CHIP ── */
+.user-chip{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,0.05);border:1px solid var(--bor);border-radius:20px;padding:6px 14px;font-size:13px;font-weight:600;}
+.user-avatar{width:24px;height:24px;border-radius:50%;background:var(--acc);color:#0f172a;font-weight:800;font-size:11px;display:flex;align-items:center;justify-content:center;}
+
+/* ── RESPONSIVE ── */
+@media(min-width:480px){
+  .app{box-shadow:0 0 60px rgba(0,0,0,0.6);}
+  body{background:#08111f;}
+}
+</style>
+</head>
+<body>
+
+<div id="loading-screen" class="loading-screen">
+  <div class="spinner"></div>
+  <div class="loading-text">Yuklanmoqda...</div>
+</div>
+
+<div class="app" id="app" style="display:none">
+
+  <!-- ══ SCREEN: SETUP ══ -->
+  <div class="screen" id="screen-setup">
+    <div class="scroll">
+      <div class="setup-hero">
+        <div class="setup-icon">🔧</div>
+        <div class="setup-title">Sozlash</div>
+        <div class="setup-desc">Google Sheets bilan ulash uchun bir martalik sozlash</div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">📋 Sozlash ko'rsatmasi</div>
+        <div class="setup-step">
+          <div class="step-num">1</div>
+          <div class="step-text"><strong>Google Cloud Console</strong>ga kiring va yangi loyiha yarating</div>
+        </div>
+        <div class="setup-step">
+          <div class="step-num">2</div>
+          <div class="step-text"><strong>Google Sheets API</strong>ni yoqing (APIs & Services → Enable APIs)</div>
+        </div>
+        <div class="setup-step">
+          <div class="step-num">3</div>
+          <div class="step-text"><strong>OAuth 2.0 Client ID</strong> yarating (Credentials → Web application)</div>
+        </div>
+        <div class="setup-step">
+          <div class="step-num">4</div>
+          <div class="step-text">Authorized JavaScript origins ga bu saytning URL'ini qo'shing</div>
+        </div>
+        <div class="setup-step">
+          <div class="step-num">5</div>
+          <div class="step-text"><strong>Client ID</strong> va <strong>Sheets ID</strong>ni quyiga kiriting</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">⚙️ Ma'lumotlarni kiriting</div>
+        <div class="form-group">
+          <label class="label-required">Google OAuth Client ID</label>
+          <input type="text" id="setup-client-id" placeholder="xxxxx.apps.googleusercontent.com" autocomplete="off" spellcheck="false">
+        </div>
+        <div class="form-group">
+          <label class="label-required">Google Sheets ID</label>
+          <input type="text" id="setup-sheet-id" placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms" autocomplete="off" spellcheck="false">
+          <div style="font-size:11px;color:var(--txt3);margin-top:6px;">Sheets URL: docs.google.com/spreadsheets/d/<strong style="color:var(--acc)">SHU_ID</strong>/edit</div>
+        </div>
+        <div class="form-group">
+          <label>Valyuta</label>
+          <select id="setup-currency">
+            <option value="so'm">So'm (UZS)</option>
+            <option value="USD">Dollar (USD)</option>
+            <option value="€">Euro (EUR)</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" onclick="saveSetup()">✅ Saqlash va davom etish</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SCREEN: LOGIN ══ -->
+  <div class="screen" id="screen-login">
+    <div class="login-hero">
+      <div class="login-icon">📊</div>
+      <div class="login-title">Xodimlar Hisoboti</div>
+      <div class="login-desc">Google hisobingiz orqali kiring va xodimlar maosh hisobotlarini to'g'ridan-to'g'ri Google Sheetsga kiriting</div>
+
+      <div class="login-info">
+        <p>🔐 Faqat siz tanlagan <strong>Google Sheets</strong>ga yozish huquqi so'raladi. Boshqa hech narsa o'qilmaydi.</p>
+      </div>
+
+      <button class="btn btn-google" onclick="signIn()">
+        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cpath fill='%23FFC107' d='M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z'/%3E%3Cpath fill='%23FF3D00' d='m6.306 14.691 6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 16.318 4 9.656 8.337 6.306 14.691z'/%3E%3Cpath fill='%234CAF50' d='M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238A11.91 11.91 0 0 1 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z'/%3E%3Cpath fill='%231976D2' d='M43.611 20.083H42V20H24v8h11.303a12.04 12.04 0 0 1-4.087 5.571l.003-.002 6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z'/%3E%3C/svg%3E" alt="Google">
+        Google bilan kirish
+      </button>
+
+      <div style="margin-top:20px;">
+        <button class="btn btn-secondary" onclick="showScreen('setup')" style="font-size:13px;padding:10px;">⚙️ Sozlamalarni o'zgartirish</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SCREEN: HOME (DASHBOARD) ══ -->
+  <div class="screen" id="screen-home">
+    <div class="header">
+      <div class="header-row">
+        <div>
+          <div class="header-title">📊 Hisobotlar</div>
+          <div class="header-sub" id="home-subtitle">Yuklanmoqda...</div>
+        </div>
+        <div id="user-chip" class="user-chip" style="cursor:pointer" onclick="showProfileMenu()">
+          <div class="user-avatar" id="user-avatar">?</div>
+          <span id="user-name-short">Foydalanuvchi</span>
+        </div>
+      </div>
+    </div>
+    <div class="scroll">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-value" id="stat-today">0</div>
+          <div class="stat-label">Bugun kiritilgan</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-month">0</div>
+          <div class="stat-label">Bu oy jami</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-employees">0</div>
+          <div class="stat-label">Xodimlar soni</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-total">0</div>
+          <div class="stat-label">Oy maoshi jami</div>
+        </div>
+      </div>
+
+      <div class="quick-btn-grid">
+        <div class="quick-btn" onclick="showScreen('form')">
+          <div class="quick-btn-icon">➕</div>
+          <div class="quick-btn-text">Hisobot qo'shish</div>
+        </div>
+        <div class="quick-btn" onclick="showScreen('history')">
+          <div class="quick-btn-icon">📋</div>
+          <div class="quick-btn-text">Tarix ko'rish</div>
+        </div>
+        <div class="quick-btn" onclick="openSheetsLink()">
+          <div class="quick-btn-icon">📄</div>
+          <div class="quick-btn-text">Google Sheets</div>
+        </div>
+        <div class="quick-btn" onclick="showScreen('settings')">
+          <div class="quick-btn-icon">⚙️</div>
+          <div class="quick-btn-text">Sozlamalar</div>
+        </div>
+      </div>
+
+      <div style="margin-top:16px;">
+        <div class="card-title" style="margin-bottom:10px;">🕐 Oxirgi kiritilganlar</div>
+        <div id="recent-entries">
+          <div class="empty-state">
+            <div class="empty-icon">📭</div>
+            <div class="empty-text">Hozircha hech narsa yo'q</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="bottom-nav">
+      <button class="nav-item active" onclick="showScreen('home')">
+        <span class="nav-icon">🏠</span>
+        <span class="nav-label">Bosh sahifa</span>
+      </button>
+      <button class="nav-item" onclick="showScreen('form')">
+        <span class="nav-icon">➕</span>
+        <span class="nav-label">Qo'shish</span>
+      </button>
+      <button class="nav-item" onclick="showScreen('history')">
+        <span class="nav-icon">📋</span>
+        <span class="nav-label">Tarix</span>
+      </button>
+      <button class="nav-item" onclick="showScreen('settings')">
+        <span class="nav-icon">⚙️</span>
+        <span class="nav-label">Sozlamalar</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ══ SCREEN: FORM ══ -->
+  <div class="screen" id="screen-form">
+    <div class="header">
+      <div class="header-row">
+        <div>
+          <div class="header-title">➕ Hisobot kiriting</div>
+          <div class="header-sub">Google Sheetsga saqlanadi</div>
+        </div>
+        <button class="icon-btn" onclick="resetForm()">🔄</button>
+      </div>
+    </div>
+    <div class="scroll">
+      <div class="card">
+        <div class="form-group">
+          <label class="label-required">Xodim</label>
+          <div style="display:flex;gap:8px;">
+            <select id="form-employee" style="flex:1">
+              <option value="">— Tanlang —</option>
+            </select>
+            <button class="icon-btn" onclick="openAddEmployee()">+</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="label-required">Sana</label>
+          <input type="date" id="form-date">
+        </div>
+
+        <div class="form-group">
+          <label class="label-required">Oylik maosh</label>
+          <div class="input-money">
+            <input type="number" id="form-salary" placeholder="0" min="0" inputmode="numeric">
+            <span class="currency" id="currency-label1">so'm</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Avans</label>
+          <div class="input-money">
+            <input type="number" id="form-avans" placeholder="0" min="0" inputmode="numeric">
+            <span class="currency" id="currency-label2">so'm</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Hisobot turi</label>
+          <select id="form-type">
+            <option value="Oylik">💰 Oylik maosh</option>
+            <option value="Avans">💵 Avans</option>
+            <option value="Bonus">🎁 Bonus</option>
+            <option value="Jarima">⚠️ Jarima</option>
+            <option value="Boshqa">📝 Boshqa</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Izoh (ixtiyoriy)</label>
+          <textarea id="form-note" placeholder="Qo'shimcha ma'lumot..."></textarea>
+        </div>
+
+        <div class="card" style="background:rgba(0,217,163,0.05);border-color:rgba(0,217,163,0.2);margin-bottom:16px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="color:var(--txt2);font-size:14px;">Jami to'lov:</span>
+            <span style="font-size:20px;font-weight:800;color:var(--acc)" id="form-total">0 so'm</span>
+          </div>
+        </div>
+
+        <button class="btn btn-primary" id="submit-btn" onclick="submitReport()">
+          📤 Google Sheetsga yuborish
+        </button>
+      </div>
+    </div>
+    <div class="bottom-nav">
+      <button class="nav-item" onclick="showScreen('home')">
+        <span class="nav-icon">🏠</span>
+        <span class="nav-label">Bosh sahifa</span>
+      </button>
+      <button class="nav-item active" onclick="showScreen('form')">
+        <span class="nav-icon">➕</span>
+        <span class="nav-label">Qo'shish</span>
+      </button>
+      <button class="nav-item" onclick="showScreen('history')">
+        <span class="nav-icon">📋</span>
+        <span class="nav-label">Tarix</span>
+      </button>
+      <button class="nav-item" onclick="showScreen('settings')">
+        <span class="nav-icon">⚙️</span>
+        <span class="nav-label">Sozlamalar</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ══ SCREEN: HISTORY ══ -->
+  <div class="screen" id="screen-history">
+    <div class="header">
+      <div class="header-row">
+        <div>
+          <div class="header-title">📋 Tarix</div>
+          <div class="header-sub" id="history-sub">Google Sheetsdagi yozuvlar</div>
+        </div>
+        <button class="icon-btn" onclick="loadHistory()">🔄</button>
+      </div>
+      <div style="margin-top:10px;display:flex;gap:8px;">
+        <select id="filter-month" onchange="filterHistory()" style="flex:1;font-size:13px;padding:8px 12px;">
+          <option value="">Barcha oylar</option>
+        </select>
+        <select id="filter-emp" onchange="filterHistory()" style="flex:1;font-size:13px;padding:8px 12px;">
+          <option value="">Barcha xodimlar</option>
+        </select>
+      </div>
+    </div>
+    <div class="scroll" id="history-list">
+      <div class="empty-state">
+        <div class="empty-icon">⏳</div>
+        <div class="empty-text">Yuklanmoqda...</div>
+      </div>
+    </div>
+    <div class="bottom-nav">
+      <button class="nav-item" onclick="showScreen('home')">
+        <span class="nav-icon">🏠</span>
+        <span class="nav-label">Bosh sahifa</span>
+      </button>
+      <button class="nav-item" onclick="showScreen('form')">
+        <span class="nav-icon">➕</span>
+        <span class="nav-label">Qo'shish</span>
+      </button>
+      <button class="nav-item active" onclick="showScreen('history')">
+        <span class="nav-icon">📋</span>
+        <span class="nav-label">Tarix</span>
+      </button>
+      <button class="nav-item" onclick="showScreen('settings')">
+        <span class="nav-icon">⚙️</span>
+        <span class="nav-label">Sozlamalar</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ══ SCREEN: SETTINGS ══ -->
+  <div class="screen" id="screen-settings">
+    <div class="header">
+      <div class="header-row">
+        <div>
+          <div class="header-title">⚙️ Sozlamalar</div>
+          <div class="header-sub">Ilova konfiguratsiyasi</div>
+        </div>
+      </div>
+    </div>
+    <div class="scroll">
+      <div class="card-title" style="margin-bottom:10px;">Ulash</div>
+
+      <div class="setting-item" onclick="openSheetsLink()">
+        <div class="setting-header">
+          <div class="setting-left">
+            <div class="setting-icon" style="background:rgba(0,217,163,0.12)">📄</div>
+            <div>
+              <div class="setting-label">Google Sheets</div>
+              <div class="setting-value" id="setting-sheet-id">Yuklanmoqda...</div>
+            </div>
+          </div>
+          <div class="setting-arrow">↗</div>
+        </div>
+      </div>
+
+      <div class="setting-item" onclick="showScreen('setup')">
+        <div class="setting-header">
+          <div class="setting-left">
+            <div class="setting-icon" style="background:rgba(14,165,233,0.12)">🔑</div>
+            <div>
+              <div class="setting-label">API Sozlamalar</div>
+              <div class="setting-value">Client ID va Sheets ID</div>
+            </div>
+          </div>
+          <div class="setting-arrow">›</div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+      <div class="card-title" style="margin-bottom:10px;">Xodimlar ro'yxati</div>
+
+      <div class="setting-item" onclick="openEmployeeManager()">
+        <div class="setting-header">
+          <div class="setting-left">
+            <div class="setting-icon" style="background:rgba(167,139,250,0.12)">👥</div>
+            <div>
+              <div class="setting-label">Xodimlarni boshqarish</div>
+              <div class="setting-value" id="setting-emp-count">0 ta xodim</div>
+            </div>
+          </div>
+          <div class="setting-arrow">›</div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+      <div class="card-title" style="margin-bottom:10px;">Hisob</div>
+
+      <div class="setting-item" id="setting-user-info">
+        <div class="setting-header">
+          <div class="setting-left">
+            <div class="setting-icon" style="background:rgba(251,191,36,0.12)">👤</div>
+            <div>
+              <div class="setting-label" id="setting-user-name">Foydalanuvchi</div>
+              <div class="setting-value" id="setting-user-email">—</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:8px;">
+        <button class="btn btn-danger" onclick="signOut()">🚪 Chiqish</button>
+      </div>
+
+      <div class="divider"></div>
+      <div style="text-align:center;padding:8px 0;">
+        <div style="font-size:12px;color:var(--txt3);">Xodimlar Hisoboti v1.0</div>
+        <div style="font-size:11px;color:var(--txt3);margin-top:4px;">Google Sheets bilan sinxronlash</div>
+      </div>
+    </div>
+    <div class="bottom-nav">
+      <button class="nav-item" onclick="showScreen('home')">
+        <span class="nav-icon">🏠</span>
+        <span class="nav-label">Bosh sahifa</span>
+      </button>
+      <button class="nav-item" onclick="showScreen('form')">
+        <span class="nav-icon">➕</span>
+        <span class="nav-label">Qo'shish</span>
+      </button>
+      <button class="nav-item" onclick="showScreen('history')">
+        <span class="nav-icon">📋</span>
+        <span class="nav-label">Tarix</span>
+      </button>
+      <button class="nav-item active" onclick="showScreen('settings')">
+        <span class="nav-icon">⚙️</span>
+        <span class="nav-label">Sozlamalar</span>
+      </button>
+    </div>
+  </div>
+
+</div><!-- /app -->
+
+<!-- ── TOAST ── -->
+<div id="toast"></div>
+
+<!-- ── MODAL: ADD EMPLOYEE ── -->
+<div class="modal-overlay" id="modal-employee">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">👥 Xodim qo'shish</div>
+    <div class="form-group">
+      <label>Yangi xodim ismi</label>
+      <input type="text" id="new-employee-input" placeholder="Ism Familiya" autocomplete="off">
+    </div>
+    <button class="btn btn-primary" style="margin-bottom:12px" onclick="addEmployee()">➕ Qo'shish</button>
+    <div id="employee-tag-list" class="tag-list"></div>
+    <button class="btn btn-secondary" onclick="closeModal('modal-employee')" style="margin-top:8px">Yopish</button>
+  </div>
+</div>
+
+<!-- ── MODAL: EMPLOYEE MANAGER ── -->
+<div class="modal-overlay" id="modal-emp-manager">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">👥 Xodimlar ro'yxati</div>
+    <div id="emp-manager-list" class="tag-list"></div>
+    <div style="margin-top:12px;">
+      <div class="form-group">
+        <label>Yangi xodim qo'shish</label>
+        <div style="display:flex;gap:8px;">
+          <input type="text" id="manager-new-emp" placeholder="Ism Familiya" style="flex:1" autocomplete="off">
+          <button class="icon-btn" onclick="addEmployeeFromManager()">+</button>
+        </div>
+      </div>
+    </div>
+    <button class="btn btn-secondary" onclick="closeModal('modal-emp-manager')">Yopish</button>
+  </div>
+</div>
+
+<!-- ── MODAL: PROFILE MENU ── -->
+<div class="modal-overlay" id="modal-profile">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div style="text-align:center;margin-bottom:20px;">
+      <div style="font-size:48px;margin-bottom:8px;">👤</div>
+      <div style="font-size:17px;font-weight:700;" id="profile-name">—</div>
+      <div style="font-size:13px;color:var(--txt3);margin-top:4px;" id="profile-email">—</div>
+    </div>
+    <button class="btn btn-danger" onclick="signOut()" style="margin-bottom:8px;">🚪 Hisobdan chiqish</button>
+    <button class="btn btn-secondary" onclick="closeModal('modal-profile')">Bekor qilish</button>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════
+const APP = {
+  clientId: '',
+  sheetId: '',
+  currency: "so'm",
+  employees: [],
+  accessToken: null,
+  tokenExpiry: 0,
+  user: null,
+  history: [],
+  tokenClient: null,
+  gapiReady: false,
+  gisReady: false,
+};
+
+const SHEET_NAME = 'Hisobotlar';
+const SHEET_HEADERS = ['Sana','Xodim','Tur','Oylik','Avans','Jami','Izoh','Kiritilgan vaqt','Kirituvchi'];
+
+// ══════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════
+function loadConfig() {
+  APP.clientId  = localStorage.getItem('hr_client_id') || '';
+  APP.sheetId   = localStorage.getItem('hr_sheet_id')  || '';
+  APP.currency  = localStorage.getItem('hr_currency')  || "so'm";
+  try { APP.employees = JSON.parse(localStorage.getItem('hr_employees') || '[]'); } catch(e){ APP.employees=[]; }
+  try { APP.user = JSON.parse(localStorage.getItem('hr_user') || 'null'); } catch(e){ APP.user=null; }
+  APP.accessToken = sessionStorage.getItem('hr_token') || null;
+  APP.tokenExpiry = parseInt(sessionStorage.getItem('hr_token_expiry') || '0');
+}
+
+function saveConfig() {
+  localStorage.setItem('hr_client_id', APP.clientId);
+  localStorage.setItem('hr_sheet_id',  APP.sheetId);
+  localStorage.setItem('hr_currency',  APP.currency);
+  localStorage.setItem('hr_employees', JSON.stringify(APP.employees));
+  if (APP.user) localStorage.setItem('hr_user', JSON.stringify(APP.user));
+}
+
+window.onload = async function() {
+  loadConfig();
+  updateCurrencyLabels();
+  setTodayDate();
+
+  // Load Google APIs
+  await Promise.all([loadGapi(), loadGis()]);
+
+  document.getElementById('loading-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+
+  if (!APP.clientId || !APP.sheetId) {
+    showScreen('setup');
+  } else if (!isTokenValid()) {
+    showScreen('login');
+  } else {
+    showScreen('home');
+    initAfterLogin();
+  }
+};
+
+function loadGapi() {
+  return new Promise(resolve => {
+    if (typeof gapi !== 'undefined') {
+      gapi.load('client', async () => {
+        try {
+          await gapi.client.init({
+            discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
+          });
+        } catch(e) { /* ignore */ }
+        APP.gapiReady = true;
+        resolve();
+      });
+    } else {
+      // gapi not loaded, handle gracefully
+      APP.gapiReady = false;
+      resolve();
+    }
+  });
+}
+
+function loadGis() {
+  return new Promise(resolve => {
+    const check = () => {
+      if (typeof google !== 'undefined' && google.accounts) {
+        APP.gisReady = true;
+        resolve();
+      } else {
+        setTimeout(check, 100);
+      }
+    };
+    check();
+    setTimeout(resolve, 3000); // timeout
+  });
+}
+
+// ══════════════════════════════════════════
+//  SCREEN NAVIGATION
+// ══════════════════════════════════════════
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const screen = document.getElementById('screen-' + name);
+  if (screen) screen.classList.add('active');
+
+  if (name === 'home') refreshHome();
+  if (name === 'history') loadHistory();
+  if (name === 'settings') refreshSettings();
+  if (name === 'form') refreshForm();
+}
+
+// ══════════════════════════════════════════
+//  SETUP
+// ══════════════════════════════════════════
+function saveSetup() {
+  const clientId = document.getElementById('setup-client-id').value.trim();
+  const sheetId  = document.getElementById('setup-sheet-id').value.trim();
+  const currency = document.getElementById('setup-currency').value;
+
+  if (!clientId) { toast('Client ID kiriting!', 'error'); return; }
+  if (!sheetId)  { toast('Sheets ID kiriting!', 'error'); return; }
+
+  APP.clientId = clientId;
+  APP.sheetId  = sheetId;
+  APP.currency = currency;
+  saveConfig();
+  updateCurrencyLabels();
+
+  toast('✅ Sozlamalar saqlandi!', 'success');
+  setTimeout(() => {
+    clearToken();
+    showScreen('login');
+  }, 800);
+}
+
+// ══════════════════════════════════════════
+//  AUTH
+// ══════════════════════════════════════════
+function isTokenValid() {
+  return APP.accessToken && Date.now() < APP.tokenExpiry - 60000;
+}
+
+function clearToken() {
+  APP.accessToken = null;
+  APP.tokenExpiry = 0;
+  sessionStorage.removeItem('hr_token');
+  sessionStorage.removeItem('hr_token_expiry');
+}
+
+function signIn() {
+  if (!APP.gisReady) { toast('Google API yuklanmadi. Sahifani yangilang.', 'error'); return; }
+  if (!APP.clientId) { toast('Avval Client ID kiriting!', 'error'); showScreen('setup'); return; }
+
+  APP.tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: APP.clientId,
+    scope: 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email',
+    callback: async (response) => {
+      if (response.error) { toast('Xatolik: ' + response.error, 'error'); return; }
+      APP.accessToken = response.access_token;
+      APP.tokenExpiry = Date.now() + (response.expires_in * 1000);
+      sessionStorage.setItem('hr_token', APP.accessToken);
+      sessionStorage.setItem('hr_token_expiry', APP.tokenExpiry.toString());
+      await fetchUserInfo();
+      await ensureSheetExists();
+      showScreen('home');
+      initAfterLogin();
+      toast('✅ Muvaffaqiyatli kirildi!', 'success');
+    },
+  });
+  APP.tokenClient.requestAccessToken({ prompt: 'consent' });
+}
+
+async function fetchUserInfo() {
+  try {
+    const res = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+      headers: { Authorization: 'Bearer ' + APP.accessToken }
+    });
+    const data = await res.json();
+    APP.user = { name: data.name || 'Foydalanuvchi', email: data.email || '', picture: data.picture || '' };
+    saveConfig();
+    updateUserUI();
+  } catch(e) { /* ignore */ }
+}
+
+function signOut() {
+  clearToken();
+  APP.user = null;
+  localStorage.removeItem('hr_user');
+  if (APP.gisReady && google.accounts && google.accounts.oauth2) {
+    google.accounts.oauth2.revoke(APP.accessToken || '', () => {});
+  }
+  closeModal('modal-profile');
+  showScreen('login');
+  toast('Hisobdan chiqildi', 'success');
+}
+
+function updateUserUI() {
+  const name = APP.user?.name || 'Foydalanuvchi';
+  const email = APP.user?.email || '';
+  const initial = name[0]?.toUpperCase() || '?';
+
+  document.getElementById('user-avatar').textContent = initial;
+  document.getElementById('user-name-short').textContent = name.split(' ')[0];
+  document.getElementById('profile-name').textContent = name;
+  document.getElementById('profile-email').textContent = email;
+  document.getElementById('setting-user-name').textContent = name;
+  document.getElementById('setting-user-email').textContent = email;
+}
+
+function initAfterLogin() {
+  updateUserUI();
+  populateEmployeeSelect();
+  refreshHome();
+}
+
+// ══════════════════════════════════════════
+//  GOOGLE SHEETS API
+// ══════════════════════════════════════════
+async function sheetsRequest(method, path, body) {
+  if (!isTokenValid()) {
+    toast('Sessiya tugadi. Qayta kiring.', 'error');
+    clearToken();
+    showScreen('login');
+    return null;
+  }
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${APP.sheetId}${path}`;
+  const opts = {
+    method,
+    headers: {
+      'Authorization': 'Bearer ' + APP.accessToken,
+      'Content-Type': 'application/json',
+    },
+  };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(url, opts);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error?.message || 'API xatosi');
+  }
+  return res.json();
+}
+
+async function ensureSheetExists() {
+  try {
+    const info = await sheetsRequest('GET', '');
+    if (!info) return;
+    const exists = info.sheets?.some(s => s.properties?.title === SHEET_NAME);
+    if (!exists) {
+      await sheetsRequest('POST', ':batchUpdate', {
+        requests: [{ addSheet: { properties: { title: SHEET_NAME } } }]
+      });
+      // Add headers
+      await sheetsRequest('PUT', `/values/${SHEET_NAME}!A1:I1?valueInputOption=RAW`, {
+        values: [SHEET_HEADERS]
+      });
+    }
+  } catch(e) {
+    console.error('Sheet yaratishda xato:', e);
+  }
+}
+
+async function appendRow(values) {
+  return sheetsRequest('POST', `/values/${SHEET_NAME}!A:I:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`, {
+    values: [values]
+  });
+}
+
+async function getRows() {
+  const data = await sheetsRequest('GET', `/values/${SHEET_NAME}!A2:I`);
+  return data?.values || [];
+}
+
+// ══════════════════════════════════════════
+//  FORM
+// ══════════════════════════════════════════
+function setTodayDate() {
+  const today = new Date().toISOString().split('T')[0];
+  const el = document.getElementById('form-date');
+  if (el) el.value = today;
+}
+
+function refreshForm() {
+  populateEmployeeSelect();
+  setTodayDate();
+  updateTotal();
+  const c = APP.currency;
+  document.getElementById('currency-label1').textContent = c;
+  document.getElementById('currency-label2').textContent = c;
+}
+
+function updateTotal() {
+  const salary = parseFloat(document.getElementById('form-salary')?.value) || 0;
+  const avans  = parseFloat(document.getElementById('form-avans')?.value)  || 0;
+  const total  = salary + avans;
+  const el = document.getElementById('form-total');
+  if (el) el.textContent = formatMoney(total) + ' ' + APP.currency;
+}
+
+document.addEventListener('input', function(e) {
+  if (e.target.id === 'form-salary' || e.target.id === 'form-avans') updateTotal();
+});
+
+function populateEmployeeSelect() {
+  const sel = document.getElementById('form-employee');
+  if (!sel) return;
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">— Tanlang —</option>';
+  APP.employees.forEach(emp => {
+    const opt = document.createElement('option');
+    opt.value = emp;
+    opt.textContent = emp;
+    if (emp === cur) opt.selected = true;
+    sel.appendChild(opt);
+  });
+
+  // Also populate filter
+  const filterEmp = document.getElementById('filter-emp');
+  if (filterEmp) {
+    const cur2 = filterEmp.value;
+    filterEmp.innerHTML = '<option value="">Barcha xodimlar</option>';
+    APP.employees.forEach(emp => {
+      const opt = document.createElement('option');
+      opt.value = emp;
+      opt.textContent = emp;
+      if (emp === cur2) opt.selected = true;
+      filterEmp.appendChild(opt);
+    });
+  }
+}
+
+function resetForm() {
+  document.getElementById('form-employee').value = '';
+  document.getElementById('form-salary').value = '';
+  document.getElementById('form-avans').value = '';
+  document.getElementById('form-note').value = '';
+  document.getElementById('form-type').value = 'Oylik';
+  setTodayDate();
+  updateTotal();
+  toast('Form tozalandi', 'success');
+}
+
+async function submitReport() {
+  const employee = document.getElementById('form-employee').value.trim();
+  const date     = document.getElementById('form-date').value;
+  const salary   = parseFloat(document.getElementById('form-salary').value) || 0;
+  const avans    = parseFloat(document.getElementById('form-avans').value)  || 0;
+  const type     = document.getElementById('form-type').value;
+  const note     = document.getElementById('form-note').value.trim();
+
+  if (!employee) { toast('Xodimni tanlang!', 'error'); return; }
+  if (!date)     { toast('Sanani tanlang!', 'error'); return; }
+  if (salary <= 0 && avans <= 0) { toast("Maosh yoki avans kiriting!", 'error'); return; }
+
+  const btn = document.getElementById('submit-btn');
+  btn.textContent = '⏳ Saqlanmoqda...';
+  btn.classList.add('btn-disabled');
+
+  try {
+    const now = new Date().toLocaleString('uz-UZ');
+    const row = [
+      date,
+      employee,
+      type,
+      salary || '',
+      avans  || '',
+      salary + avans,
+      note,
+      now,
+      APP.user?.name || 'Noma\'lum'
+    ];
+
+    await appendRow(row);
+
+    // Cache locally
+    APP.history.unshift({ date, employee, type, salary, avans, total: salary+avans, note, time: now });
+    if (APP.history.length > 50) APP.history.pop();
+
+    toast('✅ Google Sheetsga saqlandi!', 'success');
+    resetForm();
+    setTimeout(() => showScreen('home'), 1200);
+  } catch(e) {
+    toast('Xatolik: ' + e.message, 'error');
+  } finally {
+    btn.textContent = '📤 Google Sheetsga yuborish';
+    btn.classList.remove('btn-disabled');
+  }
+}
+
+// ══════════════════════════════════════════
+//  HISTORY
+// ══════════════════════════════════════════
+async function loadHistory() {
+  const list = document.getElementById('history-list');
+  list.innerHTML = '<div class="empty-state"><div class="spinner"></div><div class="empty-text" style="margin-top:12px">Yuklanmoqda...</div></div>';
+  document.getElementById('history-sub').textContent = 'Yuklanmoqda...';
+
+  try {
+    const rows = await getRows();
+    APP.history = rows.map(r => ({
+      date:     r[0] || '',
+      employee: r[1] || '',
+      type:     r[2] || '',
+      salary:   parseFloat(r[3]) || 0,
+      avans:    parseFloat(r[4]) || 0,
+      total:    parseFloat(r[5]) || 0,
+      note:     r[6] || '',
+      time:     r[7] || '',
+    })).reverse();
+
+    populateMonthFilter();
+    populateEmployeeSelect();
+    document.getElementById('history-sub').textContent = `${rows.length} ta yozuv`;
+    filterHistory();
+  } catch(e) {
+    list.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-text">${e.message}</div></div>`;
+  }
+}
+
+function populateMonthFilter() {
+  const months = [...new Set(APP.history.map(h => h.date.slice(0,7)).filter(Boolean))];
+  const sel = document.getElementById('filter-month');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">Barcha oylar</option>';
+  months.forEach(m => {
+    const opt = document.createElement('option');
+    opt.value = m;
+    const [y, mo] = m.split('-');
+    opt.textContent = `${mo}-oy ${y}`;
+    if (m === cur) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+
+function filterHistory() {
+  const month = document.getElementById('filter-month').value;
+  const emp   = document.getElementById('filter-emp').value;
+  let data = APP.history;
+  if (month) data = data.filter(h => h.date.startsWith(month));
+  if (emp)   data = data.filter(h => h.employee === emp);
+  renderHistory(data);
+}
+
+function renderHistory(data) {
+  const list = document.getElementById('history-list');
+  if (!data.length) {
+    list.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-text">Yozuvlar topilmadi</div></div>';
+    return;
+  }
+  list.innerHTML = data.map(h => `
+    <div class="entry-card">
+      <div class="entry-top">
+        <div class="entry-name">${h.employee}</div>
+        <div class="entry-date">${formatDate(h.date)}</div>
+      </div>
+      <div class="entry-amounts">
+        ${h.salary ? `<span class="amount-tag amount-salary">Maosh: ${formatMoney(h.salary)}</span>` : ''}
+        ${h.avans  ? `<span class="amount-tag amount-avans">Avans: ${formatMoney(h.avans)}</span>`   : ''}
+        <span class="amount-tag amount-total">Jami: ${formatMoney(h.total)}</span>
+      </div>
+      ${h.note ? `<div class="entry-note">📝 ${h.note}</div>` : ''}
+    </div>
+  `).join('');
+}
+
+// ══════════════════════════════════════════
+//  HOME / DASHBOARD
+// ══════════════════════════════════════════
+function refreshHome() {
+  const today = new Date().toISOString().split('T')[0];
+  const month = today.slice(0,7);
+
+  const todayEntries = APP.history.filter(h => h.date === today);
+  const monthEntries = APP.history.filter(h => h.date.startsWith(month));
+  const totalMonth   = monthEntries.reduce((s, h) => s + (h.total||0), 0);
+
+  document.getElementById('stat-today').textContent     = todayEntries.length;
+  document.getElementById('stat-month').textContent     = monthEntries.length;
+  document.getElementById('stat-employees').textContent = APP.employees.length;
+  document.getElementById('stat-total').textContent     = formatMoney(totalMonth);
+  document.getElementById('home-subtitle').textContent  = APP.user ? `Xush kelibsiz, ${APP.user.name.split(' ')[0]}!` : 'Google Sheets bilan ulangan';
+
+  updateUserUI();
+
+  // Recent 3
+  const recent = document.getElementById('recent-entries');
+  const last3 = APP.history.slice(0, 3);
+  if (!last3.length) {
+    recent.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-text">Hozircha hech narsa yo\'q</div></div>';
+  } else {
+    recent.innerHTML = last3.map(h => `
+      <div class="entry-card">
+        <div class="entry-top">
+          <div class="entry-name">${h.employee}</div>
+          <div class="entry-date">${formatDate(h.date)}</div>
+        </div>
+        <div class="entry-amounts">
+          ${h.salary ? `<span class="amount-tag amount-salary">${formatMoney(h.salary)}</span>` : ''}
+          ${h.avans  ? `<span class="amount-tag amount-avans">Av: ${formatMoney(h.avans)}</span>`  : ''}
+          <span class="amount-tag amount-total">Jami: ${formatMoney(h.total)}</span>
+        </div>
+      </div>
+    `).join('');
+  }
+}
+
+// ══════════════════════════════════════════
+//  SETTINGS
+// ══════════════════════════════════════════
+function refreshSettings() {
+  const sheetId = APP.sheetId || '—';
+  document.getElementById('setting-sheet-id').textContent = sheetId.length > 30 ? sheetId.slice(0,30) + '...' : sheetId;
+  document.getElementById('setting-emp-count').textContent = APP.employees.length + ' ta xodim';
+  updateUserUI();
+
+  // Prefill setup fields if visible
+  document.getElementById('setup-client-id').value = APP.clientId || '';
+  document.getElementById('setup-sheet-id').value  = APP.sheetId  || '';
+  document.getElementById('setup-currency').value  = APP.currency || "so'm";
+}
+
+function openSheetsLink() {
+  if (!APP.sheetId) { toast('Sheets ID kiritilmagan!', 'error'); return; }
+  window.open(`https://docs.google.com/spreadsheets/d/${APP.sheetId}/edit`, '_blank');
+}
+
+// ══════════════════════════════════════════
+//  EMPLOYEES
+// ══════════════════════════════════════════
+function openAddEmployee() {
+  renderEmployeeTags();
+  document.getElementById('new-employee-input').value = '';
+  openModal('modal-employee');
+}
+
+function openEmployeeManager() {
+  renderEmployeeManagerTags();
+  document.getElementById('manager-new-emp').value = '';
+  document.getElementById('setting-emp-count').textContent = APP.employees.length + ' ta xodim';
+  openModal('modal-emp-manager');
+}
+
+function renderEmployeeTags() {
+  const list = document.getElementById('employee-tag-list');
+  if (!APP.employees.length) {
+    list.innerHTML = '<span style="color:var(--txt3);font-size:13px">Xodimlar yo\'q</span>';
+    return;
+  }
+  list.innerHTML = APP.employees.map((emp, i) =>
+    `<span class="tag" onclick="selectEmployee('${emp}')">${emp}</span>`
+  ).join('');
+}
+
+function renderEmployeeManagerTags() {
+  const list = document.getElementById('emp-manager-list');
+  if (!APP.employees.length) {
+    list.innerHTML = '<span style="color:var(--txt3);font-size:13px">Xodimlar yo\'q</span>';
+    return;
+  }
+  list.innerHTML = APP.employees.map((emp, i) =>
+    `<span class="tag">${emp} <span class="tag-delete" onclick="removeEmployee(${i})">✕</span></span>`
+  ).join('');
+}
+
+function selectEmployee(name) {
+  document.getElementById('form-employee').value = name;
+  closeModal('modal-employee');
+  showScreen('form');
+}
+
+function addEmployee() {
+  const input = document.getElementById('new-employee-input');
+  const name = input.value.trim();
+  if (!name) { toast('Ism kiriting!', 'error'); return; }
+  if (APP.employees.includes(name)) { toast('Bu xodim allaqachon bor!', 'error'); return; }
+  APP.employees.push(name);
+  saveConfig();
+  input.value = '';
+  renderEmployeeTags();
+  populateEmployeeSelect();
+  document.getElementById('setting-emp-count').textContent = APP.employees.length + ' ta xodim';
+  toast(`✅ ${name} qo'shildi!`, 'success');
+}
+
+function addEmployeeFromManager() {
+  const input = document.getElementById('manager-new-emp');
+  const name = input.value.trim();
+  if (!name) { toast('Ism kiriting!', 'error'); return; }
+  if (APP.employees.includes(name)) { toast('Bu xodim allaqachon bor!', 'error'); return; }
+  APP.employees.push(name);
+  saveConfig();
+  input.value = '';
+  renderEmployeeManagerTags();
+  populateEmployeeSelect();
+  document.getElementById('setting-emp-count').textContent = APP.employees.length + ' ta xodim';
+  toast(`✅ ${name} qo'shildi!`, 'success');
+}
+
+function removeEmployee(index) {
+  const name = APP.employees[index];
+  APP.employees.splice(index, 1);
+  saveConfig();
+  renderEmployeeManagerTags();
+  populateEmployeeSelect();
+  document.getElementById('setting-emp-count').textContent = APP.employees.length + ' ta xodim';
+  toast(`${name} o'chirildi`, 'error');
+}
+
+// ══════════════════════════════════════════
+//  MODAL
+// ══════════════════════════════════════════
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+}
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+function showProfileMenu() {
+  updateUserUI();
+  openModal('modal-profile');
+}
+
+// Close modal on overlay click
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', function(e) {
+    if (e.target === this) this.classList.remove('open');
+  });
+});
+
+// ══════════════════════════════════════════
+//  TOAST
+// ══════════════════════════════════════════
+let toastTimer;
+function toast(msg, type = '') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'show ' + type;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.className = '', 2800);
+}
+
+// ══════════════════════════════════════════
+//  UTILS
+// ══════════════════════════════════════════
+function formatMoney(n) {
+  if (!n) return '0';
+  return Number(n).toLocaleString('uz-UZ');
+}
+
+function formatDate(str) {
+  if (!str) return '';
+  const [y,m,d] = str.split('-');
+  const months = ['yan','fev','mar','apr','may','iyn','iyl','avg','sen','okt','noy','dek'];
+  return `${parseInt(d)} ${months[parseInt(m)-1]} ${y}`;
+}
+
+function updateCurrencyLabels() {
+  document.getElementById('currency-label1').textContent = APP.currency;
+  document.getElementById('currency-label2').textContent = APP.currency;
+  const totalEl = document.getElementById('form-total');
+  if (totalEl) totalEl.textContent = '0 ' + APP.currency;
+}
+
+// ══════════════════════════════════════════
+//  SERVICE WORKER
+// ══════════════════════════════════════════
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/hisobot-sw.js').catch(() => {});
+}
+</script>
+
+<!-- Google APIs (loaded last for faster initial render) -->
+<script async defer src="https://apis.google.com/js/api.js"></script>
+<script async defer src="https://accounts.google.com/gsi/client"></script>
+
+</body>
+</html>
