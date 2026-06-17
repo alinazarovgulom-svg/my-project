@@ -38,7 +38,7 @@ export default function StockIn() {
   const filtered = [...activeMovements]
     .filter(m => m.type === 'kirim')
     .filter(m => !search || m.productName?.toLowerCase().includes(search.toLowerCase()) || m.supplier?.toLowerCase().includes(search.toLowerCase()))
-    .sort((a, b) => b.date?.localeCompare(a.date))
+    .sort((a, b) => (b.date || '').localeCompare(a.date || ''))
 
   const openAdd = () => {
     setForm(emptyForm(products))
@@ -68,7 +68,7 @@ export default function StockIn() {
     if (isTeam && teamId) {
       await addTeamMovement(teamId, mv)
     } else {
-      saveMovements([...movements, mv])
+      saveMovements([...movements, mv], products)
     }
     await addLogEntry(user?.id, {
       action: 'kirim_qoshildi',

@@ -56,7 +56,7 @@ export default function AuditLog() {
   useEffect(() => {
     if (!teamId) return
     const unsub = subscribeToTeamLog(teamId, (log) => {
-      setTeamLog([...log].sort((a, b) => b.timestamp?.localeCompare(a.timestamp)))
+      setTeamLog([...log].sort((a, b) => (b.timestamp || '').localeCompare(a.timestamp || '')))
     })
     return () => unsub()
   }, [teamId])

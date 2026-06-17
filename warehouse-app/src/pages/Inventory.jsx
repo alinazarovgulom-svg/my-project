@@ -23,7 +23,7 @@ export default function Inventory() {
     const outQty = activeMovements.filter(m => m.productId === item.productId && m.type === 'chiqim').reduce((s, m) => s + m.quantity, 0)
     const isLow = prod?.minStock && item.quantity < prod.minStock
     const stockValue = item.quantity * (prod?.purchasePrice || 0)
-    return { ...item, prod, inQty, outQty, isLow, stockValue, avgCostCalc: prod?.purchasePrice || 0 }
+    return { ...item, prod, inQty, outQty, isLow, stockValue, avgCostCalc: avgCost || prod?.purchasePrice || 0 }
   })
 
   const totalValue = enriched.reduce((s, i) => s + i.stockValue, 0)

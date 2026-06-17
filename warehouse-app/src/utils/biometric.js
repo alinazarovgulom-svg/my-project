@@ -8,7 +8,8 @@ const toB64 = (buf) =>
 
 const fromB64 = (str) => {
   const b64 = str.replace(/-/g, '+').replace(/_/g, '/')
-  return Uint8Array.from(atob(b64 + '=='.slice((b64.length * 3) & 3)), c => c.charCodeAt(0))
+  const pad = (4 - b64.length % 4) % 4
+  return Uint8Array.from(atob(b64 + '='.repeat(pad)), c => c.charCodeAt(0))
 }
 
 export const isBiometricSupported = () =>

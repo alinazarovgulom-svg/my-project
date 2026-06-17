@@ -30,12 +30,12 @@ export default function Reports() {
   const filtered = useMemo(() => {
     if (!range) return activeMovements
     return activeMovements.filter(mv => {
+      if (!mv.date) return false
       try {
-        const d = parseISO(mv.date)
-        return isWithinInterval(d, range)
+        return isWithinInterval(parseISO(mv.date), range)
       } catch { return false }
     })
-  }, [activeMovements, period])
+  }, [activeMovements, period, range])
 
   const totalIn = filtered.filter(m => m.type === 'kirim').reduce((s, m) => s + m.total, 0)
   const totalOut = filtered.filter(m => m.type === 'chiqim').reduce((s, m) => s + m.total, 0)

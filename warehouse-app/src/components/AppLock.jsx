@@ -10,6 +10,7 @@ export default function AppLock({ children, onUnlock }) {
   const [error, setError] = useState(false)
   const [bioReady, setBioReady] = useState(false)
   const [bioError, setBioError] = useState('')
+  const wasHidden = useRef(false)
 
   const getPIN = useCallback(() => {
     if (!user) return null
@@ -37,9 +38,11 @@ export default function AppLock({ children, onUnlock }) {
 
   useEffect(() => {
     const handler = () => {
-      if (!document.hidden) {
-        const storedPin = getPIN()
-        if (storedPin) setLocked(true)
+      if (document.hidden) {
+        wasHidden.current = true
+      } else if (wasHidden.current) {
+        wasHidden.current = false
+        if (getPIN()) setLocked(true)
       }
     }
     document.addEventListener('visibilitychange', handler)

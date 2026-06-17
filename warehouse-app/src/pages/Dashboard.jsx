@@ -30,7 +30,7 @@ export default function Dashboard() {
     return prod?.minStock && i.quantity < prod.minStock && i.quantity >= 0
   })
 
-  const recent = [...activeMovements].sort((a, b) => b.date?.localeCompare(a.date)).slice(0, 6)
+  const recent = [...activeMovements].sort((a, b) => (b.date || '').localeCompare(a.date || '')).slice(0, 6)
 
   return (
     <div className="min-h-screen bg-slate-950 pb-24">
@@ -140,8 +140,8 @@ export default function Dashboard() {
                 const prod = products.find(p => p.id === item.productId)
                 return (
                   <div key={item.productId} className="flex justify-between items-center">
-                    <span className="text-white text-sm">{item.productName}</span>
-                    <span className="text-amber-400 text-sm font-medium">{fmtNum(item.quantity)} {item.unit}</span>
+                    <span className="text-white text-sm">{prod?.name || item.productName}</span>
+                    <span className="text-amber-400 text-sm font-medium">{fmtNum(item.quantity)} {prod?.unit || item.unit}</span>
                   </div>
                 )
               })}

@@ -26,8 +26,9 @@ export const subscribeToCloud = (userId, key, callback) => {
   if (!userId) return () => {}
   return onSnapshot(
     doc(db, 'wh_users', userId, 'data', key),
+    { includeMetadataChanges: true },
     (snap) => {
-      if (snap.exists()) {
+      if (snap.exists() && !snap.metadata.hasPendingWrites) {
         try { callback(JSON.parse(snap.data().value)) } catch (e) {}
       }
     },

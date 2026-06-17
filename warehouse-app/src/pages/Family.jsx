@@ -33,7 +33,7 @@ export default function Family() {
     setLoading(true)
     setError('')
     const res = await joinTeam(joinCode.trim(), user.id, user.username, user.fullName)
-    if (res.error) { setError(t('teamNotFound')); setLoading(false); return }
+    if (res.error) { setError(res.error); setLoading(false); return }
     refreshTeam()
     setLoading(false)
     setJoinModal(false)

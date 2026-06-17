@@ -45,7 +45,7 @@ export default function StockOut() {
   const filtered = [...activeMovements]
     .filter(m => m.type === 'chiqim')
     .filter(m => !search || m.productName?.toLowerCase().includes(search.toLowerCase()) || m.customer?.toLowerCase().includes(search.toLowerCase()))
-    .sort((a, b) => b.date?.localeCompare(a.date))
+    .sort((a, b) => (b.date || '').localeCompare(a.date || ''))
 
   const openAdd = () => {
     setForm(emptyForm(products))
@@ -103,7 +103,7 @@ export default function StockOut() {
     if (isTeam && teamId) {
       await deleteTeamMovement(teamId, mv.id)
     } else {
-      saveMovements(movements.filter(m => m.id !== mv.id))
+      saveMovements(movements.filter(m => m.id !== mv.id), products)
     }
     await addLogEntry(user?.id, {
       action: 'chiqim_ochirildi',

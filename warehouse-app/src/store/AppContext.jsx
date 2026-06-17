@@ -22,13 +22,12 @@ export function AppProvider({ children }) {
   const [products, setProducts] = useState([])
   const [movements, setMovements] = useState([])
   const [team, setTeam] = useState(null)
-  const [teamId, setTeamId] = useState(() => getUserTeamId(getCurrentUser()?.id))
+  const [teamId, setTeamId] = useState(() => { const u = getCurrentUser(); return u ? getUserTeamId(u.id) : null })
   const [syncing, setSyncing] = useState(false)
   // Oflayn holat
   const [online, setOnline] = useState(() => navigator.onLine)
   const [pendingCount, setPendingCount] = useState(0)
   const [syncPhase, setSyncPhase] = useState(null) // 'syncing' | 'done' | null
-  const skipCloudUpdate = useRef(false)
   const wasOffline = useRef(false)
 
   const uid = user?.id
@@ -106,11 +105,9 @@ export function AppProvider({ children }) {
     loadCloud()
 
     const unsubProducts = subscribeToCloud(uid, 'products', (data) => {
-      if (skipCloudUpdate.current) return
       setProducts(data); saveData('products', uid, data)
     })
     const unsubMovements = subscribeToCloud(uid, 'movements', (data) => {
-      if (skipCloudUpdate.current) return
       setMovements(data); saveData('movements', uid, data)
     })
 
@@ -134,10 +131,7 @@ export function AppProvider({ children }) {
     if (uid) {
       saveData('products', uid, data)
       incrementPending()
-      skipCloudUpdate.current = true
-      syncToCloud(uid, 'products', data).finally(() => {
-        setTimeout(() => { skipCloudUpdate.current = false }, 500)
-      })
+      syncToCloud(uid, 'products', data)
     }
   }, [uid, incrementPending])
 
@@ -146,10 +140,7 @@ export function AppProvider({ children }) {
     if (uid) {
       saveData('movements', uid, data)
       incrementPending()
-      skipCloudUpdate.current = true
-      syncToCloud(uid, 'movements', data).finally(() => {
-        setTimeout(() => { skipCloudUpdate.current = false }, 500)
-      })
+      syncToCloud(uid, 'movements', data)
     }
     const prods = currentProducts || []
     if (prods.length > 0) {
@@ -204,10 +195,10 @@ export function AppProvider({ children }) {
   const canEdit = (ownerId) => {
     if (!userRole) return false
     if (userRole === 'admin') return true
-    if ((userRole === 'member' || userRole === 'manager') && ownerId === uid) return true
+    if (userRole === 'manager' && ownerId === uid) return true
     return false
   }
-  const canAdd = () => userRole === 'admin' || userRole === 'manager' || userRole === 'member'
+  const canAdd = () => userRole === 'admin' || userRole === 'manager'
 
   const getTeamInventory = useCallback(() => {
     if (!team) return []
