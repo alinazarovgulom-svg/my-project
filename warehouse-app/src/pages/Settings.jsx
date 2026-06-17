@@ -4,7 +4,7 @@ import { useApp } from '../store/AppContext'
 import { useLang } from '../i18n/LangContext'
 import { getUsers, saveUsers, hashPassword, setCurrentUser } from '../store/storage'
 import { requestPermission, isGranted } from '../utils/notifications'
-import { Lock, LogOut, Globe, Info, ChevronRight, Shield, Package, Boxes, Bell, BellOff } from 'lucide-react'
+import { Lock, LogOut, Globe, Info, ChevronRight, Shield, Package, Boxes, Bell, BellOff, ClipboardList } from 'lucide-react'
 import Modal from '../components/Modal'
 
 export default function Settings() {
@@ -142,6 +142,7 @@ export default function Settings() {
             { icon: Lock, label: t('changePassword'), onClick: () => setPassModal(true) },
             { icon: Shield, label: t('pinLock') + (hasPin ? ' ✓' : ''), onClick: () => setPinModal(true) },
             { icon: Package, label: t('products'), onClick: () => navigate('/products') },
+            { icon: ClipboardList, label: 'Harakat tarixi', onClick: () => navigate('/audit') },
             { icon: UsersIcon, label: t('teamMode'), onClick: () => navigate('/team') },
           ].map(({ icon: Icon, label, onClick }, i, arr) => (
             <button key={i} onClick={onClick}

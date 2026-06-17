@@ -5,6 +5,7 @@ import { fmtNum } from '../utils/format'
 import { generateId } from '../store/storage'
 import { DEFAULT_CATEGORIES, UNITS } from '../store/AppContext'
 import { downloadTemplate, parseExcelFile } from '../utils/excelImport'
+import { addLogEntry } from '../store/auditLog'
 import Modal from '../components/Modal'
 import SwipeableRow from '../components/SwipeableRow'
 import {
@@ -50,7 +51,7 @@ export default function Products() {
     setEditId(p.id); setModalOpen(true)
   }
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!form.name.trim()) return
     if (editId) {
       saveProducts(products.map(p => p.id === editId ? {
@@ -59,22 +60,46 @@ export default function Products() {
         salePrice: Number(form.salePrice) || 0,
         minStock: Number(form.minStock) || 0
       } : p))
+      await addLogEntry(user?.id, {
+        action: 'mahsulot_tahrirlandi',
+        userId: user?.id,
+        userName: user?.fullName || user?.username,
+        productId: editId,
+        productName: form.name
+      })
     } else {
-      saveProducts([...products, {
+      const newProduct = {
         id: generateId(), ...form,
         purchasePrice: Number(form.purchasePrice) || 0,
         salePrice: Number(form.salePrice) || 0,
         minStock: Number(form.minStock) || 0,
         createdAt: new Date().toISOString(),
         userId: user?.id
-      }])
+      }
+      saveProducts([...products, newProduct])
+      await addLogEntry(user?.id, {
+        action: 'mahsulot_qoshildi',
+        userId: user?.id,
+        userName: user?.fullName || user?.username,
+        productId: newProduct.id,
+        productName: newProduct.name,
+        price: newProduct.purchasePrice
+      })
     }
     setModalOpen(false)
   }
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (!confirm(t('deleteConfirm'))) return
+    const prod = products.find(p => p.id === id)
     saveProducts(products.filter(p => p.id !== id))
+    await addLogEntry(user?.id, {
+      action: 'mahsulot_ochirildi',
+      userId: user?.id,
+      userName: user?.fullName || user?.username,
+      productId: id,
+      productName: prod?.name || ''
+    })
   }
 
   // --- Import ---
@@ -101,13 +126,19 @@ export default function Products() {
     e.target.value = ''
   }
 
-  const handleImportConfirm = () => {
+  const handleImportConfirm = async () => {
     if (!importResult?.products?.length) return
-    // Allaqachon mavjud nomlarni o'tkazib yuborish (nom bo'yicha tekshiruv)
     const existingNames = new Set(products.map(p => p.name.toLowerCase()))
     const newOnes = importResult.products.filter(p => !existingNames.has(p.name.toLowerCase()))
     const duplicates = importResult.products.length - newOnes.length
     saveProducts([...products, ...newOnes])
+    await addLogEntry(user?.id, {
+      action: 'excel_import',
+      userId: user?.id,
+      userName: user?.fullName || user?.username,
+      count: newOnes.length,
+      productName: `${newOnes.length} ta mahsulot import qilindi`
+    })
     setImportDone(true)
     setImportResult(r => ({ ...r, duplicates, imported: newOnes.length }))
   }

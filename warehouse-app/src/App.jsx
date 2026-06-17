@@ -15,6 +15,7 @@ import Inventory from './pages/Inventory'
 import Reports from './pages/Reports'
 import Settings from './pages/Settings'
 import Family from './pages/Family'
+import AuditLog from './pages/AuditLog'
 import { useState, useEffect, useRef } from 'react'
 import './index.css'
 
@@ -34,6 +35,7 @@ function ProtectedLayout() {
         <Route path="/reports" element={<Reports />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/team" element={<Family />} />
+        <Route path="/audit" element={<AuditLog />} />
       </Routes>
       <BottomNav />
     </>

@@ -7,6 +7,7 @@ import { addTeamMovement, deleteTeamMovement } from '../store/family'
 import Modal from '../components/Modal'
 import SwipeableRow from '../components/SwipeableRow'
 import { PackagePlus, Search, Users } from 'lucide-react'
+import { addLogEntry } from '../store/auditLog'
 
 const emptyForm = (products) => ({
   productId: products[0]?.id || '',
@@ -68,6 +69,19 @@ export default function StockIn() {
     } else {
       saveMovements([...movements, mv])
     }
+    await addLogEntry(user?.id, {
+      action: 'kirim_qoshildi',
+      userId: user?.id,
+      userName: user?.fullName || user?.username,
+      productId: mv.productId,
+      productName: mv.productName,
+      quantity: mv.quantity,
+      unit: mv.unit,
+      price: mv.price,
+      total: mv.total,
+      supplier: mv.supplier,
+      note: mv.note
+    }, isTeam ? teamId : null)
     setModalOpen(false)
   }
 
@@ -78,6 +92,16 @@ export default function StockIn() {
     } else {
       saveMovements(movements.filter(m => m.id !== mv.id))
     }
+    await addLogEntry(user?.id, {
+      action: 'kirim_ochirildi',
+      userId: user?.id,
+      userName: user?.fullName || user?.username,
+      productId: mv.productId,
+      productName: mv.productName,
+      quantity: mv.quantity,
+      unit: mv.unit,
+      total: mv.total
+    }, isTeam ? teamId : null)
   }
 
   return (
