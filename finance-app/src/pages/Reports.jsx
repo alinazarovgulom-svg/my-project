@@ -77,45 +77,14 @@ export default function Reports() {
   const exportPDF = async () => {
     setLoading(true)
     try {
-      const { default: jsPDF } = await import('jspdf')
-      const { default: autoTable } = await import('jspdf-autotable')
-
-      const doc = new jsPDF()
-      doc.setFont('helvetica')
-      doc.setFontSize(18)
-      doc.text('Moliyaviy Hisobot', 14, 20)
-      doc.setFontSize(11)
-      doc.text(`Foydalanuvchi: ${user?.name}`, 14, 30)
-      doc.text(`Davr: ${startDate} - ${endDate}`, 14, 37)
-      doc.text(`Sana: ${format(new Date(), 'dd.MM.yyyy')}`, 14, 44)
-
-      doc.setFontSize(13)
-      doc.text('Umumiy ko\'rsatkichlar', 14, 55)
-      autoTable(doc, {
-        startY: 58,
-        head: [['Kirim', 'Chiqim', 'Sof foyda']],
-        body: [[`${fmt(income)} so'm`, `${fmt(expense)} so'm`, `${fmt(net)} so'm`]],
-        styles: { fontSize: 10 },
-        headStyles: { fillColor: [79, 142, 247] }
+      await exportReportPDF({
+        filtered,
+        startDate,
+        endDate,
+        userName: user?.name || '',
+        currencyStats,
+        filename: `hisobot_${startDate}_${endDate}.pdf`
       })
-
-      const afterSummary = doc.lastAutoTable?.finalY ?? 70
-      doc.text('Operatsiyalar', 14, afterSummary + 10)
-      autoTable(doc, {
-        startY: afterSummary + 13,
-        head: [['Sana', 'Tur', 'Kategoriya', 'Izoh', 'Summa']],
-        body: filtered.map(t => [
-          format(new Date(t.date), 'dd.MM.yyyy'),
-          t.type === 'income' ? 'Kirim' : 'Chiqim',
-          t.category,
-          t.note || '',
-          `${t.type === 'income' ? '+' : '-'}${fmt(t.amount)}`
-        ]),
-        styles: { fontSize: 9 },
-        headStyles: { fillColor: [79, 142, 247] }
-      })
-
-      doc.save(`hisobot_${startDate}_${endDate}.pdf`)
     } catch (e) {
       alert('PDF yaratishda xatolik: ' + e.message)
     }
