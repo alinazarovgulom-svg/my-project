@@ -117,9 +117,6 @@ export default function Categories() {
         )}
       </div>
 
-      <button onClick={handleReset} className="text-gray-500 text-sm text-center underline">
-        Standartga qaytarish
-      </button>
     </div>
   )
 }
