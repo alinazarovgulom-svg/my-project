@@ -1,6 +1,6 @@
 import { db } from './firebase'
 import {
-  doc, setDoc, getDoc, deleteDoc, onSnapshot, serverTimestamp
+  doc, setDoc, getDoc, updateDoc, deleteDoc, onSnapshot, arrayUnion, arrayRemove
 } from 'firebase/firestore'
 
 const FAMILY_PREFIX = 'finance_family_'
@@ -61,7 +61,7 @@ export const getUserFamilyId = (userId) => {
   return localStorage.getItem(USER_FAMILY_KEY(userId))
 }
 
-export const createFamily = async (userId, username, fullName, familyName) => {
+export const createFamily = async (userId, username, fullName, familyName, personalTransactions = [], personalDebts = []) => {
   const familyId = generateFamilyCode()
   const family = {
     id: familyId,
@@ -71,8 +71,8 @@ export const createFamily = async (userId, username, fullName, familyName) => {
     members: [
       { userId, username, fullName, role: 'admin', joinedAt: new Date().toISOString() }
     ],
-    transactions: [],
-    debts: []
+    transactions: personalTransactions,
+    debts: personalDebts
   }
   saveFamilyLocal(family)
   localStorage.setItem(USER_FAMILY_KEY(userId), familyId)
@@ -89,6 +89,7 @@ export const joinFamily = async (code, userId, username, fullName) => {
   const alreadyMember = family.members.find(m => m.userId === userId)
   if (alreadyMember) return { error: 'Siz allaqachon bu guruh a\'zosisiz' }
 
+  // Faqat a'zo qo'shiladi — shaxsiy ma'lumotlari guruhga o'tmaydi
   family.members.push({ userId, username, fullName, role: 'member', joinedAt: new Date().toISOString() })
   saveFamilyLocal(family)
   localStorage.setItem(USER_FAMILY_KEY(userId), code)
@@ -97,78 +98,121 @@ export const joinFamily = async (code, userId, username, fullName) => {
 }
 
 export const leaveFamily = async (familyId, userId) => {
-  let family = await getFamilyFromCloud(familyId) || getFamilyLocal(familyId)
-  if (!family) return
-
-  family.members = family.members.filter(m => m.userId !== userId)
-  if (family.members.length === 0) {
-    localStorage.removeItem(`${FAMILY_PREFIX}${familyId}`)
-    try { await deleteDoc(doc(db, 'families', familyId)) } catch {}
-  } else {
-    if (!family.members.find(m => m.role === 'admin')) {
-      family.members[0].role = 'admin'
+  try {
+    const snap = await getDoc(doc(db, 'families', familyId))
+    if (!snap.exists()) { localStorage.removeItem(USER_FAMILY_KEY(userId)); return }
+    const family = snap.data()
+    const leavingMember = family.members.find(m => m.userId === userId)
+    const remaining = family.members.filter(m => m.userId !== userId)
+    if (remaining.length === 0) {
+      localStorage.removeItem(`${FAMILY_PREFIX}${familyId}`)
+      localStorage.removeItem(USER_FAMILY_KEY(userId))
+      try { await deleteDoc(doc(db, 'families', familyId)) } catch {}
+      return
     }
-    saveFamilyLocal(family)
-    await saveFamilyToCloud(family)
+    let updatedMembers = remaining
+    if (leavingMember?.role === 'admin' && !remaining.find(m => m.role === 'admin')) {
+      updatedMembers = [{ ...remaining[0], role: 'admin' }, ...remaining.slice(1)]
+    }
+    await updateDoc(doc(db, 'families', familyId), { members: updatedMembers })
+    localStorage.removeItem(USER_FAMILY_KEY(userId))
+  } catch (e) {
+    console.warn('[family] leaveFamily failed:', e?.code || e?.message)
   }
-  localStorage.removeItem(USER_FAMILY_KEY(userId))
 }
 
 export const updateMemberRole = async (familyId, targetUserId, newRole, requestingUserId) => {
-  let family = await getFamilyFromCloud(familyId) || getFamilyLocal(familyId)
-  if (!family) return { error: 'Guruh topilmadi' }
-
-  const requester = family.members.find(m => m.userId === requestingUserId)
-  if (!requester || requester.role !== 'admin') return { error: 'Ruxsat yo\'q' }
-
-  const idx = family.members.findIndex(m => m.userId === targetUserId)
-  if (idx === -1) return { error: 'A\'zo topilmadi' }
-
-  family.members[idx].role = newRole
-  saveFamilyLocal(family)
-  await saveFamilyToCloud(family)
-  return { success: true }
+  try {
+    const snap = await getDoc(doc(db, 'families', familyId))
+    if (!snap.exists()) return { error: 'Guruh topilmadi' }
+    const family = snap.data()
+    const requester = family.members.find(m => m.userId === requestingUserId)
+    if (!requester || requester.role !== 'admin') return { error: 'Ruxsat yo\'q' }
+    const updatedMembers = family.members.map(m =>
+      m.userId === targetUserId ? { ...m, role: newRole } : m
+    )
+    await updateDoc(doc(db, 'families', familyId), { members: updatedMembers })
+    return { success: true }
+  } catch (e) {
+    return { error: e?.message || 'Xatolik' }
+  }
 }
 
 export const removeMember = async (familyId, targetUserId, requestingUserId) => {
-  let family = await getFamilyFromCloud(familyId) || getFamilyLocal(familyId)
-  if (!family) return { error: 'Guruh topilmadi' }
-
-  const requester = family.members.find(m => m.userId === requestingUserId)
-  if (!requester || requester.role !== 'admin') return { error: 'Ruxsat yo\'q' }
-
-  family.members = family.members.filter(m => m.userId !== targetUserId)
-  saveFamilyLocal(family)
-  localStorage.removeItem(USER_FAMILY_KEY(targetUserId))
-  await saveFamilyToCloud(family)
-  return { success: true }
+  try {
+    const snap = await getDoc(doc(db, 'families', familyId))
+    if (!snap.exists()) return { error: 'Guruh topilmadi' }
+    const family = snap.data()
+    const requester = family.members.find(m => m.userId === requestingUserId)
+    if (!requester || requester.role !== 'admin') return { error: 'Ruxsat yo\'q' }
+    const updatedMembers = family.members.filter(m => m.userId !== targetUserId)
+    await updateDoc(doc(db, 'families', familyId), { members: updatedMembers })
+    localStorage.removeItem(USER_FAMILY_KEY(targetUserId))
+    return { success: true }
+  } catch (e) {
+    return { error: e?.message || 'Xatolik' }
+  }
 }
 
 export const addFamilyTransaction = async (familyId, transaction) => {
-  let family = await getFamilyFromCloud(familyId) || getFamilyLocal(familyId)
-  if (!family) return
-
-  family.transactions = [...(family.transactions || []), transaction]
-  saveFamilyLocal(family)
-  await saveFamilyToCloud(family)
+  try {
+    await updateDoc(doc(db, 'families', familyId), {
+      transactions: arrayUnion(transaction)
+    })
+  } catch (e) {
+    console.warn('[family] addFamilyTransaction failed:', e?.code || e?.message)
+  }
 }
 
 export const deleteFamilyTransaction = async (familyId, transactionId) => {
-  let family = await getFamilyFromCloud(familyId) || getFamilyLocal(familyId)
-  if (!family) return
-
-  family.transactions = (family.transactions || []).filter(t => t.id !== transactionId)
-  saveFamilyLocal(family)
-  await saveFamilyToCloud(family)
+  // arrayRemove requires exact object match — fetch first to find the object
+  try {
+    const snap = await getDoc(doc(db, 'families', familyId))
+    if (!snap.exists()) return
+    const family = snap.data()
+    const tx = (family.transactions || []).find(t => t.id === transactionId)
+    if (!tx) return
+    await updateDoc(doc(db, 'families', familyId), {
+      transactions: arrayRemove(tx)
+    })
+  } catch (e) {
+    console.warn('[family] deleteFamilyTransaction failed:', e?.code || e?.message)
+  }
 }
 
 export const addFamilyDebt = async (familyId, debt) => {
-  let family = await getFamilyFromCloud(familyId) || getFamilyLocal(familyId)
-  if (!family) return
+  try {
+    await updateDoc(doc(db, 'families', familyId), {
+      debts: arrayUnion(debt)
+    })
+  } catch (e) {
+    console.warn('[family] addFamilyDebt failed:', e?.code || e?.message)
+  }
+}
 
-  family.debts = [...(family.debts || []), debt]
-  saveFamilyLocal(family)
-  await saveFamilyToCloud(family)
+export const deleteFamilyDebt = async (familyId, debtId) => {
+  try {
+    const snap = await getDoc(doc(db, 'families', familyId))
+    if (!snap.exists()) return
+    const family = snap.data()
+    const debt = (family.debts || []).find(d => d.id === debtId)
+    if (!debt) return
+    await updateDoc(doc(db, 'families', familyId), { debts: arrayRemove(debt) })
+  } catch (e) {
+    console.warn('[family] deleteFamilyDebt failed:', e?.code || e?.message)
+  }
+}
+
+export const updateFamilyDebt = async (familyId, updatedDebt) => {
+  try {
+    const snap = await getDoc(doc(db, 'families', familyId))
+    if (!snap.exists()) return
+    const family = snap.data()
+    const updatedDebts = (family.debts || []).map(d => d.id === updatedDebt.id ? updatedDebt : d)
+    await updateDoc(doc(db, 'families', familyId), { debts: updatedDebts })
+  } catch (e) {
+    console.warn('[family] updateFamilyDebt failed:', e?.code || e?.message)
+  }
 }
 
 export const subscribeToFamily = (familyId, callback) => {

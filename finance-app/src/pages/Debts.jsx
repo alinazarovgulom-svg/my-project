@@ -3,6 +3,7 @@ import { Plus, ChevronDown, ChevronUp, Trash2, AlertTriangle, Pencil } from 'luc
 import { useApp } from '../store/AppContext'
 import Modal from '../components/Modal'
 import { generateId } from '../store/storage'
+import { addFamilyDebt, deleteFamilyDebt, updateFamilyDebt } from '../store/family'
 import { format, differenceInDays, isToday, isTomorrow, isPast, parseISO } from 'date-fns'
 import { fmtCur } from '../utils/format'
 
@@ -24,7 +25,8 @@ function getDueDateWarning(debt) {
 }
 
 export default function Debts() {
-  const { debts, saveDebts, getCurrencyBalance } = useApp()
+  const { debts, saveDebts, family, familyDebts } = useApp()
+  const activeDebts = family ? familyDebts : debts
   const [modal, setModal] = useState(false)
   const [payModal, setPayModal] = useState(null)
   const [editModal, setEditModal] = useState(false)
@@ -33,23 +35,18 @@ export default function Debts() {
   const [payAmount, setPayAmount] = useState('')
   const [expanded, setExpanded] = useState({})
   const [filter, setFilter] = useState('all')
-  const [balanceError, setBalanceError] = useState('')
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
   const handleAdd = () => {
     if (!form.person || !form.amount) return
-    setBalanceError('')
     const amount = parseFloat(form.amount)
-    if (form.direction === 'lent') {
-      const curBal = getCurrencyBalance(form.currency || 'UZS')
-      if (amount > curBal) {
-        setBalanceError(`Yetarli mablag' yo'q. ${form.currency || 'UZS'} balansi: ${new Intl.NumberFormat('uz-UZ').format(Math.max(0, curBal))}`)
-        return
-      }
-    }
     const debt = { id: generateId(), ...form, amount, remaining: amount, payments: [] }
-    saveDebts([...debts, debt])
+    if (family) {
+      addFamilyDebt(family.id, debt)
+    } else {
+      saveDebts([...debts, debt])
+    }
     setModal(false)
     setForm(defaultForm)
   }
@@ -57,20 +54,26 @@ export default function Debts() {
   const handlePay = () => {
     const amount = parseFloat(payAmount)
     if (!amount || amount <= 0) return
-    const updated = debts.map(d => {
-      if (d.id !== payModal.id) return d
-      const paid = Math.min(amount, d.remaining)
-      const payments = [...d.payments, { id: generateId(), amount: paid, date: new Date().toISOString().split('T')[0] }]
-      return { ...d, remaining: d.remaining - paid, payments }
-    })
-    saveDebts(updated)
+    const paid = Math.min(amount, payModal.remaining)
+    const payments = [...payModal.payments, { id: generateId(), amount: paid, date: new Date().toISOString().split('T')[0] }]
+    const updatedDebt = { ...payModal, remaining: payModal.remaining - paid, payments }
+    if (family) {
+      updateFamilyDebt(family.id, updatedDebt)
+    } else {
+      saveDebts(debts.map(d => d.id === payModal.id ? updatedDebt : d))
+    }
     setPayModal(null)
     setPayAmount('')
   }
 
   const handleDelete = (id) => {
-    if (confirm('O\'chirishni tasdiqlaysizmi?'))
-      saveDebts(debts.filter(d => d.id !== id))
+    if (confirm('O\'chirishni tasdiqlaysizmi?')) {
+      if (family) {
+        deleteFamilyDebt(family.id, id)
+      } else {
+        saveDebts(debts.filter(d => d.id !== id))
+      }
+    }
   }
 
   const openEdit = (debt) => {
@@ -80,27 +83,28 @@ export default function Debts() {
 
   const handleEditSave = () => {
     if (!editingDebt?.person || !editingDebt?.amount) return
-    const updated = debts.map(d => {
-      if (d.id !== editingDebt.id) return d
-      const newAmount = parseFloat(editingDebt.amount)
-      const alreadyPaid = d.amount - d.remaining
-      const newRemaining = Math.max(0, newAmount - alreadyPaid)
-      return { ...editingDebt, amount: newAmount, remaining: newRemaining }
-    })
-    saveDebts(updated)
+    const newAmount = parseFloat(editingDebt.amount)
+    const alreadyPaid = editingDebt.amount - editingDebt.remaining
+    const newRemaining = Math.max(0, newAmount - alreadyPaid)
+    const updatedDebt = { ...editingDebt, amount: newAmount, remaining: newRemaining }
+    if (family) {
+      updateFamilyDebt(family.id, updatedDebt)
+    } else {
+      saveDebts(debts.map(d => d.id === editingDebt.id ? updatedDebt : d))
+    }
     setEditModal(false)
     setEditingDebt(null)
   }
 
-  const filtered = debts
+  const filtered = activeDebts
     .filter(d => filter === 'all' || d.direction === filter || (filter === 'active' && d.remaining > 0) || (filter === 'done' && d.remaining <= 0))
     .sort((a, b) => new Date(b.date) - new Date(a.date))
 
-  const borrowed = debts.filter(d => d.direction === 'borrowed' && d.remaining > 0)
-  const lent = debts.filter(d => d.direction === 'lent' && d.remaining > 0)
+  const borrowed = activeDebts.filter(d => d.direction === 'borrowed' && d.remaining > 0)
+  const lent = activeDebts.filter(d => d.direction === 'lent' && d.remaining > 0)
 
   // Collect all warnings
-  const warnings = debts.filter(d => d.remaining > 0).map(d => getDueDateWarning(d)).filter(Boolean)
+  const warnings = activeDebts.filter(d => d.remaining > 0).map(d => getDueDateWarning(d)).filter(Boolean)
 
   return (
     <div className="flex flex-col min-h-dvh pb-24">
@@ -261,7 +265,6 @@ export default function Debts() {
             <label className="text-gray-400 text-xs mb-1 block">Qaytarish sanasi (ixtiyoriy)</label>
             <input className="input-field" type="date" value={form.dueDate} onChange={e => set('dueDate', e.target.value)} />
           </div>
-          {balanceError && <p className="text-red-400 text-sm bg-red-500/10 py-2 px-3 rounded-lg">{balanceError}</p>}
           <button onClick={handleAdd} className="btn-primary mt-2">Saqlash</button>
         </div>
       </Modal>

@@ -12,13 +12,9 @@ const fmt = (n, cur) => fmtCur(n, cur)
 const FLAGS = { UZS: '🇺🇿', USD: '🇺🇸', EUR: '🇪🇺', RUB: '🇷🇺' }
 
 export default function Dashboard() {
-  const { user, transactions: personalTx, debts, family, familyTransactions, familyMembers, settings } = useApp()
+  const { user, transactions, debts, family, familyMembers, settings } = useApp()
   const { t } = useLang()
   const nav = useNavigate()
-
-  const allTx = family ? familyTransactions : personalTx
-  const transactions = allTx // balans uchun hammasi (exchange ham)
-  const recentTx = allTx.filter(t => t.category !== 'Valyuta ayirboshlash') // faqat ro'yxat uchun
 
   const rates = settings?.rates || { USD: 12700, EUR: 13800, RUB: 140 }
 
@@ -54,20 +50,19 @@ export default function Dashboard() {
 
   const hasMultiCurrency = currencyBreakdown.some(x => x.cur !== 'UZS')
 
-  // Bugungi konvertatsiyalar — transactions dan (expense qismi)
-  const today = format(new Date(), 'yyyy-MM-dd')
-  const todayExchanges = allTx
-    .filter(t => t.category === 'Valyuta ayirboshlash' && t.type === 'expense' && t.date?.startsWith(today))
-    .map(txOut => {
-      const txIn = allTx.find(t => t.pairId === txOut.pairId && t.type === 'income')
-      return txIn ? { from: txOut.currency, fromAmt: txOut.amount, to: txIn.currency, toAmt: txIn.amount } : null
-    })
-    .filter(Boolean)
+  // Today's confirmed conversions from Exchange page
+  const todayConversions = (() => {
+    try {
+      const today = format(new Date(), 'yyyy-MM-dd')
+      const key = `finance_${user?.id}_conversions_${today}`
+      return JSON.parse(localStorage.getItem(key) || '[]')
+    } catch { return [] }
+  })()
 
   // Family balances
   const memberBalances = family
     ? familyMembers.map(m => {
-        const memberTx = familyTransactions.filter(tx => tx.userId === m.userId)
+        const memberTx = getData('transactions', m.userId)
         const bal = memberTx.reduce((sum, tx) => {
           const inUZS = toUZS(tx.amount, tx.currency)
           return tx.type === 'income' ? sum + inUZS : sum - inUZS
@@ -77,7 +72,7 @@ export default function Dashboard() {
     : []
   const familyTotalBalance = memberBalances.reduce((s, m) => s + m.balance, 0)
 
-  const recent = [...recentTx].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5)
+  const recent = [...transactions].filter(t => t.category !== 'Valyuta ayirboshlash').sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5)
 
   const activeDebts = debts.filter(d => d.remaining > 0)
   const myDebts = activeDebts.filter(d => d.direction === 'borrowed')
@@ -92,22 +87,7 @@ export default function Dashboard() {
           <h1 className="text-xl font-bold text-white">{user?.name} 👋</h1>
         </div>
         <div className="text-right flex flex-col items-end gap-0.5">
-          <span className="kaftimda-gold text-[10px] font-bold tracking-widest uppercase">by KAFTIMDA</span>
-          <style>{`
-            @keyframes kaftimda-shine {
-              0%   { background-position: -200% center; opacity: 0.7; }
-              40%  { background-position: 200% center; opacity: 1; }
-              100% { background-position: 200% center; opacity: 0.7; }
-            }
-            .kaftimda-gold {
-              background: linear-gradient(90deg, #b8860b, #ffd700, #ffe066, #ffd700, #b8860b);
-              background-size: 300% auto;
-              -webkit-background-clip: text;
-              -webkit-text-fill-color: transparent;
-              background-clip: text;
-              animation: kaftimda-shine 5s ease-in-out infinite;
-            }
-          `}</style>
+          <span className="text-[10px] font-bold tracking-widest text-blue-400/60 uppercase">by KAFTIMDA</span>
           <p className="text-gray-500 text-xs">{format(new Date(), 'dd MMM yyyy', { locale: uz })}</p>
         </div>
       </div>
@@ -162,21 +142,22 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Today's conversions */}
-      {todayExchanges.length > 0 && (
+      {/* Today's conversions from Exchange page */}
+      {todayConversions.length > 0 && (
         <div className="card">
           <div className="flex items-center gap-2 mb-3">
             <ArrowLeftRight size={14} className="text-blue-400" />
             <p className="text-gray-400 text-xs">Bugungi konvertatsiyalar</p>
           </div>
           <div className="flex flex-col gap-2">
-            {todayExchanges.map((c, i) => (
+            {todayConversions.map((c, i) => (
               <div key={i} className="flex items-center justify-between bg-dark-600 rounded-xl px-3 py-2">
                 <div className="flex items-center gap-2">
-                  <span className="text-red-400 text-sm font-medium">-{fmt(c.fromAmt, c.from)} {c.from}</span>
+                  <span className="text-white text-sm font-medium">{c.amount} {c.from}</span>
                   <ArrowRight size={12} className="text-gray-500" />
-                  <span className="text-green-400 text-sm font-medium">+{fmt(c.toAmt, c.to)} {c.to}</span>
+                  <span className="text-blue-400 text-sm font-medium">{c.result} {c.to}</span>
                 </div>
+                <span className="text-gray-500 text-xs">{c.time}</span>
               </div>
             ))}
           </div>
@@ -199,6 +180,41 @@ export default function Dashboard() {
         </button>
       </div>
 
+      {/* Family Balance */}
+      {family && (
+        <div className="card">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Users size={16} className="text-purple-400" />
+              <h2 className="font-semibold text-white">{t('familyBalance')}</h2>
+            </div>
+            <button onClick={() => nav('/family')} className="text-purple-400 text-sm flex items-center gap-1">
+              {t('allTx')} <ArrowRight size={14} />
+            </button>
+          </div>
+          <div className="bg-purple-500/10 rounded-xl p-3 mb-3">
+            <p className="text-purple-300 text-xs mb-0.5">{t('familyBalance')}</p>
+            <p className={`text-xl font-bold ${familyTotalBalance >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+              {familyTotalBalance >= 0 ? '+' : '-'}{fmt(familyTotalBalance)} so'm
+            </p>
+          </div>
+          <div className="flex flex-col gap-2">
+            {memberBalances.map(m => (
+              <div key={m.userId} className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center flex-shrink-0">
+                  <span className="text-purple-300 text-xs font-bold">
+                    {(m.fullName || m.username || '?')[0].toUpperCase()}
+                  </span>
+                </div>
+                <p className="text-gray-300 text-sm flex-1 truncate">{m.fullName}</p>
+                <p className={`text-sm font-semibold ${m.balance >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                  {m.balance >= 0 ? '+' : '-'}{fmt(m.balance)} so'm
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Debts Summary */}
       {activeDebts.length > 0 && (

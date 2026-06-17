@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus, Trash2, ArrowRight, ArrowLeftRight, AlertTriangle } from 'lucide-react'
+import { Plus, Trash2, ArrowRight, ArrowLeftRight } from 'lucide-react'
 import { useApp } from '../store/AppContext'
 import Modal from '../components/Modal'
 import { format } from 'date-fns'
@@ -11,11 +11,10 @@ const FLAGS = { UZS: '🇺🇿', USD: '🇺🇸', EUR: '🇪🇺', RUB: '🇷�
 const fmt = (n, c) => fmtCur(n, c)
 
 export default function Exchange() {
-  const { settings, updateSettings, user, transactions, saveTransactions, softDeleteTransactions, family, familyTransactions, refreshFamily, getCurrencyBalance } = useApp()
+  const { settings, updateSettings, user, transactions, saveTransactions, family, familyTransactions, refreshFamily } = useApp()
   const rates = settings?.rates || { USD: 12700, EUR: 13800, RUB: 140 }
 
   const [modal, setModal] = useState(false)
-  const [balanceError, setBalanceError] = useState('')
   const [form, setForm] = useState({
     from: 'USD', to: 'UZS', fromAmount: '', rate: '', note: '',
     date: new Date().toISOString().split('T')[0]
@@ -41,12 +40,6 @@ export default function Exchange() {
     if (!n || n <= 0) return
     const toAmt = toAmount()
     if (!toAmt || toAmt <= 0) return
-    setBalanceError('')
-    const curBal = getCurrencyBalance(form.from)
-    if (n > curBal) {
-      setBalanceError(`Yetarli mablag' yo'q. ${form.from} balansi: ${new Intl.NumberFormat('uz-UZ').format(Math.max(0, curBal))}`)
-      return
-    }
 
     const pairId = generateId()
     const txOut = {
@@ -85,23 +78,15 @@ export default function Exchange() {
     setForm({ from: 'USD', to: 'UZS', fromAmount: '', rate: '', note: '', date: new Date().toISOString().split('T')[0] })
   }
 
-  const [deleteConfirm, setDeleteConfirm] = useState(null)
-
-  const handleDelete = (tx) => setDeleteConfirm(tx)
-
-  const confirmDelete = async () => {
-    const tx = deleteConfirm
-    setDeleteConfirm(null)
-    if (!tx) return
+  const handleDelete = async (tx) => {
+    if (!confirm('O\'chirishni tasdiqlaysizmi?')) return
     if (family) {
       const { deleteFamilyTransaction } = await import('../store/family')
       const pair = familyTransactions.filter(t => t.pairId === tx.pairId)
       for (const t of pair) await deleteFamilyTransaction(family.id, t.id)
       refreshFamily()
     } else {
-      const pairTx = transactions.find(t => t.category === 'Valyuta ayirboshlash' && t.type === 'income' && t.pairId === tx.pairId)
-      const ids = [tx.id, pairTx?.id].filter(Boolean)
-      softDeleteTransactions(ids)
+      saveTransactions(transactions.filter(t => t.pairId !== tx.pairId))
     }
   }
 
@@ -132,17 +117,17 @@ export default function Exchange() {
           </div>
         ) : (
           exchangeTx.map(tx => {
-            const pair = allTx.find(t => t.category === 'Valyuta ayirboshlash' && t.type === 'income' && t.pairId === tx.pairId)
+            const pair = allTx.find(t => t.pairId === tx.pairId && t.type === 'income')
             return (
               <div key={tx.id} className="card flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-blue-500/15 flex items-center justify-center text-lg flex-shrink-0">
                   💱
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className="text-red-400 text-sm font-semibold">-{fmt(tx.amount, tx.currency)} {tx.currency}</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-white text-sm font-semibold">{fmt(tx.amount, tx.currency)} {tx.currency}</span>
                     <ArrowRight size={12} className="text-gray-500 flex-shrink-0" />
-                    {pair && <span className="text-green-400 text-sm font-semibold">+{fmt(pair.amount, pair.currency)} {pair.currency}</span>}
+                    {pair && <span className="text-blue-400 text-sm font-semibold">{fmt(pair.amount, pair.currency)} {pair.currency}</span>}
                   </div>
                   <p className="text-gray-500 text-xs truncate">{tx.note || format(new Date(tx.date), 'dd.MM.yyyy')}</p>
                   <p className="text-gray-600 text-xs">{format(new Date(tx.date), 'dd.MM.yyyy')}</p>
@@ -163,20 +148,6 @@ export default function Exchange() {
       >
         <Plus size={24} className="text-white" />
       </button>
-
-      {/* Delete Confirm Modal */}
-      <Modal open={!!deleteConfirm} onClose={() => setDeleteConfirm(null)} title="O'chirishni tasdiqlang">
-        <div className="flex flex-col gap-4">
-          <div className="flex items-center gap-3 bg-orange-500/10 border border-orange-500/20 rounded-xl p-3">
-            <AlertTriangle size={20} className="text-orange-400 flex-shrink-0" />
-            <p className="text-gray-300 text-sm">30 kun ichida tiklanishi mumkin</p>
-          </div>
-          <div className="flex gap-2">
-            <button onClick={() => setDeleteConfirm(null)} className="flex-1 py-3 rounded-xl bg-dark-600 text-gray-300 text-sm font-medium">Bekor qilish</button>
-            <button onClick={confirmDelete} className="flex-1 py-3 rounded-xl bg-red-500/20 border border-red-500/30 text-red-400 text-sm font-medium">O'chirish</button>
-          </div>
-        </div>
-      </Modal>
 
       {/* Add Modal */}
       <Modal open={modal} onClose={() => setModal(false)} title="Valyuta ayirboshlash">
@@ -235,7 +206,6 @@ export default function Exchange() {
             <input className="input-field" type="date" value={form.date} onChange={e => set('date', e.target.value)} />
           </div>
 
-          {balanceError && <p className="text-red-400 text-sm bg-red-500/10 py-2 px-3 rounded-lg">{balanceError}</p>}
           <button onClick={handleSave} disabled={!form.fromAmount || !form.rate} className="btn-primary disabled:opacity-40">
             Tasdiqlash
           </button>

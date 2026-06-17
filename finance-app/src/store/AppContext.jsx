@@ -5,13 +5,17 @@ import { syncToCloud, loadFromCloud, subscribeToCloud } from './sync'
 
 const AppContext = createContext(null)
 
-export const INCOME_CATEGORIES = []
-export const EXPENSE_CATEGORIES = []
+export const INCOME_CATEGORIES = [
+  'Maosh', 'Biznes', 'Freelance', 'Investitsiya', 'Sovg\'a', 'Boshqa kirim'
+]
+export const EXPENSE_CATEGORIES = [
+  'Oziq-ovqat', 'Transport', 'Uy-joy', 'Kiyim', 'Sog\'liq', 'Ta\'lim',
+  'Ko\'ngilochar', 'Kommunal', 'Telefon/Internet', 'Boshqa chiqim'
+]
 
 export function AppProvider({ children }) {
   const [user, setUser] = useState(getCurrentUser)
   const [transactions, setTransactions] = useState([])
-  const [trash, setTrash] = useState([])
   const [debts, setDebts] = useState([])
   const [settings, setSettingsState] = useState({ rates: { USD: 12700, EUR: 13800, RUB: 140 } })
   const [family, setFamily] = useState(null)
@@ -28,10 +32,6 @@ export function AppProvider({ children }) {
     // Lokal ma'lumotlarni darhol yuklash
     setTransactions(getData('transactions', uid))
     setDebts(getData('debts', uid))
-    const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000
-    const savedTrash = (getData('trash', uid) || []).filter(t => new Date(t.deletedAt).getTime() > thirtyDaysAgo)
-    setTrash(savedTrash)
-    saveData('trash', uid, savedTrash)
     const s = getSettings(uid)
     setSettingsState(s.rates ? s : { rates: { USD: 12700, EUR: 13800, RUB: 140 } })
     setFamily(getUserFamily(uid))
@@ -101,30 +101,6 @@ export function AppProvider({ children }) {
     }
   }, [uid])
 
-  const saveTrash = useCallback((data) => {
-    setTrash(data)
-    if (uid) saveData('trash', uid, data)
-  }, [uid])
-
-  const softDeleteTransactions = useCallback((ids) => {
-    const idSet = new Set(ids)
-    const toTrash = transactions.filter(t => idSet.has(t.id)).map(t => ({ ...t, deletedAt: new Date().toISOString() }))
-    saveTrash([...trash, ...toTrash])
-    saveTransactions(transactions.filter(t => !idSet.has(t.id)))
-  }, [transactions, trash, saveTransactions, saveTrash])
-
-  const restoreTransaction = useCallback((id) => {
-    const tx = trash.find(t => t.id === id)
-    if (!tx) return
-    const { deletedAt, ...restored } = tx
-    saveTransactions([...transactions, restored])
-    saveTrash(trash.filter(t => t.id !== id))
-  }, [trash, transactions, saveTransactions, saveTrash])
-
-  const permanentDelete = useCallback((id) => {
-    saveTrash(trash.filter(t => t.id !== id))
-  }, [trash, saveTrash])
-
   const saveDebts = useCallback((data) => {
     setDebts(data)
     if (uid) {
@@ -168,17 +144,10 @@ export function AppProvider({ children }) {
 
   const canAdd = () => userRole === 'admin' || userRole === 'member'
 
-  const allActiveTx = family ? familyTransactions : transactions
-  const getCurrencyBalance = (currency = 'UZS') =>
-    allActiveTx
-      .filter(t => (t.currency || 'UZS') === currency)
-      .reduce((s, t) => t.type === 'income' ? s + t.amount : s - t.amount, 0)
-
   return (
     <AppContext.Provider value={{
       user, setUser,
       transactions, saveTransactions,
-      trash, softDeleteTransactions, restoreTransaction, permanentDelete,
       debts, saveDebts,
       settings, updateSettings,
       balance, totalIncome, totalExpense,
@@ -186,7 +155,6 @@ export function AppProvider({ children }) {
       userRole, familyMembers,
       familyTransactions, familyDebts,
       canEdit, canAdd,
-      getCurrencyBalance,
       syncing
     }}>
       {children}

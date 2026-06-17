@@ -1,15 +1,15 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { Plus, Trash2, Search, TrendingUp, TrendingDown, Users, Download, AlertTriangle, SlidersHorizontal, X, CheckSquare, Square } from 'lucide-react'
+import { Plus, Trash2, Search, TrendingUp, TrendingDown, Users, Download } from 'lucide-react'
 import { useApp, INCOME_CATEGORIES, EXPENSE_CATEGORIES } from '../store/AppContext'
 import Modal from '../components/Modal'
 import SwipeableRow from '../components/SwipeableRow'
 import { generateId } from '../store/storage'
 import { addFamilyTransaction, deleteFamilyTransaction } from '../store/family'
 import { format } from 'date-fns'
+import jsPDF from 'jspdf'
+import autoTable from 'jspdf-autotable'
 import * as XLSX from 'xlsx'
 import { fmtCur } from '../utils/format'
-import { exportTransactionsPDF } from '../utils/pdfExport'
 
 const EMOJIS = { income: '💰', expense: '💸' }
 const fmt = (n, cur) => fmtCur(n, cur)
@@ -20,27 +20,19 @@ const CATEGORY_EMOJIS = {
   'Ko\'ngilochar': '🎮', 'Kommunal': '💡', 'Telefon/Internet': '📱', 'Boshqa chiqim': '💸'
 }
 
-const defaultForm = { type: 'expense', amount: '', category: '', currency: 'UZS', note: '', date: new Date().toISOString().split('T')[0] }
+const defaultForm = { type: 'expense', amount: '', category: '', currency: 'UZS', note: '', date: new Date().toISOString().slice(0, 16) }
 
 export default function Transactions() {
-  const { transactions, saveTransactions, softDeleteTransactions, user, family, familyTransactions, familyMembers, canEdit, canAdd, refreshFamily, getCurrencyBalance } = useApp()
-  const nav = useNavigate()
+  const { transactions, saveTransactions, user, family, familyTransactions, familyMembers, canEdit, canAdd, refreshFamily } = useApp()
   const [modal, setModal] = useState(false)
   const [editModal, setEditModal] = useState(false)
   const [editingTx, setEditingTx] = useState(null)
   const [exportModal, setExportModal] = useState(false)
-  const [deleteConfirm, setDeleteConfirm] = useState(null)
-  const [selectMode, setSelectMode] = useState(false)
-  const [selected, setSelected] = useState(new Set())
-  const [familyMode, setFamilyMode] = useState(false)
+  const [familyMode, setFamilyMode] = useState(() => !!family)
   const [form, setForm] = useState(defaultForm)
+  const [extraAmounts, setExtraAmounts] = useState([])
   const [filter, setFilter] = useState('all')
   const [search, setSearch] = useState('')
-  const [dateFrom, setDateFrom] = useState('')
-  const [dateTo, setDateTo] = useState('')
-  const [currencyFilter, setCurrencyFilter] = useState('all')
-  const [showFilters, setShowFilters] = useState(false)
-  const [balanceError, setBalanceError] = useState('')
   const [customCategories] = useState(() => {
     try {
       const saved = localStorage.getItem(`finance_${user?.id}_categories`)
@@ -51,37 +43,32 @@ export default function Transactions() {
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
   const openAdd = (type = 'expense') => {
-    const cats = customCategories || []
-    if (cats.length === 0) {
-      nav('/categories')
-      return
-    }
-    setForm({ ...defaultForm, type, category: cats[0] || '' })
+    setForm({ ...defaultForm, type, category: type === 'income' ? INCOME_CATEGORIES[0] : EXPENSE_CATEGORIES[0] })
+    setExtraAmounts([])
     setModal(true)
   }
 
   const handleSave = () => {
     if (!form.amount || !form.category) return
-    setBalanceError('')
-    if (form.type === 'expense') {
-      const curBal = getCurrencyBalance(form.currency || 'UZS')
-      if (parseFloat(form.amount) > curBal) {
-        setBalanceError(`Yetarli mablag' yo'q. ${form.currency || 'UZS'} balansi: ${new Intl.NumberFormat('uz-UZ').format(Math.round(curBal))}`)
-        return
-      }
-    }
-    const t = {
-      id: generateId(),
-      ...form,
-      amount: parseFloat(form.amount),
+    const baseFields = {
+      category: form.category,
+      note: form.note,
+      date: form.date,
+      type: form.type,
       emoji: CATEGORY_EMOJIS[form.category] || EMOJIS[form.type],
       userId: user.id,
       userName: user.name
     }
+    const newTxs = [
+      { id: generateId(), ...baseFields, amount: parseFloat(form.amount), currency: form.currency },
+      ...extraAmounts
+        .filter(e => e.amount && parseFloat(e.amount) > 0)
+        .map(e => ({ id: generateId(), ...baseFields, amount: parseFloat(e.amount), currency: e.currency }))
+    ]
     if (familyMode && family) {
-      addFamilyTransaction(family.id, t).then(() => refreshFamily())
+      newTxs.forEach(t => addFamilyTransaction(family.id, t))
     } else {
-      saveTransactions([...transactions, t])
+      saveTransactions([...transactions, ...newTxs])
     }
     setModal(false)
   }
@@ -104,32 +91,20 @@ export default function Transactions() {
   }
 
   const handleDelete = (id, isFamily = false) => {
-    const tx = (familyMode && family ? familyTransactions : transactions).find(t => t.id === id)
-    setDeleteConfirm({ id, isFamily, label: tx?.category || '' })
-  }
-
-  const confirmDelete = () => {
-    if (!deleteConfirm) return
-    const { id, isFamily } = deleteConfirm
+    if (!confirm('O\'chirishni tasdiqlaysizmi?')) return
     if (isFamily && family) {
       deleteFamilyTransaction(family.id, id).then(() => refreshFamily())
     } else {
-      softDeleteTransactions([id])
+      saveTransactions(transactions.filter(t => t.id !== id))
     }
-    setDeleteConfirm(null)
   }
 
   const activeList = (familyMode && family ? familyTransactions : transactions)
     .filter(t => t.category !== 'Valyuta ayirboshlash')
 
-  const activeFilterCount = [dateFrom, dateTo, currencyFilter !== 'all'].filter(Boolean).length
-
   const filtered = activeList
     .filter(t => filter === 'all' || t.type === filter)
     .filter(t => !search || t.category.toLowerCase().includes(search.toLowerCase()) || (t.note || '').toLowerCase().includes(search.toLowerCase()))
-    .filter(t => !dateFrom || t.date >= dateFrom)
-    .filter(t => !dateTo || t.date <= dateTo)
-    .filter(t => currencyFilter === 'all' || (t.currency || 'UZS') === currencyFilter)
     .sort((a, b) => new Date(b.date) - new Date(a.date))
 
   const categories = customCategories || (form.type === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES)
@@ -139,23 +114,40 @@ export default function Transactions() {
     return m?.fullName || m?.username || 'Noma\'lum'
   }
 
-  const exportPDF = async () => {
-    await exportTransactionsPDF(filtered, 'pulbek-tranzaksiyalar.pdf')
+  const exportPDF = () => {
+    const doc = new jsPDF()
+    doc.setFontSize(16)
+    doc.text('PulBek - Tranzaksiyalar', 14, 20)
+    doc.setFontSize(10)
+    doc.text(`Sana: ${format(new Date(), 'dd.MM.yyyy')}`, 14, 28)
+    autoTable(doc, {
+      startY: 35,
+      head: [['Sana', 'Tur', 'Kategoriya', 'Miqdor', 'Valyuta', 'Izoh']],
+      body: filtered.map(t => [
+        format(new Date(t.date), 'dd.MM.yyyy'),
+        t.type === 'income' ? 'Kirim' : 'Chiqim',
+        t.category,
+        fmt(t.amount),
+        t.currency || 'UZS',
+        t.note || ''
+      ]),
+      styles: { fontSize: 9 },
+      headStyles: { fillColor: [29, 78, 216] }
+    })
+    doc.save('pulbek-tranzaksiyalar.pdf')
     setExportModal(false)
   }
 
   const exportExcel = () => {
-    const header = [['by KAFTIMDA', '', '', '', '', ''], ['PulBek - Tranzaksiyalar', '', '', '', '', ''], [`Chop etilgan: ${format(new Date(), 'dd.MM.yyyy')}`, '', '', '', '', ''], []]
-    const rows = filtered.map(t => [
-      format(new Date(t.date), 'dd.MM.yyyy'),
-      t.type === 'income' ? 'Kirim' : 'Chiqim',
-      t.category,
-      t.amount,
-      t.currency || 'UZS',
-      t.note || ''
-    ])
-    const ws = XLSX.utils.aoa_to_sheet([...header, ['Sana', 'Tur', 'Kategoriya', 'Miqdor', 'Valyuta', 'Izoh'], ...rows])
-    ws['A1'] = { v: 'by KAFTIMDA', t: 's' }
+    const data = filtered.map(t => ({
+      'Sana': format(new Date(t.date), 'dd.MM.yyyy'),
+      'Tur': t.type === 'income' ? 'Kirim' : 'Chiqim',
+      'Kategoriya': t.category,
+      'Miqdor': t.amount,
+      'Valyuta': t.currency || 'UZS',
+      'Izoh': t.note || ''
+    }))
+    const ws = XLSX.utils.json_to_sheet(data)
     const wb = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(wb, ws, 'Tranzaksiyalar')
     XLSX.writeFile(wb, 'pulbek-tranzaksiyalar.xlsx')
@@ -168,85 +160,24 @@ export default function Transactions() {
         <div className="flex items-center justify-between mb-3">
           <h1 className="text-xl font-bold text-white">Kirim / Chiqim</h1>
           <div className="flex gap-2">
-            {!selectMode ? (
-              <>
-                <button onClick={() => setExportModal(true)} className="p-2 rounded-xl bg-dark-700 text-gray-400 active:opacity-70">
-                  <Download size={18} />
-                </button>
-                <button onClick={() => { setSelectMode(true); setSelected(new Set()) }}
-                  className="p-2 rounded-xl bg-dark-700 text-gray-400 active:opacity-70">
-                  <CheckSquare size={18} />
-                </button>
-                {family && (
-                  <button onClick={() => setFamilyMode(f => !f)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-colors ${familyMode ? 'bg-purple-500/20 text-purple-400' : 'bg-dark-600 text-gray-400'}`}>
-                    <Users size={14} />
-                    Oila
-                  </button>
-                )}
-              </>
-            ) : (
-              <div className="flex items-center gap-2">
-                <button onClick={() => {
-                  if (selected.size === filtered.length) setSelected(new Set())
-                  else setSelected(new Set(filtered.map(t => t.id)))
-                }} className="text-xs text-blue-400 px-3 py-1.5 rounded-xl bg-blue-500/10">
-                  {selected.size === filtered.length ? 'Hammasini olib tashlash' : `Hammasini tanlash (${filtered.length})`}
-                </button>
-                <button onClick={() => { setSelectMode(false); setSelected(new Set()) }}
-                  className="p-2 rounded-xl bg-dark-700 text-gray-400">
-                  <X size={18} />
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-        <div className="flex gap-2 mb-3">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
-            <input className="input-field pl-9 py-2 text-sm w-full" placeholder="Qidirish..." value={search} onChange={e => setSearch(e.target.value)} />
-          </div>
-          <button onClick={() => setShowFilters(f => !f)}
-            className={`relative p-2.5 rounded-xl text-sm font-medium transition-colors flex items-center justify-center ${showFilters || activeFilterCount > 0 ? 'bg-blue-500/20 text-blue-400' : 'bg-dark-700 text-gray-400'}`}>
-            <SlidersHorizontal size={18} />
-            {activeFilterCount > 0 && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 rounded-full text-[9px] text-white flex items-center justify-center font-bold">{activeFilterCount}</span>
-            )}
-          </button>
-        </div>
-
-        {showFilters && (
-          <div className="bg-dark-700 rounded-xl p-3 mb-3 flex flex-col gap-2">
-            <div className="flex gap-2">
-              <div className="flex-1">
-                <label className="text-gray-500 text-[10px] mb-1 block">Dan</label>
-                <input type="date" className="input-field py-1.5 text-sm" value={dateFrom} onChange={e => setDateFrom(e.target.value)} />
-              </div>
-              <div className="flex-1">
-                <label className="text-gray-500 text-[10px] mb-1 block">Gacha</label>
-                <input type="date" className="input-field py-1.5 text-sm" value={dateTo} onChange={e => setDateTo(e.target.value)} />
-              </div>
-            </div>
-            <div>
-              <label className="text-gray-500 text-[10px] mb-1 block">Valyuta</label>
-              <div className="flex gap-1.5">
-                {['all', 'UZS', 'USD', 'EUR', 'RUB'].map(c => (
-                  <button key={c} onClick={() => setCurrencyFilter(c)}
-                    className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-colors ${currencyFilter === c ? 'bg-blue-500 text-white' : 'bg-dark-600 text-gray-400'}`}>
-                    {c === 'all' ? 'Bari' : c}
-                  </button>
-                ))}
-              </div>
-            </div>
-            {activeFilterCount > 0 && (
-              <button onClick={() => { setDateFrom(''); setDateTo(''); setCurrencyFilter('all') }}
-                className="flex items-center justify-center gap-1.5 text-xs text-red-400 py-1">
-                <X size={12} /> Filtrlarni tozalash
+            <button onClick={() => setExportModal(true)} className="p-2 rounded-xl bg-dark-700 text-gray-400 active:opacity-70">
+              <Download size={18} />
+            </button>
+            {family && (
+              <button
+                onClick={() => setFamilyMode(f => !f)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-colors ${familyMode ? 'bg-purple-500/20 text-purple-400' : 'bg-dark-600 text-gray-400'}`}
+              >
+                <Users size={14} />
+                Oila
               </button>
             )}
           </div>
-        )}
-
+        </div>
+        <div className="relative mb-3">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
+          <input className="input-field pl-9 py-2 text-sm" placeholder="Qidirish..." value={search} onChange={e => setSearch(e.target.value)} />
+        </div>
         <div className="flex gap-2">
           {['all', 'income', 'expense'].map(f => (
             <button key={f} onClick={() => setFilter(f)}
@@ -267,31 +198,6 @@ export default function Transactions() {
             const isFamily = familyMode && family
             const showDelete = isFamily ? canEdit(t.userId) : true
             const canEditTx = !isFamily
-            const isSelected = selected.has(t.id)
-            if (selectMode) return (
-              <div key={t.id} onClick={() => setSelected(s => {
-                const n = new Set(s)
-                n.has(t.id) ? n.delete(t.id) : n.add(t.id)
-                return n
-              })}
-                className={`card flex items-center gap-3 cursor-pointer transition-all ${isSelected ? 'border border-blue-500/50 bg-blue-500/5' : ''}`}>
-                <div className="flex-shrink-0">
-                  {isSelected
-                    ? <CheckSquare size={20} className="text-blue-400" />
-                    : <Square size={20} className="text-gray-600" />}
-                </div>
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0 ${t.type === 'income' ? 'bg-green-500/15' : 'bg-red-500/15'}`}>
-                  {t.emoji}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-white text-sm font-medium truncate">{t.category}</p>
-                  <p className="text-gray-500 text-xs">{t.note ? `${t.note} · ` : ''}{format(new Date(t.date), 'dd.MM.yyyy')}</p>
-                </div>
-                <p className={`text-sm font-semibold flex-shrink-0 ${t.type === 'income' ? 'text-green-400' : 'text-red-400'}`}>
-                  {t.type === 'income' ? '+' : '-'}{fmt(t.amount, t.currency || 'UZS')} {t.currency || 'UZS'}
-                </p>
-              </div>
-            )
             return (
               <SwipeableRow
                 key={t.id}
@@ -306,7 +212,7 @@ export default function Transactions() {
                     <p className="text-white text-sm font-medium truncate">{t.category}</p>
                     <p className="text-gray-500 text-xs">
                       {isFamily && t.userId ? `${getMemberName(t.userId)} · ` : ''}
-                      {t.note ? `${t.note} · ` : ''}{format(new Date(t.date), 'dd.MM.yyyy')}
+                      {t.note ? `${t.note} · ` : ''}{format(new Date(t.date), t.date?.includes('T') ? 'dd.MM.yyyy HH:mm' : 'dd.MM.yyyy')}
                     </p>
                   </div>
                   <p className={`text-sm font-semibold flex-shrink-0 ${t.type === 'income' ? 'text-green-400' : 'text-red-400'}`}>
@@ -319,37 +225,7 @@ export default function Transactions() {
         )}
       </div>
 
-      {selectMode && selected.size > 0 && (
-        <div className="fixed bottom-20 left-0 right-0 px-4 z-20">
-          <div className="bg-dark-800 border border-blue-500/20 rounded-2xl p-3 flex items-center gap-3 shadow-xl">
-            <div className="flex-1">
-              <p className="text-white text-sm font-semibold">{selected.size} ta tanlandi</p>
-              <p className="text-gray-500 text-xs">Yuklab olish turini tanlang</p>
-            </div>
-            <button onClick={async () => {
-              const list = filtered.filter(t => selected.has(t.id))
-              await exportTransactionsPDF(list, 'tanlangan-tranzaksiyalar.pdf')
-            }} className="px-4 py-2 rounded-xl bg-red-500/20 border border-red-500/30 text-red-400 text-sm font-semibold">
-              PDF
-            </button>
-            <button onClick={() => {
-              const list = filtered.filter(t => selected.has(t.id))
-              const ws = XLSX.utils.aoa_to_sheet([
-                ['by KAFTIMDA'], ['PulBek - Tanlangan tranzaksiyalar'], [],
-                ['Sana', 'Tur', 'Kategoriya', 'Miqdor', 'Valyuta', 'Izoh'],
-                ...list.map(t => [format(new Date(t.date), 'dd.MM.yyyy'), t.type === 'income' ? 'Kirim' : 'Chiqim', t.category, t.amount, t.currency || 'UZS', t.note || ''])
-              ])
-              const wb = XLSX.utils.book_new()
-              XLSX.utils.book_append_sheet(wb, ws, 'Tanlangan')
-              XLSX.writeFile(wb, 'tanlangan-tranzaksiyalar.xlsx')
-            }} className="px-4 py-2 rounded-xl bg-green-500/20 border border-green-500/30 text-green-400 text-sm font-semibold">
-              Excel
-            </button>
-          </div>
-        </div>
-      )}
-
-      {(!familyMode || canAdd()) && !selectMode && (
+      {(!familyMode || canAdd()) && (
         <div className="fixed bottom-20 right-4 flex flex-col gap-2">
           <button onClick={() => openAdd('income')} className="w-12 h-12 rounded-full bg-green-500 text-white flex items-center justify-center shadow-lg shadow-green-500/30 active:opacity-80">
             <TrendingUp size={20} />
@@ -403,31 +279,14 @@ export default function Transactions() {
             </div>
             <div>
               <label className="text-gray-400 text-xs mb-1 block">Sana</label>
-              <input className="input-field" type="date" value={editingTx.date} onChange={e => setEditingTx(t => ({ ...t, date: e.target.value }))} />
+              <input className="input-field" type="datetime-local" value={editingTx.date} onChange={e => setEditingTx(t => ({ ...t, date: e.target.value }))} />
             </div>
             <button onClick={handleEditSave} className="btn-primary mt-2">Saqlash</button>
           </div>
         )}
       </Modal>
 
-      {/* Delete Confirm Modal */}
-      <Modal open={!!deleteConfirm} onClose={() => setDeleteConfirm(null)} title="O'chirishni tasdiqlang">
-        <div className="flex flex-col gap-4">
-          <div className="flex items-center gap-3 bg-orange-500/10 border border-orange-500/20 rounded-xl p-3">
-            <AlertTriangle size={20} className="text-orange-400 flex-shrink-0" />
-            <div>
-              <p className="text-white text-sm font-medium">{deleteConfirm?.label}</p>
-              <p className="text-gray-400 text-xs mt-0.5">O'chirilgan tranzaksiya 30 kun ichida tiklanishi mumkin</p>
-            </div>
-          </div>
-          <div className="flex gap-2">
-            <button onClick={() => setDeleteConfirm(null)} className="flex-1 py-3 rounded-xl bg-dark-600 text-gray-300 text-sm font-medium">Bekor qilish</button>
-            <button onClick={confirmDelete} className="flex-1 py-3 rounded-xl bg-red-500/20 border border-red-500/30 text-red-400 text-sm font-medium">O'chirish</button>
-          </div>
-        </div>
-      </Modal>
-
-      <Modal open={modal} onClose={() => { setModal(false); setBalanceError('') }} title={form.type === 'income' ? 'Kirim qo\'shish' : 'Chiqim qo\'shish'}>
+      <Modal open={modal} onClose={() => setModal(false)} title={form.type === 'income' ? 'Kirim qo\'shish' : 'Chiqim qo\'shish'}>
         <div className="flex flex-col gap-3 pb-4">
           <div className="flex gap-2">
             <button onClick={() => set('type', 'income')} className={`flex-1 py-2 rounded-xl text-sm font-medium transition-colors ${form.type === 'income' ? 'bg-green-500 text-white' : 'bg-dark-600 text-gray-400'}`}>
@@ -459,14 +318,47 @@ export default function Transactions() {
           </div>
           <div>
             <label className="text-gray-400 text-xs mb-1 block">Sana</label>
-            <input className="input-field" type="date" value={form.date} onChange={e => set('date', e.target.value)} />
+            <input className="input-field" type="datetime-local" value={form.date} onChange={e => set('date', e.target.value)} />
           </div>
+          {extraAmounts.map((ea, i) => (
+            <div key={i} className="flex gap-2 items-end">
+              <div className="flex-1">
+                <label className="text-gray-400 text-xs mb-1 block">Summa {i + 2}</label>
+                <input
+                  className="input-field"
+                  type="number"
+                  placeholder="0"
+                  value={ea.amount}
+                  onChange={e => setExtraAmounts(prev => prev.map((x, j) => j === i ? { ...x, amount: e.target.value } : x))}
+                />
+              </div>
+              <div className="flex-1">
+                <label className="text-gray-400 text-xs mb-1 block">Valyuta</label>
+                <select
+                  className="input-field"
+                  value={ea.currency}
+                  onChange={e => setExtraAmounts(prev => prev.map((x, j) => j === i ? { ...x, currency: e.target.value } : x))}
+                >
+                  {['UZS', 'USD', 'EUR', 'RUB'].map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+              <button
+                onClick={() => setExtraAmounts(prev => prev.filter((_, j) => j !== i))}
+                className="mb-0.5 px-3 py-2.5 rounded-xl bg-dark-600 text-gray-400 text-sm"
+              >×</button>
+            </div>
+          ))}
+          {extraAmounts.length < 3 && (
+            <button
+              onClick={() => setExtraAmounts(prev => [...prev, { amount: '', currency: 'USD' }])}
+              className="text-blue-400 text-xs py-2 border border-dashed border-blue-400/40 rounded-xl w-full"
+            >+ Valyuta qo'shish</button>
+          )}
           {familyMode && family && (
             <p className="text-purple-400 text-xs bg-purple-500/10 py-2 px-3 rounded-lg">
               Bu tranzaksiya oilaviy rejimga saqlanadi
             </p>
           )}
-          {balanceError && <p className="text-red-400 text-sm bg-red-500/10 py-2 px-3 rounded-lg">{balanceError}</p>}
           <button onClick={handleSave} className="btn-primary mt-2">Saqlash</button>
         </div>
       </Modal>
