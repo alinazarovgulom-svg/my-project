@@ -222,7 +222,7 @@ export default function Debts() {
 
       {/* FAB */}
       <button onClick={() => { setForm(defaultForm); setModal(true) }}
-        className="fixed bottom-20 right-4 w-14 h-14 rounded-full bg-blue-500 text-white flex items-center justify-center shadow-lg shadow-blue-500/30 active:opacity-80">
+        className="fixed bottom-24 right-4 z-40 w-14 h-14 rounded-full bg-blue-500 text-white flex items-center justify-center shadow-lg shadow-blue-500/30 active:opacity-80">
         <Plus size={24} />
       </button>
 

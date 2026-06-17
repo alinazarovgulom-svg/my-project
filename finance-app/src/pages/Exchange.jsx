@@ -144,7 +144,7 @@ export default function Exchange() {
       {/* FAB */}
       <button
         onClick={openModal}
-        className="fixed bottom-20 right-4 w-14 h-14 rounded-full bg-blue-500 flex items-center justify-center shadow-lg active:opacity-80 z-10"
+        className="fixed bottom-24 right-4 z-40 w-14 h-14 rounded-full bg-blue-500 flex items-center justify-center shadow-lg active:opacity-80 z-10"
       >
         <Plus size={24} className="text-white" />
       </button>

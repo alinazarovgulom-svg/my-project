@@ -226,7 +226,7 @@ export default function Transactions() {
       </div>
 
       {(!familyMode || canAdd()) && (
-        <div className="fixed bottom-20 right-4 flex flex-col gap-2">
+        <div className="fixed bottom-24 right-4 z-40 flex flex-col gap-2">
           <button onClick={() => openAdd('income')} className="w-12 h-12 rounded-full bg-green-500 text-white flex items-center justify-center shadow-lg shadow-green-500/30 active:opacity-80">
             <TrendingUp size={20} />
           </button>
