@@ -20,7 +20,7 @@ const CATEGORY_EMOJIS = {
   'Ko\'ngilochar': '🎮', 'Kommunal': '💡', 'Telefon/Internet': '📱', 'Boshqa chiqim': '💸'
 }
 
-const defaultForm = { type: 'expense', amount: '', category: '', currency: 'UZS', note: '', date: new Date().toISOString().split('T')[0] }
+const defaultForm = { type: 'expense', amount: '', category: '', currency: 'UZS', note: '', date: new Date().toISOString().slice(0, 16) }
 
 export default function Transactions() {
   const { transactions, saveTransactions, user, family, familyTransactions, familyMembers, canEdit, canAdd, refreshFamily } = useApp()
@@ -30,6 +30,7 @@ export default function Transactions() {
   const [exportModal, setExportModal] = useState(false)
   const [familyMode, setFamilyMode] = useState(() => !!family)
   const [form, setForm] = useState(defaultForm)
+  const [extraAmounts, setExtraAmounts] = useState([])
   const [filter, setFilter] = useState('all')
   const [search, setSearch] = useState('')
   const [customCategories] = useState(() => {
@@ -43,23 +44,31 @@ export default function Transactions() {
 
   const openAdd = (type = 'expense') => {
     setForm({ ...defaultForm, type, category: type === 'income' ? INCOME_CATEGORIES[0] : EXPENSE_CATEGORIES[0] })
+    setExtraAmounts([])
     setModal(true)
   }
 
   const handleSave = () => {
     if (!form.amount || !form.category) return
-    const t = {
-      id: generateId(),
-      ...form,
-      amount: parseFloat(form.amount),
+    const baseFields = {
+      category: form.category,
+      note: form.note,
+      date: form.date,
+      type: form.type,
       emoji: CATEGORY_EMOJIS[form.category] || EMOJIS[form.type],
       userId: user.id,
       userName: user.name
     }
+    const newTxs = [
+      { id: generateId(), ...baseFields, amount: parseFloat(form.amount), currency: form.currency },
+      ...extraAmounts
+        .filter(e => e.amount && parseFloat(e.amount) > 0)
+        .map(e => ({ id: generateId(), ...baseFields, amount: parseFloat(e.amount), currency: e.currency }))
+    ]
     if (familyMode && family) {
-      addFamilyTransaction(family.id, t)
+      newTxs.forEach(t => addFamilyTransaction(family.id, t))
     } else {
-      saveTransactions([...transactions, t])
+      saveTransactions([...transactions, ...newTxs])
     }
     setModal(false)
   }
@@ -203,7 +212,7 @@ export default function Transactions() {
                     <p className="text-white text-sm font-medium truncate">{t.category}</p>
                     <p className="text-gray-500 text-xs">
                       {isFamily && t.userId ? `${getMemberName(t.userId)} · ` : ''}
-                      {t.note ? `${t.note} · ` : ''}{format(new Date(t.date), 'dd.MM.yyyy')}
+                      {t.note ? `${t.note} · ` : ''}{format(new Date(t.date), t.date?.includes('T') ? 'dd.MM.yyyy HH:mm' : 'dd.MM.yyyy')}
                     </p>
                   </div>
                   <p className={`text-sm font-semibold flex-shrink-0 ${t.type === 'income' ? 'text-green-400' : 'text-red-400'}`}>
@@ -270,7 +279,7 @@ export default function Transactions() {
             </div>
             <div>
               <label className="text-gray-400 text-xs mb-1 block">Sana</label>
-              <input className="input-field" type="date" value={editingTx.date} onChange={e => setEditingTx(t => ({ ...t, date: e.target.value }))} />
+              <input className="input-field" type="datetime-local" value={editingTx.date} onChange={e => setEditingTx(t => ({ ...t, date: e.target.value }))} />
             </div>
             <button onClick={handleEditSave} className="btn-primary mt-2">Saqlash</button>
           </div>
@@ -309,8 +318,42 @@ export default function Transactions() {
           </div>
           <div>
             <label className="text-gray-400 text-xs mb-1 block">Sana</label>
-            <input className="input-field" type="date" value={form.date} onChange={e => set('date', e.target.value)} />
+            <input className="input-field" type="datetime-local" value={form.date} onChange={e => set('date', e.target.value)} />
           </div>
+          {extraAmounts.map((ea, i) => (
+            <div key={i} className="flex gap-2 items-end">
+              <div className="flex-1">
+                <label className="text-gray-400 text-xs mb-1 block">Summa {i + 2}</label>
+                <input
+                  className="input-field"
+                  type="number"
+                  placeholder="0"
+                  value={ea.amount}
+                  onChange={e => setExtraAmounts(prev => prev.map((x, j) => j === i ? { ...x, amount: e.target.value } : x))}
+                />
+              </div>
+              <div className="flex-1">
+                <label className="text-gray-400 text-xs mb-1 block">Valyuta</label>
+                <select
+                  className="input-field"
+                  value={ea.currency}
+                  onChange={e => setExtraAmounts(prev => prev.map((x, j) => j === i ? { ...x, currency: e.target.value } : x))}
+                >
+                  {['UZS', 'USD', 'EUR', 'RUB'].map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+              <button
+                onClick={() => setExtraAmounts(prev => prev.filter((_, j) => j !== i))}
+                className="mb-0.5 px-3 py-2.5 rounded-xl bg-dark-600 text-gray-400 text-sm"
+              >×</button>
+            </div>
+          ))}
+          {extraAmounts.length < 3 && (
+            <button
+              onClick={() => setExtraAmounts(prev => [...prev, { amount: '', currency: 'USD' }])}
+              className="text-blue-400 text-xs py-2 border border-dashed border-blue-400/40 rounded-xl w-full"
+            >+ Valyuta qo'shish</button>
+          )}
           {familyMode && family && (
             <p className="text-purple-400 text-xs bg-purple-500/10 py-2 px-3 rounded-lg">
               Bu tranzaksiya oilaviy rejimga saqlanadi
