@@ -1,0 +1,53 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  -webkit-tap-highlight-color: transparent;
+  box-sizing: border-box;
+}
+
+html {
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+body {
+  background: #020617;
+  color: white;
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+::-webkit-scrollbar {
+  display: none;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.8);
+}
+
+select option {
+  background: #1e293b;
+  color: white;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0) }
+  20% { transform: translateX(-8px) }
+  40% { transform: translateX(8px) }
+  60% { transform: translateX(-5px) }
+  80% { transform: translateX(5px) }
+}
+
+.animate-shake {
+  animation: shake 0.5s ease-in-out;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

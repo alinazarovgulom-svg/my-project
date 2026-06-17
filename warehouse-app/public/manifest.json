@@ -1,0 +1,13 @@
+{
+  "name": "OmborBek - Ombor boshqaruvi",
+  "short_name": "OmborBek",
+  "description": "Ombor kirim-chiqim va qoldiq boshqaruvi",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#16a34a",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}
