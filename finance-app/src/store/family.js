@@ -190,6 +190,31 @@ export const addFamilyDebt = async (familyId, debt) => {
   }
 }
 
+export const deleteFamilyDebt = async (familyId, debtId) => {
+  try {
+    const snap = await getDoc(doc(db, 'families', familyId))
+    if (!snap.exists()) return
+    const family = snap.data()
+    const debt = (family.debts || []).find(d => d.id === debtId)
+    if (!debt) return
+    await updateDoc(doc(db, 'families', familyId), { debts: arrayRemove(debt) })
+  } catch (e) {
+    console.warn('[family] deleteFamilyDebt failed:', e?.code || e?.message)
+  }
+}
+
+export const updateFamilyDebt = async (familyId, updatedDebt) => {
+  try {
+    const snap = await getDoc(doc(db, 'families', familyId))
+    if (!snap.exists()) return
+    const family = snap.data()
+    const updatedDebts = (family.debts || []).map(d => d.id === updatedDebt.id ? updatedDebt : d)
+    await updateDoc(doc(db, 'families', familyId), { debts: updatedDebts })
+  } catch (e) {
+    console.warn('[family] updateFamilyDebt failed:', e?.code || e?.message)
+  }
+}
+
 export const subscribeToFamily = (familyId, callback) => {
   if (!familyId) return () => {}
   return onSnapshot(
