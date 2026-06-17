@@ -51,12 +51,23 @@ const TABLE_HTML = (columns, rows) => `
   </table>`
 
 const renderToPDF = async (htmlContent, filename) => {
+  // Load Cyrillic-supporting font if not already loaded
+  if (!document.getElementById('pdf-roboto-font')) {
+    const link = document.createElement('link')
+    link.id = 'pdf-roboto-font'
+    link.rel = 'stylesheet'
+    link.href = 'https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap'
+    document.head.appendChild(link)
+    await new Promise(r => setTimeout(r, 600))
+  }
+  await document.fonts.ready
+
   const el = document.createElement('div')
-  el.style.cssText = 'position:fixed;left:-9999px;top:0;width:794px;background:#f8fafc;font-family:Arial,sans-serif;color:#0f172a;line-height:1.6'
+  el.style.cssText = 'position:fixed;left:-9999px;top:0;width:794px;background:#f8fafc;font-family:Roboto,Arial,sans-serif;color:#0f172a;line-height:1.6'
   el.innerHTML = htmlContent
   document.body.appendChild(el)
 
-  const canvas = await html2canvas(el, { scale: 2, useCORS: true, backgroundColor: '#f8fafc' })
+  const canvas = await html2canvas(el, { scale: 2, useCORS: true, backgroundColor: '#f8fafc', logging: false })
   document.body.removeChild(el)
 
   const imgData = canvas.toDataURL('image/png')
