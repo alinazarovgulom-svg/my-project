@@ -6,61 +6,53 @@ import { fmtCur } from './format'
 const fmt = (n, cur) => fmtCur(n, cur || 'UZS')
 
 const HEADER_HTML = (title, subtitle, meta, summaryCards) => `
-  <div style="background:linear-gradient(135deg,#0f172a 0%,#1e3a8a 50%,#1d4ed8 100%);padding:40px 48px 36px;position:relative;overflow:hidden">
-    <!-- decorative circles -->
+  <div style="background:linear-gradient(135deg,#0f172a 0%,#1e3a8a 50%,#1d4ed8 100%);padding:48px 56px 44px;position:relative;overflow:hidden">
     <div style="position:absolute;top:-60px;right:-60px;width:220px;height:220px;background:rgba(255,255,255,0.04);border-radius:50%"></div>
     <div style="position:absolute;bottom:-40px;left:160px;width:140px;height:140px;background:rgba(255,255,255,0.03);border-radius:50%"></div>
-    <div style="position:absolute;top:20px;right:180px;width:60px;height:60px;background:rgba(255,215,0,0.06);border-radius:50%"></div>
 
     <div style="display:flex;justify-content:space-between;align-items:flex-start;position:relative;z-index:1">
       <div>
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
-          <div style="width:36px;height:36px;background:linear-gradient(135deg,#ffd700,#b8860b);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px">💰</div>
-          <span style="font-size:22px;font-weight:900;color:#fff;letter-spacing:-0.5px">PulBek</span>
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+          <div style="width:44px;height:44px;background:linear-gradient(135deg,#ffd700,#b8860b);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px">💰</div>
+          <span style="font-size:26px;font-weight:900;color:#fff;letter-spacing:-0.5px">PulBek</span>
         </div>
-        <div style="font-size:28px;font-weight:800;color:#fff;margin-bottom:6px;letter-spacing:-0.5px">${title}</div>
-        ${subtitle ? `<div style="font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:4px">${subtitle}</div>` : ''}
+        <div style="font-size:34px;font-weight:800;color:#fff;margin-bottom:8px;letter-spacing:-0.5px">${title}</div>
+        ${subtitle ? `<div style="font-size:15px;color:rgba(255,255,255,0.5);margin-bottom:4px">${subtitle}</div>` : ''}
       </div>
       <div style="text-align:right">
-        <div style="font-size:9px;font-weight:900;letter-spacing:3px;color:#ffd700;text-transform:uppercase;margin-bottom:8px">✦ by KAFTIMDA ✦</div>
-        ${meta.map(m => `<div style="font-size:11px;color:rgba(255,255,255,0.45);margin-bottom:2px">${m}</div>`).join('')}
+        <div style="font-size:9px;font-weight:900;letter-spacing:3px;color:#ffd700;text-transform:uppercase;margin-bottom:10px">✦ by KAFTIMDA ✦</div>
+        ${meta.map(m => `<div style="font-size:13px;color:rgba(255,255,255,0.45);margin-bottom:3px">${m}</div>`).join('')}
       </div>
     </div>
 
     ${summaryCards.length ? `
-    <div style="display:flex;gap:10px;margin-top:24px;position:relative;z-index:1">
+    <div style="display:flex;gap:12px;margin-top:28px;position:relative;z-index:1">
       ${summaryCards.map(c => `
-      <div style="flex:1;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:14px 16px">
-        <div style="font-size:9px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px">${c.label}</div>
-        ${c.lines.map(l => `<div style="font-size:13px;font-weight:700;color:${l.color}">${l.text}</div>`).join('')}
+      <div style="flex:1;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:18px 20px">
+        <div style="font-size:11px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px">${c.label}</div>
+        ${c.lines.map(l => `<div style="font-size:16px;font-weight:700;color:${l.color}">${l.text}</div>`).join('')}
       </div>`).join('')}
     </div>` : ''}
   </div>`
 
-const FOOTER_HTML = () => `
-  <div style="padding:14px 48px;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;background:#f8fafc">
-    <div style="font-size:9px;color:#cbd5e1;letter-spacing:0.5px">PulBek — Shaxsiy va biznes moliyangizni boshqaring</div>
-    <div style="font-size:9px;font-weight:900;letter-spacing:2.5px;color:#b8860b">✦ by KAFTIMDA ✦</div>
-  </div>`
-
 const TABLE_HTML = (columns, rows) => `
-  <table style="width:100%;border-collapse:collapse;font-size:11.5px">
+  <table style="width:100%;border-collapse:collapse;font-size:14px">
     <thead>
       <tr style="background:#f1f5f9">
-        ${columns.map(c => `<th style="padding:10px 14px;text-align:${c.align||'left'};font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#64748b;border-bottom:2px solid #e2e8f0">${c.label}</th>`).join('')}
+        ${columns.map(c => `<th style="padding:13px 16px;text-align:${c.align||'left'};font-size:11px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;color:#64748b;border-bottom:2px solid #e2e8f0">${c.label}</th>`).join('')}
       </tr>
     </thead>
     <tbody>
       ${rows.map((row, i) => `
       <tr style="background:${i % 2 === 0 ? '#fff' : '#f8fafc'}">
-        ${row.map((cell, ci) => `<td style="padding:10px 14px;border-bottom:1px solid #f1f5f9;text-align:${columns[ci]?.align||'left'};${cell.style||''}">${cell.html||cell}</td>`).join('')}
+        ${row.map((cell, ci) => `<td style="padding:13px 16px;border-bottom:1px solid #f1f5f9;text-align:${columns[ci]?.align||'left'};${cell.style||''}">${cell.html||cell}</td>`).join('')}
       </tr>`).join('')}
     </tbody>
   </table>`
 
 const renderToPDF = async (htmlContent, filename) => {
   const el = document.createElement('div')
-  el.style.cssText = 'position:fixed;left:-9999px;top:0;width:794px;background:#f8fafc;font-family:Arial,sans-serif;color:#0f172a;line-height:1.5'
+  el.style.cssText = 'position:fixed;left:-9999px;top:0;width:794px;background:#f8fafc;font-family:Arial,sans-serif;color:#0f172a;line-height:1.6'
   el.innerHTML = htmlContent
   document.body.appendChild(el)
 
@@ -106,11 +98,11 @@ export const exportTransactionsPDF = async (list, filename = 'pulbek-tranzaksiya
   ]
 
   const rows = list.map(t => [
-    `<span style="color:#64748b;font-size:10px">${format(new Date(t.date), 'dd.MM.yyyy')}</span>`,
-    `<span style="display:inline-block;padding:2px 10px;border-radius:20px;font-size:10px;font-weight:700;background:${t.type === 'income' ? '#dcfce7' : '#fee2e2'};color:${t.type === 'income' ? '#15803d' : '#b91c1c'}">${t.type === 'income' ? '▲ Kirim' : '▼ Chiqim'}</span>`,
-    `<span style="font-weight:600;color:#1e293b">${t.emoji || ''} ${t.category}</span>`,
-    { html: `<span style="font-weight:700;color:${t.type === 'income' ? '#15803d' : '#b91c1c'}">${t.type === 'income' ? '+' : '-'}${fmt(t.amount, t.currency || 'UZS')}</span> <span style="font-size:9px;color:#94a3b8">${t.currency || 'UZS'}</span>`, align: 'right', style: '' },
-    `<span style="color:#94a3b8;font-size:10px">${t.note || '—'}</span>`,
+    `<span style="color:#64748b;font-size:12px">${format(new Date(t.date), 'dd.MM.yyyy')}</span>`,
+    `<span style="display:inline-block;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;background:${t.type === 'income' ? '#dcfce7' : '#fee2e2'};color:${t.type === 'income' ? '#15803d' : '#b91c1c'}">${t.type === 'income' ? '▲ Kirim' : '▼ Chiqim'}</span>`,
+    `<span style="font-weight:600;color:#1e293b;font-size:13px">${t.emoji || ''} ${t.category}</span>`,
+    { html: `<span style="font-weight:700;font-size:13px;color:${t.type === 'income' ? '#15803d' : '#b91c1c'}">${t.type === 'income' ? '+' : '-'}${fmt(t.amount, t.currency || 'UZS')}</span> <span style="font-size:11px;color:#94a3b8">${t.currency || 'UZS'}</span>`, align: 'right', style: '' },
+    `<span style="color:#64748b;font-size:12px">${t.note || '—'}</span>`,
   ])
 
   const html = `
@@ -118,11 +110,9 @@ export const exportTransactionsPDF = async (list, filename = 'pulbek-tranzaksiya
       `${format(new Date(), 'dd.MM.yyyy HH:mm')}`,
       `${list.length} ta operatsiya`,
     ], summaryCards)}
-    <div style="padding:28px 40px 0">
+    <div style="padding:32px 48px 48px">
       ${TABLE_HTML(columns, rows)}
-    </div>
-    <div style="height:28px"></div>
-    ${FOOTER_HTML()}`
+    </div>`
 
   await renderToPDF(html, filename)
 }
@@ -137,7 +127,6 @@ export const exportReportPDF = async ({ filtered, startDate, endDate, userName, 
     ]
   }))
 
-  // Kategoriya jadvali — har valyuta alohida
   const currencies = [...new Set(filtered.map(t => t.currency || 'UZS'))]
   const byCatCur = {}
   filtered.forEach(t => {
@@ -155,12 +144,12 @@ export const exportReportPDF = async ({ filtered, startDate, endDate, userName, 
     ])
   ]
   const catRows = Object.entries(byCatCur).map(([cat, curData]) => [
-    `<span style="font-weight:600;color:#1e293b">${cat}</span>`,
+    `<span style="font-weight:600;color:#1e293b;font-size:13px">${cat}</span>`,
     ...currencies.flatMap(cur => {
       const v = curData[cur] || { income: 0, expense: 0 }
       return [
-        { html: v.income > 0 ? `<span style="color:#15803d;font-weight:700">+${fmt(v.income, cur)}</span>` : '<span style="color:#cbd5e1">—</span>', align: 'right' },
-        { html: v.expense > 0 ? `<span style="color:#b91c1c;font-weight:700">-${fmt(v.expense, cur)}</span>` : '<span style="color:#cbd5e1">—</span>', align: 'right' },
+        { html: v.income > 0 ? `<span style="color:#15803d;font-weight:700;font-size:13px">+${fmt(v.income, cur)}</span>` : '<span style="color:#cbd5e1">—</span>', align: 'right' },
+        { html: v.expense > 0 ? `<span style="color:#b91c1c;font-weight:700;font-size:13px">-${fmt(v.expense, cur)}</span>` : '<span style="color:#cbd5e1">—</span>', align: 'right' },
       ]
     })
   ])
@@ -173,11 +162,11 @@ export const exportReportPDF = async ({ filtered, startDate, endDate, userName, 
     { label: 'Izoh' },
   ]
   const txRows = filtered.map(t => [
-    `<span style="color:#64748b;font-size:10px">${format(new Date(t.date), 'dd.MM.yyyy')}</span>`,
-    `<span style="display:inline-block;padding:2px 10px;border-radius:20px;font-size:10px;font-weight:700;background:${t.type === 'income' ? '#dcfce7' : '#fee2e2'};color:${t.type === 'income' ? '#15803d' : '#b91c1c'}">${t.type === 'income' ? '▲ Kirim' : '▼ Chiqim'}</span>`,
-    `<span style="font-weight:600;color:#1e293b">${t.emoji || ''} ${t.category}</span>`,
-    { html: `<span style="font-weight:700;color:${t.type === 'income' ? '#15803d' : '#b91c1c'}">${t.type === 'income' ? '+' : '-'}${fmt(t.amount, t.currency || 'UZS')}</span> <span style="font-size:9px;color:#94a3b8">${t.currency || 'UZS'}</span>`, align: 'right' },
-    `<span style="color:#94a3b8;font-size:10px">${t.note || '—'}</span>`,
+    `<span style="color:#64748b;font-size:12px">${format(new Date(t.date), 'dd.MM.yyyy')}</span>`,
+    `<span style="display:inline-block;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;background:${t.type === 'income' ? '#dcfce7' : '#fee2e2'};color:${t.type === 'income' ? '#15803d' : '#b91c1c'}">${t.type === 'income' ? '▲ Kirim' : '▼ Chiqim'}</span>`,
+    `<span style="font-weight:600;color:#1e293b;font-size:13px">${t.emoji || ''} ${t.category}</span>`,
+    { html: `<span style="font-weight:700;font-size:13px;color:${t.type === 'income' ? '#15803d' : '#b91c1c'}">${t.type === 'income' ? '+' : '-'}${fmt(t.amount, t.currency || 'UZS')}</span> <span style="font-size:11px;color:#94a3b8">${t.currency || 'UZS'}</span>`, align: 'right' },
+    `<span style="color:#64748b;font-size:12px">${t.note || '—'}</span>`,
   ])
 
   const html = `
@@ -186,15 +175,13 @@ export const exportReportPDF = async ({ filtered, startDate, endDate, userName, 
       `${filtered.length} ta operatsiya`,
     ], summaryCards)}
 
-    <div style="padding:28px 40px 0">
-      <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#64748b;margin-bottom:12px">Kategoriyalar bo'yicha</div>
+    <div style="padding:32px 48px 48px">
+      <div style="font-size:13px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;color:#64748b;margin-bottom:14px">Kategoriyalar bo'yicha</div>
       ${TABLE_HTML(catColumns, catRows)}
 
-      <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#64748b;margin:28px 0 12px">Barcha operatsiyalar</div>
+      <div style="font-size:13px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;color:#64748b;margin:36px 0 14px">Barcha operatsiyalar</div>
       ${TABLE_HTML(txColumns, txRows)}
-    </div>
-    <div style="height:28px"></div>
-    ${FOOTER_HTML()}`
+    </div>`
 
   await renderToPDF(html, filename || `hisobot_${startDate}_${endDate}.pdf`)
 }
