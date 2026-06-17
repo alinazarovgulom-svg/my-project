@@ -4,8 +4,9 @@ import { useApp } from '../store/AppContext'
 import { useLang } from '../i18n/LangContext'
 import { getUsers, saveUsers, hashPassword, setCurrentUser } from '../store/storage'
 import { requestPermission, isGranted } from '../utils/notifications'
-import { Lock, LogOut, Globe, Info, ChevronRight, Shield, Package, Boxes, Bell, BellOff, ClipboardList } from 'lucide-react'
+import { Lock, LogOut, Globe, Info, ChevronRight, Shield, Package, Boxes, Bell, BellOff, ClipboardList, Fingerprint } from 'lucide-react'
 import Modal from '../components/Modal'
+import { hasBiometric, isBiometricAvailable, registerBiometric, removeBiometric } from '../utils/biometric'
 
 export default function Settings() {
   const { user, setUser, products, movements } = useApp()
@@ -20,9 +21,14 @@ export default function Settings() {
   const [passOk, setPassOk] = useState(false)
   const [notifGranted, setNotifGranted] = useState(isGranted())
   const [notifUnsupported, setNotifUnsupported] = useState(!('Notification' in window))
+  const [bioRegistered, setBioRegistered] = useState(() => hasBiometric(user?.id))
+  const [bioAvailable, setBioAvailable] = useState(false)
+  const [bioLoading, setBioLoading] = useState(false)
+  const [bioMsg, setBioMsg] = useState('')
 
   useEffect(() => {
     setNotifGranted(isGranted())
+    isBiometricAvailable().then(setBioAvailable)
   }, [])
 
   const setPF = k => e => setPassForm(f => ({ ...f, [k]: e.target.value }))
@@ -63,6 +69,27 @@ export default function Settings() {
     const granted = await requestPermission()
     setNotifGranted(granted)
     if (!granted) alert('Brauzer ruxsat bermadi. Brauzer sozlamalaridan yoqing.')
+  }
+
+  const handleBioToggle = async () => {
+    if (bioRegistered) {
+      removeBiometric(user?.id)
+      setBioRegistered(false)
+      setBioMsg('Biometrik o\'chirildi')
+      setTimeout(() => setBioMsg(''), 2000)
+      return
+    }
+    setBioLoading(true)
+    setBioMsg('')
+    const res = await registerBiometric(user?.id, user?.username, user?.fullName)
+    setBioLoading(false)
+    if (res.success) {
+      setBioRegistered(true)
+      setBioMsg('Barmoq izi / Yuz ID ulandi!')
+    } else {
+      setBioMsg(res.error || 'Xatolik yuz berdi')
+    }
+    setTimeout(() => setBioMsg(''), 3000)
   }
 
   const handleLogout = () => {
@@ -132,6 +159,31 @@ export default function Settings() {
             </div>
             <div className={`w-12 h-6 rounded-full transition-all relative ${notifGranted ? 'bg-primary-500' : 'bg-slate-600'}`}>
               <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${notifGranted ? 'left-7' : 'left-1'}`} />
+            </div>
+          </button>
+        )}
+
+        {/* Biometric */}
+        {bioAvailable && (
+          <button onClick={handleBioToggle} disabled={bioLoading}
+            className={`w-full flex items-center justify-between px-5 py-4 rounded-2xl border transition-all active:scale-95 ${
+              bioRegistered
+                ? 'bg-primary-500/10 border-primary-500/20'
+                : 'bg-slate-800/60 border-slate-700/30'
+            }`}>
+            <div className="flex items-center gap-3">
+              <Fingerprint size={20} className={bioRegistered ? 'text-primary-400' : 'text-slate-400'} />
+              <div className="text-left">
+                <p className={`text-sm font-medium ${bioRegistered ? 'text-primary-400' : 'text-white'}`}>
+                  {bioLoading ? 'Ro\'yxatdan o\'tilmoqda...' : 'Barmoq izi / Yuz ID'}
+                </p>
+                <p className="text-slate-400 text-xs">
+                  {bioMsg || (bioRegistered ? 'Ulangan — PIN o\'rniga ishlating' : 'PIN qulfiga qo\'shimcha himoya')}
+                </p>
+              </div>
+            </div>
+            <div className={`w-12 h-6 rounded-full transition-all relative ${bioRegistered ? 'bg-primary-500' : 'bg-slate-600'}`}>
+              <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${bioRegistered ? 'left-7' : 'left-1'}`} />
             </div>
           </button>
         )}

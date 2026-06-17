@@ -1,16 +1,38 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useApp } from '../store/AppContext'
-import { Lock, Delete } from 'lucide-react'
+import { Lock, Delete, Fingerprint } from 'lucide-react'
+import { hasBiometric, isBiometricAvailable, authenticateBiometric } from '../utils/biometric'
 
 export default function AppLock({ children, onUnlock }) {
   const { user } = useApp()
   const [locked, setLocked] = useState(false)
   const [pin, setPin] = useState('')
   const [error, setError] = useState(false)
+  const [bioReady, setBioReady] = useState(false)
+  const [bioError, setBioError] = useState('')
 
   const getPIN = useCallback(() => {
     if (!user) return null
     return localStorage.getItem(`wh_pin_${user.id}`) || null
+  }, [user])
+
+  const unlock = useCallback(() => {
+    setLocked(false)
+    setPin('')
+    onUnlock?.()
+  }, [onUnlock])
+
+  useEffect(() => {
+    if (!user) return
+    const check = async () => {
+      if (hasBiometric(user.id)) {
+        const avail = await isBiometricAvailable()
+        setBioReady(avail)
+      } else {
+        setBioReady(false)
+      }
+    }
+    check()
   }, [user])
 
   useEffect(() => {
@@ -35,11 +57,10 @@ export default function AppLock({ children, onUnlock }) {
     const next = pin + d
     setPin(next)
     setError(false)
+    setBioError('')
     if (next.length === 4) {
       if (next === getPIN()) {
-        setLocked(false)
-        setPin('')
-        onUnlock?.()
+        unlock()
       } else {
         setError(true)
         setTimeout(() => { setPin(''); setError(false) }, 600)
@@ -48,6 +69,17 @@ export default function AppLock({ children, onUnlock }) {
   }
 
   const handleDel = () => setPin(p => p.slice(0, -1))
+
+  const handleBiometric = async () => {
+    setBioError('')
+    const res = await authenticateBiometric(user.id)
+    if (res.success) {
+      unlock()
+    } else {
+      setBioError(res.error || 'Xatolik')
+      setTimeout(() => setBioError(''), 2500)
+    }
+  }
 
   if (!locked) return children
 
@@ -74,7 +106,14 @@ export default function AppLock({ children, onUnlock }) {
 
       <div className="grid grid-cols-3 gap-4 w-full max-w-xs">
         {[1,2,3,4,5,6,7,8,9,'',0,'del'].map((d, i) => (
-          d === '' ? <div key={i} /> :
+          d === '' ? (
+            bioReady ? (
+              <button key={i} onClick={handleBiometric}
+                className="h-16 rounded-2xl bg-primary-500/15 text-primary-400 flex items-center justify-center active:bg-primary-500/30 transition-colors">
+                <Fingerprint size={26} />
+              </button>
+            ) : <div key={i} />
+          ) :
           d === 'del' ? (
             <button key={i} onClick={handleDel}
               className="h-16 rounded-2xl bg-slate-800 text-slate-300 flex items-center justify-center active:bg-slate-700 transition-colors">
@@ -88,6 +127,16 @@ export default function AppLock({ children, onUnlock }) {
           )
         ))}
       </div>
+
+      {bioError && (
+        <p className="text-red-400 text-sm text-center">{bioError}</p>
+      )}
+
+      {bioReady && (
+        <p className="text-slate-500 text-xs text-center">
+          Barmoq izi / Yuz ID bilan ham kirishingiz mumkin
+        </p>
+      )}
     </div>
   )
 }
