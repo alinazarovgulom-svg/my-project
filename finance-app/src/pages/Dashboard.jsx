@@ -42,11 +42,13 @@ export default function Dashboard() {
   const totalIncome = transactions.filter(t => t.type === 'income').reduce((s, t) => s + toUZS(t.amount, t.currency), 0)
   const totalExpense = transactions.filter(t => t.type === 'expense').reduce((s, t) => s + toUZS(t.amount, t.currency), 0)
 
-  // Currency breakdown
+  // Today's income/expense per currency (for balance card)
+  const todayStr = format(new Date(), 'yyyy-MM-dd')
+  const todayTx = transactions.filter(t => t.date?.slice(0, 10) === todayStr && t.category !== 'Valyuta ayirboshlash')
   const currencies = ['UZS', 'USD', 'EUR', 'RUB']
   const currencyBreakdown = currencies.map(cur => {
-    const income = transactions.filter(t => t.type === 'income' && (t.currency || 'UZS') === cur).reduce((s, t) => s + t.amount, 0)
-    const expense = transactions.filter(t => t.type === 'expense' && (t.currency || 'UZS') === cur).reduce((s, t) => s + t.amount, 0)
+    const income = todayTx.filter(t => t.type === 'income' && (t.currency || 'UZS') === cur).reduce((s, t) => s + t.amount, 0)
+    const expense = todayTx.filter(t => t.type === 'expense' && (t.currency || 'UZS') === cur).reduce((s, t) => s + t.amount, 0)
     return { cur, income, expense }
   }).filter(x => x.income > 0 || x.expense > 0)
 
@@ -105,12 +107,12 @@ const recent = [...transactions].filter(t => t.category !== 'Valyuta ayirboshlas
                 <TrendingUp size={16} className="text-green-400" />
               </div>
               <div>
-                <p className="text-blue-200 text-xs">{t('income')}</p>
+                <p className="text-blue-200 text-xs">Bugungi kirim</p>
                 {currencyBreakdown.filter(x => x.income > 0).map(({ cur, income: inc }) => (
                   <p key={cur} className="text-white text-xs font-semibold leading-tight">+{fmt(inc, cur)} {cur}</p>
                 ))}
                 {currencyBreakdown.filter(x => x.income > 0).length === 0 && (
-                  <p className="text-white text-sm font-semibold">{fmt(totalIncome)}</p>
+                  <p className="text-white text-sm font-semibold">0</p>
                 )}
               </div>
             </div>
@@ -119,12 +121,12 @@ const recent = [...transactions].filter(t => t.category !== 'Valyuta ayirboshlas
                 <TrendingDown size={16} className="text-red-400" />
               </div>
               <div>
-                <p className="text-blue-200 text-xs">{t('expense')}</p>
+                <p className="text-blue-200 text-xs">Bugungi chiqim</p>
                 {currencyBreakdown.filter(x => x.expense > 0).map(({ cur, expense: exp }) => (
                   <p key={cur} className="text-white text-xs font-semibold leading-tight">-{fmt(exp, cur)} {cur}</p>
                 ))}
                 {currencyBreakdown.filter(x => x.expense > 0).length === 0 && (
-                  <p className="text-white text-sm font-semibold">{fmt(totalExpense)}</p>
+                  <p className="text-white text-sm font-semibold">0</p>
                 )}
               </div>
             </div>
