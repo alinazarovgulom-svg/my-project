@@ -6,7 +6,7 @@ import { generateId } from '../store/storage'
 import { addTeamMovement, deleteTeamMovement } from '../store/family'
 import Modal from '../components/Modal'
 import SwipeableRow from '../components/SwipeableRow'
-import { PackagePlus, Search, Users } from 'lucide-react'
+import { PackagePlus, Search, Users, MapPin } from 'lucide-react'
 import { addLogEntry } from '../store/auditLog'
 
 const emptyForm = (products) => ({
@@ -182,6 +182,12 @@ export default function StockIn() {
                   className="w-full bg-slate-800 border border-slate-700/50 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-primary-500/40">
                   {products.map(p => <option key={p.id} value={p.id}>{p.name} ({p.unit})</option>)}
                 </select>
+                {selectedProduct?.location && (
+                  <div className="flex items-center gap-1.5 mt-1.5 px-1">
+                    <MapPin size={12} className="text-amber-400" />
+                    <span className="text-amber-400 text-xs">{selectedProduct.location}</span>
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-3">

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useApp } from '../store/AppContext'
 import { useLang } from '../i18n/LangContext'
 import { fmtNum } from '../utils/format'
-import { Boxes, Search, Users, TrendingUp, TrendingDown, AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react'
+import { Boxes, Search, Users, TrendingUp, TrendingDown, AlertTriangle, ChevronDown, ChevronUp, MapPin } from 'lucide-react'
 
 export default function Inventory() {
   const { products, movements, team, teamMovements, getInventory } = useApp()
@@ -128,6 +128,12 @@ export default function Inventory() {
                         <p className="text-white font-semibold text-sm">{fmtNum(item.prod?.salePrice || 0)} so'm</p>
                       </div>
                     </div>
+                    {item.prod?.location && (
+                      <div className="flex items-center gap-1.5 text-xs">
+                        <MapPin size={12} className="text-amber-400 flex-shrink-0" />
+                        <span className="text-amber-400">{item.prod.location}</span>
+                      </div>
+                    )}
                     {item.prod?.minStock > 0 && (
                       <div className="flex justify-between items-center text-xs">
                         <span className="text-slate-400">{t('minStock')}</span>

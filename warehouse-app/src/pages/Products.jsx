@@ -10,12 +10,12 @@ import Modal from '../components/Modal'
 import SwipeableRow from '../components/SwipeableRow'
 import {
   Package, Plus, Search, FileSpreadsheet,
-  Download, Upload, CheckCircle, XCircle, AlertCircle, ChevronDown, ChevronUp, Camera, X
+  Download, Upload, CheckCircle, XCircle, AlertCircle, ChevronDown, ChevronUp, Camera, X, MapPin
 } from 'lucide-react'
 
 const emptyForm = () => ({
   name: '', category: DEFAULT_CATEGORIES[0], unit: 'dona',
-  purchasePrice: '', salePrice: '', minStock: '', barcode: '', note: '', image: ''
+  purchasePrice: '', salePrice: '', minStock: '', barcode: '', location: '', note: '', image: ''
 })
 
 const compressImage = (file) => new Promise((resolve) => {
@@ -66,17 +66,19 @@ export default function Products() {
 
   const set = k => e => setForm(f => ({ ...f, [k]: e.target.value }))
 
-  const filtered = products.filter(p =>
-    p.name.toLowerCase().includes(search.toLowerCase()) ||
-    p.category?.toLowerCase().includes(search.toLowerCase())
-  )
+  const filtered = products.filter(p => {
+    const q = search.toLowerCase()
+    return p.name.toLowerCase().includes(q) ||
+      p.category?.toLowerCase().includes(q) ||
+      p.location?.toLowerCase().includes(q)
+  })
 
   const openAdd = () => { setForm(emptyForm()); setEditId(null); setModalOpen(true) }
   const openEdit = (p) => {
     setForm({
       name: p.name, category: p.category, unit: p.unit,
       purchasePrice: p.purchasePrice, salePrice: p.salePrice,
-      minStock: p.minStock || '', barcode: p.barcode || '', note: p.note || '',
+      minStock: p.minStock || '', barcode: p.barcode || '', location: p.location || '', note: p.note || '',
       image: p.image || ''
     })
     setEditId(p.id); setModalOpen(true)
@@ -235,7 +237,14 @@ export default function Products() {
                       <div className="flex-1 min-w-0">
                         <p className="text-white font-medium text-sm truncate">{p.name}</p>
                         <p className="text-slate-400 text-xs mt-0.5">{p.category} · {p.unit}</p>
-                        {p.minStock > 0 && <p className="text-slate-500 text-xs mt-0.5">Min: {p.minStock} {p.unit}</p>}
+                        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                          {p.minStock > 0 && <span className="text-slate-500 text-xs">Min: {p.minStock} {p.unit}</span>}
+                          {p.location && (
+                            <span className="flex items-center gap-0.5 text-xs text-amber-400/80">
+                              <MapPin size={10} /> {p.location}
+                            </span>
+                          )}
+                        </div>
                       </div>
                       <div className="text-right ml-3">
                         <p className="text-primary-400 text-sm font-semibold">{fmtNum(p.purchasePrice)} so'm</p>
@@ -286,6 +295,11 @@ export default function Products() {
               <input value={form.barcode} onChange={set('barcode')} placeholder="..."
                 className="w-full bg-slate-800 border border-slate-700/50 rounded-xl px-4 py-3 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-primary-500/40" />
             </div>
+          </div>
+          <div className="relative">
+            <MapPin size={15} className="absolute left-4 top-1/2 -translate-y-1/2 text-amber-400/70" />
+            <input value={form.location} onChange={set('location')} placeholder="Joylashuv: A-3 javon, 2-qator..."
+              className="w-full bg-slate-800 border border-slate-700/50 rounded-xl pl-10 pr-4 py-3 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-amber-500/40" />
           </div>
           <textarea value={form.note} onChange={set('note')} placeholder={t('note')} rows={2}
             className="w-full bg-slate-800 border border-slate-700/50 rounded-xl px-4 py-3 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-primary-500/40 resize-none" />
