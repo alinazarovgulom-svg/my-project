@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AppProvider, useApp } from './store/AppContext'
 import BottomNav from './components/BottomNav'
 import Login from './pages/Login'
@@ -15,11 +15,12 @@ import Onboarding from './components/Onboarding'
 import { useState, useEffect, useRef } from 'react'
 import './index.css'
 
-function AnimatedRoutes() {
-  const location = useLocation()
+function ProtectedLayout() {
+  const { user } = useApp()
+  if (!user) return <Navigate to="/login" replace />
   return (
-    <div key={location.pathname} className="page-enter flex-1 flex flex-col min-h-0">
-      <Routes location={location}>
+    <>
+      <Routes>
         <Route path="/" element={<Dashboard />} />
         <Route path="/transactions" element={<Transactions />} />
         <Route path="/debts" element={<Debts />} />
@@ -29,16 +30,6 @@ function AnimatedRoutes() {
         <Route path="/categories" element={<Categories />} />
         <Route path="/family" element={<Family />} />
       </Routes>
-    </div>
-  )
-}
-
-function ProtectedLayout() {
-  const { user } = useApp()
-  if (!user) return <Navigate to="/login" replace />
-  return (
-    <>
-      <AnimatedRoutes />
       <BottomNav />
     </>
   )

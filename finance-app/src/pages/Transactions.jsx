@@ -24,13 +24,13 @@ const defaultForm = { type: 'expense', amount: '', category: '', currency: 'UZS'
 
 export default function Transactions() {
   const { transactions, saveTransactions, user, family, familyTransactions, familyMembers, canEdit, canAdd, refreshFamily } = useApp()
+  const [modal, setModal] = useState(false)
   const [editModal, setEditModal] = useState(false)
   const [editingTx, setEditingTx] = useState(null)
   const [exportModal, setExportModal] = useState(false)
   const [selectMode, setSelectMode] = useState(false)
   const [selected, setSelected] = useState(new Set())
   const familyMode = !!family
-  const [modal, setModal] = useState(false)
   const [form, setForm] = useState(defaultForm)
   const [extraAmounts, setExtraAmounts] = useState([])
   const [filter, setFilter] = useState('all')
@@ -49,15 +49,13 @@ export default function Transactions() {
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
   const openAdd = (type = 'expense') => {
-    const cats = customCategories
-    setForm({ ...defaultForm, date: localNow(), type, category: cats?.[0] || (type === 'income' ? INCOME_CATEGORIES[0] : EXPENSE_CATEGORIES[0]) })
+    setForm({ ...defaultForm, date: localNow(), type, category: type === 'income' ? INCOME_CATEGORIES[0] : EXPENSE_CATEGORIES[0] })
     setExtraAmounts([])
     setModal(true)
   }
 
   const handleSave = () => {
     if (!form.amount || !form.category) return
-    if (familyMode && !canAdd()) return
     const baseFields = {
       category: form.category,
       note: form.note,
@@ -302,13 +300,13 @@ export default function Transactions() {
         </div>
       )}
 
-      {!selectMode && (
+      {(!familyMode || canAdd()) && !selectMode && (
         <div className="fixed bottom-24 right-4 z-40 flex flex-col gap-2">
-          <button onClick={() => openAdd('income')} className="w-14 h-14 rounded-full bg-green-500 text-white flex items-center justify-center shadow-lg shadow-green-500/30 active:opacity-80">
-            <TrendingUp size={22} />
+          <button onClick={() => openAdd('income')} className="w-12 h-12 rounded-full bg-green-500 text-white flex items-center justify-center shadow-lg shadow-green-500/30 active:opacity-80">
+            <TrendingUp size={20} />
           </button>
-          <button onClick={() => openAdd('expense')} className="w-14 h-14 rounded-full bg-red-500 text-white flex items-center justify-center shadow-lg shadow-red-500/30 active:opacity-80">
-            <TrendingDown size={22} />
+          <button onClick={() => openAdd('expense')} className="w-12 h-12 rounded-full bg-red-500 text-white flex items-center justify-center shadow-lg shadow-red-500/30 active:opacity-80">
+            <TrendingDown size={20} />
           </button>
         </div>
       )}
