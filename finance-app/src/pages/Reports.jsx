@@ -34,37 +34,35 @@ export default function Reports() {
     return { cur, inc, exp }
   }).filter(x => x.inc > 0 || x.exp > 0)
 
-  // Daily cumulative balance across ALL transactions (not just filtered)
+  // Daily cumulative balance — uses ALL transactions from beginning of time
   const dailyBalances = (() => {
-    // Sort all transactions by date ascending
-    const sorted = [...transactions].sort((a, b) => new Date(a.date) - new Date(b.date))
-    // Group by date
+    const allTx = (family ? familyTransactions : personalTx)
+    const sorted = [...allTx].sort((a, b) => new Date(a.date) - new Date(b.date))
     const byDate = {}
     sorted.forEach(t => {
       const d = t.date.split('T')[0]
       if (!byDate[d]) byDate[d] = []
       byDate[d].push(t)
     })
-    // Compute running balance per currency
     const running = { UZS: 0, USD: 0, EUR: 0, RUB: 0 }
-    return Object.entries(byDate)
-      .filter(([date]) => date >= startDate && date <= endDate)
-      .map(([date, txs]) => {
-        txs.forEach(t => {
-          const cur = t.currency || 'UZS'
-          running[cur] = (running[cur] || 0) + (t.type === 'income' ? t.amount : -t.amount)
-        })
-        const snap = { ...running }
+    const result = []
+    Object.entries(byDate).forEach(([date, txs]) => {
+      txs.forEach(t => {
+        const cur = t.currency || 'UZS'
+        running[cur] = (running[cur] || 0) + (t.type === 'income' ? t.amount : -t.amount)
+      })
+      if (date >= startDate && date <= endDate) {
         const dayIncome = {}
         const dayExpense = {}
-        txs.forEach(t => {
+        txs.filter(t => t.category !== 'Valyuta ayirboshlash').forEach(t => {
           const cur = t.currency || 'UZS'
           if (t.type === 'income') dayIncome[cur] = (dayIncome[cur] || 0) + t.amount
           else dayExpense[cur] = (dayExpense[cur] || 0) + t.amount
         })
-        return { date, balance: snap, dayIncome, dayExpense }
-      })
-      .reverse() // newest first
+        result.push({ date, balance: { ...running }, dayIncome, dayExpense })
+      }
+    })
+    return result.reverse()
   })()
 
   // Group by category — per currency
