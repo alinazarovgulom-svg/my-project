@@ -58,7 +58,7 @@ export default function Categories() {
   }
 
   return (
-    <div className="flex flex-col px-4 pt-4 pb-24 gap-4">
+    <div className="flex flex-col px-4 pt-4 pb-24 gap-4 page-animate">
       <h1 className="text-xl font-bold text-white">Kategoriyalar</h1>
 
       {/* Add new */}

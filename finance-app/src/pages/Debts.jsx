@@ -139,6 +139,7 @@ export default function Debts() {
 
   return (
     <div className="flex flex-col min-h-dvh pb-24">
+      <div className="page-animate">
       <div className="sticky top-0 z-10 bg-dark-900 px-4 pt-4 pb-3">
         <h1 className="text-xl font-bold text-white mb-3">Qarzlar</h1>
 
@@ -250,6 +251,8 @@ export default function Debts() {
           })
         )}
       </div>
+
+      </div>{/* end page-animate */}
 
       {/* FAB */}
       {!isViewer && <button onClick={() => { setForm(defaultForm); setModal(true) }}

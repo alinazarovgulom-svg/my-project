@@ -150,6 +150,7 @@ export default function Transactions() {
 
   return (
     <div className="flex flex-col min-h-dvh pb-24">
+      <div className="page-animate">
       <div className="sticky top-0 z-10 bg-dark-900 px-4 pt-4 pb-3">
         <div className="flex items-center justify-between mb-3">
           <h1 className="text-xl font-bold text-white">Kirim / Chiqim</h1>
@@ -299,6 +300,8 @@ export default function Transactions() {
           </button>
         </div>
       )}
+
+      </div>{/* end page-animate */}
 
       {(!familyMode || canAdd()) && !selectMode && (
         <div className="fixed bottom-24 right-4 z-40 flex flex-col gap-2">
