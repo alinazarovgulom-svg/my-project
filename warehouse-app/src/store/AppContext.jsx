@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react'
 import { getCurrentUser, getData, saveData } from './storage'
-import { getUserTeam, getUserTeamId, getTeam, subscribeToTeam } from './family'
+import { getUserTeam, getUserTeamId, getTeam, subscribeToTeam, joinTeam } from './family'
 import { syncToCloud, loadFromCloud, subscribeToCloud } from './sync'
 import { checkLowStock } from '../utils/notifications'
 import { db } from './firebase'
@@ -121,6 +121,17 @@ export function AppProvider({ children }) {
     const unsub = subscribeToTeam(teamId, (data) => setTeam(data))
     return () => unsub()
   }, [teamId])
+
+  // Auto-rejoin last team on login
+  useEffect(() => {
+    if (!uid || teamId) return
+    const lastCode = localStorage.getItem(`wh_last_team_${uid}`)
+    if (!lastCode) return
+    joinTeam(lastCode, uid, user.username, user.fullName).then(res => {
+      localStorage.removeItem(`wh_last_team_${uid}`)
+      if (res?.success) setTeamId(lastCode)
+    })
+  }, [uid])
 
   const refreshTeam = useCallback(() => {
     if (uid) setTeamId(getUserTeamId(uid) || null)

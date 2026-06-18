@@ -3,6 +3,7 @@ import { doc, setDoc, getDoc, updateDoc, deleteDoc, onSnapshot, arrayUnion, arra
 
 const TEAM_PREFIX = 'wh_team_'
 const USER_TEAM_KEY = (uid) => `wh_${uid}_teamId`
+const LAST_TEAM_KEY = (uid) => `wh_last_team_${uid}`
 
 const generateTeamCode = () => `WH-${Math.floor(100000 + Math.random() * 900000)}`
 
@@ -88,6 +89,7 @@ export const leaveTeam = async (teamId, userId) => {
     const remaining = team.members.filter(m => m.userId !== userId)
     if (remaining.length === 0) {
       await updateDoc(doc(db, 'wh_teams', teamId), { members: [] })
+      localStorage.setItem(LAST_TEAM_KEY(userId), teamId)
       localStorage.removeItem(`${TEAM_PREFIX}${teamId}`)
       localStorage.removeItem(USER_TEAM_KEY(userId))
       return
@@ -97,6 +99,7 @@ export const leaveTeam = async (teamId, userId) => {
       updated = [{ ...remaining[0], role: 'admin' }, ...remaining.slice(1)]
     }
     await updateDoc(doc(db, 'wh_teams', teamId), { members: updated })
+    localStorage.setItem(LAST_TEAM_KEY(userId), teamId)
     localStorage.removeItem(USER_TEAM_KEY(userId))
   } catch (e) {
     console.warn('[wh-team] leaveTeam failed:', e?.code || e?.message)
