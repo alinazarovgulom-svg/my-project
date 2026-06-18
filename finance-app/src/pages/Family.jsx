@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { formatDistanceToNow } from 'date-fns'
+import { uz } from 'date-fns/locale'
 import { Users, Plus, LogIn, Copy, Check, LogOut, UserX, ChevronDown } from 'lucide-react'
 import { useApp } from '../store/AppContext'
 import Modal from '../components/Modal'
@@ -190,7 +192,11 @@ export default function Family() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-white text-sm font-medium truncate">{member.fullName}</p>
-                <p className="text-gray-500 text-xs">@{member.username}</p>
+                <p className="text-gray-500 text-xs">
+                  {member.lastSeen
+                    ? `Ko'rildi: ${formatDistanceToNow(new Date(member.lastSeen), { addSuffix: true, locale: uz })}`
+                    : '@' + member.username}
+                </p>
               </div>
               <div className="flex items-center gap-2">
                 <span className={`text-xs px-2 py-0.5 rounded-lg font-medium ${ROLE_COLORS[member.role]}`}>

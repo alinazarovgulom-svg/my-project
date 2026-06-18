@@ -215,6 +215,20 @@ export const updateFamilyDebt = async (familyId, updatedDebt) => {
   }
 }
 
+export const updateMemberLastSeen = async (familyId, userId) => {
+  try {
+    const snap = await getDoc(doc(db, 'families', familyId))
+    if (!snap.exists()) return
+    const family = snap.data()
+    const updatedMembers = family.members.map(m =>
+      m.userId === userId ? { ...m, lastSeen: new Date().toISOString() } : m
+    )
+    await updateDoc(doc(db, 'families', familyId), { members: updatedMembers })
+  } catch (e) {
+    console.warn('[family] updateMemberLastSeen failed:', e?.code || e?.message)
+  }
+}
+
 export const subscribeToFamily = (familyId, callback) => {
   if (!familyId) return () => {}
   return onSnapshot(

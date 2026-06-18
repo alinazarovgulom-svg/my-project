@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react'
 import { getCurrentUser, getData, saveData, getSettings, saveSettings } from './storage'
-import { getUserFamily, getUserFamilyId, getFamily, getFamilyAsync, subscribeToFamily } from './family'
+import { getUserFamily, getUserFamilyId, getFamily, getFamilyAsync, subscribeToFamily, updateMemberLastSeen } from './family'
 import { syncToCloud, loadFromCloud, subscribeToCloud } from './sync'
 
 const AppContext = createContext(null)
@@ -80,6 +80,8 @@ export function AppProvider({ children }) {
     const unsub = subscribeToFamily(familyId, (data) => {
       setFamily(data)
     })
+    // lastSeen yangilash (faqat bir marta, har sessiyada)
+    if (uid) updateMemberLastSeen(familyId, uid)
     return () => unsub()
   }, [familyId])
 
