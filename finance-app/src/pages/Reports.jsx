@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { FileText, Table, TrendingUp, TrendingDown, PieChart, CalendarDays, ChevronDown, ChevronUp } from 'lucide-react'
 import { useApp } from '../store/AppContext'
-import { format, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns'
+import { format, startOfMonth, endOfMonth } from 'date-fns'
 import { fmtCur } from '../utils/format'
 import { exportReportPDF } from '../utils/pdfExport'
 
@@ -16,8 +16,8 @@ export default function Reports() {
   const [showDailyBalance, setShowDailyBalance] = useState(false)
 
   const filtered = transactions.filter(t => {
-    const d = new Date(t.date)
-    return isWithinInterval(d, { start: new Date(startDate), end: new Date(endDate) })
+    const d = t.date.slice(0, 10)
+    return d >= startDate && d <= endDate
   })
 
   const CURRENCIES = ['UZS', 'USD', 'EUR', 'RUB']
