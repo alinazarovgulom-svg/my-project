@@ -329,8 +329,8 @@ export default function Transactions() {
         {editingTx && (
           <div className="flex flex-col gap-3 pb-4">
             <div className="flex gap-2">
-              <button onClick={() => setEditingTx(tx => ({ ...tx, type: 'income', category: INCOME_CATEGORIES[0] }))} className={`flex-1 py-2 rounded-xl text-sm font-medium transition-colors ${editingTx.type === 'income' ? 'bg-green-500 text-white' : 'bg-dark-600 text-gray-400'}`}>Kirim</button>
-              <button onClick={() => setEditingTx(tx => ({ ...tx, type: 'expense', category: EXPENSE_CATEGORIES[0] }))} className={`flex-1 py-2 rounded-xl text-sm font-medium transition-colors ${editingTx.type === 'expense' ? 'bg-red-500 text-white' : 'bg-dark-600 text-gray-400'}`}>Chiqim</button>
+              <button onClick={() => setEditingTx(tx => ({ ...tx, type: 'income', category: (customCategories || INCOME_CATEGORIES)[0] }))} className={`flex-1 py-2 rounded-xl text-sm font-medium transition-colors ${editingTx.type === 'income' ? 'bg-green-500 text-white' : 'bg-dark-600 text-gray-400'}`}>Kirim</button>
+              <button onClick={() => setEditingTx(tx => ({ ...tx, type: 'expense', category: (customCategories || EXPENSE_CATEGORIES)[0] }))} className={`flex-1 py-2 rounded-xl text-sm font-medium transition-colors ${editingTx.type === 'expense' ? 'bg-red-500 text-white' : 'bg-dark-600 text-gray-400'}`}>Chiqim</button>
             </div>
             <div>
               <label className="text-gray-400 text-xs mb-1 block">Summa</label>
@@ -345,7 +345,7 @@ export default function Transactions() {
             <div>
               <label className="text-gray-400 text-xs mb-1 block">Kategoriya</label>
               <select className="input-field" value={editingTx.category} onChange={e => setEditingTx(t => ({ ...t, category: e.target.value }))}>
-                {(editingTx.type === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES).map(c => <option key={c} value={c}>{c}</option>)}
+                {(customCategories || (editingTx.type === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES)).map(c => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
             <div>
