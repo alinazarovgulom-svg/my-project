@@ -78,7 +78,7 @@ export default function Settings() {
   ]
 
   return (
-    <div className="flex flex-col px-4 pt-4 pb-24 gap-4 page-animate">
+    <div className="flex flex-col px-4 pt-4 pb-24 gap-4">
       <h1 className="text-xl font-bold text-white">Sozlamalar</h1>
 
       {/* Profile */}

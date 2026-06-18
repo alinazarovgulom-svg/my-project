@@ -31,14 +31,6 @@ input, select, textarea {
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 
-@keyframes pageSlideUp {
-  from { opacity: 0; transform: translateY(16px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-.page-animate {
-  animation: pageSlideUp 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
-}
-
 @layer components {
   .card {
     @apply bg-dark-700 rounded-2xl p-4 border border-white/5;
