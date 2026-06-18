@@ -1,15 +1,16 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../store/AppContext'
 import { useLang } from '../i18n/LangContext'
 import { getUsers, saveUsers, hashPassword, setCurrentUser } from '../store/storage'
 import { requestPermission, isGranted } from '../utils/notifications'
-import { Lock, LogOut, Globe, Info, ChevronRight, Shield, Package, Boxes, Bell, BellOff, ClipboardList, Fingerprint } from 'lucide-react'
+import { Lock, LogOut, Globe, Info, ChevronRight, Shield, Package, Boxes, Bell, BellOff, ClipboardList, Fingerprint, HardDriveDownload, RotateCcw, CheckCircle2, AlertCircle } from 'lucide-react'
 import Modal from '../components/Modal'
 import { hasBiometric, isBiometricAvailable, registerBiometric, removeBiometric } from '../utils/biometric'
+import { downloadBackup, parseBackupFile, applyRestore } from '../utils/backup'
 
 export default function Settings() {
-  const { user, setUser, products, movements } = useApp()
+  const { user, setUser, products, saveProducts, movements, saveMovements } = useApp()
   const { t, lang, changeLang } = useLang()
   const navigate = useNavigate()
 
@@ -25,6 +26,12 @@ export default function Settings() {
   const [bioAvailable, setBioAvailable] = useState(false)
   const [bioLoading, setBioLoading] = useState(false)
   const [bioMsg, setBioMsg] = useState('')
+  const [restoreModal, setRestoreModal] = useState(false)
+  const [restoreData, setRestoreData] = useState(null)
+  const [restoreMode, setRestoreMode] = useState('replace')
+  const [restoreDone, setRestoreDone] = useState(null) // { addedProducts, addedMovements }
+  const [restoreError, setRestoreError] = useState('')
+  const restoreRef = useRef(null)
 
   useEffect(() => {
     setNotifGranted(isGranted())
@@ -90,6 +97,32 @@ export default function Settings() {
       setBioMsg(res.error || 'Xatolik yuz berdi')
     }
     setTimeout(() => setBioMsg(''), 3000)
+  }
+
+  const handleBackup = () => {
+    downloadBackup(user?.id, user, products, movements)
+  }
+
+  const handleRestoreFile = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setRestoreError('')
+    setRestoreDone(null)
+    try {
+      const data = await parseBackupFile(file)
+      setRestoreData(data)
+      setRestoreModal(true)
+    } catch (err) {
+      setRestoreError(err.message)
+    }
+    e.target.value = ''
+  }
+
+  const handleRestoreConfirm = () => {
+    if (!restoreData) return
+    const result = applyRestore(user?.id, restoreData, restoreMode, saveProducts, saveMovements, products, movements)
+    setRestoreDone(result)
+    setRestoreData(null)
   }
 
   const handleLogout = () => {
@@ -233,6 +266,42 @@ export default function Settings() {
           </div>
         </div>
 
+        {/* Backup & Restore */}
+        <div className="bg-slate-800/60 rounded-2xl border border-slate-700/30 overflow-hidden">
+          <div className="px-5 py-3 border-b border-slate-700/30">
+            <p className="text-slate-400 text-xs font-medium uppercase tracking-wider">Zaxira nusxa</p>
+          </div>
+          <button onClick={handleBackup}
+            className="w-full flex items-center justify-between px-5 py-4 active:bg-slate-700/40 transition-colors border-b border-slate-700/30">
+            <div className="flex items-center gap-3">
+              <HardDriveDownload size={18} className="text-primary-400" />
+              <div className="text-left">
+                <p className="text-white text-sm">Yuklab olish (Backup)</p>
+                <p className="text-slate-500 text-xs">{products.length} mahsulot · {movements.length} harakat</p>
+              </div>
+            </div>
+            <ChevronRight size={16} className="text-slate-500" />
+          </button>
+          <button onClick={() => restoreRef.current?.click()}
+            className="w-full flex items-center justify-between px-5 py-4 active:bg-slate-700/40 transition-colors">
+            <div className="flex items-center gap-3">
+              <RotateCcw size={18} className="text-slate-400" />
+              <div className="text-left">
+                <p className="text-white text-sm">Tiklash (Restore)</p>
+                <p className="text-slate-500 text-xs">JSON zaxira faylidan</p>
+              </div>
+            </div>
+            <ChevronRight size={16} className="text-slate-500" />
+          </button>
+          {restoreError && (
+            <div className="px-5 py-3 flex items-center gap-2 border-t border-slate-700/30">
+              <AlertCircle size={14} className="text-red-400 flex-shrink-0" />
+              <p className="text-red-400 text-xs">{restoreError}</p>
+            </div>
+          )}
+          <input ref={restoreRef} type="file" accept=".json" onChange={handleRestoreFile} className="hidden" />
+        </div>
+
         {/* Logout */}
         <button onClick={handleLogout}
           className="w-full flex items-center justify-center gap-2 bg-red-500/10 border border-red-500/20 rounded-2xl py-4 text-red-400 text-sm font-medium active:scale-95 transition-all">
@@ -255,6 +324,86 @@ export default function Settings() {
             className="w-full bg-primary-500 text-white font-semibold py-3.5 rounded-xl active:scale-95 transition-all">
             {t('changeBtn')}
           </button>
+        </div>
+      </Modal>
+
+      {/* Restore modal */}
+      <Modal open={restoreModal} onClose={() => { setRestoreModal(false); setRestoreData(null); setRestoreDone(null) }} title="Tiklash (Restore)">
+        <div className="space-y-4 pb-4">
+          {!restoreDone ? (
+            <>
+              {restoreData && (
+                <div className="bg-slate-800/60 rounded-xl p-4 space-y-2">
+                  <p className="text-slate-400 text-xs">Fayl ma'lumotlari:</p>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400 text-sm">Mahsulotlar</span>
+                    <span className="text-white font-semibold">{restoreData.products.length} ta</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400 text-sm">Harakatlar</span>
+                    <span className="text-white font-semibold">{restoreData.movements.length} ta</span>
+                  </div>
+                  {restoreData.exportedAt && (
+                    <div className="flex justify-between">
+                      <span className="text-slate-400 text-sm">Sana</span>
+                      <span className="text-slate-300 text-sm">{restoreData.exportedAt.slice(0, 10)}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+              <div className="space-y-2">
+                <p className="text-slate-400 text-xs font-medium">Tiklash usuli:</p>
+                {[
+                  { val: 'replace', label: 'Ustiga yozish', desc: 'Mavjud ma\'lumotlar o\'chirilib, yangilanadi' },
+                  { val: 'merge',   label: 'Qo\'shib tiklash', desc: 'Mavjud ma\'lumotlar saqlanib, yangilari qo\'shiladi' },
+                ].map(opt => (
+                  <button key={opt.val} onClick={() => setRestoreMode(opt.val)}
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border transition-all text-left ${
+                      restoreMode === opt.val
+                        ? 'bg-primary-500/10 border-primary-500/40'
+                        : 'bg-slate-800/40 border-slate-700/30'
+                    }`}>
+                    <div className={`w-4 h-4 rounded-full border-2 flex-shrink-0 ${restoreMode === opt.val ? 'border-primary-400 bg-primary-400' : 'border-slate-600'}`} />
+                    <div>
+                      <p className={`text-sm font-medium ${restoreMode === opt.val ? 'text-primary-400' : 'text-white'}`}>{opt.label}</p>
+                      <p className="text-slate-500 text-xs">{opt.desc}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+              {restoreMode === 'replace' && (
+                <div className="flex items-start gap-2 bg-amber-500/10 border border-amber-500/20 rounded-xl px-4 py-3">
+                  <AlertCircle size={15} className="text-amber-400 flex-shrink-0 mt-0.5" />
+                  <p className="text-amber-300 text-xs">Mavjud barcha mahsulot va harakatlar o'chiriladi!</p>
+                </div>
+              )}
+              <button onClick={handleRestoreConfirm}
+                className="w-full bg-primary-500 text-white font-semibold py-3.5 rounded-xl active:scale-95 transition-all">
+                Tiklashni boshlash
+              </button>
+            </>
+          ) : (
+            <div className="flex flex-col items-center py-6 gap-3">
+              <div className="w-16 h-16 rounded-2xl bg-primary-500/20 flex items-center justify-center">
+                <CheckCircle2 size={32} className="text-primary-400" />
+              </div>
+              <p className="text-white font-semibold text-lg">Tiklandi!</p>
+              <div className="flex gap-6 text-center">
+                <div>
+                  <p className="text-primary-400 font-bold text-2xl">{restoreDone.addedProducts}</p>
+                  <p className="text-slate-400 text-xs">mahsulot</p>
+                </div>
+                <div>
+                  <p className="text-primary-400 font-bold text-2xl">{restoreDone.addedMovements}</p>
+                  <p className="text-slate-400 text-xs">harakat</p>
+                </div>
+              </div>
+              <button onClick={() => { setRestoreModal(false); setRestoreDone(null) }}
+                className="w-full bg-primary-500 text-white font-semibold py-3.5 rounded-xl active:scale-95 transition-all mt-2">
+                Yopish
+              </button>
+            </div>
+          )}
         </div>
       </Modal>
 
