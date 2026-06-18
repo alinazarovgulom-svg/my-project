@@ -33,12 +33,8 @@ export default function Transactions() {
   const familyMode = !!family
   const location = useLocation()
   const initType = location.state?.openType || null
-  const [form, setForm] = useState(() => initType
-    ? { ...defaultForm, date: localNow(), type: initType, category: '' }
-    : defaultForm
-  )
-  const [modal, setModal] = useState(!!initType)
-  useEffect(() => { if (initType) window.history.replaceState({}, '') }, [])
+  const [form, setForm] = useState(defaultForm)
+  const [modal, setModal] = useState(false)
   const [extraAmounts, setExtraAmounts] = useState([])
   const [filter, setFilter] = useState('all')
   const [search, setSearch] = useState('')
@@ -56,10 +52,18 @@ export default function Transactions() {
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
   const openAdd = (type = 'expense') => {
-    setForm({ ...defaultForm, date: localNow(), type, category: type === 'income' ? INCOME_CATEGORIES[0] : EXPENSE_CATEGORIES[0] })
+    const cats = customCategories
+    setForm({ ...defaultForm, date: localNow(), type, category: cats?.[0] || (type === 'income' ? INCOME_CATEGORIES[0] : EXPENSE_CATEGORIES[0]) })
     setExtraAmounts([])
     setModal(true)
   }
+
+  useEffect(() => {
+    if (initType) {
+      openAdd(initType)
+      window.history.replaceState({}, '')
+    }
+  }, [])
 
   const handleSave = () => {
     if (!form.amount || !form.category) return
