@@ -62,7 +62,7 @@ export default function Dashboard() {
   // Family balances
   const memberBalances = family
     ? familyMembers.map(m => {
-        const memberTx = getData('transactions', m.userId)
+        const memberTx = (family.transactions || []).filter(t => t.userId === m.userId)
         const bal = memberTx.reduce((sum, tx) => {
           const inUZS = toUZS(tx.amount, tx.currency)
           return tx.type === 'income' ? sum + inUZS : sum - inUZS
