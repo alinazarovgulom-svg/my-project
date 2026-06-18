@@ -87,13 +87,13 @@ export default function AppLock({ children, onUnlock }) {
   if (!locked) return children
 
   return (
-    <div className="fixed inset-0 z-[999] bg-slate-950 flex flex-col items-center justify-center gap-8 px-8">
+    <div className="fixed inset-0 z-[999] bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center gap-8 px-8">
       <div className="flex flex-col items-center gap-3">
         <div className="w-16 h-16 rounded-2xl bg-primary-500/20 flex items-center justify-center">
           <Lock size={32} className="text-primary-400" />
         </div>
-        <p className="text-white font-semibold text-xl">OmborBek</p>
-        <p className="text-slate-400 text-sm">PIN kiriting</p>
+        <p className="text-slate-900 dark:text-white font-semibold text-xl">OmborBek</p>
+        <p className="text-slate-500 dark:text-slate-400 text-sm">PIN kiriting</p>
       </div>
 
       <div className={`flex gap-4 transition-all ${error ? 'animate-shake' : ''}`}>
@@ -102,7 +102,7 @@ export default function AppLock({ children, onUnlock }) {
             className={`w-4 h-4 rounded-full border-2 transition-all ${
               i < pin.length
                 ? (error ? 'bg-red-400 border-red-400' : 'bg-primary-400 border-primary-400')
-                : 'border-slate-600'
+                : 'border-slate-400 dark:border-slate-600'
             }`} />
         ))}
       </div>
@@ -119,12 +119,12 @@ export default function AppLock({ children, onUnlock }) {
           ) :
           d === 'del' ? (
             <button key={i} onClick={handleDel}
-              className="h-16 rounded-2xl bg-slate-800 text-slate-300 flex items-center justify-center active:bg-slate-700 transition-colors">
+              className="h-16 rounded-2xl bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 flex items-center justify-center active:bg-slate-300 dark:active:bg-slate-700 transition-colors">
               <Delete size={20} />
             </button>
           ) : (
             <button key={i} onClick={() => handleDigit(String(d))}
-              className="h-16 rounded-2xl bg-slate-800 text-white text-xl font-semibold flex items-center justify-center active:bg-slate-700 transition-colors">
+              className="h-16 rounded-2xl bg-slate-200 dark:bg-slate-800 text-slate-900 dark:text-white text-xl font-semibold flex items-center justify-center active:bg-slate-300 dark:active:bg-slate-700 transition-colors">
               {d}
             </button>
           )

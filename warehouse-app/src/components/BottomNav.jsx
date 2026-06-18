@@ -16,7 +16,7 @@ export default function BottomNav() {
   const { t } = useLang()
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-slate-900/95 backdrop-blur-lg border-t border-slate-700/60"
+    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-lg border-t border-slate-200 dark:border-slate-700/60"
       style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
       <div className="flex items-center justify-around px-1 pt-2 pb-1 max-w-lg mx-auto">
         {navItems.map(({ to, icon: Icon, key, exact }) => (
@@ -28,7 +28,7 @@ export default function BottomNav() {
               `flex flex-col items-center gap-0.5 px-1.5 py-1 rounded-xl transition-all duration-200 min-w-0 ${
                 isActive
                   ? 'text-primary-400'
-                  : 'text-slate-500 hover:text-slate-300'
+                  : 'text-slate-500 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
               }`
             }
           >

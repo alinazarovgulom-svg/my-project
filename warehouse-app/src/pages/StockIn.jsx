@@ -206,17 +206,17 @@ export default function StockIn() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 pb-24">
-      <div className="bg-slate-900 px-5 pt-14 pb-4">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-24">
+      <div className="bg-white dark:bg-slate-900 px-5 pt-14 pb-4">
         <div className="flex items-center justify-between mb-3">
-          <h1 className="text-white text-xl font-bold">{t('stockIn')}</h1>
+          <h1 className="text-slate-900 dark:text-white text-xl font-bold">{t('stockIn')}</h1>
           {p.canAdd && (
             <div className="flex items-center gap-2">
               <button onClick={openProcReceive} disabled={pendingProcessing.length === 0}
                 className={`h-10 px-3 rounded-xl border flex items-center gap-1.5 text-xs font-medium transition-all ${
                   pendingProcessing.length > 0
                     ? 'bg-amber-500/20 border-amber-500/30 text-amber-400 active:scale-95'
-                    : 'bg-slate-800/30 border-slate-700/20 text-slate-600 cursor-default'
+                    : 'bg-slate-100 dark:bg-slate-800/30 border-slate-200 dark:border-slate-700/20 text-slate-400 dark:text-slate-600 cursor-default'
                 }`}>
                 <Cog size={15} />
                 Qayta ishlash{pendingProcessing.length > 0 ? ` (${pendingProcessing.length})` : ''}
@@ -230,13 +230,13 @@ export default function StockIn() {
         </div>
 
         {team && (
-          <div className="flex bg-slate-800/60 rounded-xl p-1">
+          <div className="flex bg-slate-100 dark:bg-slate-800/60 rounded-xl p-1">
             <button onClick={() => setTeamMode(false)}
-              className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all ${!teamMode ? 'bg-primary-500 text-white' : 'text-slate-400'}`}>
+              className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all ${!teamMode ? 'bg-primary-500 text-white' : 'text-slate-500 dark:text-slate-400'}`}>
               Shaxsiy
             </button>
             <button onClick={() => setTeamMode(true)}
-              className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-1 ${teamMode ? 'bg-primary-500 text-white' : 'text-slate-400'}`}>
+              className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-1 ${teamMode ? 'bg-primary-500 text-white' : 'text-slate-500 dark:text-slate-400'}`}>
               <Users size={12} /> {team.name}
             </button>
           </div>
@@ -247,33 +247,33 @@ export default function StockIn() {
         <div className="relative mb-4">
           <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
           <input value={search} onChange={e => setSearch(e.target.value)} placeholder={t('search')}
-            className="w-full bg-slate-800/60 border border-slate-700/40 rounded-xl pl-10 pr-4 py-3 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-primary-500/40" />
+            className="w-full bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/40 rounded-xl pl-10 pr-4 py-3 text-slate-900 dark:text-white text-sm placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-primary-500/40" />
         </div>
 
         {filtered.length === 0 ? (
           <div className="flex flex-col items-center py-20">
-            <PackagePlus size={48} className="text-slate-700 mb-3" />
+            <PackagePlus size={48} className="text-slate-400 dark:text-slate-700 mb-3" />
             <p className="text-slate-500 text-sm">{search ? t('notFound') : t('noMovements')}</p>
           </div>
         ) : (
           <div>
             {filtered.map(mv => (
               <SwipeableRow key={mv.id} onDelete={p.canDelete ? () => handleDelete(mv) : undefined}>
-                <div className="bg-slate-800/60 rounded-xl px-4 py-3.5 border border-primary-500/10">
+                <div className="bg-slate-100 dark:bg-slate-800/60 rounded-xl px-4 py-3.5 border border-primary-500/10">
                   <div className="flex items-start justify-between">
                     <div className="flex-1 min-w-0">
-                      <p className="text-white font-medium text-sm">{mv.productName}</p>
-                      <p className="text-slate-400 text-xs mt-0.5">{fmtDate(mv.date)}{mv.supplier ? ` · ${mv.supplier}` : ''}</p>
+                      <p className="text-slate-900 dark:text-white font-medium text-sm">{mv.productName}</p>
+                      <p className="text-slate-500 dark:text-slate-400 text-xs mt-0.5">{fmtDate(mv.date)}{mv.supplier ? ` · ${mv.supplier}` : ''}</p>
                       {mv.userName && mv.userId !== user?.id && (
-                        <p className="text-slate-500 text-xs mt-0.5">{mv.userName}</p>
+                        <p className="text-slate-600 dark:text-slate-500 text-xs mt-0.5">{mv.userName}</p>
                       )}
                     </div>
                     <div className="text-right ml-3">
                       <p className="text-primary-400 font-semibold text-sm">+{fmtNum(mv.quantity)} {mv.unit}</p>
-                      <p className="text-slate-400 text-xs">{fmtNum(mv.total)} so'm</p>
+                      <p className="text-slate-500 dark:text-slate-400 text-xs">{fmtNum(mv.total)} so'm</p>
                     </div>
                   </div>
-                  {mv.note && <p className="text-slate-500 text-xs mt-2 border-t border-slate-700/50 pt-2">{mv.note}</p>}
+                  {mv.note && <p className="text-slate-600 dark:text-slate-500 text-xs mt-2 border-t border-slate-200 dark:border-slate-700/50 pt-2">{mv.note}</p>}
                 </div>
               </SwipeableRow>
             ))}
@@ -284,9 +284,9 @@ export default function StockIn() {
       <Modal open={procReceiveModal} onClose={() => setProcReceiveModal(false)} title="Qayta ishlash qabul qilish">
         <div className="space-y-3 pb-4">
           <div>
-            <p className="text-slate-400 text-xs mb-1.5">Qayta ishlash partiyasi</p>
+            <p className="text-slate-500 dark:text-slate-400 text-xs mb-1.5">Qayta ishlash partiyasi</p>
             <select value={procReceiveForm.processingId} onChange={setProcReceive('processingId')}
-              className="w-full bg-slate-800 border border-slate-700/50 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-amber-500/40">
+              className="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/50 rounded-xl px-4 py-3 text-slate-900 dark:text-white text-sm focus:outline-none focus:border-amber-500/40">
               {pendingProcessing.map(p => (
                 <option key={p.id} value={p.id}>{p.supplierName} · {p.productName} {fmtNum(p.quantity)} {p.unit} ({fmtDate(p.date)})</option>
               ))}
@@ -294,9 +294,9 @@ export default function StockIn() {
           </div>
 
           <div>
-            <p className="text-slate-400 text-xs mb-1.5">Qabul qilingan mahsulot</p>
+            <p className="text-slate-500 dark:text-slate-400 text-xs mb-1.5">Qabul qilingan mahsulot</p>
             <select value={procReceiveForm.productId} onChange={setProcReceive('productId')}
-              className="w-full bg-slate-800 border border-slate-700/50 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-primary-500/40">
+              className="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/50 rounded-xl px-4 py-3 text-slate-900 dark:text-white text-sm focus:outline-none focus:border-primary-500/40">
               {sortedProducts.map(pr => (
                 <option key={pr.id} value={pr.id}>{pinned.includes(pr.id) ? '★ ' : ''}{pr.name} ({pr.unit})</option>
               ))}
@@ -304,10 +304,10 @@ export default function StockIn() {
           </div>
 
           <input type="number" value={procReceiveForm.quantity} onChange={setProcReceive('quantity')} placeholder="Miqdor"
-            className="w-full bg-slate-800 border border-slate-700/50 rounded-xl px-4 py-3 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-primary-500/40" />
+            className="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/50 rounded-xl px-4 py-3 text-slate-900 dark:text-white text-sm placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-primary-500/40" />
 
           <input type="number" value={procReceiveForm.serviceFee} onChange={setProcReceive('serviceFee')} placeholder="Xizmat narxi (so'm) — ixtiyoriy"
-            className="w-full bg-slate-800 border border-slate-700/50 rounded-xl px-4 py-3 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-amber-500/40" />
+            className="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/50 rounded-xl px-4 py-3 text-slate-900 dark:text-white text-sm placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-amber-500/40" />
 
           {Number(procReceiveForm.serviceFee) > 0 && (
             <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl px-4 py-2.5 text-xs text-amber-400">
@@ -316,7 +316,7 @@ export default function StockIn() {
           )}
 
           <input type="date" value={procReceiveForm.date} onChange={setProcReceive('date')}
-            className="w-full bg-slate-800 border border-slate-700/50 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-primary-500/40" />
+            className="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/50 rounded-xl px-4 py-3 text-slate-900 dark:text-white text-sm focus:outline-none focus:border-primary-500/40" />
 
           <button onClick={handleProcReceiveSave}
             className="w-full bg-amber-500 text-white font-semibold py-3.5 rounded-xl shadow-lg shadow-amber-500/20 active:scale-95 transition-all">
@@ -328,7 +328,7 @@ export default function StockIn() {
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={t('addKirim')}>
         <div className="space-y-3 pb-4">
           {products.length === 0 ? (
-            <p className="text-slate-400 text-sm text-center py-4">Avval mahsulot qo'shing</p>
+            <p className="text-slate-500 dark:text-slate-400 text-sm text-center py-4">Avval mahsulot qo'shing</p>
           ) : (
             <>
               <div className="space-y-2">
@@ -337,9 +337,9 @@ export default function StockIn() {
                   const itemPrice = Number(item.price) || itemProd?.purchasePrice || 0
                   const itemTotal = (Number(item.quantity) || 0) * itemPrice
                   return (
-                    <div key={idx} className="bg-slate-900/60 rounded-xl p-3 space-y-2 border border-slate-700/30">
+                    <div key={idx} className="bg-slate-100 dark:bg-slate-900/60 rounded-xl p-3 space-y-2 border border-slate-200 dark:border-slate-700/30">
                       <div className="flex items-center justify-between">
-                        <span className="text-slate-500 text-xs font-medium">#{idx + 1} mahsulot</span>
+                        <span className="text-slate-600 dark:text-slate-500 text-xs font-medium">#{idx + 1} mahsulot</span>
                         {form.items.length > 1 && (
                           <button onClick={() => removeItem(idx)}
                             className="w-6 h-6 flex items-center justify-center rounded-lg active:bg-red-500/20">
@@ -348,7 +348,7 @@ export default function StockIn() {
                         )}
                       </div>
                       <select value={item.productId} onChange={setItem(idx, 'productId')}
-                        className="w-full bg-slate-800 border border-slate-700/50 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-primary-500/40">
+                        className="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/50 rounded-xl px-3 py-2.5 text-slate-900 dark:text-white text-sm focus:outline-none focus:border-primary-500/40">
                         {sortedProducts.map(pr => (
                           <option key={pr.id} value={pr.id}>{pinned.includes(pr.id) ? '★ ' : ''}{pr.name} ({pr.unit})</option>
                         ))}
@@ -362,10 +362,10 @@ export default function StockIn() {
                       <div className="grid grid-cols-2 gap-2">
                         <input type="number" value={item.quantity} onChange={setItem(idx, 'quantity')}
                           placeholder="Miqdor"
-                          className="w-full bg-slate-800 border border-slate-700/50 rounded-xl px-3 py-2.5 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-primary-500/40" />
+                          className="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/50 rounded-xl px-3 py-2.5 text-slate-900 dark:text-white text-sm placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-primary-500/40" />
                         <input type="number" value={item.price} onChange={setItem(idx, 'price')}
                           placeholder={String(itemProd?.purchasePrice || 0)}
-                          className="w-full bg-slate-800 border border-slate-700/50 rounded-xl px-3 py-2.5 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-primary-500/40" />
+                          className="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/50 rounded-xl px-3 py-2.5 text-slate-900 dark:text-white text-sm placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-primary-500/40" />
                       </div>
                       {itemTotal > 0 && (
                         <p className="text-right text-primary-400 text-xs font-medium">{fmtNum(itemTotal)} so'm</p>
@@ -382,19 +382,19 @@ export default function StockIn() {
 
               {totalAmount > 0 && (
                 <div className="bg-primary-500/10 border border-primary-500/20 rounded-xl px-4 py-3 flex justify-between items-center">
-                  <span className="text-slate-400 text-sm">{t('total')}</span>
+                  <span className="text-slate-500 dark:text-slate-400 text-sm">{t('total')}</span>
                   <span className="text-primary-400 font-bold">{fmtNum(totalAmount)} so'm</span>
                 </div>
               )}
 
               <input value={form.supplier} onChange={set('supplier')} placeholder={t('supplier')}
-                className="w-full bg-slate-800 border border-slate-700/50 rounded-xl px-4 py-3 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-primary-500/40" />
+                className="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/50 rounded-xl px-4 py-3 text-slate-900 dark:text-white text-sm placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-primary-500/40" />
 
               <input type="date" value={form.date} onChange={set('date')}
-                className="w-full bg-slate-800 border border-slate-700/50 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-primary-500/40" />
+                className="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/50 rounded-xl px-4 py-3 text-slate-900 dark:text-white text-sm focus:outline-none focus:border-primary-500/40" />
 
               <textarea value={form.note} onChange={set('note')} placeholder={t('note')} rows={2}
-                className="w-full bg-slate-800 border border-slate-700/50 rounded-xl px-4 py-3 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-primary-500/40 resize-none" />
+                className="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/50 rounded-xl px-4 py-3 text-slate-900 dark:text-white text-sm placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-primary-500/40 resize-none" />
 
               <button onClick={handleSave}
                 className="w-full bg-primary-500 text-white font-semibold py-3.5 rounded-xl shadow-lg shadow-primary-500/20 active:scale-95 transition-all">

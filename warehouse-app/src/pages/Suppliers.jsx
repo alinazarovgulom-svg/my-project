@@ -108,10 +108,10 @@ export default function Suppliers() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 pb-24">
-      <div className="bg-slate-900 px-5 pt-14 pb-4">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-24">
+      <div className="bg-white dark:bg-slate-900 px-5 pt-14 pb-4">
         <div className="flex items-center justify-between mb-3">
-          <h1 className="text-white text-xl font-bold">Yetkazuvchilar</h1>
+          <h1 className="text-slate-900 dark:text-white text-xl font-bold">Yetkazuvchilar</h1>
           <button onClick={openAdd}
             className="w-10 h-10 rounded-xl bg-primary-500 flex items-center justify-center shadow-lg shadow-primary-500/20">
             <Plus size={20} className="text-white" />
@@ -119,7 +119,7 @@ export default function Suppliers() {
         </div>
         {totalDebt > 0 && (
           <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-2.5 flex justify-between items-center">
-            <span className="text-slate-400 text-sm">Jami qarz</span>
+            <span className="text-slate-500 dark:text-slate-400 text-sm">Jami qarz</span>
             <span className="text-red-400 font-bold text-sm">{fmtNum(totalDebt)} so'm</span>
           </div>
         )}
@@ -129,12 +129,12 @@ export default function Suppliers() {
         <div className="relative mb-4">
           <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
           <input value={search} onChange={e => setSearch(e.target.value)} placeholder={t('search')}
-            className="w-full bg-slate-800/60 border border-slate-700/40 rounded-xl pl-10 pr-4 py-3 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-primary-500/40" />
+            className="w-full bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/40 rounded-xl pl-10 pr-4 py-3 text-slate-900 dark:text-white text-sm placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-primary-500/40" />
         </div>
 
         {filtered.length === 0 ? (
           <div className="flex flex-col items-center py-20">
-            <Truck size={48} className="text-slate-700 mb-3" />
+            <Truck size={48} className="text-slate-400 dark:text-slate-700 mb-3" />
             <p className="text-slate-500 text-sm">{search ? t('notFound') : "Yetkazuvchilar yo'q"}</p>
             {!search && (
               <button onClick={openAdd}
@@ -155,19 +155,19 @@ export default function Suppliers() {
               return (
                 <div key={s.id}>
                   <SwipeableRow onEdit={() => openEdit(s)} onDelete={() => handleDeleteSupplier(s.id)}>
-                    <div className={`bg-slate-800/60 rounded-xl border ${balance > 0 ? 'border-red-500/20' : 'border-slate-700/30'}`}>
+                    <div className={`bg-slate-100 dark:bg-slate-800/60 rounded-xl border ${balance > 0 ? 'border-red-500/20' : 'border-slate-200 dark:border-slate-700/30'}`}>
                       <button onClick={() => setExpanded(isExp ? null : s.id)} className="w-full px-4 py-3.5 text-left">
                         <div className="flex items-start justify-between">
                           <div className="flex-1 min-w-0">
-                            <p className="text-white font-medium text-sm">{s.name}</p>
+                            <p className="text-slate-900 dark:text-white font-medium text-sm">{s.name}</p>
                             <div className="flex items-center gap-3 mt-0.5 flex-wrap">
                               {s.phone && (
-                                <span className="flex items-center gap-1 text-slate-400 text-xs">
+                                <span className="flex items-center gap-1 text-slate-500 dark:text-slate-400 text-xs">
                                   <Phone size={10} /> {s.phone}
                                 </span>
                               )}
                               {s.company && (
-                                <span className="flex items-center gap-1 text-slate-400 text-xs">
+                                <span className="flex items-center gap-1 text-slate-500 dark:text-slate-400 text-xs">
                                   <Building2 size={10} /> {s.company}
                                 </span>
                               )}
@@ -191,7 +191,7 @@ export default function Suppliers() {
                       </button>
 
                       {isExp && (
-                        <div className="border-t border-slate-700/40 px-4 py-3 space-y-3">
+                        <div className="border-t border-slate-200 dark:border-slate-700/40 px-4 py-3 space-y-3">
                           <div className="flex gap-2">
                             <button onClick={() => openTxn(s.id, 'debt')}
                               className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-red-500/15 border border-red-500/20 text-red-400 text-sm font-medium active:scale-95 transition-all">
@@ -203,14 +203,14 @@ export default function Suppliers() {
                             </button>
                           </div>
 
-                                          {sPending.length > 0 && (
+                          {sPending.length > 0 && (
                             <div className="bg-amber-500/5 border border-amber-500/15 rounded-xl p-3 space-y-2">
                               <p className="text-amber-400 text-xs font-medium">Qayta ishlashda:</p>
                               {sPending.map(p => (
                                 <div key={p.id} className="flex items-center justify-between py-1.5 border-b border-amber-500/10 last:border-0">
                                   <div className="flex-1 min-w-0">
-                                    <p className="text-white text-xs font-medium">{p.productName}</p>
-                                    <p className="text-slate-500 text-xs">{fmtDate(p.date)}{p.note ? ` · ${p.note}` : ''}</p>
+                                    <p className="text-slate-900 dark:text-white text-xs font-medium">{p.productName}</p>
+                                    <p className="text-slate-600 dark:text-slate-500 text-xs">{fmtDate(p.date)}{p.note ? ` · ${p.note}` : ''}</p>
                                   </div>
                                   <p className="text-amber-400 text-sm font-semibold ml-3 flex-shrink-0">
                                     {fmtNum(p.quantity)} {p.unit}
@@ -221,18 +221,18 @@ export default function Suppliers() {
                           )}
 
                           {s.note && (
-                            <p className="text-slate-500 text-xs">{s.note}</p>
+                            <p className="text-slate-600 dark:text-slate-500 text-xs">{s.note}</p>
                           )}
 
                           {sTxns.length === 0 ? (
-                            <p className="text-slate-600 text-xs text-center py-2">Hali tranzaksiya yo'q</p>
+                            <p className="text-slate-400 dark:text-slate-600 text-xs text-center py-2">Hali tranzaksiya yo'q</p>
                           ) : (
                             <div className="space-y-1 max-h-52 overflow-y-auto">
                               {sTxns.slice(0, 15).map(tx => (
-                                <div key={tx.id} className="flex items-center justify-between py-2 border-b border-slate-700/30 last:border-0">
+                                <div key={tx.id} className="flex items-center justify-between py-2 border-b border-slate-200 dark:border-slate-700/30 last:border-0">
                                   <div className="flex-1 min-w-0">
-                                    <p className="text-slate-400 text-xs">{fmtDate(tx.date)}</p>
-                                    {tx.note && <p className="text-slate-500 text-xs truncate">{tx.note}</p>}
+                                    <p className="text-slate-500 dark:text-slate-400 text-xs">{fmtDate(tx.date)}</p>
+                                    {tx.note && <p className="text-slate-600 dark:text-slate-500 text-xs truncate">{tx.note}</p>}
                                   </div>
                                   <p className={`text-sm font-semibold ml-3 flex-shrink-0 ${tx.type === 'debt' ? 'text-red-400' : 'text-primary-400'}`}>
                                     {tx.type === 'debt' ? '+' : '-'}{fmtNum(tx.amount)} so'm
@@ -252,18 +252,17 @@ export default function Suppliers() {
         )}
       </div>
 
-      {/* Add/Edit Supplier Modal */}
       <Modal open={supplierModal} onClose={() => setSupplierModal(false)}
         title={editId ? "Yetkazuvchini tahrirlash" : "Yetkazuvchi qo'shish"}>
         <div className="space-y-3 pb-4">
           <input value={form.name} onChange={set('name')} placeholder="Yetkazuvchi nomi *"
-            className="w-full bg-slate-800 border border-slate-700/50 rounded-xl px-4 py-3 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-primary-500/40" />
+            className="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/50 rounded-xl px-4 py-3 text-slate-900 dark:text-white text-sm placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-primary-500/40" />
           <input value={form.phone} onChange={set('phone')} placeholder="Telefon: +998901234567" type="tel"
-            className="w-full bg-slate-800 border border-slate-700/50 rounded-xl px-4 py-3 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-primary-500/40" />
+            className="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/50 rounded-xl px-4 py-3 text-slate-900 dark:text-white text-sm placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-primary-500/40" />
           <input value={form.company} onChange={set('company')} placeholder="Kompaniya nomi"
-            className="w-full bg-slate-800 border border-slate-700/50 rounded-xl px-4 py-3 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-primary-500/40" />
+            className="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/50 rounded-xl px-4 py-3 text-slate-900 dark:text-white text-sm placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-primary-500/40" />
           <textarea value={form.note} onChange={set('note')} placeholder={t('note')} rows={2}
-            className="w-full bg-slate-800 border border-slate-700/50 rounded-xl px-4 py-3 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-primary-500/40 resize-none" />
+            className="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/50 rounded-xl px-4 py-3 text-slate-900 dark:text-white text-sm placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-primary-500/40 resize-none" />
           <button onClick={handleSaveSupplier}
             className="w-full bg-primary-500 text-white font-semibold py-3.5 rounded-xl shadow-lg shadow-primary-500/20 active:scale-95 transition-all">
             {t('save')}
@@ -271,29 +270,28 @@ export default function Suppliers() {
         </div>
       </Modal>
 
-      {/* Debt / Payment Modal */}
       <Modal open={txnModal} onClose={() => setTxnModal(false)}
         title={suppliers.find(s => s.id === activeSupplierId)?.name || ''}>
         <div className="space-y-3 pb-4">
-          <div className="flex bg-slate-800/60 rounded-xl p-1">
+          <div className="flex bg-slate-100 dark:bg-slate-800/60 rounded-xl p-1">
             <button onClick={() => setTxnForm(f => ({ ...f, type: 'debt' }))}
-              className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all ${txnForm.type === 'debt' ? 'bg-red-500 text-white' : 'text-slate-400'}`}>
+              className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all ${txnForm.type === 'debt' ? 'bg-red-500 text-white' : 'text-slate-500 dark:text-slate-400'}`}>
               Qarz qo'shish
             </button>
             <button onClick={() => setTxnForm(f => ({ ...f, type: 'payment' }))}
-              className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all ${txnForm.type === 'payment' ? 'bg-primary-500 text-white' : 'text-slate-400'}`}>
+              className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all ${txnForm.type === 'payment' ? 'bg-primary-500 text-white' : 'text-slate-500 dark:text-slate-400'}`}>
               To'lov qilish
             </button>
           </div>
 
           <input type="number" value={txnForm.amount} onChange={setTxn('amount')} placeholder="Summa (so'm)"
-            className="w-full bg-slate-800 border border-slate-700/50 rounded-xl px-4 py-3 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-primary-500/40" />
+            className="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/50 rounded-xl px-4 py-3 text-slate-900 dark:text-white text-sm placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-primary-500/40" />
 
           <input type="date" value={txnForm.date} onChange={setTxn('date')}
-            className="w-full bg-slate-800 border border-slate-700/50 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-primary-500/40" />
+            className="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/50 rounded-xl px-4 py-3 text-slate-900 dark:text-white text-sm focus:outline-none focus:border-primary-500/40" />
 
           <input value={txnForm.note} onChange={setTxn('note')} placeholder={t('note')}
-            className="w-full bg-slate-800 border border-slate-700/50 rounded-xl px-4 py-3 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-primary-500/40" />
+            className="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/50 rounded-xl px-4 py-3 text-slate-900 dark:text-white text-sm placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-primary-500/40" />
 
           <button onClick={handleSaveTxn}
             className={`w-full text-white font-semibold py-3.5 rounded-xl active:scale-95 transition-all shadow-lg ${txnForm.type === 'debt' ? 'bg-red-500 shadow-red-500/20' : 'bg-primary-500 shadow-primary-500/20'}`}>

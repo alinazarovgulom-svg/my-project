@@ -34,22 +34,20 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-24">
-      <div className="bg-white dark:bg-slate-900 px-5 pt-14 pb-6" style={{ background: 'linear-gradient(to bottom, var(--tw-gradient-stops))' }}>
-        <div className="bg-gradient-to-b from-slate-100 to-slate-50 dark:from-slate-900 dark:to-slate-950 px-5 pt-14 pb-6 -mx-5 -mt-14">
-          <div className="flex items-center justify-between mb-1">
-            <div>
-              <p className="text-slate-500 dark:text-slate-400 text-sm">{t('hello')}</p>
-              <h1 className="text-slate-900 dark:text-white text-xl font-bold">{user?.fullName || user?.username}</h1>
-            </div>
-            <div className="flex items-center gap-2">
-              {syncing && <RefreshCw size={16} className="text-primary-400 animate-spin" />}
-              {isTeamMode && (
-                <div className="flex items-center gap-1 bg-primary-500/20 px-2.5 py-1 rounded-full">
-                  <Users size={12} className="text-primary-400" />
-                  <span className="text-primary-400 text-xs font-medium">{team?.name}</span>
-                </div>
-              )}
-            </div>
+      <div className="bg-gradient-to-b from-slate-100 to-slate-50 dark:from-slate-900 dark:to-slate-950 px-5 pt-14 pb-6">
+        <div className="flex items-center justify-between mb-1">
+          <div>
+            <p className="text-slate-500 dark:text-slate-400 text-sm">{t('hello')}</p>
+            <h1 className="text-slate-900 dark:text-white text-xl font-bold">{user?.fullName || user?.username}</h1>
+          </div>
+          <div className="flex items-center gap-2">
+            {syncing && <RefreshCw size={16} className="text-primary-400 animate-spin" />}
+            {isTeamMode && (
+              <div className="flex items-center gap-1 bg-primary-500/20 px-2.5 py-1 rounded-full">
+                <Users size={12} className="text-primary-400" />
+                <span className="text-primary-400 text-xs font-medium">{team?.name}</span>
+              </div>
+            )}
           </div>
         </div>
       </div>
