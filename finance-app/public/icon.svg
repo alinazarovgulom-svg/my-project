@@ -1,31 +1,25 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#0f172a"/>
-      <stop offset="100%" stop-color="#1e3a8a"/>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1d4ed8"/>
+      <stop offset="100%" stop-color="#3b82f6"/>
     </linearGradient>
-    <linearGradient id="ic" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#60a5fa"/>
-      <stop offset="100%" stop-color="#818cf8"/>
-    </linearGradient>
-    <filter id="glow">
-      <feGaussianBlur stdDeviation="10" result="blur"/>
-      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-    </filter>
   </defs>
 
   <!-- Background -->
-  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <rect width="512" height="512" rx="110" fill="url(#bg)"/>
 
-  <!-- Glow -->
-  <circle cx="256" cy="240" r="120" fill="#3b82f6" opacity="0.12"/>
+  <!-- Crown (BEK — sohibi, rahbar) -->
+  <path d="M 158,238 L 158,200 L 210,138 L 256,178 L 302,138 L 354,200 L 354,238 Z"
+        fill="white" opacity="1"/>
 
-  <!-- P vertical bar -->
-  <rect x="168" y="136" width="44" height="240" rx="22" fill="url(#ic)" filter="url(#glow)"/>
+  <!-- Crown base bar -->
+  <rect x="152" y="228" width="208" height="32" rx="10" fill="white"/>
 
-  <!-- P bowl -->
-  <path d="M212 136 Q320 136 320 208 Q320 280 212 280 L212 244 Q276 244 276 208 Q276 172 212 172 Z" fill="url(#ic)" filter="url(#glow)"/>
+  <!-- Coin (PUL — pul, boylik) -->
+  <circle cx="256" cy="354" r="92" fill="none" stroke="white" stroke-width="20"/>
 
-  <!-- Gold dot -->
-  <circle cx="348" cy="152" r="20" fill="#ffd700" opacity="0.95"/>
+  <!-- Two lines inside coin — banknote/value symbol -->
+  <line x1="216" y1="338" x2="296" y2="338" stroke="white" stroke-width="16" stroke-linecap="round"/>
+  <line x1="216" y1="370" x2="296" y2="370" stroke="white" stroke-width="16" stroke-linecap="round"/>
 </svg>
