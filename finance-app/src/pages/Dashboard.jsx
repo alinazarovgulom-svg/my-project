@@ -78,8 +78,8 @@ const recent = [...transactions].filter(t => t.category !== 'Valyuta ayirboshlas
           <p className="text-gray-400 text-sm">{t('hello')}</p>
           <h1 className="text-xl font-bold text-white">{user?.name} 👋</h1>
         </div>
-        <div className="text-right flex flex-col items-end gap-0.5">
-          <span className="text-[10px] font-bold tracking-widest text-blue-400/60 uppercase">by KAFTIMDA</span>
+        <div className="text-right flex flex-col items-end gap-1">
+          <img src="/logo.svg" alt="PulBek" style={{ height: '36px', width: 'auto' }} />
           <p className="text-gray-500 text-xs">{format(new Date(), 'dd MMM yyyy', { locale: uz })}</p>
         </div>
       </div>
