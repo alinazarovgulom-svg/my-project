@@ -30,7 +30,6 @@ export default function Transactions() {
   const [selectMode, setSelectMode] = useState(false)
   const [selected, setSelected] = useState(new Set())
   const familyMode = !!family
-  const location = useLocation()
   const [modal, setModal] = useState(false)
   const [form, setForm] = useState(defaultForm)
   const [extraAmounts, setExtraAmounts] = useState([])
