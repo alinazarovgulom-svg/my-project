@@ -190,7 +190,7 @@ export default function HamkorDetail() {
       </div>
 
       {/* Add entry modal */}
-      <Modal isOpen={addModal} onClose={() => setAddModal(false)} title={isSupplier ? 'Xomashyo qo\'shish' : 'Xizmat haqi qo\'shish'}>
+      <Modal open={addModal} onClose={() => setAddModal(false)} title={isSupplier ? 'Xomashyo qo\'shish' : 'Xizmat haqi qo\'shish'}>
         {isSupplier ? (
           <div className="flex flex-col gap-3">
             <input className="w-full bg-gray-700 text-white rounded-xl px-3 py-3 outline-none" placeholder="Xomashyo nomi *" value={xForm.name} onChange={e => setXForm(f => ({ ...f, name: e.target.value }))} />
@@ -231,7 +231,7 @@ export default function HamkorDetail() {
       </Modal>
 
       {/* To'lov modal */}
-      <Modal isOpen={payModal} onClose={() => setPayModal(false)} title="To'lov qilish">
+      <Modal open={payModal} onClose={() => setPayModal(false)} title="To'lov qilish">
         <div className="flex flex-col gap-3">
           <div className="flex gap-2">
             <input className="flex-1 bg-gray-700 text-white rounded-xl px-3 py-3 outline-none" placeholder="Summa *" type="number" value={tForm.amount} onChange={e => setTForm(f => ({ ...f, amount: e.target.value }))} />
@@ -247,7 +247,7 @@ export default function HamkorDetail() {
       </Modal>
 
       {/* Delete confirm */}
-      <Modal isOpen={deleteConfirm} onClose={() => setDeleteConfirm(false)} title="Hamkorni o'chirish">
+      <Modal open={deleteConfirm} onClose={() => setDeleteConfirm(false)} title="Hamkorni o'chirish">
         <p className="text-gray-300 mb-4">"{hamkor.name}" ni barcha ma'lumotlari bilan o'chirasizmi?</p>
         <div className="flex gap-2">
           <button onClick={() => setDeleteConfirm(false)} className="flex-1 bg-gray-700 text-white rounded-xl py-3">Bekor</button>

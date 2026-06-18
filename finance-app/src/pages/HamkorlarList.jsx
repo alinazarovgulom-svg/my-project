@@ -101,7 +101,7 @@ export default function HamkorlarList() {
       </button>
 
       {/* Add modal */}
-      <Modal isOpen={modal} onClose={() => { setModal(false); setName(''); setPhone('') }} title="Yangi hamkor qo'shish">
+      <Modal open={modal} onClose={() => { setModal(false); setName(''); setPhone('') }} title="Yangi hamkor qo'shish">
         <div className="flex flex-col gap-3">
           <div>
             <label className="text-gray-400 text-xs mb-1 block">Ism *</label>
