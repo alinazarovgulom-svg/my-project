@@ -30,7 +30,7 @@ export default function Transactions() {
   const [exportModal, setExportModal] = useState(false)
   const [selectMode, setSelectMode] = useState(false)
   const [selected, setSelected] = useState(new Set())
-  const [familyMode, setFamilyMode] = useState(() => !!family)
+  const familyMode = !!family
   const [form, setForm] = useState(defaultForm)
   const [extraAmounts, setExtraAmounts] = useState([])
   const [filter, setFilter] = useState('all')
@@ -165,13 +165,10 @@ export default function Transactions() {
               {activeFilterCount > 0 && <span className="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 rounded-full text-white text-[10px] flex items-center justify-center">{activeFilterCount}</span>}
             </button>
             {family && (
-              <button
-                onClick={() => setFamilyMode(f => !f)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-colors ${familyMode ? 'bg-purple-500/20 text-purple-400' : 'bg-dark-600 text-gray-400'}`}
-              >
+              <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-purple-500/20 text-purple-400">
                 <Users size={14} />
                 Oila
-              </button>
+              </span>
             )}
           </div>
         </div>

@@ -12,7 +12,9 @@ const fmt = (n, cur) => fmtCur(n, cur)
 const FLAGS = { UZS: '🇺🇿', USD: '🇺🇸', EUR: '🇪🇺', RUB: '🇷🇺' }
 
 export default function Dashboard() {
-  const { user, transactions, debts, family, familyMembers, settings } = useApp()
+  const { user, transactions: personalTx, familyTransactions, debts, familyDebts, family, familyMembers, settings } = useApp()
+  const transactions = family ? familyTransactions : personalTx
+  const activeDebtsList = family ? familyDebts : debts
   const { t } = useLang()
   const nav = useNavigate()
 
@@ -74,7 +76,7 @@ export default function Dashboard() {
 
   const recent = [...transactions].filter(t => t.category !== 'Valyuta ayirboshlash').sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5)
 
-  const activeDebts = debts.filter(d => d.remaining > 0)
+  const activeDebts = activeDebtsList.filter(d => d.remaining > 0)
   const myDebts = activeDebts.filter(d => d.direction === 'borrowed')
   const theirDebts = activeDebts.filter(d => d.direction === 'lent')
 
