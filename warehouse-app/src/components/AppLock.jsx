@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useApp } from '../store/AppContext'
 import { Lock, Delete, Fingerprint } from 'lucide-react'
 import { hasBiometric, isBiometricAvailable, authenticateBiometric } from '../utils/biometric'
