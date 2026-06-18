@@ -1,4 +1,4 @@
-import { TrendingUp, TrendingDown, Wallet, ArrowRight, Plus, Users, ArrowLeftRight } from 'lucide-react'
+import { TrendingUp, TrendingDown, Wallet, ArrowRight, Users, ArrowLeftRight } from 'lucide-react'
 import { useApp } from '../store/AppContext'
 import { useNavigate } from 'react-router-dom'
 import { format } from 'date-fns'
@@ -49,6 +49,15 @@ export default function Dashboard() {
     const expense = transactions.filter(t => t.type === 'expense' && (t.currency || 'UZS') === cur).reduce((s, t) => s + t.amount, 0)
     return { cur, income, expense }
   }).filter(x => x.income > 0 || x.expense > 0)
+
+  // Today's income/expense per currency
+  const today = format(new Date(), 'yyyy-MM-dd')
+  const todayTx = transactions.filter(t => t.date?.slice(0, 10) === today && t.category !== 'Valyuta ayirboshlash')
+  const todayStats = currencies.map(cur => {
+    const inc = todayTx.filter(t => t.type === 'income' && (t.currency || 'UZS') === cur).reduce((s, t) => s + t.amount, 0)
+    const exp = todayTx.filter(t => t.type === 'expense' && (t.currency || 'UZS') === cur).reduce((s, t) => s + t.amount, 0)
+    return { cur, inc, exp }
+  }).filter(x => x.inc > 0 || x.exp > 0)
 
   const hasMultiCurrency = currencyBreakdown.some(x => x.cur !== 'UZS')
 
@@ -153,20 +162,28 @@ const recent = [...transactions].filter(t => t.category !== 'Valyuta ayirboshlas
         </div>
       )}
 
-      {/* Quick Actions */}
-      <div className="grid grid-cols-2 gap-3">
-        <button onClick={() => nav('/transactions')} className="card flex items-center gap-3 active:opacity-70 transition-opacity">
-          <div className="w-10 h-10 rounded-xl bg-green-500/20 flex items-center justify-center">
-            <Plus size={20} className="text-green-400" />
+      {/* Today's Stats */}
+      <div className="card">
+        <p className="text-gray-400 text-xs mb-3">Bugun — {format(new Date(), 'dd MMM yyyy', { locale: uz })}</p>
+        {todayStats.length === 0 ? (
+          <p className="text-gray-600 text-sm text-center py-2">Bugun tranzaksiya yo'q</p>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {todayStats.map(({ cur, inc, exp }) => (
+              <div key={cur} className="flex items-center justify-between">
+                <span className="text-gray-400 text-xs font-medium">{cur}</span>
+                <div className="flex gap-3">
+                  {inc > 0 && (
+                    <span className="text-green-400 text-sm font-semibold">+{fmt(inc, cur)}</span>
+                  )}
+                  {exp > 0 && (
+                    <span className="text-red-400 text-sm font-semibold">-{fmt(exp, cur)}</span>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
-          <span className="text-sm font-medium text-white">{t('addIncome')}</span>
-        </button>
-        <button onClick={() => nav('/transactions')} className="card flex items-center gap-3 active:opacity-70 transition-opacity">
-          <div className="w-10 h-10 rounded-xl bg-red-500/20 flex items-center justify-center">
-            <Plus size={20} className="text-red-400" />
-          </div>
-          <span className="text-sm font-medium text-white">{t('addExpense')}</span>
-        </button>
+        )}
       </div>
 
 
