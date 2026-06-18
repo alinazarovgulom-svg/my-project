@@ -3,11 +3,13 @@ import { FileText, Table, TrendingUp, TrendingDown, PieChart, CalendarDays, Chev
 import { useApp } from '../store/AppContext'
 import { format, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns'
 import { fmtCur } from '../utils/format'
+import { exportReportPDF } from '../utils/pdfExport'
 
 const fmt = (n, cur) => fmtCur(n, cur || 'UZS')
 
 export default function Reports() {
-  const { transactions, debts, user } = useApp()
+  const { transactions: personalTx, familyTransactions, family, debts, user } = useApp()
+  const transactions = (family ? familyTransactions : personalTx).filter(t => t.category !== 'Valyuta ayirboshlash')
   const [startDate, setStartDate] = useState(format(startOfMonth(new Date()), 'yyyy-MM-dd'))
   const [endDate, setEndDate] = useState(format(endOfMonth(new Date()), 'yyyy-MM-dd'))
   const [loading, setLoading] = useState(false)
