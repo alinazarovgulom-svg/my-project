@@ -6,13 +6,12 @@ import { generateId, getPinned } from '../store/storage'
 import { addTeamMovement, deleteTeamMovement } from '../store/family'
 import Modal from '../components/Modal'
 import SwipeableRow from '../components/SwipeableRow'
-import { PackageMinus, Search, Users, AlertCircle, MapPin } from 'lucide-react'
+import { PackageMinus, Search, Users, AlertCircle, MapPin, Plus, X } from 'lucide-react'
 import { addLogEntry } from '../store/auditLog'
 
+const emptyItem = (products) => ({ productId: products[0]?.id || '', quantity: '', price: '' })
 const emptyForm = (products) => ({
-  productId: products[0]?.id || '',
-  quantity: '',
-  price: '',
+  items: [emptyItem(products)],
   customer: '',
   note: '',
   date: today()
@@ -26,7 +25,6 @@ export default function StockOut() {
   const [form, setForm] = useState(() => emptyForm(products))
   const [teamMode, setTeamMode] = useState(false)
   const [stockError, setStockError] = useState('')
-
   const [pinned] = useState(() => getPinned(user?.id))
 
   const isTeam = teamMode && !!team
@@ -39,14 +37,27 @@ export default function StockOut() {
   ]
 
   const set = k => e => {
-    setForm(f => ({ ...f, [k]: e.target.value }))
     setStockError('')
+    setForm(f => ({ ...f, [k]: e.target.value }))
+  }
+  const setItem = (idx, key) => e => {
+    setStockError('')
+    setForm(f => ({
+      ...f,
+      items: f.items.map((item, i) => i === idx ? { ...item, [key]: e.target.value } : item)
+    }))
+  }
+  const addItem = () => setForm(f => ({ ...f, items: [...f.items, emptyItem(products)] }))
+  const removeItem = (idx) => {
+    setStockError('')
+    setForm(f => ({ ...f, items: f.items.filter((_, i) => i !== idx) }))
   }
 
-  const selectedProduct = products.find(p => p.id === form.productId)
-  const currentStock = inventory.find(i => i.productId === form.productId)?.quantity || 0
-  const salePrice = Number(form.price) || selectedProduct?.salePrice || 0
-  const totalAmount = (Number(form.quantity) || 0) * salePrice
+  const totalAmount = form.items.reduce((sum, item) => {
+    const prod = products.find(pr => pr.id === item.productId)
+    const price = Number(item.price) || prod?.salePrice || 0
+    return sum + (Number(item.quantity) || 0) * price
+  }, 0)
 
   const filtered = [...activeMovements]
     .filter(m => m.type === 'chiqim')
@@ -60,47 +71,63 @@ export default function StockOut() {
   }
 
   const handleSave = async () => {
-    if (!form.productId || !form.quantity) return
-    const qty = Number(form.quantity)
-    if (qty > currentStock) {
-      setStockError(`Omborda faqat ${fmtNum(currentStock)} ${selectedProduct?.unit || 'dona'} bor`)
-      return
+    if (form.items.some(item => !item.productId || !item.quantity)) return
+
+    // Aggregate requested quantities per product to handle duplicates
+    const requested = {}
+    for (const item of form.items) {
+      requested[item.productId] = (requested[item.productId] || 0) + Number(item.quantity)
     }
-    const prod = products.find(p => p.id === form.productId)
-    const price = Number(form.price) || prod?.salePrice || 0
-    const mv = {
-      id: generateId(),
-      type: 'chiqim',
-      productId: form.productId,
-      productName: prod?.name || '',
-      quantity: qty,
-      unit: prod?.unit || 'dona',
-      price,
-      total: qty * price,
-      customer: form.customer,
-      note: form.note,
-      date: form.date || today(),
-      userId: user?.id,
-      userName: user?.fullName || user?.username
+    for (const [productId, qty] of Object.entries(requested)) {
+      const stock = inventory.find(i => i.productId === productId)?.quantity || 0
+      if (qty > stock) {
+        const prod = products.find(pr => pr.id === productId)
+        setStockError(`${prod?.name}: faqat ${fmtNum(stock)} ${prod?.unit || 'dona'} bor`)
+        return
+      }
     }
+
+    const mvs = form.items.map(item => {
+      const prod = products.find(pr => pr.id === item.productId)
+      const price = Number(item.price) || prod?.salePrice || 0
+      const qty = Number(item.quantity)
+      return {
+        id: generateId(),
+        type: 'chiqim',
+        productId: item.productId,
+        productName: prod?.name || '',
+        quantity: qty,
+        unit: prod?.unit || 'dona',
+        price,
+        total: qty * price,
+        customer: form.customer,
+        note: form.note,
+        date: form.date || today(),
+        userId: user?.id,
+        userName: user?.fullName || user?.username
+      }
+    })
+
     if (isTeam && teamId) {
-      await addTeamMovement(teamId, mv)
+      for (const mv of mvs) await addTeamMovement(teamId, mv)
     } else {
-      saveMovements([...movements, mv], products)
+      saveMovements([...movements, ...mvs], products)
     }
-    await addLogEntry(user?.id, {
-      action: 'chiqim_qoshildi',
-      userId: user?.id,
-      userName: user?.fullName || user?.username,
-      productId: mv.productId,
-      productName: mv.productName,
-      quantity: mv.quantity,
-      unit: mv.unit,
-      price: mv.price,
-      total: mv.total,
-      customer: mv.customer,
-      note: mv.note
-    }, isTeam ? teamId : null)
+    for (const mv of mvs) {
+      await addLogEntry(user?.id, {
+        action: 'chiqim_qoshildi',
+        userId: user?.id,
+        userName: user?.fullName || user?.username,
+        productId: mv.productId,
+        productName: mv.productName,
+        quantity: mv.quantity,
+        unit: mv.unit,
+        price: mv.price,
+        total: mv.total,
+        customer: mv.customer,
+        note: mv.note
+      }, isTeam ? teamId : null)
+    }
     setModalOpen(false)
   }
 
@@ -194,42 +221,62 @@ export default function StockOut() {
             <p className="text-slate-400 text-sm text-center py-4">Avval mahsulot qo'shing</p>
           ) : (
             <>
-              <div>
-                <label className="text-slate-400 text-xs mb-1 block">{t('product')}</label>
-                <select value={form.productId} onChange={set('productId')}
-                  className="w-full bg-slate-800 border border-slate-700/50 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-red-500/40">
-                  {sortedProducts.map(pr => {
-                    const stock = inventory.find(i => i.productId === pr.id)?.quantity || 0
-                    return <option key={pr.id} value={pr.id}>{pinned.includes(pr.id) ? '★ ' : ''}{pr.name} (qoldiq: {fmtNum(stock)} {pr.unit})</option>
-                  })}
-                </select>
-                {selectedProduct?.location && (
-                  <div className="flex items-center gap-1.5 mt-1.5 px-1">
-                    <MapPin size={12} className="text-amber-400" />
-                    <span className="text-amber-400 text-xs">{selectedProduct.location}</span>
-                  </div>
-                )}
+              <div className="space-y-2">
+                {form.items.map((item, idx) => {
+                  const itemProd = products.find(pr => pr.id === item.productId)
+                  const stock = inventory.find(i => i.productId === item.productId)?.quantity || 0
+                  const itemPrice = Number(item.price) || itemProd?.salePrice || 0
+                  const itemTotal = (Number(item.quantity) || 0) * itemPrice
+                  return (
+                    <div key={idx} className="bg-slate-900/60 rounded-xl p-3 space-y-2 border border-slate-700/30">
+                      <div className="flex items-center justify-between">
+                        <span className="text-slate-500 text-xs font-medium">#{idx + 1} mahsulot</span>
+                        {form.items.length > 1 && (
+                          <button onClick={() => removeItem(idx)}
+                            className="w-6 h-6 flex items-center justify-center rounded-lg active:bg-red-500/20">
+                            <X size={13} className="text-slate-500" />
+                          </button>
+                        )}
+                      </div>
+                      <select value={item.productId} onChange={setItem(idx, 'productId')}
+                        className="w-full bg-slate-800 border border-slate-700/50 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-red-500/40">
+                        {sortedProducts.map(pr => {
+                          const s = inventory.find(i => i.productId === pr.id)?.quantity || 0
+                          return <option key={pr.id} value={pr.id}>{pinned.includes(pr.id) ? '★ ' : ''}{pr.name} (qoldiq: {fmtNum(s)} {pr.unit})</option>
+                        })}
+                      </select>
+                      {itemProd?.location && (
+                        <div className="flex items-center gap-1.5 px-0.5">
+                          <MapPin size={11} className="text-amber-400" />
+                          <span className="text-amber-400 text-xs">{itemProd.location}</span>
+                        </div>
+                      )}
+                      <div className="flex items-center justify-between px-0.5">
+                        <span className="text-slate-500 text-xs">{t('currentStock')}</span>
+                        <span className={`text-xs font-medium ${stock <= 0 ? 'text-red-400' : 'text-slate-300'}`}>
+                          {fmtNum(stock)} {itemProd?.unit || 'dona'}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <input type="number" value={item.quantity} onChange={setItem(idx, 'quantity')}
+                          placeholder="Miqdor"
+                          className="w-full bg-slate-800 border border-slate-700/50 rounded-xl px-3 py-2.5 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-red-500/40" />
+                        <input type="number" value={item.price} onChange={setItem(idx, 'price')}
+                          placeholder={String(itemProd?.salePrice || 0)}
+                          className="w-full bg-slate-800 border border-slate-700/50 rounded-xl px-3 py-2.5 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-red-500/40" />
+                      </div>
+                      {itemTotal > 0 && (
+                        <p className="text-right text-red-400 text-xs font-medium">{fmtNum(itemTotal)} so'm</p>
+                      )}
+                    </div>
+                  )
+                })}
               </div>
 
-              <div className="bg-slate-800/60 rounded-xl px-4 py-2.5 flex justify-between items-center">
-                <span className="text-slate-400 text-sm">{t('currentStock')}</span>
-                <span className={`font-medium text-sm ${currentStock <= 0 ? 'text-red-400' : 'text-white'}`}>
-                  {fmtNum(currentStock)} {selectedProduct?.unit || 'dona'}
-                </span>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-slate-400 text-xs mb-1 block">{t('quantity')}</label>
-                  <input type="number" value={form.quantity} onChange={set('quantity')} placeholder="0"
-                    className="w-full bg-slate-800 border border-slate-700/50 rounded-xl px-4 py-3 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-red-500/40" />
-                </div>
-                <div>
-                  <label className="text-slate-400 text-xs mb-1 block">{t('salePrice')}</label>
-                  <input type="number" value={form.price} onChange={set('price')} placeholder={String(selectedProduct?.salePrice || 0)}
-                    className="w-full bg-slate-800 border border-slate-700/50 rounded-xl px-4 py-3 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-red-500/40" />
-                </div>
-              </div>
+              <button onClick={addItem}
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-dashed border-red-500/30 text-red-400 text-sm active:scale-95 transition-all">
+                <Plus size={15} /> Mahsulot qo'shish
+              </button>
 
               {stockError && (
                 <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
@@ -256,7 +303,7 @@ export default function StockOut() {
 
               <button onClick={handleSave}
                 className="w-full bg-red-500 text-white font-semibold py-3.5 rounded-xl shadow-lg shadow-red-500/20 active:scale-95 transition-all">
-                {t('save')}
+                {form.items.length > 1 ? `${form.items.length} ta chiqim saqlash` : t('save')}
               </button>
             </>
           )}
