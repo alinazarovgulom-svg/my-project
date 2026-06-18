@@ -71,7 +71,7 @@ const recent = [...transactions].filter(t => t.category !== 'Valyuta ayirboshlas
   const theirDebts = activeDebts.filter(d => d.direction === 'lent')
 
   return (
-    <div className="flex flex-col gap-4 px-4 pt-4 pb-24">
+    <div className="flex flex-col gap-4 px-4 pt-4 pb-24 page-animate">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

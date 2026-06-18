@@ -149,7 +149,7 @@ export default function Transactions() {
   }
 
   return (
-    <div className="flex flex-col min-h-dvh pb-24">
+    <div className="flex flex-col min-h-dvh pb-24 page-animate">
       <div className="sticky top-0 z-10 bg-dark-900 px-4 pt-4 pb-3">
         <div className="flex items-center justify-between mb-3">
           <h1 className="text-xl font-bold text-white">Kirim / Chiqim</h1>

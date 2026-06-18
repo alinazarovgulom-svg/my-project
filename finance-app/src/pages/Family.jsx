@@ -78,7 +78,7 @@ export default function Family() {
 
   if (!family) {
     return (
-      <div className="flex flex-col px-4 pt-4 pb-24 gap-4">
+      <div className="flex flex-col px-4 pt-4 pb-24 gap-4 page-animate">
         <h1 className="text-xl font-bold text-white">Oilaviy rejim</h1>
 
         <div className="card text-center py-12 flex flex-col items-center gap-4">
@@ -148,7 +148,7 @@ export default function Family() {
 
   // User is in a family
   return (
-    <div className="flex flex-col px-4 pt-4 pb-24 gap-4">
+    <div className="flex flex-col px-4 pt-4 pb-24 gap-4 page-animate">
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold text-white">Oilaviy rejim</h1>
