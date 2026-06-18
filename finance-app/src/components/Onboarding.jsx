@@ -258,13 +258,12 @@ export default function Onboarding({ onDone }) {
 
         {/* Logo */}
         <div className="relative mb-5">
-          <div className="w-24 h-24 rounded-3xl flex items-center justify-center"
+          <div className="w-24 h-24 rounded-3xl flex items-center justify-center overflow-hidden"
             style={{
-              background: 'linear-gradient(135deg, #1d4ed8 0%, #7c3aed 100%)',
+              background: 'linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%)',
               animation: phase === 3 ? 'logoPop 0.7s cubic-bezier(0.16,1,0.3,1) forwards, glowPulse 3s 0.8s ease-in-out infinite' : 'glowPulse 3s ease-in-out infinite',
             }}>
-            <span className="text-5xl font-black text-white"
-              style={{ textShadow: '0 0 20px rgba(255,255,255,0.6)' }}>₿</span>
+            <img src="/icon.svg" alt="PulBek" style={{ width: '80px', height: '80px' }} />
           </div>
           <div className="absolute -bottom-1 -right-1 w-7 h-7 bg-green-400 rounded-full flex items-center justify-center"
             style={{
