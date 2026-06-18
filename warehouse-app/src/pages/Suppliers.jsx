@@ -4,30 +4,35 @@ import { useLang } from '../i18n/LangContext'
 import { fmtNum, fmtDate, today } from '../utils/format'
 import { generateId } from '../store/storage'
 import { getSuppliers, saveSuppliers, getSupplierTxns, saveSupplierTxns, getBalance } from '../store/suppliers'
+import { getProcessing, saveProcessing } from '../store/processing'
 import Modal from '../components/Modal'
 import SwipeableRow from '../components/SwipeableRow'
-import { Truck, Plus, Search, ChevronDown, ChevronUp, Phone, Building2, TrendingUp, TrendingDown } from 'lucide-react'
+import { Truck, Plus, Search, ChevronDown, ChevronUp, Phone, Building2, TrendingUp, TrendingDown, Cog } from 'lucide-react'
 
 export default function Suppliers() {
-  const { user } = useApp()
+  const { user, products } = useApp()
   const { t } = useLang()
   const uid = user?.id
 
   const [suppliers, setSuppliers] = useState(() => getSuppliers(uid))
   const [txns, setTxns] = useState(() => getSupplierTxns(uid))
+  const [processing, setProcessing] = useState(() => getProcessing(uid))
   const [search, setSearch] = useState('')
   const [expanded, setExpanded] = useState(null)
 
   const [supplierModal, setSupplierModal] = useState(false)
   const [txnModal, setTxnModal] = useState(false)
+  const [processingModal, setProcessingModal] = useState(false)
   const [editId, setEditId] = useState(null)
   const [activeSupplierId, setActiveSupplierId] = useState(null)
 
   const [form, setForm] = useState({ name: '', phone: '', company: '', note: '' })
   const [txnForm, setTxnForm] = useState({ type: 'debt', amount: '', note: '', date: today() })
+  const [procForm, setProcForm] = useState({ productId: '', quantity: '', date: today(), note: '' })
 
   const set = k => e => setForm(f => ({ ...f, [k]: e.target.value }))
   const setTxn = k => e => setTxnForm(f => ({ ...f, [k]: e.target.value }))
+  const setProc = k => e => setProcForm(f => ({ ...f, [k]: e.target.value }))
 
   const totalDebt = suppliers.reduce((sum, s) => {
     const b = getBalance(txns, s.id)
@@ -73,6 +78,9 @@ export default function Suppliers() {
     const updatedT = txns.filter(tx => tx.supplierId !== id)
     setTxns(updatedT)
     saveSupplierTxns(uid, updatedT)
+    const updatedP = processing.filter(p => p.supplierId !== id)
+    setProcessing(updatedP)
+    saveProcessing(uid, updatedP)
     if (expanded === id) setExpanded(null)
   }
 
@@ -100,6 +108,36 @@ export default function Suppliers() {
     setTxns(updated)
     saveSupplierTxns(uid, updated)
     setTxnModal(false)
+  }
+
+  const openProcessing = (supplierId) => {
+    setActiveSupplierId(supplierId)
+    setProcForm({ productId: products[0]?.id || '', quantity: '', date: today(), note: '' })
+    setProcessingModal(true)
+  }
+
+  const handleSaveProcessing = () => {
+    if (!procForm.productId || !procForm.quantity || !activeSupplierId) return
+    const supplier = suppliers.find(s => s.id === activeSupplierId)
+    const prod = products.find(p => p.id === procForm.productId)
+    const newProc = {
+      id: generateId(),
+      supplierId: activeSupplierId,
+      supplierName: supplier?.name || '',
+      productId: procForm.productId,
+      productName: prod?.name || '',
+      unit: prod?.unit || 'dona',
+      quantity: Number(procForm.quantity),
+      date: procForm.date || today(),
+      note: procForm.note,
+      status: 'pending',
+      userId: uid,
+      createdAt: new Date().toISOString()
+    }
+    const updated = [...processing, newProc]
+    setProcessing(updated)
+    saveProcessing(uid, updated)
+    setProcessingModal(false)
   }
 
   return (
@@ -145,6 +183,7 @@ export default function Suppliers() {
               const sTxns = txns
                 .filter(tx => tx.supplierId === s.id)
                 .sort((a, b) => (b.date || '').localeCompare(a.date || ''))
+              const sPending = processing.filter(p => p.supplierId === s.id && p.status === 'pending')
               const isExp = expanded === s.id
               return (
                 <div key={s.id}>
@@ -163,6 +202,11 @@ export default function Suppliers() {
                               {s.company && (
                                 <span className="flex items-center gap-1 text-slate-400 text-xs">
                                   <Building2 size={10} /> {s.company}
+                                </span>
+                              )}
+                              {sPending.length > 0 && (
+                                <span className="flex items-center gap-1 text-amber-400 text-xs">
+                                  <Cog size={10} /> {sPending.length} ta qayta ishlashda
                                 </span>
                               )}
                             </div>
@@ -191,6 +235,30 @@ export default function Suppliers() {
                               <TrendingDown size={14} /> To'lov qilish
                             </button>
                           </div>
+
+                          {products.length > 0 && (
+                            <button onClick={() => openProcessing(s.id)}
+                              className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-amber-500/15 border border-amber-500/20 text-amber-400 text-sm font-medium active:scale-95 transition-all">
+                              <Cog size={14} /> Qayta ishlashga berish
+                            </button>
+                          )}
+
+                          {sPending.length > 0 && (
+                            <div className="bg-amber-500/5 border border-amber-500/15 rounded-xl p-3 space-y-2">
+                              <p className="text-amber-400 text-xs font-medium">Qayta ishlashda:</p>
+                              {sPending.map(p => (
+                                <div key={p.id} className="flex items-center justify-between py-1.5 border-b border-amber-500/10 last:border-0">
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-white text-xs font-medium">{p.productName}</p>
+                                    <p className="text-slate-500 text-xs">{fmtDate(p.date)}{p.note ? ` · ${p.note}` : ''}</p>
+                                  </div>
+                                  <p className="text-amber-400 text-sm font-semibold ml-3 flex-shrink-0">
+                                    {fmtNum(p.quantity)} {p.unit}
+                                  </p>
+                                </div>
+                              ))}
+                            </div>
+                          )}
 
                           {s.note && (
                             <p className="text-slate-500 text-xs">{s.note}</p>
@@ -269,6 +337,36 @@ export default function Suppliers() {
 
           <button onClick={handleSaveTxn}
             className={`w-full text-white font-semibold py-3.5 rounded-xl active:scale-95 transition-all shadow-lg ${txnForm.type === 'debt' ? 'bg-red-500 shadow-red-500/20' : 'bg-primary-500 shadow-primary-500/20'}`}>
+            {t('save')}
+          </button>
+        </div>
+      </Modal>
+
+      {/* Processing Modal */}
+      <Modal open={processingModal} onClose={() => setProcessingModal(false)}
+        title="Qayta ishlashga berish">
+        <div className="space-y-3 pb-4">
+          <p className="text-slate-400 text-xs">
+            Yetkazuvchi: <span className="text-amber-400 font-medium">{suppliers.find(s => s.id === activeSupplierId)?.name}</span>
+          </p>
+          <select value={procForm.productId} onChange={setProc('productId')}
+            className="w-full bg-slate-800 border border-slate-700/50 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-primary-500/40">
+            {products.map(pr => (
+              <option key={pr.id} value={pr.id}>{pr.name} ({pr.unit})</option>
+            ))}
+          </select>
+
+          <input type="number" value={procForm.quantity} onChange={setProc('quantity')} placeholder="Miqdor"
+            className="w-full bg-slate-800 border border-slate-700/50 rounded-xl px-4 py-3 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-primary-500/40" />
+
+          <input type="date" value={procForm.date} onChange={setProc('date')}
+            className="w-full bg-slate-800 border border-slate-700/50 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-primary-500/40" />
+
+          <input value={procForm.note} onChange={setProc('note')} placeholder={t('note')}
+            className="w-full bg-slate-800 border border-slate-700/50 rounded-xl px-4 py-3 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-primary-500/40" />
+
+          <button onClick={handleSaveProcessing}
+            className="w-full bg-amber-500 text-white font-semibold py-3.5 rounded-xl shadow-lg shadow-amber-500/20 active:scale-95 transition-all">
             {t('save')}
           </button>
         </div>

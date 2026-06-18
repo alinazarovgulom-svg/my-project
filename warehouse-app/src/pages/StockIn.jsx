@@ -4,9 +4,11 @@ import { useLang } from '../i18n/LangContext'
 import { fmtNum, fmtDate, today } from '../utils/format'
 import { generateId, getPinned } from '../store/storage'
 import { addTeamMovement, deleteTeamMovement } from '../store/family'
+import { getProcessing, saveProcessing } from '../store/processing'
+import { getSupplierTxns, saveSupplierTxns } from '../store/suppliers'
 import Modal from '../components/Modal'
 import SwipeableRow from '../components/SwipeableRow'
-import { PackagePlus, Search, Users, MapPin, Plus, X } from 'lucide-react'
+import { PackagePlus, Search, Users, MapPin, Plus, X, Cog } from 'lucide-react'
 import { addLogEntry } from '../store/auditLog'
 
 const emptyItem = (products) => ({ productId: products[0]?.id || '', quantity: '', price: '' })
@@ -25,6 +27,11 @@ export default function StockIn() {
   const [form, setForm] = useState(() => emptyForm(products))
   const [teamMode, setTeamMode] = useState(false)
   const [pinned] = useState(() => getPinned(user?.id))
+  const [processing, setProcessing] = useState(() => getProcessing(user?.id))
+  const [procReceiveModal, setProcReceiveModal] = useState(false)
+  const [procReceiveForm, setProcReceiveForm] = useState({ processingId: '', productId: '', quantity: '', serviceFee: '', date: today() })
+
+  const pendingProcessing = processing.filter(p => p.status === 'pending')
 
   const isTeam = teamMode && !!team
   const activeMovements = isTeam ? teamMovements : movements
@@ -33,6 +40,82 @@ export default function StockIn() {
     ...products.filter(pr => pinned.includes(pr.id)),
     ...products.filter(pr => !pinned.includes(pr.id))
   ]
+
+  const setProcReceive = k => e => setProcReceiveForm(f => ({ ...f, [k]: e.target.value }))
+
+  const openProcReceive = () => {
+    const first = pendingProcessing[0]
+    setProcReceiveForm({
+      processingId: first?.id || '',
+      productId: sortedProducts[0]?.id || '',
+      quantity: '',
+      serviceFee: '',
+      date: today()
+    })
+    setProcReceiveModal(true)
+  }
+
+  const handleProcReceiveSave = async () => {
+    const { processingId, productId, quantity, serviceFee, date } = procReceiveForm
+    if (!processingId || !productId || !quantity) return
+    const batch = processing.find(p => p.id === processingId)
+    if (!batch) return
+    const prod = products.find(pr => pr.id === productId)
+    const qty = Number(quantity)
+    const fee = Number(serviceFee) || 0
+    const mv = {
+      id: generateId(),
+      type: 'kirim',
+      productId,
+      productName: prod?.name || '',
+      quantity: qty,
+      unit: prod?.unit || 'dona',
+      price: 0,
+      total: 0,
+      supplier: batch.supplierName,
+      note: `Qayta ishlash: ${batch.productName} ${fmtNum(batch.quantity)} ${batch.unit}`,
+      date: date || today(),
+      userId: user?.id,
+      userName: user?.fullName || user?.username
+    }
+    if (isTeam && teamId) {
+      await addTeamMovement(teamId, mv)
+    } else {
+      saveMovements([...movements, mv], products)
+    }
+    await addLogEntry(user?.id, {
+      action: 'kirim_qoshildi',
+      userId: user?.id,
+      userName: user?.fullName || user?.username,
+      productId: mv.productId,
+      productName: mv.productName,
+      quantity: mv.quantity,
+      unit: mv.unit,
+      price: mv.price,
+      total: mv.total,
+      supplier: mv.supplier,
+      note: mv.note
+    }, isTeam ? teamId : null)
+    const updatedProc = processing.map(p => p.id === processingId ? { ...p, status: 'completed', completedAt: new Date().toISOString() } : p)
+    setProcessing(updatedProc)
+    saveProcessing(user?.id, updatedProc)
+    if (fee > 0) {
+      const existingTxns = getSupplierTxns(user?.id)
+      const feeTxn = {
+        id: generateId(),
+        supplierId: batch.supplierId,
+        supplierName: batch.supplierName,
+        type: 'debt',
+        amount: fee,
+        note: `Qayta ishlash xizmati: ${batch.productName}`,
+        date: date || today(),
+        userId: user?.id,
+        userName: user?.fullName || user?.username
+      }
+      saveSupplierTxns(user?.id, [...existingTxns, feeTxn])
+    }
+    setProcReceiveModal(false)
+  }
 
   const set = k => e => setForm(f => ({ ...f, [k]: e.target.value }))
   const setItem = (idx, key) => e => setForm(f => ({
@@ -127,12 +210,20 @@ export default function StockIn() {
       <div className="bg-slate-900 px-5 pt-14 pb-4">
         <div className="flex items-center justify-between mb-3">
           <h1 className="text-white text-xl font-bold">{t('stockIn')}</h1>
-          {p.canAdd && (
-            <button onClick={openAdd}
-              className="w-10 h-10 rounded-xl bg-primary-500 flex items-center justify-center shadow-lg shadow-primary-500/20">
-              <PackagePlus size={20} className="text-white" />
-            </button>
-          )}
+          <div className="flex items-center gap-2">
+            {p.canAdd && pendingProcessing.length > 0 && (
+              <button onClick={openProcReceive}
+                className="h-10 px-3 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center gap-1.5 text-amber-400 text-xs font-medium">
+                <Cog size={15} /> {pendingProcessing.length} ta
+              </button>
+            )}
+            {p.canAdd && (
+              <button onClick={openAdd}
+                className="w-10 h-10 rounded-xl bg-primary-500 flex items-center justify-center shadow-lg shadow-primary-500/20">
+                <PackagePlus size={20} className="text-white" />
+              </button>
+            )}
+          </div>
         </div>
 
         {team && (
@@ -186,6 +277,50 @@ export default function StockIn() {
           </div>
         )}
       </div>
+
+      <Modal open={procReceiveModal} onClose={() => setProcReceiveModal(false)} title="Qayta ishlash qabul qilish">
+        <div className="space-y-3 pb-4">
+          <div>
+            <p className="text-slate-400 text-xs mb-1.5">Qayta ishlash partiyasi</p>
+            <select value={procReceiveForm.processingId} onChange={setProcReceive('processingId')}
+              className="w-full bg-slate-800 border border-slate-700/50 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-amber-500/40">
+              {pendingProcessing.map(p => (
+                <option key={p.id} value={p.id}>{p.supplierName} · {p.productName} {fmtNum(p.quantity)} {p.unit} ({fmtDate(p.date)})</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <p className="text-slate-400 text-xs mb-1.5">Qabul qilingan mahsulot</p>
+            <select value={procReceiveForm.productId} onChange={setProcReceive('productId')}
+              className="w-full bg-slate-800 border border-slate-700/50 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-primary-500/40">
+              {sortedProducts.map(pr => (
+                <option key={pr.id} value={pr.id}>{pinned.includes(pr.id) ? '★ ' : ''}{pr.name} ({pr.unit})</option>
+              ))}
+            </select>
+          </div>
+
+          <input type="number" value={procReceiveForm.quantity} onChange={setProcReceive('quantity')} placeholder="Miqdor"
+            className="w-full bg-slate-800 border border-slate-700/50 rounded-xl px-4 py-3 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-primary-500/40" />
+
+          <input type="number" value={procReceiveForm.serviceFee} onChange={setProcReceive('serviceFee')} placeholder="Xizmat narxi (so'm) — ixtiyoriy"
+            className="w-full bg-slate-800 border border-slate-700/50 rounded-xl px-4 py-3 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-amber-500/40" />
+
+          {Number(procReceiveForm.serviceFee) > 0 && (
+            <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl px-4 py-2.5 text-xs text-amber-400">
+              {fmtNum(Number(procReceiveForm.serviceFee))} so'm xizmat narxi yetkazuvchi qarziga qo'shiladi
+            </div>
+          )}
+
+          <input type="date" value={procReceiveForm.date} onChange={setProcReceive('date')}
+            className="w-full bg-slate-800 border border-slate-700/50 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-primary-500/40" />
+
+          <button onClick={handleProcReceiveSave}
+            className="w-full bg-amber-500 text-white font-semibold py-3.5 rounded-xl shadow-lg shadow-amber-500/20 active:scale-95 transition-all">
+            Qabul qilish va saqlash
+          </button>
+        </div>
+      </Modal>
 
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={t('addKirim')}>
         <div className="space-y-3 pb-4">
