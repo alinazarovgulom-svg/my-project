@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { Home, PackagePlus, PackageMinus, Boxes, BarChart3, Settings } from 'lucide-react'
+import { Home, PackagePlus, PackageMinus, Boxes, BarChart3, Settings, Truck } from 'lucide-react'
 import { useLang } from '../i18n/LangContext'
 
 const navItems = [
@@ -7,6 +7,7 @@ const navItems = [
   { to: '/stock-in', icon: PackagePlus, key: 'stockIn' },
   { to: '/stock-out', icon: PackageMinus, key: 'stockOut' },
   { to: '/inventory', icon: Boxes, key: 'inventory' },
+  { to: '/suppliers', icon: Truck, key: 'suppliers' },
   { to: '/reports', icon: BarChart3, key: 'reports' },
   { to: '/settings', icon: Settings, key: 'settings' },
 ]
@@ -24,7 +25,7 @@ export default function BottomNav() {
             to={to}
             end={exact}
             className={({ isActive }) =>
-              `flex flex-col items-center gap-0.5 px-3 py-1 rounded-xl transition-all duration-200 min-w-0 ${
+              `flex flex-col items-center gap-0.5 px-1.5 py-1 rounded-xl transition-all duration-200 min-w-0 ${
                 isActive
                   ? 'text-primary-400'
                   : 'text-slate-500 hover:text-slate-300'

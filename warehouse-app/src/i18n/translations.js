@@ -21,6 +21,7 @@ export const translations = {
     reports: "Hisobot",
     team: "Jamoa",
     settings: "Sozlama",
+    suppliers: "Yetk.",
     products: "Mahsulotlar",
     // Dashboard
     hello: "Salom,",
@@ -147,6 +148,7 @@ export const translations = {
     reports: "Отчёты",
     team: "Команда",
     settings: "Настройки",
+    suppliers: "Пост.",
     products: "Товары",
     hello: "Привет,",
     totalProducts: "Всего товаров",
@@ -265,6 +267,7 @@ export const translations = {
     reports: "Reports",
     team: "Team",
     settings: "Settings",
+    suppliers: "Suppliers",
     products: "Products",
     hello: "Hello,",
     totalProducts: "Total products",
