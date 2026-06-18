@@ -70,7 +70,9 @@ export const joinTeam = async (code, userId, username, fullName) => {
   if (!team) team = getTeamLocal(code)
   if (!team) return { error: 'Bunday jamoa topilmadi' }
   if (team.members.find(m => m.userId === userId)) return { error: 'Siz allaqachon bu jamoada siz' }
-  team.members.push({ userId, username, fullName, role: 'manager', joinedAt: new Date().toISOString() })
+  const hasAdmin = team.members.some(m => m.role === 'admin')
+  const role = hasAdmin ? 'manager' : 'admin'
+  team.members.push({ userId, username, fullName, role, joinedAt: new Date().toISOString() })
   saveTeamLocal(team)
   localStorage.setItem(USER_TEAM_KEY(userId), code)
   await saveTeamToCloud(team)
