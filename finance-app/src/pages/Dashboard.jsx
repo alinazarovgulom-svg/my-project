@@ -134,6 +134,28 @@ const recent = [...transactions].filter(t => t.category !== 'Valyuta ayirboshlas
         </div>
       </div>
 
+      {/* Quick Actions */}
+      <div className="grid grid-cols-2 gap-3">
+        <button
+          onClick={() => nav('/transactions', { state: { openType: 'income' } })}
+          className="flex items-center gap-3 bg-green-500/10 border border-green-500/20 rounded-2xl px-4 py-3.5 active:opacity-70 transition-opacity"
+        >
+          <div className="w-9 h-9 rounded-xl bg-green-500/20 flex items-center justify-center flex-shrink-0">
+            <TrendingUp size={18} className="text-green-400" />
+          </div>
+          <span className="text-green-400 font-semibold text-sm">Kirim</span>
+        </button>
+        <button
+          onClick={() => nav('/transactions', { state: { openType: 'expense' } })}
+          className="flex items-center gap-3 bg-red-500/10 border border-red-500/20 rounded-2xl px-4 py-3.5 active:opacity-70 transition-opacity"
+        >
+          <div className="w-9 h-9 rounded-xl bg-red-500/20 flex items-center justify-center flex-shrink-0">
+            <TrendingDown size={18} className="text-red-400" />
+          </div>
+          <span className="text-red-400 font-semibold text-sm">Chiqim</span>
+        </button>
+      </div>
+
       {/* Today's conversions */}
       <div className="card">
         <div className="flex items-center gap-2 mb-3">

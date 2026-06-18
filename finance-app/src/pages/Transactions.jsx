@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
 import { Plus, Trash2, Search, TrendingUp, TrendingDown, Users, Download, SlidersHorizontal, CheckSquare, Square, X } from 'lucide-react'
 import { useApp, INCOME_CATEGORIES, EXPENSE_CATEGORIES } from '../store/AppContext'
 import Modal from '../components/Modal'
@@ -31,9 +32,17 @@ export default function Transactions() {
   const [selectMode, setSelectMode] = useState(false)
   const [selected, setSelected] = useState(new Set())
   const familyMode = !!family
+  const location = useLocation()
   const [form, setForm] = useState(defaultForm)
   const [extraAmounts, setExtraAmounts] = useState([])
   const [filter, setFilter] = useState('all')
+
+  useEffect(() => {
+    if (location.state?.openType) {
+      openAdd(location.state.openType)
+      window.history.replaceState({}, '')
+    }
+  }, [])
   const [search, setSearch] = useState('')
   const [showFilter, setShowFilter] = useState(false)
   const [dateFrom, setDateFrom] = useState('')
