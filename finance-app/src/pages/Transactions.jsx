@@ -57,6 +57,7 @@ export default function Transactions() {
 
   const handleSave = () => {
     if (!form.amount || !form.category) return
+    if (familyMode && !canAdd()) return
     const baseFields = {
       category: form.category,
       note: form.note,
@@ -301,13 +302,13 @@ export default function Transactions() {
         </div>
       )}
 
-      {(!familyMode || canAdd()) && !selectMode && (
+      {!selectMode && (
         <div className="fixed bottom-24 right-4 z-40 flex flex-col gap-2">
-          <button onClick={() => openAdd('income')} className="w-12 h-12 rounded-full bg-green-500 text-white flex items-center justify-center shadow-lg shadow-green-500/30 active:opacity-80">
-            <TrendingUp size={20} />
+          <button onClick={() => openAdd('income')} className="w-14 h-14 rounded-full bg-green-500 text-white flex items-center justify-center shadow-lg shadow-green-500/30 active:opacity-80">
+            <TrendingUp size={22} />
           </button>
-          <button onClick={() => openAdd('expense')} className="w-12 h-12 rounded-full bg-red-500 text-white flex items-center justify-center shadow-lg shadow-red-500/30 active:opacity-80">
-            <TrendingDown size={20} />
+          <button onClick={() => openAdd('expense')} className="w-14 h-14 rounded-full bg-red-500 text-white flex items-center justify-center shadow-lg shadow-red-500/30 active:opacity-80">
+            <TrendingDown size={22} />
           </button>
         </div>
       )}
