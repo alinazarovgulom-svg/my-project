@@ -8,7 +8,7 @@ import Modal from '../components/Modal'
 const ROLES = ['admin', 'manager', 'viewer']
 
 export default function Family() {
-  const { user, team, teamId, userRole, refreshTeam } = useApp()
+  const { user, team, teamId, userRole, refreshTeam, movements, products } = useApp()
   const { t } = useLang()
   const [createModal, setCreateModal] = useState(false)
   const [joinModal, setJoinModal] = useState(false)
@@ -21,7 +21,7 @@ export default function Family() {
   const handleCreate = async () => {
     if (!teamName.trim()) return
     setLoading(true)
-    await createTeam(user.id, user.username, user.fullName, teamName)
+    await createTeam(user.id, user.username, user.fullName, teamName, movements, products)
     refreshTeam()
     setLoading(false)
     setCreateModal(false)

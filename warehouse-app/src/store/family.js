@@ -48,7 +48,7 @@ export const getUserTeam = (userId) => {
 
 export const getUserTeamId = (userId) => localStorage.getItem(USER_TEAM_KEY(userId))
 
-export const createTeam = async (userId, username, fullName, teamName) => {
+export const createTeam = async (userId, username, fullName, teamName, existingMovements = [], existingProducts = []) => {
   const teamId = generateTeamCode()
   const team = {
     id: teamId,
@@ -56,8 +56,8 @@ export const createTeam = async (userId, username, fullName, teamName) => {
     createdBy: userId,
     createdAt: new Date().toISOString(),
     members: [{ userId, username, fullName, role: 'admin', joinedAt: new Date().toISOString() }],
-    movements: [],
-    products: []
+    movements: existingMovements,
+    products: existingProducts
   }
   saveTeamLocal(team)
   localStorage.setItem(USER_TEAM_KEY(userId), teamId)
