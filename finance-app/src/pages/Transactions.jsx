@@ -1,15 +1,14 @@
 import { useState } from 'react'
-import { Plus, Trash2, Search, TrendingUp, TrendingDown, Users, Download, SlidersHorizontal } from 'lucide-react'
+import { Plus, Trash2, Search, TrendingUp, TrendingDown, Users, Download, SlidersHorizontal, CheckSquare, Square, X } from 'lucide-react'
 import { useApp, INCOME_CATEGORIES, EXPENSE_CATEGORIES } from '../store/AppContext'
 import Modal from '../components/Modal'
 import SwipeableRow from '../components/SwipeableRow'
 import { generateId } from '../store/storage'
 import { addFamilyTransaction, deleteFamilyTransaction } from '../store/family'
 import { format } from 'date-fns'
-import jsPDF from 'jspdf'
-import autoTable from 'jspdf-autotable'
 import * as XLSX from 'xlsx'
 import { fmtCur } from '../utils/format'
+import { exportTransactionsPDF } from '../utils/pdfExport'
 
 const EMOJIS = { income: '💰', expense: '💸' }
 const fmt = (n, cur) => fmtCur(n, cur)
@@ -29,6 +28,8 @@ export default function Transactions() {
   const [editModal, setEditModal] = useState(false)
   const [editingTx, setEditingTx] = useState(null)
   const [exportModal, setExportModal] = useState(false)
+  const [selectMode, setSelectMode] = useState(false)
+  const [selected, setSelected] = useState(new Set())
   const [familyMode, setFamilyMode] = useState(() => !!family)
   const [form, setForm] = useState(defaultForm)
   const [extraAmounts, setExtraAmounts] = useState([])
@@ -124,32 +125,15 @@ export default function Transactions() {
     return m?.fullName || m?.username || 'Noma\'lum'
   }
 
-  const exportPDF = () => {
-    const doc = new jsPDF()
-    doc.setFontSize(16)
-    doc.text('PulBek - Tranzaksiyalar', 14, 20)
-    doc.setFontSize(10)
-    doc.text(`Sana: ${format(new Date(), 'dd.MM.yyyy')}`, 14, 28)
-    autoTable(doc, {
-      startY: 35,
-      head: [['Sana', 'Tur', 'Kategoriya', 'Miqdor', 'Valyuta', 'Izoh']],
-      body: filtered.map(t => [
-        format(new Date(t.date), 'dd.MM.yyyy'),
-        t.type === 'income' ? 'Kirim' : 'Chiqim',
-        t.category,
-        fmt(t.amount),
-        t.currency || 'UZS',
-        t.note || ''
-      ]),
-      styles: { fontSize: 9 },
-      headStyles: { fillColor: [29, 78, 216] }
-    })
-    doc.save('pulbek-tranzaksiyalar.pdf')
+  const getExportList = () => selected.size > 0 ? filtered.filter(t => selected.has(t.id)) : filtered
+
+  const exportPDF = async () => {
     setExportModal(false)
+    await exportTransactionsPDF(getExportList(), 'pulbek-tranzaksiyalar.pdf')
   }
 
   const exportExcel = () => {
-    const data = filtered.map(t => ({
+    const data = getExportList().map(t => ({
       'Sana': format(new Date(t.date), 'dd.MM.yyyy'),
       'Tur': t.type === 'income' ? 'Kirim' : 'Chiqim',
       'Kategoriya': t.category,
@@ -172,6 +156,9 @@ export default function Transactions() {
           <div className="flex gap-2">
             <button onClick={() => setExportModal(true)} className="p-2 rounded-xl bg-dark-700 text-gray-400 active:opacity-70">
               <Download size={18} />
+            </button>
+            <button onClick={() => { setSelectMode(s => !s); setSelected(new Set()) }} className={`p-2 rounded-xl active:opacity-70 ${selectMode ? 'bg-blue-500/20 text-blue-400' : 'bg-dark-700 text-gray-400'}`}>
+              <CheckSquare size={18} />
             </button>
             <button onClick={() => setShowFilter(f => !f)} className={`relative p-2 rounded-xl active:opacity-70 ${showFilter || activeFilterCount > 0 ? 'bg-blue-500/20 text-blue-400' : 'bg-dark-700 text-gray-400'}`}>
               <SlidersHorizontal size={18} />
@@ -229,6 +216,20 @@ export default function Transactions() {
         )}
       </div>
 
+      {/* Select mode toolbar */}
+      {selectMode && (
+        <div className="px-4 py-2 flex items-center justify-between bg-dark-800 border-b border-dark-600">
+          <button onClick={() => {
+            if (selected.size === filtered.length) setSelected(new Set())
+            else setSelected(new Set(filtered.map(t => t.id)))
+          }} className="flex items-center gap-2 text-sm text-blue-400">
+            {selected.size === filtered.length ? <CheckSquare size={16} /> : <Square size={16} />}
+            {selected.size === filtered.length ? 'Barchasini bekor qilish' : 'Barchasini tanlash'}
+          </button>
+          <span className="text-gray-400 text-xs">{selected.size} ta tanlandi</span>
+        </div>
+      )}
+
       <div className="flex-1 px-4 flex flex-col gap-2">
         {filtered.length === 0 ? (
           <div className="card text-center py-10 mt-4">
@@ -239,7 +240,28 @@ export default function Transactions() {
             const isFamily = familyMode && family
             const showDelete = isFamily ? canEdit(t.userId) : true
             const canEditTx = !isFamily
-            return (
+            const isSelected = selected.has(t.id)
+            return selectMode ? (
+              <div key={t.id} onClick={() => {
+                const s = new Set(selected)
+                s.has(t.id) ? s.delete(t.id) : s.add(t.id)
+                setSelected(s)
+              }} className={`card flex items-center gap-3 cursor-pointer transition-colors ${isSelected ? 'border border-blue-500/50 bg-blue-500/5' : ''}`}>
+                <div className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 ${isSelected ? 'text-blue-400' : 'text-gray-600'}`}>
+                  {isSelected ? <CheckSquare size={18} /> : <Square size={18} />}
+                </div>
+                <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-base flex-shrink-0 ${t.type === 'income' ? 'bg-green-500/15' : 'bg-red-500/15'}`}>
+                  {t.emoji}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-white text-sm font-medium truncate">{t.category}</p>
+                  <p className="text-gray-500 text-xs">{t.note ? `${t.note} · ` : ''}{format(new Date(t.date), t.date?.includes('T') ? 'dd.MM.yyyy HH:mm' : 'dd.MM.yyyy')}</p>
+                </div>
+                <p className={`text-sm font-semibold flex-shrink-0 ${t.type === 'income' ? 'text-green-400' : 'text-red-400'}`}>
+                  {t.type === 'income' ? '+' : '-'}{fmt(t.amount, t.currency || 'UZS')} {t.currency || 'UZS'}
+                </p>
+              </div>
+            ) : (
               <SwipeableRow
                 key={t.id}
                 onDelete={showDelete ? () => handleDelete(t.id, isFamily) : null}
@@ -266,7 +288,22 @@ export default function Transactions() {
         )}
       </div>
 
-      {(!familyMode || canAdd()) && (
+      {/* Select mode bottom panel */}
+      {selectMode && selected.size > 0 && (
+        <div className="fixed bottom-20 left-4 right-4 z-40 bg-dark-700 rounded-2xl p-3 flex gap-2 shadow-xl">
+          <button onClick={exportPDF} className="flex-1 py-3 rounded-xl bg-red-500/20 border border-red-500/30 text-red-400 text-sm font-semibold">
+            📄 PDF ({selected.size} ta)
+          </button>
+          <button onClick={exportExcel} className="flex-1 py-3 rounded-xl bg-green-500/20 border border-green-500/30 text-green-400 text-sm font-semibold">
+            📊 Excel ({selected.size} ta)
+          </button>
+          <button onClick={() => setSelected(new Set())} className="p-3 rounded-xl bg-dark-600 text-gray-400">
+            <X size={18} />
+          </button>
+        </div>
+      )}
+
+      {(!familyMode || canAdd()) && !selectMode && (
         <div className="fixed bottom-24 right-4 z-40 flex flex-col gap-2">
           <button onClick={() => openAdd('income')} className="w-12 h-12 rounded-full bg-green-500 text-white flex items-center justify-center shadow-lg shadow-green-500/30 active:opacity-80">
             <TrendingUp size={20} />
