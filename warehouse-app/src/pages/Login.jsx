@@ -35,54 +35,49 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center px-6 py-10 relative overflow-hidden">
-      {/* Background */}
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center px-6 py-10 relative overflow-hidden">
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-80 h-80 bg-primary-600/10 rounded-full blur-3xl" />
         <div className="absolute bottom-0 left-0 w-64 h-64 bg-emerald-600/5 rounded-full blur-3xl" />
       </div>
 
-      {/* Lang switcher */}
       <div className="absolute top-6 right-6 flex gap-1">
         {['uz','ru','en'].map(l => (
           <button key={l} onClick={() => changeLang(l)}
-            className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${lang === l ? 'bg-primary-500 text-white' : 'bg-slate-800 text-slate-400'}`}>
+            className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${lang === l ? 'bg-primary-500 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'}`}>
             {l.toUpperCase()}
           </button>
         ))}
       </div>
 
       <div className="w-full max-w-sm relative">
-        {/* Logo */}
         <div className="flex flex-col items-center mb-10">
           <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-primary-400 to-primary-700 flex items-center justify-center shadow-xl shadow-primary-500/20 mb-4">
             <Package size={40} className="text-white" strokeWidth={1.5} />
           </div>
-          <h1 className="text-2xl font-bold text-white">OmborBek</h1>
-          <p className="text-slate-400 text-sm mt-1 text-center">{t('tagline')}</p>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">OmborBek</h1>
+          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1 text-center">{t('tagline')}</p>
         </div>
 
-        {/* Tabs */}
-        <div className="flex bg-slate-800/60 rounded-2xl p-1 mb-6">
+        <div className="flex bg-slate-100 dark:bg-slate-800/60 rounded-2xl p-1 mb-6">
           {['login','register'].map(m => (
             <button key={m} onClick={() => { setMode(m); setError('') }}
-              className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-all ${mode === m ? 'bg-primary-500 text-white shadow-lg' : 'text-slate-400'}`}>
+              className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-all ${mode === m ? 'bg-primary-500 text-white shadow-lg' : 'text-slate-500 dark:text-slate-400'}`}>
               {t(m)}
             </button>
           ))}
         </div>
 
-        {/* Form */}
         <div className="space-y-3">
           {mode === 'register' && (
             <input value={form.fullName} onChange={set('fullName')} placeholder={t('fullName')}
-              className="w-full bg-slate-800/60 border border-slate-700/50 rounded-2xl px-4 py-3.5 text-white placeholder-slate-500 focus:outline-none focus:border-primary-500/50 text-sm" />
+              className="w-full bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/50 rounded-2xl px-4 py-3.5 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-primary-500/50 text-sm" />
           )}
           <input value={form.username} onChange={set('username')} placeholder={t('username')} autoCapitalize="none"
-            className="w-full bg-slate-800/60 border border-slate-700/50 rounded-2xl px-4 py-3.5 text-white placeholder-slate-500 focus:outline-none focus:border-primary-500/50 text-sm" />
+            className="w-full bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/50 rounded-2xl px-4 py-3.5 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-primary-500/50 text-sm" />
           <div className="relative">
             <input type={showPass ? 'text' : 'password'} value={form.password} onChange={set('password')} placeholder={t('password')}
-              className="w-full bg-slate-800/60 border border-slate-700/50 rounded-2xl px-4 py-3.5 pr-12 text-white placeholder-slate-500 focus:outline-none focus:border-primary-500/50 text-sm" />
+              className="w-full bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/50 rounded-2xl px-4 py-3.5 pr-12 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-primary-500/50 text-sm" />
             <button onClick={() => setShowPass(s => !s)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400">
               {showPass ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>

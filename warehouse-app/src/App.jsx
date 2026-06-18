@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AppProvider, useApp } from './store/AppContext'
 import { LangProvider } from './i18n/LangContext'
+import { ThemeProvider } from './store/ThemeContext'
 import BottomNav from './components/BottomNav'
 import AppLock from './components/AppLock'
 import Onboarding from './components/Onboarding'
@@ -74,14 +75,16 @@ export default function App() {
 
   return (
     <BrowserRouter>
-      <LangProvider>
-        <AppProvider>
-          {showSplash && <Onboarding onDone={() => setShowSplash(false)} />}
-          <AppLock onUnlock={() => setShowSplash(false)}>
-            <AppRoutes />
-          </AppLock>
-        </AppProvider>
-      </LangProvider>
+      <ThemeProvider>
+        <LangProvider>
+          <AppProvider>
+            {showSplash && <Onboarding onDone={() => setShowSplash(false)} />}
+            <AppLock onUnlock={() => setShowSplash(false)}>
+              <AppRoutes />
+            </AppLock>
+          </AppProvider>
+        </LangProvider>
+      </ThemeProvider>
     </BrowserRouter>
   )
 }
