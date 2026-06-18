@@ -28,14 +28,14 @@ export default function Onboarding({ onDone }) {
     const T = (fn, ms) => setTimeout(fn, ms)
     const timers = []
 
-    timers.push(T(() => setPhase(1), 600))      // "KAFTIMDA presents..."
-    timers.push(T(() => setPhase(2), 2400))     // fade out presents
-    timers.push(T(() => {                        // logo zoom + shockwave
+    timers.push(T(() => setPhase(1), 150))
+    timers.push(T(() => setPhase(2), 700))
+    timers.push(T(() => {
       setPhase(3)
       setShowShockwave(true)
-      setTimeout(() => setShowShockwave(false), 1000)
-    }, 3000))
-    timers.push(T(() => setPhase(4), 3600))     // PulBek typewriter
+      setTimeout(() => setShowShockwave(false), 500)
+    }, 1000))
+    timers.push(T(() => setPhase(4), 1300))
 
     // Typewriter
     let typewriterIv = null
@@ -46,18 +46,18 @@ export default function Onboarding({ onDone }) {
         i++
         setTypedTitle(title.slice(0, i))
         if (i >= title.length) clearInterval(typewriterIv)
-      }, 90)
-    }, 3700))
+      }, 50)
+    }, 1350))
 
-    timers.push(T(() => setPhase(5), 4600))     // features
+    timers.push(T(() => setPhase(5), 1900))
 
     FEATURES.forEach((_, idx) => {
       timers.push(T(() => {
         setVisibleFeatures(prev => [...prev, idx])
-      }, 4800 + idx * 130))
+      }, 2000 + idx * 60))
     })
 
-    timers.push(T(() => setShowBtn(true), 4800 + FEATURES.length * 130 + 200))
+    timers.push(T(() => setShowBtn(true), 2000 + FEATURES.length * 60 + 80))
 
     return () => {
       timers.forEach(t => { clearTimeout(t); clearInterval(t) })
