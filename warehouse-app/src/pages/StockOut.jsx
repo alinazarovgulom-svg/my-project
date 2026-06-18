@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useApp } from '../store/AppContext'
 import { useLang } from '../i18n/LangContext'
 import { fmtNum, fmtDate, today } from '../utils/format'
-import { generateId } from '../store/storage'
+import { generateId, getPinned } from '../store/storage'
 import { addTeamMovement, deleteTeamMovement } from '../store/family'
 import Modal from '../components/Modal'
 import SwipeableRow from '../components/SwipeableRow'
@@ -27,10 +27,16 @@ export default function StockOut() {
   const [teamMode, setTeamMode] = useState(false)
   const [stockError, setStockError] = useState('')
 
+  const [pinned] = useState(() => getPinned(user?.id))
+
   const isTeam = teamMode && !!team
   const activeMovements = isTeam ? teamMovements : movements
   const inventory = getInventory(activeMovements)
   const p = perm(isTeam)
+  const sortedProducts = [
+    ...products.filter(pr => pinned.includes(pr.id)),
+    ...products.filter(pr => !pinned.includes(pr.id))
+  ]
 
   const set = k => e => {
     setForm(f => ({ ...f, [k]: e.target.value }))
@@ -192,9 +198,9 @@ export default function StockOut() {
                 <label className="text-slate-400 text-xs mb-1 block">{t('product')}</label>
                 <select value={form.productId} onChange={set('productId')}
                   className="w-full bg-slate-800 border border-slate-700/50 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-red-500/40">
-                  {products.map(p => {
-                    const stock = inventory.find(i => i.productId === p.id)?.quantity || 0
-                    return <option key={p.id} value={p.id}>{p.name} (qoldiq: {fmtNum(stock)} {p.unit})</option>
+                  {sortedProducts.map(pr => {
+                    const stock = inventory.find(i => i.productId === pr.id)?.quantity || 0
+                    return <option key={pr.id} value={pr.id}>{pinned.includes(pr.id) ? '★ ' : ''}{pr.name} (qoldiq: {fmtNum(stock)} {pr.unit})</option>
                   })}
                 </select>
                 {selectedProduct?.location && (

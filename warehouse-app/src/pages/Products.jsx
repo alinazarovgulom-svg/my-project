@@ -2,7 +2,7 @@ import { useState, useRef, useCallback } from 'react'
 import { useApp } from '../store/AppContext'
 import { useLang } from '../i18n/LangContext'
 import { fmtNum } from '../utils/format'
-import { generateId } from '../store/storage'
+import { generateId, getPinned, togglePin } from '../store/storage'
 import { DEFAULT_CATEGORIES, UNITS } from '../store/AppContext'
 import { downloadTemplate, parseExcelFile } from '../utils/excelImport'
 import { addLogEntry } from '../store/auditLog'
@@ -10,7 +10,7 @@ import Modal from '../components/Modal'
 import SwipeableRow from '../components/SwipeableRow'
 import {
   Package, Plus, Search, FileSpreadsheet,
-  Download, Upload, CheckCircle, XCircle, AlertCircle, ChevronDown, ChevronUp, Camera, X, MapPin
+  Download, Upload, CheckCircle, XCircle, AlertCircle, ChevronDown, ChevronUp, Camera, X, MapPin, Star
 } from 'lucide-react'
 
 const emptyForm = () => ({
@@ -47,6 +47,12 @@ export default function Products() {
   const [importModal, setImportModal] = useState(false)
   const [form, setForm] = useState(emptyForm())
   const [editId, setEditId] = useState(null)
+  const [pinned, setPinnedState] = useState(() => getPinned(user?.id))
+
+  const handlePin = (productId) => {
+    const next = togglePin(user?.id, productId)
+    setPinnedState(next)
+  }
 
   // Import holati
   const [importing, setImporting] = useState(false)
@@ -66,12 +72,17 @@ export default function Products() {
 
   const set = k => e => setForm(f => ({ ...f, [k]: e.target.value }))
 
-  const filtered = products.filter(p => {
+  const baseFiltered = products.filter(p => {
     const q = search.toLowerCase()
     return p.name.toLowerCase().includes(q) ||
       p.category?.toLowerCase().includes(q) ||
       p.location?.toLowerCase().includes(q)
   })
+  const filtered = [
+    ...baseFiltered.filter(p => pinned.includes(p.id)),
+    ...baseFiltered.filter(p => !pinned.includes(p.id))
+  ]
+  const pinnedCount = filtered.filter(p => pinned.includes(p.id)).length
 
   const openAdd = () => { setForm(emptyForm()); setEditId(null); setModalOpen(true) }
   const openEdit = (p) => {
@@ -223,37 +234,52 @@ export default function Products() {
           </div>
         ) : (
           <div>
-            {filtered.map(p => (
-              <SwipeableRow key={p.id} onEdit={() => openEdit(p)} onDelete={() => handleDelete(p.id)}>
-                <div className="bg-slate-800/60 rounded-xl px-4 py-3.5 border border-slate-700/30">
-                  <div className="flex items-center gap-3">
-                    {p.image
-                      ? <img src={p.image} alt={p.name} className="w-12 h-12 rounded-xl object-cover flex-shrink-0" />
-                      : <div className="w-12 h-12 rounded-xl bg-slate-700/60 flex items-center justify-center flex-shrink-0">
-                          <Package size={20} className="text-slate-500" />
+            {filtered.map((p, idx) => (
+              <div key={p.id}>
+                {idx === pinnedCount && pinnedCount > 0 && pinnedCount < filtered.length && (
+                  <div className="flex items-center gap-2 my-2 px-1">
+                    <div className="flex-1 h-px bg-slate-700/50" />
+                    <span className="text-slate-600 text-xs">Boshqalar</span>
+                    <div className="flex-1 h-px bg-slate-700/50" />
+                  </div>
+                )}
+                <SwipeableRow onEdit={() => openEdit(p)} onDelete={() => handleDelete(p.id)}>
+                  <div className={`bg-slate-800/60 rounded-xl px-4 py-3.5 border ${pinned.includes(p.id) ? 'border-amber-500/25' : 'border-slate-700/30'}`}>
+                    <div className="flex items-center gap-3">
+                      {p.image
+                        ? <img src={p.image} alt={p.name} className="w-12 h-12 rounded-xl object-cover flex-shrink-0" />
+                        : <div className="w-12 h-12 rounded-xl bg-slate-700/60 flex items-center justify-center flex-shrink-0">
+                            <Package size={20} className="text-slate-500" />
+                          </div>
+                      }
+                      <div className="flex-1 min-w-0 flex items-center justify-between">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-white font-medium text-sm truncate">{p.name}</p>
+                          <p className="text-slate-400 text-xs mt-0.5">{p.category} · {p.unit}</p>
+                          <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                            {p.minStock > 0 && <span className="text-slate-500 text-xs">Min: {p.minStock} {p.unit}</span>}
+                            {p.location && (
+                              <span className="flex items-center gap-0.5 text-xs text-amber-400/80">
+                                <MapPin size={10} /> {p.location}
+                              </span>
+                            )}
+                          </div>
                         </div>
-                    }
-                    <div className="flex-1 min-w-0 flex items-center justify-between">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-white font-medium text-sm truncate">{p.name}</p>
-                        <p className="text-slate-400 text-xs mt-0.5">{p.category} · {p.unit}</p>
-                        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                          {p.minStock > 0 && <span className="text-slate-500 text-xs">Min: {p.minStock} {p.unit}</span>}
-                          {p.location && (
-                            <span className="flex items-center gap-0.5 text-xs text-amber-400/80">
-                              <MapPin size={10} /> {p.location}
-                            </span>
-                          )}
+                        <div className="flex flex-col items-end gap-1.5 ml-3">
+                          <button
+                            onPointerDown={e => e.stopPropagation()}
+                            onClick={e => { e.stopPropagation(); handlePin(p.id) }}
+                            className="p-1 -mr-1 -mt-1">
+                            <Star size={15} className={pinned.includes(p.id) ? 'text-amber-400 fill-amber-400' : 'text-slate-600'} />
+                          </button>
+                          <p className="text-primary-400 text-sm font-semibold">{fmtNum(p.purchasePrice)} so'm</p>
+                          {p.salePrice > 0 && <p className="text-slate-400 text-xs">{fmtNum(p.salePrice)} so'm</p>}
                         </div>
-                      </div>
-                      <div className="text-right ml-3">
-                        <p className="text-primary-400 text-sm font-semibold">{fmtNum(p.purchasePrice)} so'm</p>
-                        {p.salePrice > 0 && <p className="text-slate-400 text-xs">{fmtNum(p.salePrice)} so'm</p>}
                       </div>
                     </div>
                   </div>
-                </div>
-              </SwipeableRow>
+                </SwipeableRow>
+              </div>
             ))}
           </div>
         )}

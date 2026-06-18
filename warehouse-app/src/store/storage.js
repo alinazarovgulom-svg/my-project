@@ -27,3 +27,13 @@ export const saveObjData = (name, uid, data) =>
   localStorage.setItem(key(name, uid), JSON.stringify(data))
 
 export const generateId = () => Date.now().toString(36) + Math.random().toString(36).slice(2)
+
+export const getPinned = (uid) => {
+  try { return JSON.parse(localStorage.getItem(`wh_pinned_${uid}`)) || [] } catch { return [] }
+}
+export const togglePin = (uid, productId) => {
+  const pins = getPinned(uid)
+  const next = pins.includes(productId) ? pins.filter(id => id !== productId) : [...pins, productId]
+  localStorage.setItem(`wh_pinned_${uid}`, JSON.stringify(next))
+  return next
+}

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useApp } from '../store/AppContext'
 import { useLang } from '../i18n/LangContext'
 import { fmtNum, fmtDate, today } from '../utils/format'
-import { generateId } from '../store/storage'
+import { generateId, getPinned } from '../store/storage'
 import { addTeamMovement, deleteTeamMovement } from '../store/family'
 import Modal from '../components/Modal'
 import SwipeableRow from '../components/SwipeableRow'
@@ -26,8 +26,14 @@ export default function StockIn() {
   const [form, setForm] = useState(() => emptyForm(products))
   const [teamMode, setTeamMode] = useState(false)
 
+  const [pinned] = useState(() => getPinned(user?.id))
+
   const isTeam = teamMode && !!team
   const activeMovements = isTeam ? teamMovements : movements
+  const sortedProducts = [
+    ...products.filter(p => pinned.includes(p.id)),
+    ...products.filter(p => !pinned.includes(p.id))
+  ]
   const p = perm(isTeam)
 
   const set = k => e => setForm(f => ({ ...f, [k]: e.target.value }))
@@ -180,7 +186,7 @@ export default function StockIn() {
                 <label className="text-slate-400 text-xs mb-1 block">{t('product')}</label>
                 <select value={form.productId} onChange={set('productId')}
                   className="w-full bg-slate-800 border border-slate-700/50 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-primary-500/40">
-                  {products.map(p => <option key={p.id} value={p.id}>{p.name} ({p.unit})</option>)}
+                  {sortedProducts.map(p => <option key={p.id} value={p.id}>{pinned.includes(p.id) ? '★ ' : ''}{p.name} ({p.unit})</option>)}
                 </select>
                 {selectedProduct?.location && (
                   <div className="flex items-center gap-1.5 mt-1.5 px-1">
