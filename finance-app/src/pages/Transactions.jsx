@@ -4,7 +4,7 @@ import { useApp, INCOME_CATEGORIES, EXPENSE_CATEGORIES } from '../store/AppConte
 import Modal from '../components/Modal'
 import SwipeableRow from '../components/SwipeableRow'
 import { generateId } from '../store/storage'
-import { addFamilyTransaction, deleteFamilyTransaction } from '../store/family'
+import { addFamilyTransaction, deleteFamilyTransaction, updateFamilyTransaction } from '../store/family'
 import { format } from 'date-fns'
 import * as XLSX from 'xlsx'
 import { fmtCur } from '../utils/format'
@@ -86,12 +86,12 @@ export default function Transactions() {
 
   const handleEditSave = () => {
     if (!editingTx?.amount || !editingTx?.category) return
-    const updated = transactions.map(t =>
-      t.id === editingTx.id
-        ? { ...editingTx, amount: parseFloat(editingTx.amount) }
-        : t
-    )
-    saveTransactions(updated)
+    const savedTx = { ...editingTx, amount: parseFloat(editingTx.amount) }
+    if (familyMode && family) {
+      updateFamilyTransaction(family.id, savedTx).then(() => refreshFamily())
+    } else {
+      saveTransactions(transactions.map(t => t.id === savedTx.id ? savedTx : t))
+    }
     setEditModal(false)
     setEditingTx(null)
   }
@@ -236,7 +236,7 @@ export default function Transactions() {
           filtered.map(t => {
             const isFamily = familyMode && family
             const showDelete = isFamily ? canEdit(t.userId) : true
-            const canEditTx = !isFamily
+            const canEditTx = isFamily ? canEdit(t.userId) : true
             const isSelected = selected.has(t.id)
             return selectMode ? (
               <div key={t.id} onClick={() => {

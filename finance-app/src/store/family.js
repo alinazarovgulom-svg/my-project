@@ -180,6 +180,18 @@ export const deleteFamilyTransaction = async (familyId, transactionId) => {
   }
 }
 
+export const updateFamilyTransaction = async (familyId, updatedTx) => {
+  try {
+    const snap = await getDoc(doc(db, 'families', familyId))
+    if (!snap.exists()) return
+    const family = snap.data()
+    const updatedTransactions = (family.transactions || []).map(t => t.id === updatedTx.id ? updatedTx : t)
+    await updateDoc(doc(db, 'families', familyId), { transactions: updatedTransactions })
+  } catch (e) {
+    console.warn('[family] updateFamilyTransaction failed:', e?.code || e?.message)
+  }
+}
+
 export const addFamilyDebt = async (familyId, debt) => {
   try {
     await updateDoc(doc(db, 'families', familyId), {
