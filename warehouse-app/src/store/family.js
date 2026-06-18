@@ -1,5 +1,6 @@
 import { db } from './firebase'
 import { doc, setDoc, getDoc, updateDoc, deleteDoc, onSnapshot, arrayUnion, arrayRemove } from 'firebase/firestore'
+import { syncToCloud, deleteFromCloud } from './sync'
 
 const TEAM_PREFIX = 'wh_team_'
 const USER_TEAM_KEY = (uid) => `wh_${uid}_teamId`
@@ -63,6 +64,7 @@ export const createTeam = async (userId, username, fullName, teamName, existingM
   saveTeamLocal(team)
   localStorage.setItem(USER_TEAM_KEY(userId), teamId)
   await saveTeamToCloud(team)
+  await syncToCloud(userId, 'teamId', teamId)
   return teamId
 }
 
@@ -77,6 +79,7 @@ export const joinTeam = async (code, userId, username, fullName) => {
   saveTeamLocal(team)
   localStorage.setItem(USER_TEAM_KEY(userId), code)
   await saveTeamToCloud(team)
+  await syncToCloud(userId, 'teamId', code)
   return { success: true, teamId: code }
 }
 
@@ -92,6 +95,8 @@ export const leaveTeam = async (teamId, userId) => {
       localStorage.setItem(LAST_TEAM_KEY(userId), teamId)
       localStorage.removeItem(`${TEAM_PREFIX}${teamId}`)
       localStorage.removeItem(USER_TEAM_KEY(userId))
+      await syncToCloud(userId, 'lastTeamId', teamId)
+      await deleteFromCloud(userId, 'teamId')
       return
     }
     let updated = remaining
@@ -101,6 +106,8 @@ export const leaveTeam = async (teamId, userId) => {
     await updateDoc(doc(db, 'wh_teams', teamId), { members: updated })
     localStorage.setItem(LAST_TEAM_KEY(userId), teamId)
     localStorage.removeItem(USER_TEAM_KEY(userId))
+    await syncToCloud(userId, 'lastTeamId', teamId)
+    await deleteFromCloud(userId, 'teamId')
   } catch (e) {
     console.warn('[wh-team] leaveTeam failed:', e?.code || e?.message)
   }

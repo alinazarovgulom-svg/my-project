@@ -1,5 +1,5 @@
 import { db } from './firebase'
-import { doc, setDoc, getDoc, onSnapshot, serverTimestamp } from 'firebase/firestore'
+import { doc, setDoc, getDoc, deleteDoc, onSnapshot, serverTimestamp } from 'firebase/firestore'
 
 export const syncToCloud = async (userId, key, data) => {
   if (!userId) return
@@ -20,6 +20,15 @@ export const loadFromCloud = async (userId, key) => {
     if (snap.exists()) return JSON.parse(snap.data().value)
   } catch (e) {}
   return null
+}
+
+export const deleteFromCloud = async (userId, key) => {
+  if (!userId) return
+  try {
+    await deleteDoc(doc(db, 'wh_users', userId, 'data', key))
+  } catch (e) {
+    console.warn('[wh-sync] delete failed:', key, e?.code || e?.message)
+  }
 }
 
 export const subscribeToCloud = (userId, key, callback) => {
