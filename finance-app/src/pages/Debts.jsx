@@ -25,8 +25,9 @@ function getDueDateWarning(debt) {
 }
 
 export default function Debts() {
-  const { debts, saveDebts, transactions, saveTransactions, user, family, familyDebts } = useApp()
+  const { debts, saveDebts, transactions, saveTransactions, user, family, familyDebts, canAdd } = useApp()
   const activeDebts = family ? familyDebts : debts
+  const isViewer = family && !canAdd()
   const [modal, setModal] = useState(false)
   const [payModal, setPayModal] = useState(null)
   const [editModal, setEditModal] = useState(false)
@@ -198,17 +199,17 @@ export default function Debts() {
                       <div className="flex items-center gap-1">
                         {isDone ? (
                           <span className="text-xs bg-green-500/20 text-green-400 px-2 py-0.5 rounded-lg">✓ Tugatildi</span>
-                        ) : (
+                        ) : !isViewer && (
                           <button onClick={() => { setPayModal(d); setPayAmount('') }} className="text-xs bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-lg">
                             To'lash
                           </button>
                         )}
-                        <button onClick={() => openEdit(d)} className="p-1 text-gray-600 active:text-blue-400">
+                        {!isViewer && <button onClick={() => openEdit(d)} className="p-1 text-gray-600 active:text-blue-400">
                           <Pencil size={14} />
-                        </button>
-                        <button onClick={() => handleDelete(d.id)} className="p-1 text-gray-600 active:text-red-400">
+                        </button>}
+                        {!isViewer && <button onClick={() => handleDelete(d.id)} className="p-1 text-gray-600 active:text-red-400">
                           <Trash2 size={14} />
-                        </button>
+                        </button>}
                       </div>
                     </div>
                     <p className="text-gray-400 text-xs">{d.note || format(new Date(d.date), 'dd.MM.yyyy')}</p>
@@ -251,10 +252,10 @@ export default function Debts() {
       </div>
 
       {/* FAB */}
-      <button onClick={() => { setForm(defaultForm); setModal(true) }}
+      {!isViewer && <button onClick={() => { setForm(defaultForm); setModal(true) }}
         className="fixed bottom-24 right-4 z-40 w-14 h-14 rounded-full bg-blue-500 text-white flex items-center justify-center shadow-lg shadow-blue-500/30 active:opacity-80">
         <Plus size={24} />
-      </button>
+      </button>}
 
       {/* Add Modal */}
       <Modal open={modal} onClose={() => setModal(false)} title="Qarz qo'shish">
