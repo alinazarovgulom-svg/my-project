@@ -25,7 +25,6 @@ const defaultForm = { type: 'expense', amount: '', category: '', currency: 'UZS'
 
 export default function Transactions() {
   const { transactions, saveTransactions, user, family, familyTransactions, familyMembers, canEdit, canAdd, refreshFamily } = useApp()
-  const [modal, setModal] = useState(false)
   const [editModal, setEditModal] = useState(false)
   const [editingTx, setEditingTx] = useState(null)
   const [exportModal, setExportModal] = useState(false)
@@ -33,16 +32,15 @@ export default function Transactions() {
   const [selected, setSelected] = useState(new Set())
   const familyMode = !!family
   const location = useLocation()
-  const [form, setForm] = useState(defaultForm)
+  const initType = location.state?.openType || null
+  const [form, setForm] = useState(() => initType
+    ? { ...defaultForm, date: localNow(), type: initType, category: '' }
+    : defaultForm
+  )
+  const [modal, setModal] = useState(!!initType)
+  useEffect(() => { if (initType) window.history.replaceState({}, '') }, [])
   const [extraAmounts, setExtraAmounts] = useState([])
   const [filter, setFilter] = useState('all')
-
-  useEffect(() => {
-    if (location.state?.openType) {
-      openAdd(location.state.openType)
-      window.history.replaceState({}, '')
-    }
-  }, [])
   const [search, setSearch] = useState('')
   const [showFilter, setShowFilter] = useState(false)
   const [dateFrom, setDateFrom] = useState('')
