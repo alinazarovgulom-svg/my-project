@@ -62,16 +62,28 @@ export default function Reports() {
     const { jsPDF } = await import('jspdf')
     const autoTable = (await import('jspdf-autotable')).default
     const doc = new jsPDF()
-    doc.setFontSize(16)
-    doc.text('OmborBek - Hisobot', 14, 20)
+
+    doc.setFontSize(20)
+    doc.setFont('helvetica', 'bold')
+    doc.text('OMBORCHI', 14, 16)
+    doc.setFontSize(9)
+    doc.setFont('helvetica', 'normal')
+    doc.setTextColor(130, 130, 130)
+    doc.text('by KAFTIMDA', 14, 23)
+    doc.setTextColor(0, 0, 0)
+
+    doc.setFontSize(13)
+    doc.setFont('helvetica', 'bold')
+    doc.text('Hisobot', 14, 36)
     doc.setFontSize(10)
-    doc.text(`Davr: ${t(period)}`, 14, 30)
-    doc.text(`Jami kirim: ${fmtNum(totalIn)} so'm`, 14, 38)
-    doc.text(`Jami chiqim: ${fmtNum(totalOut)} so'm`, 14, 46)
-    doc.text(`Foyda: ${fmtNum(grossProfit)} so'm`, 14, 54)
+    doc.setFont('helvetica', 'normal')
+    doc.text(`Davr: ${t(period)}`, 14, 44)
+    doc.text(`Jami kirim: ${fmtNum(totalIn)} so'm`, 14, 52)
+    doc.text(`Jami chiqim: ${fmtNum(totalOut)} so'm`, 14, 60)
+    doc.text(`Foyda: ${fmtNum(grossProfit)} so'm`, 14, 68)
 
     autoTable(doc, {
-      startY: 62,
+      startY: 76,
       head: [['Mahsulot', "Kirim (dona)", "Kirim (so'm)", "Chiqim (dona)", "Chiqim (so'm)", "Foyda"]],
       body: byProduct.map(p => [
         p.name, fmtNum(p.inQty), fmtNum(p.inTotal), fmtNum(p.outQty), fmtNum(p.outTotal), fmtNum(p.outTotal - p.inTotal)
@@ -84,6 +96,9 @@ export default function Reports() {
   const exportExcel = async () => {
     const XLSX = await import('xlsx')
     const data = [
+      ['OMBORCHI'],
+      ['by KAFTIMDA'],
+      [],
       ['Mahsulot', 'Kirim dona', "Kirim so'm", 'Chiqim dona', "Chiqim so'm", 'Foyda'],
       ...byProduct.map(p => [p.name, p.inQty, p.inTotal, p.outQty, p.outTotal, p.outTotal - p.inTotal]),
       [],

@@ -78,6 +78,9 @@ export default function AuditLog() {
   const exportExcel = async () => {
     const XLSX = await import('xlsx')
     const rows = [
+      ['OMBORCHI'],
+      ['by KAFTIMDA'],
+      [],
       ['Vaqt', 'Foydalanuvchi', 'Amal', 'Mahsulot', 'Miqdor', "Narx (so'm)", 'Izoh'],
       ...filtered.map(e => [
         new Date(e.timestamp).toLocaleString('uz-UZ'),

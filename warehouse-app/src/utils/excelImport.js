@@ -4,6 +4,7 @@ import { DEFAULT_CATEGORIES, UNITS } from '../store/AppContext'
 // Shablon yuklab olish
 export const downloadTemplate = async () => {
   const XLSX = await import('xlsx')
+  const branding = [['OMBORCHI'], ['by KAFTIMDA'], []]
   const header = [['Nomi *', 'Toifa', "O'lchov", 'Kelish narxi', 'Sotish narxi', 'Min qoldiq', 'Izoh']]
   const examples = [
     ['Coca-Cola 0.5l', 'Oziq-ovqat', 'dona', 3500, 5000, 50, ''],
@@ -16,7 +17,7 @@ export const downloadTemplate = async () => {
     [`Toifa: ${DEFAULT_CATEGORIES.join(', ')}`],
     [`O'lchov: ${UNITS.join(', ')}`],
   ]
-  const ws = XLSX.utils.aoa_to_sheet([...header, ...examples, [], ...notes])
+  const ws = XLSX.utils.aoa_to_sheet([...branding, ...header, ...examples, [], ...notes])
 
   // Ustun kengliklarini sozlash
   ws['!cols'] = [{ wch: 24 }, { wch: 18 }, { wch: 10 }, { wch: 14 }, { wch: 14 }, { wch: 12 }, { wch: 24 }]
