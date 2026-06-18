@@ -85,9 +85,9 @@ export const leaveTeam = async (teamId, userId) => {
     const leaving = team.members.find(m => m.userId === userId)
     const remaining = team.members.filter(m => m.userId !== userId)
     if (remaining.length === 0) {
+      await updateDoc(doc(db, 'wh_teams', teamId), { members: [] })
       localStorage.removeItem(`${TEAM_PREFIX}${teamId}`)
       localStorage.removeItem(USER_TEAM_KEY(userId))
-      try { await deleteDoc(doc(db, 'wh_teams', teamId)) } catch {}
       return
     }
     let updated = remaining
