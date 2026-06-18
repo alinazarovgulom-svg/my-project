@@ -4,9 +4,11 @@ import { useLang } from '../i18n/LangContext'
 import { fmtNum, fmtDate, today } from '../utils/format'
 import { generateId, getPinned } from '../store/storage'
 import { addTeamMovement, deleteTeamMovement } from '../store/family'
+import { getProcessing, saveProcessing } from '../store/processing'
+import { getSuppliers } from '../store/suppliers'
 import Modal from '../components/Modal'
 import SwipeableRow from '../components/SwipeableRow'
-import { PackageMinus, Search, Users, AlertCircle, MapPin, Plus, X } from 'lucide-react'
+import { PackageMinus, Search, Users, AlertCircle, MapPin, Plus, X, Cog } from 'lucide-react'
 import { addLogEntry } from '../store/auditLog'
 
 const emptyItem = (products) => ({ productId: products[0]?.id || '', quantity: '', price: '' })
@@ -26,6 +28,11 @@ export default function StockOut() {
   const [teamMode, setTeamMode] = useState(false)
   const [stockError, setStockError] = useState('')
   const [pinned] = useState(() => getPinned(user?.id))
+  const [processing, setProcessing] = useState(() => getProcessing(user?.id))
+  const [suppliers] = useState(() => getSuppliers(user?.id))
+  const [procSendModal, setProcSendModal] = useState(false)
+  const [procSendForm, setProcSendForm] = useState({ supplierId: '', productId: '', quantity: '', date: today(), note: '' })
+  const [procSendError, setProcSendError] = useState('')
 
   const isTeam = teamMode && !!team
   const activeMovements = isTeam ? teamMovements : movements
@@ -35,6 +42,88 @@ export default function StockOut() {
     ...products.filter(pr => pinned.includes(pr.id)),
     ...products.filter(pr => !pinned.includes(pr.id))
   ]
+
+  const setProcSend = k => e => {
+    setProcSendError('')
+    setProcSendForm(f => ({ ...f, [k]: e.target.value }))
+  }
+
+  const openProcSend = () => {
+    setProcSendForm({
+      supplierId: suppliers[0]?.id || '',
+      productId: sortedProducts[0]?.id || '',
+      quantity: '',
+      date: today(),
+      note: ''
+    })
+    setProcSendError('')
+    setProcSendModal(true)
+  }
+
+  const handleProcSendSave = async () => {
+    const { supplierId, productId, quantity, date, note } = procSendForm
+    if (!productId || !quantity) return
+    const qty = Number(quantity)
+    const stock = inventory.find(i => i.productId === productId)?.quantity || 0
+    if (qty > stock) {
+      const prod = products.find(pr => pr.id === productId)
+      setProcSendError(`Faqat ${fmtNum(stock)} ${prod?.unit || 'dona'} bor`)
+      return
+    }
+    const supplier = suppliers.find(s => s.id === supplierId)
+    const prod = products.find(pr => pr.id === productId)
+    const mv = {
+      id: generateId(),
+      type: 'chiqim',
+      productId,
+      productName: prod?.name || '',
+      quantity: qty,
+      unit: prod?.unit || 'dona',
+      price: 0,
+      total: 0,
+      customer: supplier?.name || '',
+      note: `Qayta ishlashga berildi${note ? ': ' + note : ''}`,
+      date: date || today(),
+      userId: user?.id,
+      userName: user?.fullName || user?.username
+    }
+    if (isTeam && teamId) {
+      await addTeamMovement(teamId, mv)
+    } else {
+      saveMovements([...movements, mv], products)
+    }
+    await addLogEntry(user?.id, {
+      action: 'chiqim_qoshildi',
+      userId: user?.id,
+      userName: user?.fullName || user?.username,
+      productId: mv.productId,
+      productName: mv.productName,
+      quantity: mv.quantity,
+      unit: mv.unit,
+      price: 0,
+      total: 0,
+      customer: mv.customer,
+      note: mv.note
+    }, isTeam ? teamId : null)
+    const newProc = {
+      id: generateId(),
+      supplierId: supplierId || '',
+      supplierName: supplier?.name || '',
+      productId,
+      productName: prod?.name || '',
+      unit: prod?.unit || 'dona',
+      quantity: qty,
+      date: date || today(),
+      note,
+      status: 'pending',
+      userId: user?.id,
+      createdAt: new Date().toISOString()
+    }
+    const updatedProc = [...processing, newProc]
+    setProcessing(updatedProc)
+    saveProcessing(user?.id, updatedProc)
+    setProcSendModal(false)
+  }
 
   const set = k => e => {
     setStockError('')
@@ -156,10 +245,16 @@ export default function StockOut() {
         <div className="flex items-center justify-between mb-3">
           <h1 className="text-white text-xl font-bold">{t('stockOut')}</h1>
           {p.canAdd && (
-            <button onClick={openAdd}
-              className="w-10 h-10 rounded-xl bg-red-500 flex items-center justify-center shadow-lg shadow-red-500/20">
-              <PackageMinus size={20} className="text-white" />
-            </button>
+            <div className="flex items-center gap-2">
+              <button onClick={openProcSend}
+                className="h-10 px-3 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center gap-1.5 text-amber-400 text-xs font-medium active:scale-95 transition-all">
+                <Cog size={15} /> Qayta ishlash
+              </button>
+              <button onClick={openAdd}
+                className="w-10 h-10 rounded-xl bg-red-500 flex items-center justify-center shadow-lg shadow-red-500/20">
+                <PackageMinus size={20} className="text-white" />
+              </button>
+            </div>
           )}
         </div>
 
@@ -214,6 +309,61 @@ export default function StockOut() {
           </div>
         )}
       </div>
+
+      <Modal open={procSendModal} onClose={() => setProcSendModal(false)} title="Qayta ishlashga berish">
+        <div className="space-y-3 pb-4">
+          {suppliers.length > 0 ? (
+            <div>
+              <p className="text-slate-400 text-xs mb-1.5">Yetkazuvchi</p>
+              <select value={procSendForm.supplierId} onChange={setProcSend('supplierId')}
+                className="w-full bg-slate-800 border border-slate-700/50 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-amber-500/40">
+                <option value="">— Yetkazuvchisiz —</option>
+                {suppliers.map(s => (
+                  <option key={s.id} value={s.id}>{s.name}</option>
+                ))}
+              </select>
+            </div>
+          ) : (
+            <p className="text-slate-500 text-xs">Yetkazuvchisiz ham saqlash mumkin</p>
+          )}
+
+          <div>
+            <p className="text-slate-400 text-xs mb-1.5">Mahsulot</p>
+            <select value={procSendForm.productId} onChange={setProcSend('productId')}
+              className="w-full bg-slate-800 border border-slate-700/50 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-primary-500/40">
+              {sortedProducts.map(pr => {
+                const s = inventory.find(i => i.productId === pr.id)?.quantity || 0
+                return <option key={pr.id} value={pr.id}>{pinned.includes(pr.id) ? '★ ' : ''}{pr.name} (qoldiq: {fmtNum(s)} {pr.unit})</option>
+              })}
+            </select>
+          </div>
+
+          <input type="number" value={procSendForm.quantity} onChange={setProcSend('quantity')} placeholder="Miqdor"
+            className="w-full bg-slate-800 border border-slate-700/50 rounded-xl px-4 py-3 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-primary-500/40" />
+
+          {procSendError && (
+            <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
+              <AlertCircle size={16} className="text-red-400 flex-shrink-0" />
+              <p className="text-red-400 text-sm">{procSendError}</p>
+            </div>
+          )}
+
+          <input type="date" value={procSendForm.date} onChange={setProcSend('date')}
+            className="w-full bg-slate-800 border border-slate-700/50 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-primary-500/40" />
+
+          <input value={procSendForm.note} onChange={setProcSend('note')} placeholder="Izoh (ixtiyoriy)"
+            className="w-full bg-slate-800 border border-slate-700/50 rounded-xl px-4 py-3 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-primary-500/40" />
+
+          <div className="bg-amber-500/8 border border-amber-500/15 rounded-xl px-4 py-2.5 text-xs text-slate-400">
+            Mahsulot ombor qoldig'idan chiqariladi va qayta ishlashda kuzatiladi
+          </div>
+
+          <button onClick={handleProcSendSave}
+            className="w-full bg-amber-500 text-white font-semibold py-3.5 rounded-xl shadow-lg shadow-amber-500/20 active:scale-95 transition-all">
+            Chiqim + Qayta ishlashga yuborish
+          </button>
+        </div>
+      </Modal>
 
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={t('addChiqim')}>
         <div className="space-y-3 pb-4">

@@ -210,20 +210,23 @@ export default function StockIn() {
       <div className="bg-slate-900 px-5 pt-14 pb-4">
         <div className="flex items-center justify-between mb-3">
           <h1 className="text-white text-xl font-bold">{t('stockIn')}</h1>
-          <div className="flex items-center gap-2">
-            {p.canAdd && pendingProcessing.length > 0 && (
-              <button onClick={openProcReceive}
-                className="h-10 px-3 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center gap-1.5 text-amber-400 text-xs font-medium">
-                <Cog size={15} /> {pendingProcessing.length} ta
+          {p.canAdd && (
+            <div className="flex items-center gap-2">
+              <button onClick={openProcReceive} disabled={pendingProcessing.length === 0}
+                className={`h-10 px-3 rounded-xl border flex items-center gap-1.5 text-xs font-medium transition-all ${
+                  pendingProcessing.length > 0
+                    ? 'bg-amber-500/20 border-amber-500/30 text-amber-400 active:scale-95'
+                    : 'bg-slate-800/30 border-slate-700/20 text-slate-600 cursor-default'
+                }`}>
+                <Cog size={15} />
+                Qayta ishlash{pendingProcessing.length > 0 ? ` (${pendingProcessing.length})` : ''}
               </button>
-            )}
-            {p.canAdd && (
               <button onClick={openAdd}
                 className="w-10 h-10 rounded-xl bg-primary-500 flex items-center justify-center shadow-lg shadow-primary-500/20">
                 <PackagePlus size={20} className="text-white" />
               </button>
-            )}
-          </div>
+            </div>
+          )}
         </div>
 
         {team && (
