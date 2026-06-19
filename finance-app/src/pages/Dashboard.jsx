@@ -55,13 +55,20 @@ export default function Dashboard() {
 
   const hasMultiCurrency = currencyBreakdown.some(x => x.cur !== 'UZS')
 
-  // Today's confirmed conversions from Exchange page
+  // Today's confirmed conversions — derived from paired 'Valyuta ayirboshlash' transactions
   const todayConversions = (() => {
-    try {
-      const today = format(new Date(), 'yyyy-MM-dd')
-      const key = `finance_${user?.id}_conversions_${today}`
-      return JSON.parse(localStorage.getItem(key) || '[]')
-    } catch { return [] }
+    const today = format(new Date(), 'yyyy-MM-dd')
+    const outTxs = transactions.filter(t =>
+      t.category === 'Valyuta ayirboshlash' &&
+      t.type === 'expense' &&
+      t.date?.slice(0, 10) === today &&
+      t.pairId
+    )
+    return outTxs.map(out => {
+      const inn = transactions.find(t => t.pairId === out.pairId && t.type === 'income')
+      if (!inn) return null
+      return { amount: out.amount, from: out.currency || 'UZS', result: inn.amount, to: inn.currency || 'UZS', note: out.note }
+    }).filter(Boolean)
   })()
 
 const recent = [...transactions].filter(t => t.category !== 'Valyuta ayirboshlash').sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5)
