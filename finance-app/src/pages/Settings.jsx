@@ -8,7 +8,7 @@ import Modal from '../components/Modal'
 import { useLang } from '../i18n/LangContext'
 
 export default function Settings() {
-  const { user, setUser, transactions: personalTx, familyTransactions, family, debts, userRole } = useApp()
+  const { user, setUser, transactions: personalTx, familyTransactions, family, debts, userRole, pin, savePin } = useApp()
   const transactions = family ? familyTransactions : personalTx
   const { t, lang, setLang } = useLang()
   const nav = useNavigate()
@@ -28,7 +28,7 @@ export default function Settings() {
   const [saving, setSaving] = useState(false)
   const [pinError, setPinError] = useState('')
   const [pinSuccess, setPinSuccess] = useState('')
-  const hasPin = user?.id ? !!localStorage.getItem(`finance_pin_${user.id}`) : false
+  const hasPin = !!pin
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
@@ -77,7 +77,7 @@ export default function Settings() {
     setPinError(''); setPinSuccess('')
     if (pinForm.pin.length !== 4 || !/^\d{4}$/.test(pinForm.pin)) return setPinError('PIN 4 raqamdan iborat bo\'lishi kerak')
     if (pinForm.pin !== pinForm.confirm) return setPinError('PIN lar mos kelmaydi')
-    localStorage.setItem(`finance_pin_${user.id}`, pinForm.pin)
+    savePin(pinForm.pin)
     setPinSuccess('PIN muvaffaqiyatli o\'rnatildi!')
     setPinForm({ pin: '', confirm: '' })
     setTimeout(() => setPinModal(false), 1200)
@@ -85,7 +85,7 @@ export default function Settings() {
 
   const handleRemovePin = () => {
     if (user?.id) {
-      localStorage.removeItem(`finance_pin_${user.id}`)
+      savePin(null)
       setPinModal(false)
     }
   }

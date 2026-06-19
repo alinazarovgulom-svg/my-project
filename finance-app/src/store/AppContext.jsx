@@ -18,6 +18,8 @@ export function AppProvider({ children }) {
   const [transactions, setTransactions] = useState([])
   const [debts, setDebts] = useState([])
   const [settings, setSettingsState] = useState({ rates: { USD: 12700, EUR: 13800, RUB: 140 } })
+  const [categories, setCategoriesState] = useState([])
+  const [pin, setPinState] = useState(null)
   const [family, setFamily] = useState(null)
   const [familyId, setFamilyId] = useState(() => getUserFamilyId(user?.id))
   const [syncing, setSyncing] = useState(false)
@@ -36,17 +38,35 @@ export function AppProvider({ children }) {
     setSettingsState(s.rates ? s : { rates: { USD: 12700, EUR: 13800, RUB: 140 } })
     setFamily(getUserFamily(uid))
 
+    // Lokal kategoriyalar va PIN
+    try {
+      const localCats = localStorage.getItem(`finance_${uid}_categories`)
+      if (localCats) setCategoriesState(JSON.parse(localCats))
+      const localPin = localStorage.getItem(`finance_pin_${uid}`)
+      if (localPin) setPinState(localPin)
+    } catch {}
+
     // Cloud dan yangi ma'lumot bo'lsa yuklash
     const loadCloud = async () => {
       setSyncing(true)
-      const [cloudTx, cloudDebts, cloudSettings] = await Promise.all([
+      const [cloudTx, cloudDebts, cloudSettings, cloudCats, cloudPin] = await Promise.all([
         loadFromCloud(uid, 'transactions'),
         loadFromCloud(uid, 'debts'),
         loadFromCloud(uid, 'settings'),
+        loadFromCloud(uid, 'categories'),
+        loadFromCloud(uid, 'pin'),
       ])
       if (cloudTx) { setTransactions(cloudTx); saveData('transactions', uid, cloudTx) }
       if (cloudDebts) { setDebts(cloudDebts); saveData('debts', uid, cloudDebts) }
       if (cloudSettings?.rates) { setSettingsState(cloudSettings); saveSettings(uid, cloudSettings) }
+      if (cloudCats) {
+        setCategoriesState(cloudCats)
+        localStorage.setItem(`finance_${uid}_categories`, JSON.stringify(cloudCats))
+      }
+      if (cloudPin) {
+        setPinState(cloudPin)
+        localStorage.setItem(`finance_pin_${uid}`, cloudPin)
+      }
       setSyncing(false)
     }
     loadCloud()
@@ -66,8 +86,15 @@ export function AppProvider({ children }) {
       if (skipCloudUpdate.current) return
       if (data?.rates) { setSettingsState(data); saveSettings(uid, data) }
     })
+    const unsubCats = subscribeToCloud(uid, 'categories', (data) => {
+      setCategoriesState(data)
+      localStorage.setItem(`finance_${uid}_categories`, JSON.stringify(data))
+    })
+    const unsubPin = subscribeToCloud(uid, 'pin', (data) => {
+      if (data) { setPinState(data); localStorage.setItem(`finance_pin_${uid}`, data) }
+    })
 
-    return () => { unsubTx(); unsubDebts(); unsubSettings() }
+    return () => { unsubTx(); unsubDebts(); unsubSettings(); unsubCats(); unsubPin() }
   }, [uid])
 
   // Oila real-vaqt sinxronizatsiyasi — har qanday a'zo o'zgartirganda darhol yangilanadi
@@ -122,6 +149,27 @@ export function AppProvider({ children }) {
     }
   }, [uid])
 
+  const saveCategories = useCallback((cats) => {
+    setCategoriesState(cats)
+    if (uid) {
+      localStorage.setItem(`finance_${uid}_categories`, JSON.stringify(cats))
+      syncToCloud(uid, 'categories', cats)
+    }
+  }, [uid])
+
+  const savePin = useCallback((newPin) => {
+    setPinState(newPin)
+    if (uid) {
+      if (newPin) {
+        localStorage.setItem(`finance_pin_${uid}`, newPin)
+        syncToCloud(uid, 'pin', newPin)
+      } else {
+        localStorage.removeItem(`finance_pin_${uid}`)
+        syncToCloud(uid, 'pin', null)
+      }
+    }
+  }, [uid])
+
   const balance = transactions.reduce((sum, t) => {
     return t.type === 'income' ? sum + t.amount : sum - t.amount
   }, 0)
@@ -152,6 +200,8 @@ export function AppProvider({ children }) {
       transactions, saveTransactions,
       debts, saveDebts,
       settings, updateSettings,
+      categories, saveCategories,
+      pin, savePin,
       balance, totalIncome, totalExpense,
       family, setFamily, refreshFamily,
       userRole, familyMembers,

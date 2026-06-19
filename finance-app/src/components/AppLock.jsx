@@ -2,9 +2,9 @@ import { useState, useEffect, useCallback } from 'react'
 import { useApp } from '../store/AppContext'
 
 export default function AppLock({ children, onUnlock }) {
-  const { user } = useApp()
+  const { user, pin } = useApp()
   const [locked, setLocked] = useState(false)
-  const [pin, setPin] = useState('')
+  const [pinInput, setPinInput] = useState('')
   const [error, setError] = useState('')
   const [biometricAvailable, setBiometricAvailable] = useState(false)
 
@@ -19,7 +19,7 @@ export default function AppLock({ children, onUnlock }) {
   useEffect(() => {
     const handler = () => {
       if (document.hidden && user) {
-        const savedPin = user?.id ? localStorage.getItem(`finance_pin_${user.id}`) : null
+        const savedPin = pin || null
         if (savedPin) setLocked(true)
       }
     }
@@ -28,24 +28,24 @@ export default function AppLock({ children, onUnlock }) {
   }, [user])
 
   const handleDigit = (d) => {
-    if (pin.length >= 4) return
-    const next = pin + d
-    setPin(next)
+    if (pinInput.length >= 4) return
+    const next = pinInput + d
+    setPinInput(next)
     setError('')
     if (next.length === 4) {
-      const savedPin = user?.id ? localStorage.getItem(`finance_pin_${user.id}`) : null
+      const savedPin = pin || null
       if (next === savedPin) {
         setLocked(false)
-        setPin('')
+        setPinInput('')
         onUnlock?.()
       } else {
         setError('PIN noto\'g\'ri')
-        setTimeout(() => setPin(''), 600)
+        setTimeout(() => setPinInput(''), 600)
       }
     }
   }
 
-  const handleBackspace = () => setPin(p => p.slice(0, -1))
+  const handleBackspace = () => setPinInput(p => p.slice(0, -1))
 
   const tryBiometric = useCallback(async () => {
     if (!biometricAvailable) return
@@ -67,7 +67,7 @@ export default function AppLock({ children, onUnlock }) {
       })
       if (assertion) {
         setLocked(false)
-        setPin('')
+        setPinInput('')
       }
     } catch (e) {
       setError('Biometrik tekshiruv muvaffaqiyatsiz')
@@ -88,7 +88,7 @@ export default function AppLock({ children, onUnlock }) {
       {/* PIN dots */}
       <div className="flex gap-4 mb-8">
         {[0, 1, 2, 3].map(i => (
-          <div key={i} className={`w-4 h-4 rounded-full transition-all ${i < pin.length ? 'bg-blue-500' : 'bg-dark-600 border border-dark-500'}`} />
+          <div key={i} className={`w-4 h-4 rounded-full transition-all ${i < pinInput.length ? 'bg-blue-500' : 'bg-dark-600 border border-dark-500'}`} />
         ))}
       </div>
 
