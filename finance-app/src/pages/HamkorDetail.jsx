@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Plus, CreditCard, Trash2, Package, Wrench, Banknote, Pencil, ArchiveRestore, Archive, FileDown, FileSpreadsheet } from 'lucide-react'
+import { ArrowLeft, Plus, CreditCard, Trash2, Package, Wrench, Banknote, Pencil, ArchiveRestore, Archive, FileDown, Sheet } from 'lucide-react'
 import { useApp } from '../store/AppContext'
 import Modal from '../components/Modal'
 import { getData, saveData, generateId } from '../store/storage'
@@ -8,8 +8,6 @@ import { calcDebt, archiveEntry, getArchive, restoreEntry, deleteFromArchive } f
 import { fmtCur } from '../utils/format'
 import { formatDistanceToNow, format } from 'date-fns'
 import { uz } from 'date-fns/locale'
-import jsPDF from 'jspdf'
-import autoTable from 'jspdf-autotable'
 import * as XLSX from 'xlsx'
 
 const CURRENCIES = ['UZS', 'USD', 'EUR', 'RUB']
@@ -128,34 +126,44 @@ export default function HamkorDetail() {
   }
 
   const exportPDF = (entries) => {
-    const doc = new jsPDF()
     const period = dateFrom || dateTo ? `${dateFrom || '...'} — ${dateTo || '...'}` : 'Barcha davr'
-    doc.setFontSize(16)
-    doc.text(`${hamkor.name} — Hisobot`, 14, 20)
-    doc.setFontSize(10)
-    doc.text(`Davr: ${period}`, 14, 28)
-    doc.text(`Sana: ${format(new Date(), 'dd.MM.yyyy')}`, 14, 34)
-
+    const debtVal = calcDebt(entries)
     const rows = entries.map(e => {
       const r = entryRow(e)
-      return [r.date, r.type, r.desc, r.amount]
-    })
+      return `<tr>
+        <td>${r.date}</td>
+        <td>${r.type}</td>
+        <td>${r.desc}</td>
+        <td style="text-align:right;font-weight:600;color:${e.entryType === 'tolov' ? '#16a34a' : '#dc2626'}">${r.amount}</td>
+      </tr>`
+    }).join('')
 
-    autoTable(doc, {
-      startY: 40,
-      head: [['Sana', 'Tur', 'Izoh', 'Summa']],
-      body: rows,
-      styles: { fontSize: 9 },
-      headStyles: { fillColor: [29, 78, 216] },
-    })
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
+    <title>${hamkor.name} hisobot</title>
+    <style>
+      body { font-family: system-ui, -apple-system, sans-serif; padding: 24px; color: #111; }
+      h2 { margin: 0 0 4px; font-size: 20px; }
+      .meta { color: #666; font-size: 13px; margin-bottom: 20px; }
+      table { width: 100%; border-collapse: collapse; font-size: 13px; }
+      th { background: #1d4ed8; color: white; padding: 8px 10px; text-align: left; }
+      td { padding: 7px 10px; border-bottom: 1px solid #e5e7eb; }
+      tr:last-child td { border-bottom: none; }
+      .summary { margin-top: 16px; font-size: 14px; font-weight: 600; }
+      @media print { body { padding: 0; } }
+    </style></head><body>
+    <h2>${hamkor.name} — Hisobot</h2>
+    <div class="meta">Davr: ${period} &nbsp;|&nbsp; Sana: ${format(new Date(), 'dd.MM.yyyy')}</div>
+    <table>
+      <thead><tr><th>Sana</th><th>Tur</th><th>Izoh</th><th>Summa</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <div class="summary">Qolgan qarz: ${debtVal > 0 ? fmtCur(debtVal, 'UZS') : "To'liq to'langan ✓"}</div>
+    <script>window.onload = () => { window.print(); }<\/script>
+    </body></html>`
 
-    // Qoldiq
-    const debt = calcDebt(entries)
-    const finalY = doc.lastAutoTable.finalY + 8
-    doc.setFontSize(11)
-    doc.text(`Qolgan qarz: ${fmtCur(Math.abs(debt), 'UZS')}${debt < 0 ? ' (ortiqcha to\'langan)' : ''}`, 14, finalY)
-
-    doc.save(`${hamkor.name}_hisobot.pdf`)
+    const w = window.open('', '_blank')
+    w.document.write(html)
+    w.document.close()
   }
 
   const exportExcel = (entries) => {
