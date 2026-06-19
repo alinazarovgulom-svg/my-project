@@ -11,7 +11,7 @@ import { useLang } from '../i18n/LangContext'
 export default function Settings() {
   const { user, setUser, transactions: personalTx, familyTransactions, family, debts, userRole, pin, savePin,
     saveTransactions, saveDebts, saveCategories, saveHamkorSections, saveHamkorPartners, updateSettings,
-    categories, settings, hamkorSections, hamkorPartners } = useApp()
+    categories, settings, hamkorSections, hamkorPartners, showToast } = useApp()
   const transactions = family ? familyTransactions : personalTx
   const { t, lang, setLang } = useLang()
   const nav = useNavigate()
@@ -62,6 +62,7 @@ export default function Settings() {
       ])
       setSyncDone(true)
       setTimeout(() => setSyncDone(false), 3000)
+      showToast("Ma'lumotlar yuklandi ✓")
     } catch (e) {
       console.warn('Force sync error:', e)
     } finally {
@@ -151,9 +152,9 @@ export default function Settings() {
     try {
       const res = await changePassword(user.id, form.current, form.newPass)
       if (res.error) return setError(res.error)
-      setSuccess('Parol muvaffaqiyatli o\'zgartirildi!')
       setForm({ current: '', newPass: '', confirm: '' })
-      setTimeout(() => setPassModal(false), 1500)
+      setPassModal(false)
+      showToast('Parol muvaffaqiyatli o\'zgartirildi ✓')
     } catch { setError('Tarmoq xatosi') } finally { setSaving(false) }
   }
 
@@ -169,9 +170,9 @@ export default function Settings() {
       const res = await changeUsername(user.id, newUsername.trim(), currentPass)
       if (res.error) return setLoginError(res.error)
       setUser(res.user)
-      setLoginSuccess(`Login "${newUsername.trim()}" ga o'zgartirildi!`)
       setLoginForm({ newUsername: '', currentPass: '' })
-      setTimeout(() => setLoginModal(false), 1500)
+      setLoginModal(false)
+      showToast(`Login "${newUsername.trim()}" ga o'zgartirildi ✓`)
     } catch { setLoginError('Tarmoq xatosi') } finally { setSaving(false) }
   }
 
@@ -180,9 +181,9 @@ export default function Settings() {
     if (pinForm.pin.length !== 4 || !/^\d{4}$/.test(pinForm.pin)) return setPinError('PIN 4 raqamdan iborat bo\'lishi kerak')
     if (pinForm.pin !== pinForm.confirm) return setPinError('PIN lar mos kelmaydi')
     savePin(pinForm.pin)
-    setPinSuccess('PIN muvaffaqiyatli o\'rnatildi!')
     setPinForm({ pin: '', confirm: '' })
-    setTimeout(() => setPinModal(false), 1200)
+    setPinModal(false)
+    showToast('PIN muvaffaqiyatli o\'rnatildi ✓')
   }
 
   const handleRemovePin = () => {

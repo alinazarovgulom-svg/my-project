@@ -23,7 +23,7 @@ const localNow = () => { const d = new Date(); return new Date(d.getTime() - d.g
 const defaultForm = { type: 'expense', amount: '', category: '', currency: 'UZS', note: '', date: localNow() }
 
 export default function Transactions() {
-  const { transactions, saveTransactions, user, family, familyTransactions, familyMembers, canEdit, canAdd, refreshFamily, categories: contextCategories } = useApp()
+  const { transactions, saveTransactions, user, family, familyTransactions, familyMembers, canEdit, canAdd, refreshFamily, categories: contextCategories, showToast } = useApp()
   const [modal, setModal] = useState(false)
   const [editModal, setEditModal] = useState(false)
   const [editingTx, setEditingTx] = useState(null)
@@ -73,6 +73,7 @@ export default function Transactions() {
       saveTransactions([...transactions, ...newTxs])
     }
     setModal(false)
+    showToast(form.type === 'income' ? 'Kirim saqlandi ✓' : 'Chiqim saqlandi ✓')
   }
 
   const openEdit = (tx) => {
@@ -104,6 +105,7 @@ export default function Transactions() {
     setEditModal(false)
     setEditingTx(null)
     setEditExtraAmounts([])
+    showToast('Tahrirlash saqlandi ✓')
   }
 
   const handleDelete = (id, isFamily = false) => {
@@ -113,6 +115,7 @@ export default function Transactions() {
     } else {
       saveTransactions(transactions.filter(t => t.id !== id))
     }
+    showToast('O\'chirildi', 'error')
   }
 
   const activeList = (familyMode && family ? familyTransactions : transactions)

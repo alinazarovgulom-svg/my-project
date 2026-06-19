@@ -1,4 +1,5 @@
-import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react'
+import { createContext, useContext, useState, useEffect, useCallback, useRef, useMemo } from 'react'
+import ToastContainer from '../components/Toast'
 import { getCurrentUser, getData, saveData, getSettings, saveSettings } from './storage'
 import { getUserFamily, getUserFamilyId, getFamily, subscribeToFamily, updateMemberLastSeen } from './family'
 import { syncToCloud, loadFromCloud, subscribeToCloud } from './sync'
@@ -31,6 +32,17 @@ export function AppProvider({ children }) {
   const [workspace, setWorkspace] = useState(null)
   const [onlineMembers, setOnlineMembers] = useState([])
   const skipCloudUpdate = useRef(false)
+  const [toasts, setToasts] = useState([])
+  const toastId = useRef(0)
+
+  const showToast = useCallback((message, type = 'success') => {
+    const id = ++toastId.current
+    setToasts(prev => [...prev, { id, message, type }])
+  }, [])
+
+  const removeToast = useCallback((id) => {
+    setToasts(prev => prev.filter(t => t.id !== id))
+  }, [])
 
   const uid = user?.id
 
@@ -278,8 +290,10 @@ export function AppProvider({ children }) {
       workspaceId, setWorkspaceId,
       myRole, canViewSection, canEditSection,
       onlineMembers, updatePresence,
+      showToast,
     }}>
       {children}
+      <ToastContainer toasts={toasts} onRemove={removeToast} />
     </AppContext.Provider>
   )
 }

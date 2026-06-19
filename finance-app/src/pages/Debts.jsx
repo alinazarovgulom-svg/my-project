@@ -25,7 +25,7 @@ function getDueDateWarning(debt) {
 }
 
 export default function Debts() {
-  const { debts, saveDebts, transactions, saveTransactions, user, family, familyDebts, canAdd } = useApp()
+  const { debts, saveDebts, transactions, saveTransactions, user, family, familyDebts, canAdd, showToast } = useApp()
   const activeDebts = family ? familyDebts : debts
   const isViewer = family && !canAdd()
   const [modal, setModal] = useState(false)
@@ -71,6 +71,7 @@ export default function Debts() {
     }
     setModal(false)
     setForm(defaultForm)
+    showToast('Qarz saqlandi ✓')
   }
 
   const handlePay = () => {
@@ -95,6 +96,7 @@ export default function Debts() {
     }
     setPayModal(null)
     setPayAmount('')
+    showToast("To'lov amalga oshirildi ✓")
   }
 
   const handleDelete = (id) => {
@@ -104,6 +106,7 @@ export default function Debts() {
       } else {
         saveDebts(debts.filter(d => d.id !== id))
       }
+      showToast("Qarz o'chirildi", 'error')
     }
   }
 
@@ -125,6 +128,7 @@ export default function Debts() {
     }
     setEditModal(false)
     setEditingDebt(null)
+    showToast('Tahrirlash saqlandi ✓')
   }
 
   const filtered = activeDebts
