@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, useCallback, useRef } f
 import { getCurrentUser, getData, saveData, getSettings, saveSettings } from './storage'
 import { getUserFamily, getUserFamilyId, getFamily, getFamilyAsync, subscribeToFamily, updateMemberLastSeen } from './family'
 import { syncToCloud, loadFromCloud, subscribeToCloud } from './sync'
+import { migrateLocalUsers } from './auth'
 
 const AppContext = createContext(null)
 
@@ -30,6 +31,9 @@ export function AppProvider({ children }) {
   // Boshlang'ich yuklash: avval localStorage, keyin cloud
   useEffect(() => {
     if (!uid) return
+
+    // Akkauntni Firestore ga sinxronlash (agar faqat telefonda qolgan bo'lsa)
+    migrateLocalUsers()
 
     // Lokal ma'lumotlarni darhol yuklash
     setTransactions(getData('transactions', uid))

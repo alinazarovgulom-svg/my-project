@@ -23,13 +23,23 @@ export const loginUser = async (username, password) => {
   return { user: safeUser }
 }
 
-// Ro'yxatdan o'tish: Firestore ga yozish
+// Ro'yxatdan o'tish: Firestore ga yozish, muvaffaqiyatsiz bo'lsa zaxira
 export const registerUser = async (name, username, password) => {
   const existing = await findUserByUsername(username)
   if (existing) return { error: 'Bu login band, boshqa tanlang' }
   const id = generateId()
   const newUser = { id, name, username, password: hashPassword(password), createdAt: new Date().toISOString() }
-  await setDoc(doc(db, USERS_COL, id), newUser)
+  try {
+    await setDoc(doc(db, USERS_COL, id), newUser)
+  } catch (e) {
+    console.warn('[auth] Firestore write failed, saving locally:', e?.code)
+    // Zaxira: fin_users ga saqlash (migrateLocalUsers keyinroq yuklaydi)
+    try {
+      const arr = JSON.parse(localStorage.getItem('fin_users') || '[]')
+      if (!arr.find(u => u.id === id)) arr.push(newUser)
+      localStorage.setItem('fin_users', JSON.stringify(arr))
+    } catch {}
+  }
   const { password: _, ...safeUser } = newUser
   setCurrentUser(safeUser)
   return { user: safeUser }
@@ -70,23 +80,51 @@ export const resetPasswordByUsername = async (username, newPassword) => {
   return { success: true }
 }
 
-// localStorage dagi eski akkauntni Firestore ga ko'chirish (bir martalik migration)
+// localStorage dagi akkauntlarni Firestore ga ko'chirish
 export const migrateLocalUsers = async () => {
+  // 1. fin_users massividagi eski akkauntlarni migrate qilish
   const raw = localStorage.getItem('fin_users')
-  if (!raw) return
-  try {
-    const users = JSON.parse(raw)
-    for (const u of users) {
-      const existing = await findUserByUsername(u.username)
-      if (!existing) {
-        await setDoc(doc(db, USERS_COL, u.id), {
-          id: u.id, name: u.name, username: u.username,
-          password: u.password, createdAt: u.createdAt || new Date().toISOString()
-        })
+  if (raw) {
+    try {
+      const users = JSON.parse(raw)
+      let allSynced = true
+      for (const u of users) {
+        try {
+          const existing = await findUserByUsername(u.username)
+          if (!existing) {
+            await setDoc(doc(db, USERS_COL, u.id), {
+              id: u.id, name: u.name, username: u.username,
+              password: u.password, createdAt: u.createdAt || new Date().toISOString()
+            })
+          }
+        } catch { allSynced = false }
       }
+      if (allSynced) localStorage.removeItem('fin_users')
+    } catch (e) {
+      console.warn('[auth] migration error:', e?.code)
     }
-    localStorage.removeItem('fin_users')
+  }
+
+  // 2. Joriy session foydalanuvchisini Firestore da tekshirish
+  const current = getCurrentUser()
+  if (!current?.id) return
+  try {
+    const snap = await getDoc(doc(db, USERS_COL, current.id))
+    if (!snap.exists()) {
+      // Telefon xotirasida bor lekin Firestore da yo'q — yuklab qo'yish
+      const localPass = (() => {
+        try { return JSON.parse(localStorage.getItem('fin_users') || '[]').find(u => u.id === current.id)?.password } catch { return null }
+      })()
+      await setDoc(doc(db, USERS_COL, current.id), {
+        id: current.id,
+        name: current.name,
+        username: current.username,
+        password: localPass || hashPassword('0000'),
+        createdAt: new Date().toISOString()
+      })
+      console.log('[auth] session user synced to Firestore:', current.username)
+    }
   } catch (e) {
-    console.error('Migration error:', e)
+    console.warn('[auth] session sync failed:', e?.code)
   }
 }
