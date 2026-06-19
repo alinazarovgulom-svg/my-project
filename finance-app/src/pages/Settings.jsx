@@ -14,12 +14,16 @@ export default function Settings() {
   // Only admin (or user not in a family) can access categories
   const isAdmin = !userRole || userRole === 'admin'
   const [passModal, setPassModal] = useState(false)
+  const [loginModal, setLoginModal] = useState(false)
   const [pinModal, setPinModal] = useState(false)
   const [form, setForm] = useState({ current: '', newPass: '', confirm: '' })
+  const [loginForm, setLoginForm] = useState({ newUsername: '', currentPass: '' })
   const [pinForm, setPinForm] = useState({ pin: '', confirm: '' })
   const [showPass, setShowPass] = useState({})
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const [loginError, setLoginError] = useState('')
+  const [loginSuccess, setLoginSuccess] = useState('')
   const [pinError, setPinError] = useState('')
   const [pinSuccess, setPinSuccess] = useState('')
   const hasPin = user?.id ? !!localStorage.getItem(`finance_pin_${user.id}`) : false
@@ -53,6 +57,25 @@ export default function Settings() {
   }
 
   const showField = (k) => setShowPass(s => ({ ...s, [k]: !s[k] }))
+
+  const handleChangeLogin = () => {
+    setLoginError(''); setLoginSuccess('')
+    const { newUsername, currentPass } = loginForm
+    if (!newUsername.trim() || !currentPass) return setLoginError('Barcha maydonlarni to\'ldiring')
+    if (newUsername.trim().length < 3) return setLoginError('Login kamida 3 belgi bo\'lsin')
+    const users = getUsers()
+    const idx = users.findIndex(u => u.id === user.id)
+    if (idx === -1 || users[idx].password !== hashPassword(currentPass)) return setLoginError('Joriy parol noto\'g\'ri')
+    const taken = users.find(u => u.username === newUsername.trim() && u.id !== user.id)
+    if (taken) return setLoginError('Bu login band, boshqa tanlang')
+    users[idx] = { ...users[idx], username: newUsername.trim() }
+    saveUsers(users)
+    setCurrentUser(users[idx])
+    setUser(users[idx])
+    setLoginSuccess(`Login "${newUsername.trim()}" ga o'zgartirildi!`)
+    setLoginForm({ newUsername: '', currentPass: '' })
+    setTimeout(() => setLoginModal(false), 1500)
+  }
 
   const handleSetPin = () => {
     setPinError(''); setPinSuccess('')
@@ -109,6 +132,19 @@ export default function Settings() {
             <div className="h-px bg-white/5 mx-4" />
           </>
         )}
+
+        <button onClick={() => { setLoginModal(true); setLoginError(''); setLoginSuccess(''); setLoginForm({ newUsername: '', currentPass: '' }) }}
+          className="flex items-center gap-3 px-4 py-4 active:bg-dark-600 transition-colors text-left w-full">
+          <div className="w-9 h-9 rounded-xl bg-blue-500/15 flex items-center justify-center">
+            <User size={18} className="text-blue-400" />
+          </div>
+          <div>
+            <p className="text-white text-sm font-medium">Loginni o'zgartirish</p>
+            <p className="text-gray-500 text-xs">Hozirgi: @{user?.username}</p>
+          </div>
+        </button>
+
+        <div className="h-px bg-white/5 mx-4" />
 
         <button onClick={() => { setPassModal(true); setError(''); setSuccess(''); setForm({ current: '', newPass: '', confirm: '' }) }}
           className="flex items-center gap-3 px-4 py-4 active:bg-dark-600 transition-colors text-left w-full">
@@ -204,6 +240,39 @@ export default function Settings() {
           {pinSuccess && <p className="text-green-400 text-sm bg-green-500/10 py-2 px-3 rounded-lg">{pinSuccess}</p>}
           <button onClick={handleSetPin} className="btn-primary">Saqlash</button>
           {hasPin && <button onClick={handleRemovePin} className="text-red-400 text-sm py-2">PIN ni o'chirish</button>}
+        </div>
+      </Modal>
+
+      {/* Login Change Modal */}
+      <Modal open={loginModal} onClose={() => setLoginModal(false)} title="Loginni o'zgartirish">
+        <div className="flex flex-col gap-3">
+          <div>
+            <label className="text-gray-400 text-xs mb-1 block">Yangi login</label>
+            <input
+              className="input-field"
+              placeholder="Yangi login"
+              value={loginForm.newUsername}
+              onChange={e => setLoginForm(f => ({ ...f, newUsername: e.target.value }))}
+              autoCapitalize="none" autoCorrect="off" spellCheck="false"
+            />
+          </div>
+          <div className="relative">
+            <label className="text-gray-400 text-xs mb-1 block">Joriy parol (tasdiqlash uchun)</label>
+            <input
+              className="input-field pr-12"
+              type={showPass.loginPass ? 'text' : 'password'}
+              placeholder="Parolingiz"
+              value={loginForm.currentPass}
+              onChange={e => setLoginForm(f => ({ ...f, currentPass: e.target.value }))}
+              autoCapitalize="none" autoCorrect="off"
+            />
+            <button type="button" onClick={() => showField('loginPass')} className="absolute right-3 bottom-3 text-gray-500 p-0.5">
+              {showPass.loginPass ? <EyeOff size={16} /> : <Eye size={16} />}
+            </button>
+          </div>
+          {loginError && <p className="text-red-400 text-sm bg-red-500/10 py-2 px-3 rounded-lg">{loginError}</p>}
+          {loginSuccess && <p className="text-green-400 text-sm bg-green-500/10 py-2 px-3 rounded-lg">{loginSuccess}</p>}
+          <button onClick={handleChangeLogin} className="btn-primary mt-2">O'zgartirish</button>
         </div>
       </Modal>
 
