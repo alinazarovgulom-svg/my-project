@@ -22,8 +22,10 @@ export default function Login() {
     const users = getUsers()
 
     if (mode === 'login') {
+      const byUsername = users.find(u => u.username === form.username)
+      if (!byUsername) return setError(`"${form.username}" foydalanuvchisi topilmadi. Ro'yxatdan o'ting.`)
       const u = users.find(u => u.username === form.username && u.password === hashPassword(form.password))
-      if (!u) return setError(t('wrongCredentials'))
+      if (!u) return setError('Parol noto\'g\'ri. Qayta urinib ko\'ring.')
       setCurrentUser(u)
       setUser(u)
       nav('/')
