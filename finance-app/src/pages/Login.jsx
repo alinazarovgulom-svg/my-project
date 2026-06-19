@@ -99,12 +99,12 @@ export default function Login() {
             {mode === 'register' && (
               <div className="relative">
                 <User className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-400/60" size={17} />
-                <input className="input-field pl-11" placeholder={t('fullName')} value={form.name} onChange={e => set('name', e.target.value)} />
+                <input className="input-field pl-11" placeholder={t('fullName')} value={form.name} onChange={e => set('name', e.target.value)} autoCorrect="off" />
               </div>
             )}
             <div className="relative">
               <User className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-400/60" size={17} />
-              <input className="input-field pl-11" placeholder={t('username')} value={form.username} onChange={e => set('username', e.target.value)} autoComplete="username" />
+              <input className="input-field pl-11" placeholder={t('username')} value={form.username} onChange={e => set('username', e.target.value)} autoComplete="username" autoCapitalize="none" autoCorrect="off" spellCheck="false" />
             </div>
             <div className="relative">
               <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-400/60" size={17} />
@@ -115,6 +115,7 @@ export default function Login() {
                 value={form.password}
                 onChange={e => set('password', e.target.value)}
                 autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+                autoCapitalize="none" autoCorrect="off" spellCheck="false"
               />
               <button type="button" onClick={() => setShowPass(v => !v)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 p-1">
                 {showPass ? <EyeOff size={17} /> : <Eye size={17} />}
