@@ -3,8 +3,8 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, Plus, ChevronRight, Phone, Users } from 'lucide-react'
 import { useApp } from '../store/AppContext'
 import Modal from '../components/Modal'
-import { getData, saveData, generateId } from '../store/storage'
-import { calcDebt } from '../store/hamkorlar'
+import { generateId } from '../store/storage'
+import { calcDebt, getSections, getPartners, savePartners } from '../store/hamkorlar'
 import { fmtCur } from '../utils/format'
 
 export default function HamkorlarList() {
@@ -20,26 +20,16 @@ export default function HamkorlarList() {
   const [phone, setPhone] = useState('')
 
   const load = () => {
-    const sections = getData('hamkorlar_sections', uid)
-    setSection(sections.find(s => s.id === sectionId) || null)
-    const all = getData('hamkorlar', uid)
-    setList(all.filter(h => h.sectionId === sectionId))
+    setSection(getSections(uid).find(s => s.id === sectionId) || null)
+    setList(getPartners(uid).filter(h => h.sectionId === sectionId))
   }
 
   useEffect(() => { if (uid) load() }, [uid, sectionId])
 
   const handleAdd = () => {
     if (!name.trim()) return
-    const all = getData('hamkorlar', uid)
-    const hamkor = {
-      id: generateId(),
-      sectionId,
-      name: name.trim(),
-      phone: phone.trim(),
-      createdAt: new Date().toISOString(),
-      entries: [],
-    }
-    saveData('hamkorlar', uid, [...all, hamkor])
+    const hamkor = { id: generateId(), sectionId, name: name.trim(), phone: phone.trim(), createdAt: new Date().toISOString(), entries: [] }
+    savePartners(uid, [...getPartners(uid), hamkor])
     setName(''); setPhone(''); setModal(false)
     load()
   }

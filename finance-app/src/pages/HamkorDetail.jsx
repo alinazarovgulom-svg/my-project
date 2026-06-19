@@ -3,8 +3,8 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, Plus, CreditCard, Trash2, Package, Wrench, Banknote, Pencil, ArchiveRestore, Archive, FileDown, Sheet } from 'lucide-react'
 import { useApp } from '../store/AppContext'
 import Modal from '../components/Modal'
-import { getData, saveData, generateId } from '../store/storage'
-import { calcDebt, archiveEntry, getArchive, restoreEntry, deleteFromArchive } from '../store/hamkorlar'
+import { generateId } from '../store/storage'
+import { calcDebt, archiveEntry, getArchive, restoreEntry, deleteFromArchive, getPartners, savePartners } from '../store/hamkorlar'
 import { fmtCur } from '../utils/format'
 import { formatDistanceToNow, format } from 'date-fns'
 import { uz } from 'date-fns/locale'
@@ -42,7 +42,7 @@ export default function HamkorDetail() {
   const [tConvRate, setTConvRate] = useState('')
 
   const load = () => {
-    const all = getData('hamkorlar', uid)
+    const all = getPartners(uid)
     setHamkor(all.find(h => h.id === id) || null)
     setArchive(getArchive(uid).filter(a => a.hamkorId === id))
   }
@@ -50,8 +50,8 @@ export default function HamkorDetail() {
   useEffect(() => { if (uid) load() }, [uid, id])
 
   const updateEntries = (newEntry) => {
-    const all = getData('hamkorlar', uid)
-    saveData('hamkorlar', uid, all.map(h =>
+    const all = getPartners(uid)
+    savePartners(uid, all.map(h =>
       h.id === id ? { ...h, entries: [...(h.entries || []), newEntry] } : h
     ))
     load()
@@ -193,8 +193,8 @@ export default function HamkorDetail() {
     } else {
       updated.amount = parseFloat(e.amount)
     }
-    const all = getData('hamkorlar', uid)
-    saveData('hamkorlar', uid, all.map(h =>
+    const all = getPartners(uid)
+    savePartners(uid, all.map(h =>
       h.id === id ? { ...h, entries: (h.entries || []).map(en => en.id === updated.id ? updated : en) } : h
     ))
     setEditingEntry(null)
@@ -204,8 +204,8 @@ export default function HamkorDetail() {
   // Delete (archive)
   const handleDeleteEntry = (entry) => {
     archiveEntry(uid, id, hamkor?.name, sectionId, entry)
-    const all = getData('hamkorlar', uid)
-    saveData('hamkorlar', uid, all.map(h =>
+    const all = getPartners(uid)
+    savePartners(uid, all.map(h =>
       h.id === id ? { ...h, entries: (h.entries || []).filter(e => e.id !== entry.id) } : h
     ))
     load()
@@ -222,8 +222,8 @@ export default function HamkorDetail() {
   }
 
   const handleDeleteHamkor = () => {
-    const all = getData('hamkorlar', uid)
-    saveData('hamkorlar', uid, all.filter(h => h.id !== id))
+    const all = getPartners(uid)
+    savePartners(uid, all.filter(h => h.id !== id))
     nav(`/hamkorlar/${sectionId}`)
   }
 

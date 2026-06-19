@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { ChevronRight, Plus, Users, Trash2 } from 'lucide-react'
 import { useApp } from '../store/AppContext'
 import Modal from '../components/Modal'
-import { getData, saveData, generateId } from '../store/storage'
+import { generateId } from '../store/storage'
+import { getSections, saveSections, getPartners, savePartners, loadHamkorlarFromCloud } from '../store/hamkorlar'
 
 const COLORS = [
   { bg: 'bg-blue-500/20', text: 'text-blue-400' },
@@ -24,39 +25,32 @@ export default function Hamkorlar() {
   const [sectionName, setSectionName] = useState('')
   const [deleteId, setDeleteId] = useState(null)
 
-  const loadSections = () => {
-    setSections(getData('hamkorlar_sections', uid))
-  }
+  const loadSections = () => setSections(getSections(uid))
 
-  useEffect(() => { if (uid) loadSections() }, [uid])
+  useEffect(() => {
+    if (!uid) return
+    loadSections()
+    loadHamkorlarFromCloud(uid).then(() => loadSections())
+  }, [uid])
 
   const handleAdd = () => {
     if (!sectionName.trim()) return
     const colorIdx = sections.length % COLORS.length
-    const section = {
-      id: generateId(),
-      name: sectionName.trim(),
-      colorIdx,
-      createdAt: new Date().toISOString(),
-    }
-    saveData('hamkorlar_sections', uid, [...sections, section])
+    const section = { id: generateId(), name: sectionName.trim(), colorIdx, createdAt: new Date().toISOString() }
+    saveSections(uid, [...sections, section])
     setSectionName('')
     setModal(false)
     loadSections()
   }
 
   const handleDelete = (id) => {
-    saveData('hamkorlar_sections', uid, sections.filter(s => s.id !== id))
-    // Also remove partners in this section
-    const partners = getData('hamkorlar', uid)
-    saveData('hamkorlar', uid, partners.filter(p => p.sectionId !== id))
+    saveSections(uid, sections.filter(s => s.id !== id))
+    savePartners(uid, getPartners(uid).filter(p => p.sectionId !== id))
     setDeleteId(null)
     loadSections()
   }
 
-  const partnerCount = (sectionId) => {
-    return getData('hamkorlar', uid).filter(p => p.sectionId === sectionId).length
-  }
+  const partnerCount = (sectionId) => getPartners(uid).filter(p => p.sectionId === sectionId).length
 
   return (
     <div className="flex flex-col min-h-dvh pb-24">
