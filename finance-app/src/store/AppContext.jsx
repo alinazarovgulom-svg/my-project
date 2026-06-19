@@ -4,6 +4,8 @@ import { getUserFamily, getUserFamilyId, getFamily, subscribeToFamily, updateMem
 import { syncToCloud, loadFromCloud, subscribeToCloud } from './sync'
 import { migrateLocalUsers } from './auth'
 import { getUserWorkspaceId, subscribeToWorkspace } from './workspace'
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore'
+import { db } from './firebase'
 
 const AppContext = createContext(null)
 
@@ -27,6 +29,7 @@ export function AppProvider({ children }) {
   const [syncing, setSyncing] = useState(false)
   const [workspaceId, setWorkspaceId] = useState(() => getUserWorkspaceId(user?.id))
   const [workspace, setWorkspace] = useState(null)
+  const [onlineMembers, setOnlineMembers] = useState([])
   const skipCloudUpdate = useRef(false)
 
   const uid = user?.id
@@ -114,7 +117,15 @@ export function AppProvider({ children }) {
       if (data) { setPinState(data); localStorage.setItem(`finance_pin_${uid}`, data) }
     })
 
-    return () => { unsubTx(); unsubDebts(); unsubSettings(); unsubCats(); unsubPin() }
+    // Online presence
+    updatePresence('online')
+    const presenceInterval = setInterval(() => updatePresence('online'), 120000)
+
+    return () => {
+      unsubTx(); unsubDebts(); unsubSettings(); unsubCats(); unsubPin()
+      updatePresence('offline')
+      clearInterval(presenceInterval)
+    }
   }, [uid])
 
   // Oila real-vaqt sinxronizatsiyasi
@@ -126,6 +137,19 @@ export function AppProvider({ children }) {
     if (uid) updateMemberLastSeen(familyId, uid)
     return () => unsub()
   }, [familyId])
+
+  const updatePresence = useCallback(async (status = 'online') => {
+    if (!uid) return
+    try {
+      await setDoc(doc(db, 'presence', uid), {
+        userId: uid,
+        username: user?.username,
+        fullName: user?.name,
+        status,
+        lastSeen: serverTimestamp(),
+      }, { merge: true })
+    } catch(e) {}
+  }, [uid, user])
 
   const refreshFamily = useCallback(() => {
     if (uid) {
@@ -253,6 +277,7 @@ export function AppProvider({ children }) {
       workspace, setWorkspace,
       workspaceId, setWorkspaceId,
       myRole, canViewSection, canEditSection,
+      onlineMembers, updatePresence,
     }}>
       {children}
     </AppContext.Provider>
