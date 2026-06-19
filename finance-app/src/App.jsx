@@ -13,6 +13,8 @@ import Hamkorlar from './pages/Hamkorlar'
 import HamkorlarList from './pages/HamkorlarList'
 import HamkorDetail from './pages/HamkorDetail'
 import Korxona from './pages/Korxona'
+import MenuPage from './pages/MenuPage'
+import Profile from './pages/Profile'
 import AppLock from './components/AppLock'
 import Onboarding from './components/Onboarding'
 import { useState, useEffect, useRef } from 'react'
@@ -25,6 +27,13 @@ function ProtectedLayout() {
     <>
       <Routes>
         <Route path="/" element={<Dashboard />} />
+        <Route path="/menu" element={<MenuPage />} />
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/notifications" element={
+          <div className="min-h-screen flex items-center justify-center" style={{ background: '#08080f', color: '#374151', fontSize: 14 }}>
+            Tez orada...
+          </div>
+        } />
         <Route path="/transactions" element={<Transactions />} />
         <Route path="/debts" element={<Debts />} />
         <Route path="/exchange" element={<Exchange />} />
@@ -61,11 +70,8 @@ export default function App() {
         wasHidden.current = true
       } else if (wasHidden.current) {
         wasHidden.current = false
-        // Only show splash if no PIN lock is active (AppLock handles that case)
         const users = Object.keys(localStorage).filter(k => k.startsWith('finance_pin_'))
-        if (users.length === 0) {
-          setShowSplash(true)
-        }
+        if (users.length === 0) setShowSplash(true)
       }
     }
     document.addEventListener('visibilitychange', handler)
