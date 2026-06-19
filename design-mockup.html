@@ -6,307 +6,229 @@
 <title>Finance App</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-  * { margin:0; padding:0; box-sizing:border-box; }
-  body {
-    background: #070709;
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 40px;
-    padding: 40px;
-    flex-wrap: wrap;
-    font-family: 'Inter', -apple-system, sans-serif;
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{
+    background:#070709;
+    min-height:100vh;
+    display:flex;
+    align-items:flex-start;
+    justify-content:center;
+    gap:28px;
+    padding:36px 24px;
+    flex-wrap:wrap;
+    font-family:'Inter',-apple-system,sans-serif;
   }
-
-  .wrap { display:flex; flex-direction:column; align-items:center; gap:14px; }
-  .screen-label { color: #333; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 600; }
-
-  .phone {
-    width: 375px;
-    height: 812px;
-    background: #090910;
-    border-radius: 50px;
-    border: 1px solid rgba(255,255,255,0.07);
-    overflow: hidden;
-    position: relative;
-    box-shadow:
-      0 0 0 1px rgba(255,255,255,0.03),
-      0 50px 120px rgba(0,0,0,0.9),
-      inset 0 1px 0 rgba(255,255,255,0.08);
-    display: flex;
-    flex-direction: column;
+  .wrap{display:flex;flex-direction:column;align-items:center;gap:12px;}
+  .screen-label{color:#333;font-size:10px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;}
+  .phone{
+    width:340px;
+    height:740px;
+    background:#090910;
+    border-radius:46px;
+    border:1px solid rgba(255,255,255,0.07);
+    overflow:hidden;
+    position:relative;
+    box-shadow:0 0 0 1px rgba(255,255,255,0.03),0 40px 100px rgba(0,0,0,0.9),inset 0 1px 0 rgba(255,255,255,0.08);
+    display:flex;
+    flex-direction:column;
   }
-
-  /* NOTCH */
-  .notch {
-    position: absolute;
-    top: 0; left: 50%; transform: translateX(-50%);
-    width: 120px; height: 30px;
-    background: #090910;
-    border-radius: 0 0 20px 20px;
-    z-index: 99;
-  }
-
-  /* STATUS BAR */
-  .statusbar {
-    height: 50px;
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    padding: 0 28px 8px;
-    flex-shrink: 0;
-    z-index: 10;
-  }
-  .statusbar .time { color: #fff; font-size: 13px; font-weight: 700; }
-  .sb-right { display:flex; align-items:center; gap:6px; }
-  .sb-right svg { opacity: 0.9; }
-
-  /* SCROLL CONTENT */
-  .scroll { flex:1; overflow-y:auto; overflow-x:hidden; }
-  .scroll::-webkit-scrollbar { display:none; }
-
-  /* ── SCREEN 1: HOME ── */
-
-  .home-top {
-    padding: 4px 22px 0;
-  }
-
-  .greeting-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 22px;
-  }
-  .greeting-left {}
-  .greeting-sub { color: #555; font-size: 12px; font-weight: 500; margin-bottom: 2px; }
-  .greeting-name { color: #fff; font-size: 20px; font-weight: 800; }
-  .avatar-btn {
-    width: 42px; height: 42px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #6366f1, #8b5cf6);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 16px; font-weight: 800; color: #fff;
-    box-shadow: 0 4px 16px rgba(99,102,241,0.5);
-    flex-shrink: 0;
-    position: relative;
-  }
-  .avatar-dot {
-    position: absolute;
-    bottom: 1px; right: 1px;
-    width: 10px; height: 10px;
-    background: #22c55e;
-    border-radius: 50%;
-    border: 2px solid #090910;
-  }
-
-  /* BALANCE CARD */
-  .bal-card {
-    background: linear-gradient(135deg, #1a1060 0%, #2d1b69 40%, #1e0d4e 100%);
-    border-radius: 28px;
-    padding: 22px;
-    margin-bottom: 10px;
-    position: relative;
-    overflow: hidden;
-    border: 1px solid rgba(139,92,246,0.2);
-  }
-  .bal-glow {
-    position: absolute;
-    top: -60px; right: -60px;
-    width: 200px; height: 200px;
-    background: radial-gradient(circle, rgba(139,92,246,0.3) 0%, transparent 70%);
-    pointer-events: none;
-  }
-  .bal-glow2 {
-    position: absolute;
-    bottom: -40px; left: 30px;
-    width: 140px; height: 140px;
-    background: radial-gradient(circle, rgba(99,102,241,0.2) 0%, transparent 70%);
-    pointer-events: none;
-  }
-  .bal-label { color: rgba(255,255,255,0.5); font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 6px; }
-  .bal-amount { color: #fff; font-size: 32px; font-weight: 900; letter-spacing: -1px; line-height: 1; margin-bottom: 4px; }
-  .bal-change { display:flex; align-items:center; gap:4px; margin-bottom: 18px; }
-  .bal-change-pill { background: rgba(34,197,94,0.18); color: #4ade80; font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 20px; display:flex; align-items:center; gap:3px; }
-  .bal-change-text { color: rgba(255,255,255,0.35); font-size: 11px; }
-
-  .bal-row { display: flex; gap: 10px; }
-  .bal-item {
-    flex: 1;
-    background: rgba(255,255,255,0.07);
-    border: 1px solid rgba(255,255,255,0.06);
-    border-radius: 16px;
-    padding: 12px;
-  }
-  .bal-item-top { display:flex; align-items:center; gap:6px; margin-bottom:6px; }
-  .bal-item-dot { width:20px; height:20px; border-radius:8px; display:flex; align-items:center; justify-content:center; }
-  .dot-in { background: rgba(74,222,128,0.2); }
-  .dot-out { background: rgba(248,113,113,0.2); }
-  .bal-item-label { color:rgba(255,255,255,0.45); font-size:10px; font-weight:600; }
-  .bal-item-val { color:#fff; font-size:15px; font-weight:800; }
-  .bal-item-sub { color:rgba(255,255,255,0.3); font-size:10px; margin-top:2px; }
-
-  /* QUICK ACTIONS */
-  .section-header { display:flex; align-items:center; justify-content:space-between; padding: 18px 22px 12px; }
-  .section-title { color:#fff; font-size:15px; font-weight:700; }
-  .section-more { color:#6366f1; font-size:12px; font-weight:600; }
-
-  .quick-row { display:flex; gap:8px; padding: 0 22px; overflow-x:auto; }
-  .quick-row::-webkit-scrollbar { display:none; }
-  .quick-btn {
-    flex-shrink: 0;
-    display: flex; flex-direction:column; align-items:center; gap:7px;
-    cursor: pointer;
-  }
-  .quick-icon {
-    width: 54px; height: 54px;
-    border-radius: 18px;
-    display: flex; align-items:center; justify-content:center;
-  }
-  .quick-icon svg { width:22px; height:22px; stroke-width:2; fill:none; stroke-linecap:round; stroke-linejoin:round; }
-  .quick-label { color:rgba(255,255,255,0.55); font-size:10px; font-weight:600; text-align:center; }
-
-  .qi-blue   { background: rgba(99,102,241,0.15); border: 1px solid rgba(99,102,241,0.2); }
-  .qi-blue svg { stroke: #818cf8; }
-  .qi-green  { background: rgba(34,197,94,0.12); border: 1px solid rgba(34,197,94,0.18); }
-  .qi-green svg { stroke: #4ade80; }
-  .qi-amber  { background: rgba(251,191,36,0.12); border: 1px solid rgba(251,191,36,0.18); }
-  .qi-amber svg { stroke: #fbbf24; }
-  .qi-violet { background: rgba(167,139,250,0.12); border: 1px solid rgba(167,139,250,0.18); }
-  .qi-violet svg { stroke: #a78bfa; }
-  .qi-cyan   { background: rgba(34,211,238,0.12); border: 1px solid rgba(34,211,238,0.18); }
-  .qi-cyan svg { stroke: #22d3ee; }
-  .qi-rose   { background: rgba(251,113,133,0.12); border: 1px solid rgba(251,113,133,0.18); }
-  .qi-rose svg { stroke: #fb7185; }
-
-  /* RECENT */
-  .tx-list { padding: 0 22px; display:flex; flex-direction:column; gap:8px; margin-bottom:16px; }
-  .tx-item {
-    display: flex; align-items: center; gap: 12px;
-    background: rgba(255,255,255,0.03);
-    border: 1px solid rgba(255,255,255,0.04);
-    border-radius: 16px;
-    padding: 12px 14px;
-  }
-  .tx-icon {
-    width: 40px; height: 40px;
-    border-radius: 13px;
-    display: flex; align-items:center; justify-content:center;
-    flex-shrink: 0;
-  }
-  .tx-icon svg { width:18px; height:18px; stroke-width:2; fill:none; stroke-linecap:round; stroke-linejoin:round; }
-  .tx-body { flex:1; }
-  .tx-name { color:#e5e7eb; font-size:13px; font-weight:600; }
-  .tx-date { color:#4b5563; font-size:10px; margin-top:2px; }
-  .tx-cat { display:inline-block; background:rgba(255,255,255,0.05); color:#6b7280; font-size:9px; font-weight:600; padding:2px 7px; border-radius:20px; margin-top:3px; }
-  .tx-amount { font-size:14px; font-weight:800; }
-  .tx-in { color: #4ade80; }
-  .tx-out { color: #f87171; }
+  .notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:110px;height:28px;background:#090910;border-radius:0 0 18px 18px;z-index:99;}
+  .statusbar{height:46px;display:flex;align-items:flex-end;justify-content:space-between;padding:0 24px 7px;flex-shrink:0;z-index:10;}
+  .statusbar .time{color:#fff;font-size:13px;font-weight:700;}
+  .sb-right{display:flex;align-items:center;gap:5px;}
+  .scroll{flex:1;overflow-y:auto;overflow-x:hidden;}
+  .scroll::-webkit-scrollbar{display:none;}
 
   /* BOTTOM NAV */
-  .bottom-nav {
-    height: 76px;
-    background: rgba(9,9,16,0.95);
-    backdrop-filter: blur(30px);
-    border-top: 1px solid rgba(255,255,255,0.04);
-    display: flex;
-    align-items: center;
-    justify-content: space-around;
-    padding: 0 8px 10px;
-    flex-shrink: 0;
+  .bottom-nav{
+    height:70px;
+    background:rgba(9,9,16,0.97);
+    backdrop-filter:blur(30px);
+    border-top:1px solid rgba(255,255,255,0.04);
+    display:flex;align-items:center;justify-content:space-around;
+    padding:0 6px 8px;
+    flex-shrink:0;
   }
-  .nav-item { display:flex; flex-direction:column; align-items:center; gap:4px; padding:6px 14px; border-radius:16px; cursor:pointer; }
-  .nav-item.active { background: rgba(99,102,241,0.1); }
-  .nav-item svg { width:22px; height:22px; stroke-width:2; fill:none; stroke-linecap:round; stroke-linejoin:round; }
-  .nav-item.active svg { stroke: #818cf8; }
-  .nav-item:not(.active) svg { stroke: #374151; }
-  .nav-label { font-size:9px; font-weight:700; letter-spacing:0.02em; }
-  .nav-item.active .nav-label { color: #818cf8; }
-  .nav-item:not(.active) .nav-label { color: #374151; }
-  .nav-dot { width:4px; height:4px; background:#6366f1; border-radius:50%; margin-top:1px; }
+  .nav-item{display:flex;flex-direction:column;align-items:center;gap:4px;padding:5px 12px;border-radius:14px;cursor:pointer;}
+  .nav-item.active{background:rgba(99,102,241,0.1);}
+  .nav-item svg{width:21px;height:21px;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round;}
+  .nav-item.active svg{stroke:#818cf8;}
+  .nav-item:not(.active) svg{stroke:#374151;}
+  .nav-label{font-size:9px;font-weight:700;letter-spacing:.02em;}
+  .nav-item.active .nav-label{color:#818cf8;}
+  .nav-item:not(.active) .nav-label{color:#374151;}
+  .nav-dot{width:4px;height:4px;background:#6366f1;border-radius:50%;margin-top:1px;}
 
-  /* ── SCREEN 2: MENU ── */
-  .menu-page { flex:1; display:flex; flex-direction:column; }
+  /* ── SCREEN 1: HOME ── */
+  .home-top{padding:2px 20px 0;}
+  .greeting-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+  .greeting-sub{color:#555;font-size:11px;font-weight:500;margin-bottom:2px;}
+  .greeting-name{color:#fff;font-size:19px;font-weight:800;}
+  .avatar-btn{
+    width:40px;height:40px;border-radius:50%;
+    background:linear-gradient(135deg,#6366f1,#8b5cf6);
+    display:flex;align-items:center;justify-content:center;
+    font-size:15px;font-weight:800;color:#fff;
+    box-shadow:0 4px 16px rgba(99,102,241,0.5);
+    flex-shrink:0;position:relative;
+    overflow:hidden;
+  }
+  .avatar-btn img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
+  .avatar-dot{position:absolute;bottom:1px;right:1px;width:10px;height:10px;background:#22c55e;border-radius:50%;border:2px solid #090910;z-index:2;}
 
-  .menu-top-bar {
-    display: flex; align-items:center; justify-content:space-between;
-    padding: 4px 22px 16px;
+  .bal-card{
+    background:linear-gradient(135deg,#1a1060 0%,#2d1b69 40%,#1e0d4e 100%);
+    border-radius:24px;padding:18px 18px;margin-bottom:8px;
+    position:relative;overflow:hidden;
+    border:1px solid rgba(139,92,246,0.2);
   }
-  .menu-top-title { color:#fff; font-size:20px; font-weight:800; }
-  .menu-search-btn {
-    width:38px; height:38px; border-radius:13px;
-    background:rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.06);
-    display:flex; align-items:center; justify-content:center;
-  }
-  .menu-search-btn svg { width:17px; height:17px; stroke:#6b7280; stroke-width:2; fill:none; stroke-linecap:round; stroke-linejoin:round; }
+  .bal-glow{position:absolute;top:-50px;right:-50px;width:160px;height:160px;background:radial-gradient(circle,rgba(139,92,246,0.3) 0%,transparent 70%);pointer-events:none;}
+  .bal-label{color:rgba(255,255,255,0.5);font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px;}
+  .bal-amount{color:#fff;font-size:28px;font-weight:900;letter-spacing:-1px;line-height:1;margin-bottom:4px;}
+  .bal-change{display:flex;align-items:center;gap:4px;margin-bottom:14px;}
+  .bal-pill{background:rgba(34,197,94,0.18);color:#4ade80;font-size:9px;font-weight:700;padding:2px 7px;border-radius:20px;display:flex;align-items:center;gap:2px;}
+  .bal-hint{color:rgba(255,255,255,0.3);font-size:10px;}
+  .bal-row{display:flex;gap:8px;}
+  .bal-item{flex:1;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.06);border-radius:14px;padding:10px 12px;}
+  .bal-item-top{display:flex;align-items:center;gap:5px;margin-bottom:4px;}
+  .bal-dot{width:18px;height:18px;border-radius:7px;display:flex;align-items:center;justify-content:center;}
+  .bal-item-label{color:rgba(255,255,255,0.45);font-size:9px;font-weight:600;}
+  .bal-item-val{color:#fff;font-size:14px;font-weight:800;}
+  .bal-item-sub{color:rgba(255,255,255,0.3);font-size:9px;margin-top:1px;}
 
-  .menu-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    padding: 0 16px;
-    flex: 1;
-  }
-  .mc {
-    border-radius: 24px;
-    padding: 18px 16px 16px;
-    display: flex; flex-direction:column;
-    position: relative;
-    overflow: hidden;
-    cursor: pointer;
-    min-height: 130px;
-    border: 1px solid rgba(255,255,255,0.04);
-  }
-  .mc-bg-glow {
-    position: absolute; top:-20px; right:-20px;
-    width:80px; height:80px;
-    border-radius:50%;
-    filter: blur(25px);
-    opacity: 0.6;
-  }
-  .mc-icon-box {
-    width: 42px; height: 42px; border-radius: 14px;
-    background: rgba(255,255,255,0.12);
-    display:flex; align-items:center; justify-content:center;
-    margin-bottom: 12px;
-    position: relative; z-index:1;
-  }
-  .mc-icon-box svg { width:20px; height:20px; stroke:#fff; stroke-width:2; fill:none; stroke-linecap:round; stroke-linejoin:round; }
-  .mc-title { color:#fff; font-size:13px; font-weight:800; position:relative; z-index:1; line-height:1.2; }
-  .mc-sub { color:rgba(255,255,255,0.45); font-size:10px; margin-top:4px; position:relative; z-index:1; line-height:1.4; }
-  .mc-badge {
-    position:absolute; top:14px; right:14px;
-    background:rgba(255,255,255,0.15);
-    color:#fff; font-size:9px; font-weight:800;
-    padding:3px 8px; border-radius:20px;
-    z-index:1;
-  }
-  .mc-arr {
-    position:absolute; bottom:14px; right:14px;
-    opacity:0.25; z-index:1;
-  }
-  .mc-arr svg { width:14px; height:14px; stroke:#fff; stroke-width:2.5; fill:none; stroke-linecap:round; stroke-linejoin:round; }
+  /* ONLINE USERS ROW */
+  .section-header{display:flex;align-items:center;justify-content:space-between;padding:14px 20px 10px;}
+  .section-title{color:#fff;font-size:14px;font-weight:700;}
+  .section-more{color:#6366f1;font-size:11px;font-weight:600;}
 
-  .mc1 { background: linear-gradient(145deg, #1e1b4b, #312e81); }
-  .mc1 .mc-bg-glow { background: #6366f1; }
-  .mc2 { background: linear-gradient(145deg, #052e16, #14532d); }
-  .mc2 .mc-bg-glow { background: #22c55e; }
-  .mc3 { background: linear-gradient(145deg, #431407, #7c2d12); }
-  .mc3 .mc-bg-glow { background: #f97316; }
-  .mc4 { background: linear-gradient(145deg, #2e1065, #4c1d95); }
-  .mc4 .mc-bg-glow { background: #a855f7; }
-  .mc5 { background: linear-gradient(145deg, #083344, #164e63); }
-  .mc5 .mc-bg-glow { background: #06b6d4; }
-  .mc6 { background: linear-gradient(145deg, #4a044e, #86198f); }
-  .mc6 .mc-bg-glow { background: #e879f9; }
+  .online-row{display:flex;gap:12px;padding:0 20px 4px;overflow-x:auto;}
+  .online-row::-webkit-scrollbar{display:none;}
+  .online-user{display:flex;flex-direction:column;align-items:center;gap:5px;flex-shrink:0;}
+  .ou-avatar{width:46px;height:46px;border-radius:50%;position:relative;}
+  .ou-avatar-inner{
+    width:46px;height:46px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-size:15px;font-weight:800;color:#fff;
+    overflow:hidden;
+  }
+  .ou-avatar-inner img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
+  .ou-ring-online{position:absolute;inset:-2px;border-radius:50%;border:2px solid #22c55e;}
+  .ou-ring-offline{position:absolute;inset:-2px;border-radius:50%;border:2px solid #374151;}
+  .ou-status-dot{
+    position:absolute;bottom:1px;right:1px;
+    width:11px;height:11px;border-radius:50%;
+    border:2px solid #090910;
+  }
+  .dot-online{background:#22c55e;}
+  .dot-offline{background:#4b5563;}
+  .dot-away{background:#f59e0b;}
+  .ou-name{color:#9ca3af;font-size:9px;font-weight:600;text-align:center;}
+  .ou-label{font-size:8px;font-weight:700;padding:2px 6px;border-radius:20px;}
+  .lbl-online{background:rgba(34,197,94,0.15);color:#4ade80;}
+  .lbl-offline{background:rgba(75,85,99,0.2);color:#6b7280;}
+  .lbl-away{background:rgba(245,158,11,0.15);color:#fbbf24;}
 
-  .menu-bottom-space { height: 16px; }
+  /* TX LIST */
+  .tx-list{padding:0 20px;display:flex;flex-direction:column;gap:7px;margin-bottom:14px;}
+  .tx-item{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.04);border-radius:14px;padding:11px 12px;}
+  .tx-icon{width:38px;height:38px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .tx-icon svg{width:17px;height:17px;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round;}
+  .tx-body{flex:1;}
+  .tx-name{color:#e5e7eb;font-size:12px;font-weight:600;}
+  .tx-date{color:#4b5563;font-size:9px;margin-top:1px;}
+  .tx-cat{display:inline-block;background:rgba(255,255,255,0.05);color:#6b7280;font-size:8px;font-weight:600;padding:2px 6px;border-radius:20px;margin-top:2px;}
+  .tx-amount{font-size:13px;font-weight:800;}
+  .tx-in{color:#4ade80;}.tx-out{color:#f87171;}
+
+  /* ── SCREEN 2: PROFILE ── */
+  .profile-page{}
+  .profile-hero{
+    background:linear-gradient(180deg,#12112a 0%,#0d0d1a 100%);
+    padding:6px 20px 24px;
+    display:flex;flex-direction:column;align-items:center;
+    position:relative;
+  }
+  .profile-top-bar{width:100%;display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+  .ptb-title{color:#fff;font-size:16px;font-weight:800;}
+  .ptb-btn{width:34px;height:34px;border-radius:11px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;justify-content:center;}
+  .ptb-btn svg{width:15px;height:15px;stroke:#9ca3af;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round;}
+
+  .profile-avatar-wrap{position:relative;margin-bottom:14px;}
+  .profile-avatar{
+    width:88px;height:88px;border-radius:50%;
+    background:linear-gradient(135deg,#6366f1,#8b5cf6);
+    display:flex;align-items:center;justify-content:center;
+    font-size:32px;font-weight:900;color:#fff;
+    box-shadow:0 8px 32px rgba(99,102,241,0.5);
+    overflow:hidden;
+    position:relative;
+  }
+  .profile-avatar img{width:100%;height:100%;object-fit:cover;}
+  .profile-avatar-ring{
+    position:absolute;inset:-3px;border-radius:50%;
+    border:2px solid rgba(99,102,241,0.5);
+  }
+  .profile-camera{
+    position:absolute;bottom:2px;right:2px;
+    width:26px;height:26px;border-radius:50%;
+    background:#6366f1;
+    border:2px solid #090910;
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;
+  }
+  .profile-camera svg{width:13px;height:13px;stroke:#fff;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round;}
+
+  .profile-name{color:#fff;font-size:20px;font-weight:800;margin-bottom:2px;}
+  .profile-username{color:#6b7280;font-size:12px;margin-bottom:10px;}
+  .profile-status-row{display:flex;align-items:center;gap:6px;}
+  .profile-status-dot{width:8px;height:8px;border-radius:50%;background:#22c55e;box-shadow:0 0 8px rgba(34,197,94,0.6);}
+  .profile-status-text{color:#4ade80;font-size:11px;font-weight:600;}
+
+  .profile-stats{
+    display:flex;gap:1px;
+    background:rgba(255,255,255,0.04);
+    border-radius:18px;
+    margin:16px 20px 0;
+    overflow:hidden;
+    border:1px solid rgba(255,255,255,0.05);
+  }
+  .ps-item{flex:1;padding:12px 8px;display:flex;flex-direction:column;align-items:center;gap:2px;border-right:1px solid rgba(255,255,255,0.04);}
+  .ps-item:last-child{border-right:none;}
+  .ps-val{color:#fff;font-size:16px;font-weight:800;}
+  .ps-label{color:#4b5563;font-size:9px;font-weight:600;text-align:center;}
+
+  .profile-section{padding:14px 20px 0;}
+  .ps-title{color:#4b5563;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px;}
+  .ps-card{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.05);border-radius:16px;overflow:hidden;}
+  .ps-row{display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid rgba(255,255,255,0.04);}
+  .ps-row:last-child{border-bottom:none;}
+  .ps-icon{width:34px;height:34px;border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .ps-icon svg{width:16px;height:16px;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round;}
+  .ps-row-label{color:#d1d5db;font-size:13px;font-weight:500;flex:1;}
+  .ps-row-val{color:#6b7280;font-size:11px;}
+  .ps-row-arr{color:#374151;}
+  .ps-row-arr svg{width:14px;height:14px;stroke:#374151;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round;}
+
+  /* ONLINE STATUS PILL on profile */
+  .status-picker{
+    display:flex;gap:6px;
+    background:rgba(255,255,255,0.04);
+    border:1px solid rgba(255,255,255,0.06);
+    border-radius:14px;
+    padding:6px;
+    margin:0 20px;
+  }
+  .sp-item{flex:1;display:flex;align-items:center;justify-content:center;gap:5px;padding:7px 4px;border-radius:10px;cursor:pointer;}
+  .sp-item.active-sp{background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.2);}
+  .sp-dot{width:7px;height:7px;border-radius:50%;}
+  .sp-text{font-size:10px;font-weight:700;}
+  .sp-item.active-sp .sp-text{color:#818cf8;}
+  .sp-item:not(.active-sp) .sp-text{color:#4b5563;}
 </style>
 </head>
 <body>
 
-<!-- SCREEN 1: HOME -->
+<!-- SCREEN 1: HOME with online users -->
 <div class="wrap">
   <div class="screen-label">Bosh sahifa</div>
   <div class="phone">
@@ -314,47 +236,41 @@
     <div class="statusbar">
       <span class="time">9:41</span>
       <div class="sb-right">
-        <svg width="15" height="11" viewBox="0 0 15 11" fill="none">
-          <rect x="0" y="4" width="2.5" height="7" rx="0.8" fill="white" opacity="0.4"/>
-          <rect x="3.5" y="2.5" width="2.5" height="8.5" rx="0.8" fill="white" opacity="0.6"/>
-          <rect x="7" y="1" width="2.5" height="10" rx="0.8" fill="white" opacity="0.8"/>
-          <rect x="10.5" y="0" width="2.5" height="11" rx="0.8" fill="white"/>
-        </svg>
-        <svg width="22" height="12" viewBox="0 0 22 12" fill="none">
-          <rect x="0.5" y="0.5" width="18" height="11" rx="2.5" stroke="white" stroke-opacity="0.35"/>
-          <rect x="2" y="2" width="12" height="8" rx="1.5" fill="white"/>
-          <path d="M20 4.5V7.5C20.8 7.2 21.5 6.5 21.5 6C21.5 5.5 20.8 4.8 20 4.5Z" fill="white" opacity="0.5"/>
-        </svg>
+        <svg width="14" height="10" viewBox="0 0 14 10" fill="none"><rect x="0" y="4" width="2" height="6" rx=".6" fill="white" opacity=".4"/><rect x="3.2" y="2.5" width="2" height="7.5" rx=".6" fill="white" opacity=".65"/><rect x="6.4" y="1" width="2" height="9" rx=".6" fill="white" opacity=".85"/><rect x="9.6" y="0" width="2" height="10" rx=".6" fill="white"/></svg>
+        <svg width="20" height="11" viewBox="0 0 20 11" fill="none"><rect x=".5" y=".5" width="16" height="10" rx="2.5" stroke="white" stroke-opacity=".3"/><rect x="2" y="2" width="11" height="7" rx="1.2" fill="white"/><path d="M18 3.8v3.4c.7-.3 1.2-.9 1.2-1.7s-.5-1.4-1.2-1.7z" fill="white" opacity=".5"/></svg>
       </div>
     </div>
 
     <div class="scroll">
       <div class="home-top">
         <div class="greeting-row">
-          <div class="greeting-left">
+          <div>
             <div class="greeting-sub">Xush kelibsiz 👋</div>
             <div class="greeting-name">Gulom</div>
           </div>
-          <div class="avatar-btn">G<div class="avatar-dot"></div></div>
+          <div class="avatar-btn">
+            <!-- avatar with photo -->
+            <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#f97316,#ef4444);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#fff;">G</div>
+            <div class="avatar-dot"></div>
+          </div>
         </div>
 
         <div class="bal-card">
           <div class="bal-glow"></div>
-          <div class="bal-glow2"></div>
-          <div class="bal-label">Umumiy balans</div>
+          <div class="bal-label">UMUMIY BALANS</div>
           <div class="bal-amount">12 450 000</div>
           <div class="bal-change">
-            <div class="bal-change-pill">
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><polyline points="18 15 12 9 6 15"/></svg>
+            <div class="bal-pill">
+              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><polyline points="18 15 12 9 6 15"/></svg>
               +8.2%
             </div>
-            <span class="bal-change-text">o'tgan oyga nisbatan</span>
+            <span class="bal-hint">o'tgan oyga nisbatan</span>
           </div>
           <div class="bal-row">
             <div class="bal-item">
               <div class="bal-item-top">
-                <div class="bal-item-dot dot-in">
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="3" stroke-linecap="round"><polyline points="18 15 12 9 6 15"/></svg>
+                <div class="bal-dot" style="background:rgba(74,222,128,.15)">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="3" stroke-linecap="round"><polyline points="18 15 12 9 6 15"/></svg>
                 </div>
                 <span class="bal-item-label">Kirim</span>
               </div>
@@ -363,8 +279,8 @@
             </div>
             <div class="bal-item">
               <div class="bal-item-top">
-                <div class="bal-item-dot dot-out">
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="3" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+                <div class="bal-dot" style="background:rgba(248,113,113,.15)">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="3" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
                 </div>
                 <span class="bal-item-label">Chiqim</span>
               </div>
@@ -375,41 +291,68 @@
         </div>
       </div>
 
-      <!-- QUICK ACTIONS -->
+      <!-- ONLINE USERS -->
       <div class="section-header">
-        <span class="section-title">Tezkor amallar</span>
+        <span class="section-title">Korxona a'zolari</span>
+        <span class="section-more">Barchasi →</span>
       </div>
-      <div class="quick-row" style="padding:0 22px 4px; gap:14px;">
-        <div class="quick-btn">
-          <div class="quick-icon qi-blue">
-            <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      <div class="online-row">
+
+        <!-- Online -->
+        <div class="online-user">
+          <div class="ou-avatar">
+            <div class="ou-ring-online"></div>
+            <div class="ou-avatar-inner" style="background:linear-gradient(135deg,#f97316,#ef4444)">A</div>
+            <div class="ou-status-dot dot-online"></div>
           </div>
-          <span class="quick-label">Kirim</span>
+          <span class="ou-name">Alisher</span>
+          <span class="ou-label lbl-online">Onlayn</span>
         </div>
-        <div class="quick-btn">
-          <div class="quick-icon qi-rose">
-            <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+
+        <!-- Online with photo feel -->
+        <div class="online-user">
+          <div class="ou-avatar">
+            <div class="ou-ring-online"></div>
+            <div class="ou-avatar-inner" style="background:linear-gradient(135deg,#0ea5e9,#6366f1)">M</div>
+            <div class="ou-status-dot dot-online"></div>
           </div>
-          <span class="quick-label">Chiqim</span>
+          <span class="ou-name">Muhammadyusuf</span>
+          <span class="ou-label lbl-online">Onlayn</span>
         </div>
-        <div class="quick-btn">
-          <div class="quick-icon qi-green">
-            <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+
+        <!-- Away -->
+        <div class="online-user">
+          <div class="ou-avatar">
+            <div class="ou-ring-offline" style="border-color:#f59e0b;opacity:.6"></div>
+            <div class="ou-avatar-inner" style="background:linear-gradient(135deg,#a855f7,#ec4899)">S</div>
+            <div class="ou-status-dot dot-away"></div>
           </div>
-          <span class="quick-label">Qarz</span>
+          <span class="ou-name">Sarvinoz</span>
+          <span class="ou-label lbl-away">Faol emas</span>
         </div>
-        <div class="quick-btn">
-          <div class="quick-icon qi-amber">
-            <svg viewBox="0 0 24 24"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+
+        <!-- Offline -->
+        <div class="online-user">
+          <div class="ou-avatar">
+            <div class="ou-ring-offline"></div>
+            <div class="ou-avatar-inner" style="background:linear-gradient(135deg,#374151,#1f2937)">B</div>
+            <div class="ou-status-dot dot-offline"></div>
           </div>
-          <span class="quick-label">Valyuta</span>
+          <span class="ou-name">Bobur</span>
+          <span class="ou-label lbl-offline">Oflayn</span>
         </div>
-        <div class="quick-btn">
-          <div class="quick-icon qi-violet">
-            <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+
+        <!-- Offline -->
+        <div class="online-user">
+          <div class="ou-avatar">
+            <div class="ou-ring-offline"></div>
+            <div class="ou-avatar-inner" style="background:linear-gradient(135deg,#065f46,#059669)">N</div>
+            <div class="ou-status-dot dot-offline"></div>
           </div>
-          <span class="quick-label">Hisobot</span>
+          <span class="ou-name">Nodira</span>
+          <span class="ou-label lbl-offline">Oflayn</span>
         </div>
+
       </div>
 
       <!-- RECENT TX -->
@@ -419,7 +362,7 @@
       </div>
       <div class="tx-list">
         <div class="tx-item">
-          <div class="tx-icon" style="background:rgba(74,222,128,0.1);border:1px solid rgba(74,222,128,0.15)">
+          <div class="tx-icon" style="background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.15)">
             <svg viewBox="0 0 24 24" stroke="#4ade80"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
           </div>
           <div class="tx-body">
@@ -430,7 +373,7 @@
           <div class="tx-amount tx-in">+5 000 000</div>
         </div>
         <div class="tx-item">
-          <div class="tx-icon" style="background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.15)">
+          <div class="tx-icon" style="background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.15)">
             <svg viewBox="0 0 24 24" stroke="#f87171"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/></svg>
           </div>
           <div class="tx-body">
@@ -441,11 +384,11 @@
           <div class="tx-amount tx-out">-320 000</div>
         </div>
         <div class="tx-item">
-          <div class="tx-icon" style="background:rgba(99,102,241,0.1);border:1px solid rgba(99,102,241,0.15)">
-            <svg viewBox="0 0 24 24" stroke="#818cf8"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+          <div class="tx-icon" style="background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.15)">
+            <svg viewBox="0 0 24 24" stroke="#818cf8"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
           </div>
           <div class="tx-body">
-            <div class="tx-name">Kommunal</div>
+            <div class="tx-name">Kommunal to'lov</div>
             <div class="tx-date">14-iyun</div>
             <span class="tx-cat">Chiqim</span>
           </div>
@@ -476,100 +419,125 @@
   </div>
 </div>
 
-<!-- SCREEN 2: MENU -->
+<!-- SCREEN 2: PROFILE PAGE -->
 <div class="wrap">
-  <div class="screen-label">Menyu sahifasi</div>
+  <div class="screen-label">Profil sahifasi</div>
   <div class="phone">
     <div class="notch"></div>
     <div class="statusbar">
       <span class="time">9:41</span>
       <div class="sb-right">
-        <svg width="15" height="11" viewBox="0 0 15 11" fill="none">
-          <rect x="0" y="4" width="2.5" height="7" rx="0.8" fill="white" opacity="0.4"/>
-          <rect x="3.5" y="2.5" width="2.5" height="8.5" rx="0.8" fill="white" opacity="0.6"/>
-          <rect x="7" y="1" width="2.5" height="10" rx="0.8" fill="white" opacity="0.8"/>
-          <rect x="10.5" y="0" width="2.5" height="11" rx="0.8" fill="white"/>
-        </svg>
-        <svg width="22" height="12" viewBox="0 0 22 12" fill="none">
-          <rect x="0.5" y="0.5" width="18" height="11" rx="2.5" stroke="white" stroke-opacity="0.35"/>
-          <rect x="2" y="2" width="12" height="8" rx="1.5" fill="white"/>
-          <path d="M20 4.5V7.5C20.8 7.2 21.5 6.5 21.5 6C21.5 5.5 20.8 4.8 20 4.5Z" fill="white" opacity="0.5"/>
-        </svg>
+        <svg width="14" height="10" viewBox="0 0 14 10" fill="none"><rect x="0" y="4" width="2" height="6" rx=".6" fill="white" opacity=".4"/><rect x="3.2" y="2.5" width="2" height="7.5" rx=".6" fill="white" opacity=".65"/><rect x="6.4" y="1" width="2" height="9" rx=".6" fill="white" opacity=".85"/><rect x="9.6" y="0" width="2" height="10" rx=".6" fill="white"/></svg>
+        <svg width="20" height="11" viewBox="0 0 20 11" fill="none"><rect x=".5" y=".5" width="16" height="10" rx="2.5" stroke="white" stroke-opacity=".3"/><rect x="2" y="2" width="11" height="7" rx="1.2" fill="white"/></svg>
       </div>
     </div>
 
-    <div class="scroll" style="display:flex;flex-direction:column;">
-      <div class="menu-top-bar">
-        <div class="menu-top-title">Bo'limlar</div>
-        <div class="menu-search-btn">
-          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <div class="scroll">
+      <div class="profile-hero">
+        <div class="profile-top-bar">
+          <div class="ptb-title">Profil</div>
+          <div class="ptb-btn">
+            <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </div>
+        </div>
+
+        <!-- AVATAR with camera button -->
+        <div class="profile-avatar-wrap">
+          <div class="profile-avatar">
+            <!-- Gradient avatar (rasm yo'q holatda) -->
+            <div style="width:100%;height:100%;background:linear-gradient(135deg,#f97316,#ef4444);display:flex;align-items:center;justify-content:center;font-size:34px;font-weight:900;color:#fff;">G</div>
+          </div>
+          <div class="profile-avatar-ring"></div>
+          <div class="profile-camera">
+            <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          </div>
+        </div>
+
+        <div class="profile-name">Gulom Alinazarov</div>
+        <div class="profile-username">@qwerty · Admin</div>
+        <div class="profile-status-row">
+          <div class="profile-status-dot"></div>
+          <span class="profile-status-text">Hozir onlayn</span>
         </div>
       </div>
 
-      <div class="menu-grid">
-        <div class="mc mc1">
-          <div class="mc-bg-glow"></div>
-          <div class="mc-icon-box">
-            <svg viewBox="0 0 24 24"><path d="M7 16V4m0 0L3 8m4-4l4 4"/><path d="M17 8v12m0 0l4-4m-4 4l-4-4"/></svg>
-          </div>
-          <div class="mc-title">Kirim /<br>Chiqim</div>
-          <div class="mc-sub">Barcha to'lovlar</div>
-          <div class="mc-badge">24</div>
-          <div class="mc-arr"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
+      <!-- STATS -->
+      <div class="profile-stats">
+        <div class="ps-item">
+          <div class="ps-val">247</div>
+          <div class="ps-label">Jami tranzaksiya</div>
         </div>
-
-        <div class="mc mc2">
-          <div class="mc-bg-glow"></div>
-          <div class="mc-icon-box">
-            <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-          </div>
-          <div class="mc-title">Qarzlar</div>
-          <div class="mc-sub">Bergan va olgan</div>
-          <div class="mc-badge">3</div>
-          <div class="mc-arr"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
+        <div class="ps-item">
+          <div class="ps-val">12</div>
+          <div class="ps-label">Faol qarz</div>
         </div>
-
-        <div class="mc mc3">
-          <div class="mc-bg-glow"></div>
-          <div class="mc-icon-box">
-            <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-          </div>
-          <div class="mc-title">Hamkorlar</div>
-          <div class="mc-sub">Mijozlar, yetkazuvchilar</div>
-          <div class="mc-arr"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
-        </div>
-
-        <div class="mc mc4">
-          <div class="mc-bg-glow"></div>
-          <div class="mc-icon-box">
-            <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-          </div>
-          <div class="mc-title">Hisobot</div>
-          <div class="mc-sub">Grafik va tahlil</div>
-          <div class="mc-arr"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
-        </div>
-
-        <div class="mc mc5">
-          <div class="mc-bg-glow"></div>
-          <div class="mc-icon-box">
-            <svg viewBox="0 0 24 24"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-          </div>
-          <div class="mc-title">Valyuta</div>
-          <div class="mc-sub">USD · EUR · RUB</div>
-          <div class="mc-arr"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
-        </div>
-
-        <div class="mc mc6">
-          <div class="mc-bg-glow"></div>
-          <div class="mc-icon-box">
-            <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-          </div>
-          <div class="mc-title">Korxona</div>
-          <div class="mc-sub">Jamoa va ruxsatlar</div>
-          <div class="mc-arr"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
+        <div class="ps-item">
+          <div class="ps-val">5</div>
+          <div class="ps-label">A'zolar</div>
         </div>
       </div>
-      <div class="menu-bottom-space"></div>
+
+      <!-- STATUS PICKER -->
+      <div class="profile-section">
+        <div class="ps-title">Holat</div>
+      </div>
+      <div class="status-picker">
+        <div class="sp-item active-sp">
+          <div class="sp-dot" style="background:#22c55e;box-shadow:0 0 6px rgba(34,197,94,.6)"></div>
+          <span class="sp-text">Onlayn</span>
+        </div>
+        <div class="sp-item">
+          <div class="sp-dot" style="background:#f59e0b"></div>
+          <span class="sp-text">Band</span>
+        </div>
+        <div class="sp-item">
+          <div class="sp-dot" style="background:#4b5563"></div>
+          <span class="sp-text">Ko'rinmas</span>
+        </div>
+      </div>
+
+      <!-- SETTINGS ROWS -->
+      <div class="profile-section">
+        <div class="ps-title">Hisob ma'lumotlari</div>
+        <div class="ps-card">
+          <div class="ps-row">
+            <div class="ps-icon" style="background:rgba(99,102,241,.12)">
+              <svg viewBox="0 0 24 24" stroke="#818cf8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            </div>
+            <span class="ps-row-label">To'liq ism</span>
+            <span class="ps-row-val">Gulom A.</span>
+            <div class="ps-row-arr"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
+          </div>
+          <div class="ps-row">
+            <div class="ps-icon" style="background:rgba(34,197,94,.1)">
+              <svg viewBox="0 0 24 24" stroke="#4ade80"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            </div>
+            <span class="ps-row-label">Parolni o'zgartirish</span>
+            <div class="ps-row-arr"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
+          </div>
+          <div class="ps-row">
+            <div class="ps-icon" style="background:rgba(251,191,36,.1)">
+              <svg viewBox="0 0 24 24" stroke="#fbbf24"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+            </div>
+            <span class="ps-row-label">PIN kod</span>
+            <span class="ps-row-val">•••• faol</span>
+            <div class="ps-row-arr"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="profile-section" style="padding-bottom:16px;">
+        <div class="ps-title">Boshqa</div>
+        <div class="ps-card">
+          <div class="ps-row">
+            <div class="ps-icon" style="background:rgba(239,68,68,.1)">
+              <svg viewBox="0 0 24 24" stroke="#f87171"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            </div>
+            <span class="ps-row-label" style="color:#f87171">Chiqish</span>
+          </div>
+        </div>
+      </div>
+
     </div>
 
     <div class="bottom-nav">
@@ -577,18 +545,18 @@
         <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
         <span class="nav-label">Asosiy</span>
       </div>
-      <div class="nav-item active">
+      <div class="nav-item">
         <svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
         <span class="nav-label">Menyu</span>
-        <div class="nav-dot"></div>
       </div>
       <div class="nav-item">
         <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         <span class="nav-label">Qidirish</span>
       </div>
-      <div class="nav-item">
+      <div class="nav-item active">
         <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
         <span class="nav-label">Profil</span>
+        <div class="nav-dot"></div>
       </div>
     </div>
   </div>
