@@ -14,14 +14,13 @@ const UNITS = ['kg', 'g', 'tonna', 'litr', 'ml', 'dona', 'm', 'm²', 'm³']
 const today = () => new Date().toISOString().split('T')[0]
 
 export default function HamkorDetail() {
-  const { type, id } = useParams()
+  const { sectionId, id } = useParams()
   const nav = useNavigate()
   const { user, saveTransactions, transactions } = useApp()
   const uid = user?.id
-  const isSupplier = type === 'yetkazib-beruvchilar'
-
   const [hamkor, setHamkor] = useState(null)
   const [addModal, setAddModal] = useState(false)
+  const [addTab, setAddTab] = useState('xomashyo') // 'xomashyo' | 'xizmat'
   const [payModal, setPayModal] = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState(false)
 
@@ -97,7 +96,7 @@ export default function HamkorDetail() {
   const handleDeleteHamkor = () => {
     const all = getData('hamkorlar', uid)
     saveData('hamkorlar', uid, all.filter(h => h.id !== id))
-    nav(`/hamkorlar/${type}`)
+    nav(`/hamkorlar/${sectionId}`)
   }
 
   if (!hamkor) return null
@@ -118,7 +117,7 @@ export default function HamkorDetail() {
         {/* Header */}
         <div className="sticky top-0 z-10 bg-gray-900 px-4 pt-4 pb-3">
           <div className="flex items-center gap-3 mb-3">
-            <button onClick={() => nav(`/hamkorlar/${type}`)} className="text-gray-400 active:text-white">
+            <button onClick={() => nav(`/hamkorlar/${sectionId}`)} className="text-gray-400 active:text-white">
               <ArrowLeft size={22} />
             </button>
             <h1 className="text-lg font-bold text-white flex-1 truncate">{hamkor.name}</h1>
@@ -190,8 +189,18 @@ export default function HamkorDetail() {
       </div>
 
       {/* Add entry modal */}
-      <Modal open={addModal} onClose={() => setAddModal(false)} title={isSupplier ? 'Xomashyo qo\'shish' : 'Xizmat haqi qo\'shish'}>
-        {isSupplier ? (
+      <Modal open={addModal} onClose={() => setAddModal(false)} title="Qo'shish">
+        {/* Tab */}
+        <div className="flex gap-2 mb-1">
+          <button onClick={() => setAddTab('xomashyo')} className={`flex-1 py-2 rounded-xl text-sm font-semibold transition-colors ${addTab === 'xomashyo' ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-400'}`}>
+            📦 Xomashyo
+          </button>
+          <button onClick={() => setAddTab('xizmat')} className={`flex-1 py-2 rounded-xl text-sm font-semibold transition-colors ${addTab === 'xizmat' ? 'bg-purple-600 text-white' : 'bg-gray-700 text-gray-400'}`}>
+            🔧 Xizmat haqi
+          </button>
+        </div>
+
+        {addTab === 'xomashyo' ? (
           <div className="flex flex-col gap-3">
             <input className="w-full bg-gray-700 text-white rounded-xl px-3 py-3 outline-none" placeholder="Xomashyo nomi *" value={xForm.name} onChange={e => setXForm(f => ({ ...f, name: e.target.value }))} />
             <div className="flex gap-2">

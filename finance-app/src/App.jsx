@@ -33,8 +33,8 @@ function ProtectedLayout() {
         <Route path="/categories" element={<Categories />} />
         <Route path="/family" element={<Family />} />
         <Route path="/hamkorlar" element={<Hamkorlar />} />
-        <Route path="/hamkorlar/:type" element={<HamkorlarList />} />
-        <Route path="/hamkorlar/:type/:id" element={<HamkorDetail />} />
+        <Route path="/hamkorlar/:sectionId" element={<HamkorlarList />} />
+        <Route path="/hamkorlar/:sectionId/:id" element={<HamkorDetail />} />
       </Routes>
       <BottomNav />
     </>
