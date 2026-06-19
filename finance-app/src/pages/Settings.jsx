@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { LogOut, Lock, User, Eye, EyeOff, Info, Tag, Globe, KeyRound, Trash2, Loader, RefreshCw } from 'lucide-react'
+import { LogOut, Lock, User, Eye, EyeOff, Info, Tag, Globe, KeyRound, Trash2, Loader, RefreshCw, UserX } from 'lucide-react'
 import { useApp } from '../store/AppContext'
 import { setCurrentUser, getData, getSettings } from '../store/storage'
-import { changePassword, changeUsername } from '../store/auth'
+import { changePassword, changeUsername, deleteAccount } from '../store/auth'
 import { syncToCloud } from '../store/sync'
 import Modal from '../components/Modal'
 import { useLang } from '../i18n/LangContext'
@@ -29,6 +29,10 @@ export default function Settings() {
   const [saving, setSaving] = useState(false)
   const [syncing, setSyncing] = useState(false)
   const [syncDone, setSyncDone] = useState(false)
+  const [deleteModal, setDeleteModal] = useState(false)
+  const [deletePass, setDeletePass] = useState('')
+  const [deleteError, setDeleteError] = useState('')
+  const [deleting, setDeleting] = useState(false)
 
   const handleForceSync = async () => {
     if (!user?.id) return
@@ -63,6 +67,18 @@ export default function Settings() {
   const hasPin = !!pin
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
+
+  const handleDeleteAccount = async () => {
+    if (!deletePass) return setDeleteError('Parolni kiriting')
+    setDeleting(true)
+    setDeleteError('')
+    try {
+      const res = await deleteAccount(user.id, deletePass)
+      if (res.error) return setDeleteError(res.error)
+      setUser(null)
+      nav('/login')
+    } catch { setDeleteError('Xatolik yuz berdi') } finally { setDeleting(false) }
+  }
 
   const handleLogout = () => {
     if (confirm('Chiqishni tasdiqlaysizmi?')) {
@@ -226,6 +242,19 @@ export default function Settings() {
 
         <div className="h-px bg-white/5 mx-4" />
 
+        <button onClick={() => { setDeleteModal(true); setDeletePass(''); setDeleteError('') }}
+          className="flex items-center gap-3 px-4 py-4 active:bg-dark-600 transition-colors text-left w-full">
+          <div className="w-9 h-9 rounded-xl bg-red-500/10 flex items-center justify-center">
+            <UserX size={18} className="text-red-500" />
+          </div>
+          <div>
+            <p className="text-red-500 text-sm font-medium">Akkauntni o'chirish</p>
+            <p className="text-gray-500 text-xs">Barcha ma'lumotlar butunlay o'chadi</p>
+          </div>
+        </button>
+
+        <div className="h-px bg-white/5 mx-4" />
+
         <button onClick={handleLogout}
           className="flex items-center gap-3 px-4 py-4 active:bg-dark-600 transition-colors text-left w-full">
           <div className="w-9 h-9 rounded-xl bg-red-500/15 flex items-center justify-center">
@@ -343,6 +372,33 @@ export default function Settings() {
           {success && <p className="text-green-400 text-sm bg-green-500/10 py-2 px-3 rounded-lg">{success}</p>}
           <button onClick={handleChangePass} disabled={saving} className="btn-primary mt-2 flex items-center justify-center gap-2">
             {saving ? <><Loader size={16} className="animate-spin" />Saqlanmoqda...</> : 'O\'zgartirish'}
+          </button>
+        </div>
+      </Modal>
+      {/* Delete Account Modal */}
+      <Modal open={deleteModal} onClose={() => setDeleteModal(false)} title="Akkauntni o'chirish">
+        <div className="flex flex-col gap-3 pb-2">
+          <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
+            <p className="text-red-400 text-sm font-medium mb-1">⚠ Diqqat!</p>
+            <p className="text-gray-400 text-xs">Barcha tranzaksiyalar, qarzlar, hamkorlar va akkaunt ma'lumotlari <span className="text-red-400 font-medium">butunlay o'chib ketadi</span>. Bu amalni qaytarib bo'lmaydi.</p>
+          </div>
+          <div>
+            <label className="text-gray-400 text-xs mb-1 block">Tasdiqlash uchun parolingizni kiriting</label>
+            <input
+              className="input-field"
+              type="password"
+              placeholder="Parol"
+              value={deletePass}
+              onChange={e => setDeletePass(e.target.value)}
+              autoComplete="current-password"
+            />
+          </div>
+          {deleteError && <p className="text-red-400 text-sm bg-red-500/10 py-2 px-3 rounded-lg">{deleteError}</p>}
+          <button
+            onClick={handleDeleteAccount}
+            disabled={deleting}
+            className="w-full py-3 rounded-xl bg-red-500 text-white font-bold flex items-center justify-center gap-2 disabled:opacity-60 active:opacity-80">
+            {deleting ? <><Loader size={16} className="animate-spin" />O'chirilmoqda...</> : <><UserX size={16} />Akkauntni o'chirish</>}
           </button>
         </div>
       </Modal>

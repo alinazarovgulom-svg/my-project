@@ -1,5 +1,5 @@
 import { db } from './firebase'
-import { collection, doc, getDoc, getDocs, query, where, setDoc, updateDoc } from 'firebase/firestore'
+import { collection, doc, getDoc, getDocs, query, where, setDoc, updateDoc, deleteDoc, writeBatch } from 'firebase/firestore'
 import { hashPassword, getCurrentUser, setCurrentUser, generateId } from './storage'
 
 const USERS_COL = 'users'
@@ -70,6 +70,36 @@ export const changePassword = async (userId, currentPassword, newPassword) => {
   if (data.password !== hashPassword(currentPassword)) return { error: "Joriy parol noto'g'ri" }
   await updateDoc(userRef, { password: hashPassword(newPassword) })
   return { success: true }
+}
+
+// Akkauntni butunlay o'chirish
+export const deleteAccount = async (userId, password) => {
+  try {
+    const snap = await getDoc(doc(db, USERS_COL, userId))
+    if (!snap.exists()) return { error: 'Foydalanuvchi topilmadi' }
+    const data = snap.data()
+    if (data.password !== hashPassword(password)) return { error: "Parol noto'g'ri" }
+
+    // Firestore dan ma'lumotlarni o'chirish
+    const batch = writeBatch(db)
+    const dataKeys = ['transactions', 'debts', 'settings', 'categories', 'pin', 'hamkorlar', 'hamkorlar_sections']
+    for (const key of dataKeys) {
+      batch.delete(doc(db, USERS_COL, userId, 'data', key))
+    }
+    batch.delete(doc(db, USERS_COL, userId))
+    await batch.commit()
+
+    // localStorage tozalash
+    setCurrentUser(null)
+    const keysToRemove = Object.keys(localStorage).filter(k =>
+      k.includes(userId) || k === 'fin_current_user'
+    )
+    keysToRemove.forEach(k => localStorage.removeItem(k))
+
+    return { success: true }
+  } catch (e) {
+    return { error: e?.message || 'Xatolik yuz berdi' }
+  }
 }
 
 // Parolni username orqali tiklash (email/phone yo'q, shuning uchun username yetarli)
