@@ -287,7 +287,7 @@ export default function HamkorDetail() {
               <FileDown size={15} /> PDF
             </button>
             <button onClick={() => exportExcel(sortedEntries)} className="flex-1 flex items-center justify-center gap-2 bg-green-600/20 border border-green-500/30 text-green-400 rounded-xl py-2.5 text-sm font-medium active:opacity-70">
-              <FileSpreadsheet size={15} /> Excel
+              <Sheet size={15} /> Excel
             </button>
             {(dateFrom || dateTo) && (
               <button onClick={() => { setDateFrom(''); setDateTo('') }} className="px-3 bg-gray-700 text-gray-400 rounded-xl text-sm active:opacity-70">
