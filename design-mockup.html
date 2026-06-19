@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dizayn Taklif</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #111; display: flex; gap: 32px; justify-content: center; align-items: flex-start; padding: 32px; flex-wrap: wrap; font-family: -apple-system, sans-serif; }
+
+  .label { color: #888; font-size: 13px; text-align: center; margin-bottom: 10px; }
+
+  .phone {
+    width: 375px;
+    height: 780px;
+    background: #0f0f14;
+    border-radius: 40px;
+    border: 2px solid #333;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.6);
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* STATUS BAR */
+  .statusbar {
+    height: 44px;
+    background: #0f0f14;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    flex-shrink: 0;
+  }
+  .statusbar span { color: #fff; font-size: 12px; font-weight: 600; }
+  .statusbar .icons { display: flex; gap: 6px; align-items: center; }
+  .statusbar .icons span { color: #fff; font-size: 11px; }
+
+  /* CONTENT */
+  .content { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
+
+  /* ========== SCREEN 1: Dashboard ========== */
+  .dashboard-header {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    padding: 16px 20px 24px;
+    flex-shrink: 0;
+  }
+  .dh-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+  .dh-user { display: flex; align-items: center; gap: 10px; }
+  .dh-avatar { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, #3b82f6, #8b5cf6); display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 14px; }
+  .dh-name { color: #fff; font-size: 14px; font-weight: 600; }
+  .dh-role { color: #6b7280; font-size: 11px; }
+  .dh-notif { width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: center; color: #9ca3af; font-size: 16px; }
+
+  .balance-card {
+    background: linear-gradient(135deg, #2563eb, #7c3aed);
+    border-radius: 20px;
+    padding: 20px;
+    color: #fff;
+  }
+  .bc-label { font-size: 12px; opacity: 0.8; margin-bottom: 6px; }
+  .bc-amount { font-size: 28px; font-weight: 800; letter-spacing: -1px; }
+  .bc-row { display: flex; gap: 16px; margin-top: 16px; }
+  .bc-item { flex: 1; background: rgba(255,255,255,0.15); border-radius: 12px; padding: 10px 12px; }
+  .bc-item-label { font-size: 10px; opacity: 0.8; margin-bottom: 3px; }
+  .bc-item-val { font-size: 15px; font-weight: 700; }
+  .bc-item-val.income { color: #86efac; }
+  .bc-item-val.expense { color: #fca5a5; }
+
+  .menu-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    padding: 16px;
+    overflow-y: auto;
+    flex: 1;
+  }
+
+  .menu-card {
+    border-radius: 18px;
+    padding: 18px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+  }
+  .menu-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(255,255,255,0.04);
+    border-radius: 18px;
+  }
+  .mc-icon { font-size: 24px; }
+  .mc-title { color: #fff; font-size: 13px; font-weight: 700; }
+  .mc-sub { color: rgba(255,255,255,0.55); font-size: 10px; line-height: 1.3; }
+  .mc-badge { position: absolute; top: 12px; right: 12px; background: rgba(255,255,255,0.2); color: #fff; font-size: 9px; font-weight: 700; padding: 2px 7px; border-radius: 20px; }
+  .mc-arrow { position: absolute; bottom: 12px; right: 12px; color: rgba(255,255,255,0.3); font-size: 14px; }
+
+  .c-blue { background: linear-gradient(135deg, #1d4ed8, #3b82f6); }
+  .c-green { background: linear-gradient(135deg, #065f46, #059669); }
+  .c-orange { background: linear-gradient(135deg, #92400e, #f59e0b); }
+  .c-purple { background: linear-gradient(135deg, #4c1d95, #8b5cf6); }
+  .c-pink { background: linear-gradient(135deg, #9d174d, #ec4899); }
+  .c-teal { background: linear-gradient(135deg, #134e4a, #14b8a6); }
+  .c-dark { background: linear-gradient(135deg, #1f2937, #374151); border: 1px solid rgba(255,255,255,0.08); }
+
+  /* BOTTOM NAV - faqat 5 ta asosiy + hamburger */
+  .bottom-strip {
+    height: 70px;
+    background: rgba(15,15,20,0.95);
+    backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(255,255,255,0.06);
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    padding: 0 8px;
+    flex-shrink: 0;
+  }
+  .bs-item { display: flex; flex-direction: column; align-items: center; gap: 4px; opacity: 0.5; cursor: pointer; padding: 6px 10px; border-radius: 12px; }
+  .bs-item.active { opacity: 1; background: rgba(59,130,246,0.15); }
+  .bs-item.active .bs-icon { color: #3b82f6; }
+  .bs-item.active .bs-label { color: #3b82f6; }
+  .bs-icon { font-size: 20px; color: #9ca3af; }
+  .bs-label { font-size: 9px; color: #9ca3af; font-weight: 500; }
+
+  /* SIDEBAR DRAWER */
+  .drawer-bg {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 10;
+    display: flex;
+  }
+  .drawer {
+    width: 280px;
+    background: #13131f;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    border-right: 1px solid rgba(255,255,255,0.06);
+  }
+  .drawer-header {
+    background: linear-gradient(135deg, #1d4ed8, #7c3aed);
+    padding: 50px 20px 20px;
+  }
+  .dr-avatar { width: 52px; height: 52px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 800; color: #fff; margin-bottom: 10px; }
+  .dr-name { color: #fff; font-size: 16px; font-weight: 700; }
+  .dr-info { color: rgba(255,255,255,0.65); font-size: 12px; margin-top: 2px; }
+  .dr-badge { display: inline-block; background: rgba(255,255,255,0.2); color: #fff; font-size: 10px; padding: 2px 10px; border-radius: 20px; margin-top: 8px; }
+
+  .drawer-menu { flex: 1; padding: 12px 0; overflow-y: auto; }
+  .dr-section { color: #4b5563; font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 12px 20px 6px; }
+  .dr-item { display: flex; align-items: center; gap: 14px; padding: 12px 20px; cursor: pointer; transition: background 0.15s; border-radius: 0; }
+  .dr-item:hover { background: rgba(255,255,255,0.04); }
+  .dr-item.active { background: rgba(59,130,246,0.12); }
+  .dr-item.active .dr-item-icon { color: #3b82f6; background: rgba(59,130,246,0.15); }
+  .dr-item.active .dr-item-label { color: #3b82f6; }
+  .dr-item-icon { width: 36px; height: 36px; border-radius: 10px; background: rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: center; font-size: 16px; color: #9ca3af; flex-shrink: 0; }
+  .dr-item-label { color: #d1d5db; font-size: 14px; font-weight: 500; }
+  .dr-item-badge { margin-left: auto; background: #3b82f6; color: #fff; font-size: 9px; font-weight: 700; padding: 2px 7px; border-radius: 20px; }
+  .dr-divider { border: none; border-top: 1px solid rgba(255,255,255,0.05); margin: 8px 0; }
+  .drawer-close { width: 95px; height: 100%; display: flex; align-items: flex-start; justify-content: center; padding-top: 60px; }
+  .close-btn { color: rgba(255,255,255,0.4); font-size: 24px; cursor: pointer; }
+</style>
+</head>
+<body>
+
+<!-- VARIANT 1: GRID MENU -->
+<div>
+  <div class="label">Variant 1 — Grid menyu (Asosiy ekran)</div>
+  <div class="phone">
+    <div class="statusbar">
+      <span>9:41</span>
+      <div class="icons"><span>📶</span><span>🔋</span></div>
+    </div>
+    <div class="content">
+      <div class="dashboard-header">
+        <div class="dh-top">
+          <div class="dh-user">
+            <div class="dh-avatar">G</div>
+            <div>
+              <div class="dh-name">Gulom</div>
+              <div class="dh-role">Shaxsiy hisob</div>
+            </div>
+          </div>
+          <div class="dh-notif">🔔</div>
+        </div>
+        <div class="balance-card">
+          <div class="bc-label">Umumiy balans</div>
+          <div class="bc-amount">12 450 000 so'm</div>
+          <div class="bc-row">
+            <div class="bc-item">
+              <div class="bc-item-label">↑ Kirim</div>
+              <div class="bc-item-val income">24 500 000</div>
+            </div>
+            <div class="bc-item">
+              <div class="bc-item-label">↓ Chiqim</div>
+              <div class="bc-item-val expense">12 050 000</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="menu-grid">
+        <div class="menu-card c-blue">
+          <div class="mc-icon">💸</div>
+          <div class="mc-title">Kirim / Chiqim</div>
+          <div class="mc-sub">Barcha to'lovlar va tushumlar</div>
+          <div class="mc-badge">24 ta</div>
+          <div class="mc-arrow">›</div>
+        </div>
+        <div class="menu-card c-green">
+          <div class="mc-icon">🤝</div>
+          <div class="mc-title">Qarzlar</div>
+          <div class="mc-sub">Bergan va olgan qarzlar</div>
+          <div class="mc-badge">3 ta</div>
+          <div class="mc-arrow">›</div>
+        </div>
+        <div class="menu-card c-orange">
+          <div class="mc-icon">🏢</div>
+          <div class="mc-title">Hamkorlar</div>
+          <div class="mc-sub">Mijozlar va yetkazib beruvchilar</div>
+          <div class="mc-arrow">›</div>
+        </div>
+        <div class="menu-card c-purple">
+          <div class="mc-icon">📊</div>
+          <div class="mc-title">Hisobot</div>
+          <div class="mc-sub">Grafik va tahlil</div>
+          <div class="mc-arrow">›</div>
+        </div>
+        <div class="menu-card c-teal">
+          <div class="mc-icon">💱</div>
+          <div class="mc-title">Valyuta</div>
+          <div class="mc-sub">USD, EUR, RUB kurslari</div>
+          <div class="mc-arrow">›</div>
+        </div>
+        <div class="menu-card c-pink">
+          <div class="mc-icon">🏭</div>
+          <div class="mc-title">Korxona</div>
+          <div class="mc-sub">Jamoa va ruxsatlar</div>
+          <div class="mc-arrow">›</div>
+        </div>
+      </div>
+    </div>
+    <div class="bottom-strip">
+      <div class="bs-item active">
+        <div class="bs-icon">🏠</div>
+        <div class="bs-label">Bosh sahifa</div>
+      </div>
+      <div class="bs-item">
+        <div class="bs-icon">🔔</div>
+        <div class="bs-label">Bildirishlar</div>
+      </div>
+      <div class="bs-item">
+        <div class="bs-icon">⚙️</div>
+        <div class="bs-label">Sozlamalar</div>
+      </div>
+      <div class="bs-item">
+        <div class="bs-icon">👤</div>
+        <div class="bs-label">Profil</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- VARIANT 2: SIDEBAR DRAWER -->
+<div>
+  <div class="label">Variant 2 — Yon menyu (Sidebar Drawer)</div>
+  <div class="phone">
+    <div class="statusbar">
+      <span>9:41</span>
+      <div class="icons"><span>📶</span><span>🔋</span></div>
+    </div>
+    <div class="content" style="position:relative;">
+      <div class="dashboard-header" style="padding-bottom:20px;">
+        <div class="dh-top" style="margin-bottom:0;">
+          <div class="dh-user">
+            <div class="dh-avatar">G</div>
+            <div>
+              <div class="dh-name">Gulom</div>
+              <div class="dh-role">Kassir · Korxona A</div>
+            </div>
+          </div>
+          <div class="dh-notif" style="font-size:20px;">☰</div>
+        </div>
+      </div>
+      <div style="padding:16px; flex:1;">
+        <div class="balance-card">
+          <div class="bc-label">Umumiy balans</div>
+          <div class="bc-amount">12 450 000 so'm</div>
+          <div class="bc-row">
+            <div class="bc-item">
+              <div class="bc-item-label">↑ Kirim</div>
+              <div class="bc-item-val income">24 500 000</div>
+            </div>
+            <div class="bc-item">
+              <div class="bc-item-label">↓ Chiqim</div>
+              <div class="bc-item-val expense">12 050 000</div>
+            </div>
+          </div>
+        </div>
+        <div style="color:#6b7280; font-size:12px; margin-top:20px; margin-bottom:10px;">So'nggi harakatlar</div>
+        <div style="background:rgba(255,255,255,0.04); border-radius:14px; overflow:hidden;">
+          <div style="display:flex; align-items:center; gap:12px; padding:12px 14px; border-bottom:1px solid rgba(255,255,255,0.05);">
+            <div style="width:36px;height:36px;border-radius:10px;background:rgba(134,239,172,0.15);display:flex;align-items:center;justify-content:center;font-size:16px;">↑</div>
+            <div style="flex:1;"><div style="color:#fff;font-size:13px;">Maosh</div><div style="color:#6b7280;font-size:11px;">Bugun, 10:30</div></div>
+            <div style="color:#86efac;font-size:13px;font-weight:700;">+5 000 000</div>
+          </div>
+          <div style="display:flex; align-items:center; gap:12px; padding:12px 14px;">
+            <div style="width:36px;height:36px;border-radius:10px;background:rgba(252,165,165,0.15);display:flex;align-items:center;justify-content:center;font-size:16px;">↓</div>
+            <div style="flex:1;"><div style="color:#fff;font-size:13px;">Oziq-ovqat</div><div style="color:#6b7280;font-size:11px;">Kecha, 18:45</div></div>
+            <div style="color:#fca5a5;font-size:13px;font-weight:700;">-150 000</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DRAWER OVERLAY -->
+      <div class="drawer-bg">
+        <div class="drawer">
+          <div class="drawer-header">
+            <div class="dr-avatar">G</div>
+            <div class="dr-name">Gulom Alinazarov</div>
+            <div class="dr-info">@qwerty</div>
+            <div class="dr-badge">🏭 Korxona A — Kassir</div>
+          </div>
+          <div class="drawer-menu">
+            <div class="dr-section">Asosiy</div>
+            <div class="dr-item active">
+              <div class="dr-item-icon">🏠</div>
+              <div class="dr-item-label">Bosh sahifa</div>
+            </div>
+            <div class="dr-item">
+              <div class="dr-item-icon">💸</div>
+              <div class="dr-item-label">Kirim / Chiqim</div>
+            </div>
+            <div class="dr-item">
+              <div class="dr-item-icon">🤝</div>
+              <div class="dr-item-label">Qarzlar</div>
+            </div>
+            <div class="dr-item">
+              <div class="dr-item-icon">🏢</div>
+              <div class="dr-item-label">Hamkorlar</div>
+            </div>
+            <hr class="dr-divider">
+            <div class="dr-section">Tahlil</div>
+            <div class="dr-item">
+              <div class="dr-item-icon">📊</div>
+              <div class="dr-item-label">Hisobot</div>
+            </div>
+            <div class="dr-item">
+              <div class="dr-item-icon">💱</div>
+              <div class="dr-item-label">Valyuta</div>
+            </div>
+            <hr class="dr-divider">
+            <div class="dr-section">Boshqaruv</div>
+            <div class="dr-item">
+              <div class="dr-item-icon">🏭</div>
+              <div class="dr-item-label">Korxona</div>
+              <div class="dr-item-badge">Admin</div>
+            </div>
+            <div class="dr-item">
+              <div class="dr-item-icon">⚙️</div>
+              <div class="dr-item-label">Sozlamalar</div>
+            </div>
+          </div>
+        </div>
+        <div class="drawer-close">
+          <div class="close-btn">✕</div>
+        </div>
+      </div>
+    </div>
+    <div class="bottom-strip">
+      <div class="bs-item active">
+        <div class="bs-icon">🏠</div>
+        <div class="bs-label">Bosh sahifa</div>
+      </div>
+      <div class="bs-item">
+        <div class="bs-icon">💸</div>
+        <div class="bs-label">Kirim/Chiqim</div>
+      </div>
+      <div class="bs-item">
+        <div class="bs-icon">🤝</div>
+        <div class="bs-label">Qarzlar</div>
+      </div>
+      <div class="bs-item">
+        <div class="bs-icon">☰</div>
+        <div class="bs-label">Menyu</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
