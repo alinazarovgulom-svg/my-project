@@ -50,7 +50,7 @@ export default function MenuPage() {
       </div>
 
       {/* Grid */}
-      <div className="grid grid-cols-2 gap-2.5 px-4">
+      <div className="grid grid-cols-2 gap-2.5 px-4 stagger">
         {sections.map(({ to, icon: Icon, label, sub, color, glow, badge }) => (
           <button
             key={to}

@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { AppProvider, useApp } from './store/AppContext'
 import BottomNav from './components/BottomNav'
 import Login from './pages/Login'
@@ -20,30 +20,42 @@ import Onboarding from './components/Onboarding'
 import { useState, useEffect, useRef } from 'react'
 import './index.css'
 
+function AnimatedPage({ children }) {
+  const location = useLocation()
+  return (
+    <div key={location.pathname} className="page-animate" style={{ minHeight: '100dvh' }}>
+      {children}
+    </div>
+  )
+}
+
 function ProtectedLayout() {
   const { user } = useApp()
+  const location = useLocation()
   if (!user) return <Navigate to="/login" replace />
   return (
     <>
-      <Routes>
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/menu" element={<MenuPage />} />
-        <Route path="/profile" element={<Profile />} />
+      <Routes location={location}>
+        <Route path="/" element={<AnimatedPage><Dashboard /></AnimatedPage>} />
+        <Route path="/menu" element={<AnimatedPage><MenuPage /></AnimatedPage>} />
+        <Route path="/profile" element={<AnimatedPage><Profile /></AnimatedPage>} />
         <Route path="/notifications" element={
-          <div className="min-h-screen flex items-center justify-center" style={{ background: '#08080f', color: '#374151', fontSize: 14 }}>
-            Tez orada...
-          </div>
+          <AnimatedPage>
+            <div className="min-h-screen flex items-center justify-center page-bg" style={{ color: 'var(--text-muted)', fontSize: 14 }}>
+              Tez orada...
+            </div>
+          </AnimatedPage>
         } />
-        <Route path="/transactions" element={<Transactions />} />
-        <Route path="/debts" element={<Debts />} />
-        <Route path="/exchange" element={<Exchange />} />
-        <Route path="/reports" element={<Reports />} />
-        <Route path="/settings" element={<Settings />} />
-        <Route path="/categories" element={<Categories />} />
-        <Route path="/hamkorlar" element={<Hamkorlar />} />
-        <Route path="/hamkorlar/:sectionId" element={<HamkorlarList />} />
-        <Route path="/hamkorlar/:sectionId/:id" element={<HamkorDetail />} />
-        <Route path="/korxona" element={<Korxona />} />
+        <Route path="/transactions" element={<AnimatedPage><Transactions /></AnimatedPage>} />
+        <Route path="/debts" element={<AnimatedPage><Debts /></AnimatedPage>} />
+        <Route path="/exchange" element={<AnimatedPage><Exchange /></AnimatedPage>} />
+        <Route path="/reports" element={<AnimatedPage><Reports /></AnimatedPage>} />
+        <Route path="/settings" element={<AnimatedPage><Settings /></AnimatedPage>} />
+        <Route path="/categories" element={<AnimatedPage><Categories /></AnimatedPage>} />
+        <Route path="/hamkorlar" element={<AnimatedPage><Hamkorlar /></AnimatedPage>} />
+        <Route path="/hamkorlar/:sectionId" element={<AnimatedPage><HamkorlarList /></AnimatedPage>} />
+        <Route path="/hamkorlar/:sectionId/:id" element={<AnimatedPage><HamkorDetail /></AnimatedPage>} />
+        <Route path="/korxona" element={<AnimatedPage><Korxona /></AnimatedPage>} />
       </Routes>
       <BottomNav />
     </>

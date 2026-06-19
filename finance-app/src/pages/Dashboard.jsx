@@ -133,7 +133,7 @@ export default function Dashboard() {
       <div className="flex items-center justify-between px-4 mb-2 mt-1">
         <span className="text-white text-[13px] font-bold">Tezkor amallar</span>
       </div>
-      <div className="flex gap-3 px-4 pb-1 overflow-x-auto" style={{scrollbarWidth:'none'}}>
+      <div className="flex gap-3 px-4 pb-1 overflow-x-auto stagger" style={{scrollbarWidth:'none'}}>
         {[
           { label:'Kirim', color:'rgba(99,102,241,0.12)', border:'rgba(99,102,241,0.2)', stroke:'#818cf8', onClick:()=>nav('/transactions'), icon:<><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></> },
           { label:'Chiqim', color:'rgba(239,68,68,0.1)', border:'rgba(239,68,68,0.18)', stroke:'#f87171', onClick:()=>nav('/transactions'), icon:<><line x1="5" y1="12" x2="19" y2="12"/></> },
