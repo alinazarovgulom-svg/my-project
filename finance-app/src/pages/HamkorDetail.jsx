@@ -34,6 +34,9 @@ export default function HamkorDetail() {
   const [xForm, setXForm] = useState({ name: '', qty: '', unit: 'kg', price: '', note: '', date: today(), currency: 'UZS' })
   const [zForm, setZForm] = useState({ amount: '', note: '', date: today(), currency: 'UZS' })
   const [tForm, setTForm] = useState({ amount: '', note: '', date: today(), currency: 'UZS' })
+  const [tConvert, setTConvert] = useState(false) // boshqa valyutada hisoblash
+  const [tConvCurrency, setTConvCurrency] = useState('USD')
+  const [tConvRate, setTConvRate] = useState('')
 
   const load = () => {
     const all = getData('hamkorlar', uid)
@@ -68,15 +71,36 @@ export default function HamkorDetail() {
 
   const handleTolov = () => {
     if (!tForm.amount) return
-    const amount = parseFloat(tForm.amount)
-    updateEntries({ id: generateId(), entryType: 'tolov', ...tForm, amount, createdAt: new Date().toISOString() })
+    const paidAmount = parseFloat(tForm.amount)
+
+    // Hamkor qarzidan ayiriladigan summa
+    let debtAmount, debtCurrency
+    if (tConvert && tConvRate && parseFloat(tConvRate) > 0) {
+      // Konvertatsiya: men UZS berdim, hamkor qarzidan USD (yoki boshqa) ayiriladi
+      debtAmount = paidAmount / parseFloat(tConvRate)
+      debtCurrency = tConvCurrency
+    } else {
+      debtAmount = paidAmount
+      debtCurrency = tForm.currency
+    }
+
+    updateEntries({
+      id: generateId(), entryType: 'tolov',
+      amount: debtAmount, currency: debtCurrency,
+      note: tForm.note, date: tForm.date,
+      // Haqiqiy to'lov ma'lumoti
+      paidAmount, paidCurrency: tForm.currency,
+      createdAt: new Date().toISOString()
+    })
     saveTransactions([{
-      id: generateId(), type: 'expense', amount, currency: tForm.currency,
+      id: generateId(), type: 'expense',
+      amount: paidAmount, currency: tForm.currency,
       category: 'Hamkorlar', emoji: '🤝',
       note: `${hamkor?.name} ga to'lov${tForm.note ? ': ' + tForm.note : ''}`,
       date: tForm.date, userId: uid, userName: user?.name,
     }, ...transactions])
     setTForm({ amount: '', note: '', date: today(), currency: 'UZS' })
+    setTConvert(false); setTConvRate(''); setTConvCurrency('USD')
     setPayModal(false)
   }
 
@@ -138,7 +162,12 @@ export default function HamkorDetail() {
   const entryLabel = (e) => {
     if (e.entryType === 'xomashyo') return `${e.name} — ${e.qty} ${e.unit} × ${fmtCur(e.price, e.currency)} = ${fmtCur(e.totalPrice, e.currency)}`
     if (e.entryType === 'xizmat') return `Xizmat haqi${e.note ? ': ' + e.note : ''}`
-    if (e.entryType === 'tolov') return `To'lov${e.note ? ': ' + e.note : ''}`
+    if (e.entryType === 'tolov') {
+      if (e.paidCurrency && e.paidCurrency !== e.currency) {
+        return `To'lov: ${fmtCur(e.paidAmount, e.paidCurrency)} → ${fmtCur(e.amount, e.currency)}${e.note ? ' · ' + e.note : ''}`
+      }
+      return `To'lov${e.note ? ': ' + e.note : ''}`
+    }
     return ''
   }
 
@@ -343,14 +372,45 @@ export default function HamkorDetail() {
       </Modal>
 
       {/* To'lov modal */}
-      <Modal open={payModal} onClose={() => setPayModal(false)} title="To'lov qilish">
+      <Modal open={payModal} onClose={() => { setPayModal(false); setTConvert(false); setTConvRate(''); }} title="To'lov qilish">
         <div className="flex flex-col gap-3">
-          <div className="flex gap-2">
-            <input className="flex-1 bg-gray-700 text-white rounded-xl px-3 py-3 outline-none" placeholder="Summa *" type="number" value={tForm.amount} onChange={e => setTForm(f => ({ ...f, amount: e.target.value }))} />
-            <select className="bg-gray-700 text-white rounded-xl px-3 py-3 outline-none" value={tForm.currency} onChange={e => setTForm(f => ({ ...f, currency: e.target.value }))}>
-              {CURRENCIES.map(c => <option key={c}>{c}</option>)}
-            </select>
+          {/* Asosiy to'lov */}
+          <div>
+            <label className="text-gray-400 text-xs mb-1 block">Men to'layman</label>
+            <div className="flex gap-2">
+              <input className="flex-1 bg-gray-700 text-white rounded-xl px-3 py-3 outline-none" placeholder="Summa *" type="number" value={tForm.amount} onChange={e => setTForm(f => ({ ...f, amount: e.target.value }))} />
+              <select className="bg-gray-700 text-white rounded-xl px-3 py-3 outline-none" value={tForm.currency} onChange={e => setTForm(f => ({ ...f, currency: e.target.value }))}>
+                {CURRENCIES.map(c => <option key={c}>{c}</option>)}
+              </select>
+            </div>
           </div>
+
+          {/* Konvertatsiya toggle */}
+          <button
+            onClick={() => setTConvert(v => !v)}
+            className={`w-full py-2.5 rounded-xl text-sm font-medium border transition-colors ${tConvert ? 'bg-blue-600/20 border-blue-500/40 text-blue-400' : 'bg-gray-700/50 border-gray-600 text-gray-400'}`}
+          >
+            {tConvert ? '✓' : '+'} Boshqa valyutada hisoblash
+          </button>
+
+          {/* Konvertatsiya fields */}
+          {tConvert && (
+            <div className="bg-gray-700/50 rounded-xl p-3 flex flex-col gap-2">
+              <label className="text-gray-400 text-xs">Hamkor qarzidan ayiriladi</label>
+              <div className="flex gap-2">
+                <select className="bg-gray-700 text-white rounded-xl px-3 py-2.5 outline-none" value={tConvCurrency} onChange={e => setTConvCurrency(e.target.value)}>
+                  {CURRENCIES.filter(c => c !== tForm.currency).map(c => <option key={c}>{c}</option>)}
+                </select>
+                <input className="flex-1 bg-gray-700 text-white rounded-xl px-3 py-2.5 outline-none" placeholder={`1 ${tConvCurrency} = ? ${tForm.currency}`} type="number" value={tConvRate} onChange={e => setTConvRate(e.target.value)} />
+              </div>
+              {tForm.amount && tConvRate && parseFloat(tConvRate) > 0 && (
+                <p className="text-blue-400 text-sm font-semibold text-center">
+                  = {fmtCur(parseFloat(tForm.amount) / parseFloat(tConvRate), tConvCurrency)} hamkor qarzidan ayiriladi
+                </p>
+              )}
+            </div>
+          )}
+
           <input className="w-full bg-gray-700 text-white rounded-xl px-3 py-3 outline-none" placeholder="Izoh (ixtiyoriy)" value={tForm.note} onChange={e => setTForm(f => ({ ...f, note: e.target.value }))} />
           <input className="w-full bg-gray-700 text-white rounded-xl px-3 py-3 outline-none" type="date" value={tForm.date} onChange={e => setTForm(f => ({ ...f, date: e.target.value }))} />
           <p className="text-gray-400 text-xs text-center">To'lov hisobingizdan chiqim sifatida yoziladi</p>
