@@ -62,6 +62,14 @@ export const changePassword = async (userId, currentPassword, newPassword) => {
   return { success: true }
 }
 
+// Parolni username orqali tiklash (email/phone yo'q, shuning uchun username yetarli)
+export const resetPasswordByUsername = async (username, newPassword) => {
+  const user = await findUserByUsername(username)
+  if (!user) return { error: `"${username}" foydalanuvchisi topilmadi` }
+  await updateDoc(doc(db, USERS_COL, user.id), { password: hashPassword(newPassword) })
+  return { success: true }
+}
+
 // localStorage dagi eski akkauntni Firestore ga ko'chirish (bir martalik migration)
 export const migrateLocalUsers = async () => {
   const raw = localStorage.getItem('fin_users')

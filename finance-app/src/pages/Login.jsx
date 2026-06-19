@@ -3,13 +3,14 @@ import { useNavigate } from 'react-router-dom'
 import { Lock, User, Eye, EyeOff, Mail, Phone, Send, Loader } from 'lucide-react'
 import { useApp } from '../store/AppContext'
 import { useLang } from '../i18n/LangContext'
-import { loginUser, registerUser, migrateLocalUsers } from '../store/auth'
+import { loginUser, registerUser, migrateLocalUsers, resetPasswordByUsername } from '../store/auth'
 
 export default function Login() {
   const { setUser } = useApp()
   const { t, lang, setLang } = useLang()
   const nav = useNavigate()
   const [mode, setMode] = useState('login')
+  const [resetDone, setResetDone] = useState(false)
   const [form, setForm] = useState({ name: '', username: '', password: '' })
   const [showPass, setShowPass] = useState(false)
   const [error, setError] = useState('')
@@ -30,13 +31,19 @@ export default function Login() {
         if (res.error) return setError(res.error)
         setUser(res.user)
         nav('/')
-      } else {
+      } else if (mode === 'register') {
         if (!form.name || !form.username || !form.password) return setError(t('fillAll'))
         if (form.password.length < 4) return setError(t('passwordShort'))
         const res = await registerUser(form.name, form.username, form.password)
         if (res.error) return setError(res.error)
         setUser(res.user)
         nav('/')
+      } else if (mode === 'reset') {
+        if (!form.username) return setError('Login nomini kiriting')
+        if (!form.password || form.password.length < 4) return setError('Yangi parol kamida 4 ta belgidan iborat bo\'lsin')
+        const res = await resetPasswordByUsername(form.username, form.password)
+        if (res.error) return setError(res.error)
+        setResetDone(true)
       }
     } catch {
       setError('Tarmoq xatosi. Internet aloqasini tekshiring.')
@@ -87,26 +94,56 @@ export default function Login() {
           </div>
 
           {/* Mode toggle */}
-          <div className="flex bg-dark-700/80 rounded-2xl p-1 mb-5 border border-white/5">
-            <button onClick={() => setMode('login')}
-              className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${mode === 'login' ? 'text-white shadow-lg' : 'text-gray-500'}`}
-              style={mode === 'login' ? { background: 'linear-gradient(135deg, #1d4ed8, #7c3aed)' } : {}}>
-              {t('login')}
-            </button>
-            <button onClick={() => setMode('register')}
-              className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${mode === 'register' ? 'text-white shadow-lg' : 'text-gray-500'}`}
-              style={mode === 'register' ? { background: 'linear-gradient(135deg, #1d4ed8, #7c3aed)' } : {}}>
-              {t('register')}
-            </button>
-          </div>
+          {mode !== 'reset' && (
+            <div className="flex bg-dark-700/80 rounded-2xl p-1 mb-5 border border-white/5">
+              <button onClick={() => { setMode('login'); setError(''); setResetDone(false) }}
+                className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${mode === 'login' ? 'text-white shadow-lg' : 'text-gray-500'}`}
+                style={mode === 'login' ? { background: 'linear-gradient(135deg, #1d4ed8, #7c3aed)' } : {}}>
+                {t('login')}
+              </button>
+              <button onClick={() => { setMode('register'); setError(''); setResetDone(false) }}
+                className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${mode === 'register' ? 'text-white shadow-lg' : 'text-gray-500'}`}
+                style={mode === 'register' ? { background: 'linear-gradient(135deg, #1d4ed8, #7c3aed)' } : {}}>
+                {t('register')}
+              </button>
+            </div>
+          )}
+
+          {/* Reset password mode */}
+          {mode === 'reset' && (
+            <div className="mb-5">
+              <button onClick={() => { setMode('login'); setError(''); setResetDone(false); setForm({ name: '', username: '', password: '' }) }}
+                className="text-sm text-blue-400 mb-4 flex items-center gap-1">
+                ← Orqaga
+              </button>
+              <h2 className="text-white font-bold text-lg mb-1">Parolni tiklash</h2>
+              <p className="text-gray-500 text-sm">Login nomingizni kiriting va yangi parol o'rnating</p>
+            </div>
+          )}
 
           {/* Form */}
+          {resetDone ? (
+            <div className="flex flex-col items-center gap-4 py-4">
+              <div className="w-14 h-14 rounded-full bg-green-500/20 flex items-center justify-center">
+                <span className="text-2xl">✓</span>
+              </div>
+              <p className="text-green-400 font-semibold text-center">Parol muvaffaqiyatli yangilandi!</p>
+              <button
+                onClick={() => { setMode('login'); setResetDone(false); setForm({ name: '', username: form.username, password: '' }); setError('') }}
+                className="btn-primary w-full">
+                Kirish
+              </button>
+            </div>
+          ) : (
           <form onSubmit={handleSubmit} className="flex flex-col gap-3">
             {mode === 'register' && (
               <div className="relative">
                 <User className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-400/60" size={17} />
                 <input className="input-field pl-11" placeholder={t('fullName')} value={form.name} onChange={e => set('name', e.target.value)} autoCorrect="off" />
               </div>
+            )}
+            {mode === 'reset' && (
+              <p className="text-gray-500 text-xs -mb-1">Login nomingiz (ro'yxatdan o'tganingizda kiritgansiz)</p>
             )}
             <div className="relative">
               <User className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-400/60" size={17} />
@@ -117,7 +154,7 @@ export default function Login() {
               <input
                 className="input-field pl-11 pr-12"
                 type={showPass ? 'text' : 'password'}
-                placeholder={t('password')}
+                placeholder={mode === 'reset' ? 'Yangi parol (kamida 4 ta belgi)' : t('password')}
                 value={form.password}
                 onChange={e => set('password', e.target.value)}
                 autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
@@ -134,9 +171,16 @@ export default function Login() {
             )}
             <button type="submit" disabled={loading} className="w-full py-3.5 rounded-2xl font-bold text-white text-base mt-1 active:scale-95 transition-transform flex items-center justify-center gap-2 disabled:opacity-60"
               style={{ background: 'linear-gradient(135deg, #1d4ed8 0%, #7c3aed 100%)', boxShadow: '0 4px 20px rgba(59,130,246,0.3)' }}>
-              {loading ? <><Loader size={18} className="animate-spin" /> Tekshirilmoqda...</> : (mode === 'login' ? t('enterBtn') : t('registerBtn'))}
+              {loading ? <><Loader size={18} className="animate-spin" /> Tekshirilmoqda...</> : mode === 'login' ? t('enterBtn') : mode === 'reset' ? 'Parolni yangilash' : t('registerBtn')}
             </button>
+            {mode === 'login' && (
+              <button type="button" onClick={() => { setMode('reset'); setError(''); setForm(f => ({ ...f, password: '' })) }}
+                className="text-center text-sm text-gray-500 hover:text-blue-400 transition-colors py-1">
+                Parolni unutdim?
+              </button>
+            )}
           </form>
+          )}
         </div>
       </div>
 
