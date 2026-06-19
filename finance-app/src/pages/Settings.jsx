@@ -1,15 +1,16 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { LogOut, Lock, User, Eye, EyeOff, Info, Tag, Globe, KeyRound, Trash2, Loader, RefreshCw, UserX } from 'lucide-react'
+import { LogOut, Lock, User, Eye, EyeOff, Info, Tag, Globe, KeyRound, Trash2, Loader, RefreshCw, UserX, Download, Upload } from 'lucide-react'
 import { useApp } from '../store/AppContext'
-import { setCurrentUser, getData, getSettings } from '../store/storage'
+import { setCurrentUser, getData, saveData, getSettings, saveSettings } from '../store/storage'
 import { changePassword, changeUsername, deleteAccount } from '../store/auth'
 import { syncToCloud } from '../store/sync'
 import Modal from '../components/Modal'
 import { useLang } from '../i18n/LangContext'
 
 export default function Settings() {
-  const { user, setUser, transactions: personalTx, familyTransactions, family, debts, userRole, pin, savePin } = useApp()
+  const { user, setUser, transactions: personalTx, familyTransactions, family, debts, userRole, pin, savePin,
+    saveTransactions, saveDebts, saveCategories, saveHamkorSections, saveHamkorPartners, updateSettings } = useApp()
   const transactions = family ? familyTransactions : personalTx
   const { t, lang, setLang } = useLang()
   const nav = useNavigate()
@@ -67,6 +68,55 @@ export default function Settings() {
   const hasPin = !!pin
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
+
+  const handleExport = () => {
+    if (!user?.id) return
+    const uid = user.id
+    const backup = {
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      user: { name: user.name, username: user.username },
+      transactions: getData('transactions', uid),
+      debts: getData('debts', uid),
+      hamkorlar: getData('hamkorlar', uid),
+      hamkorlar_sections: getData('hamkorlar_sections', uid),
+      settings: getSettings(uid),
+      categories: (() => { try { return JSON.parse(localStorage.getItem(`finance_${uid}_categories`) || 'null') } catch { return null } })(),
+    }
+    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `pulbek-backup-${new Date().toISOString().slice(0,10)}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  const [importError, setImportError] = useState('')
+  const [importSuccess, setImportSuccess] = useState('')
+
+  const handleImport = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setImportError(''); setImportSuccess('')
+    const reader = new FileReader()
+    reader.onload = (ev) => {
+      try {
+        const data = JSON.parse(ev.target.result)
+        if (!data.version || !data.user) return setImportError('Fayl noto\'g\'ri formatda')
+        const uid = user.id
+        if (data.transactions?.length) saveTransactions(data.transactions)
+        if (data.debts?.length) saveDebts(data.debts)
+        if (data.hamkorlar?.length) saveHamkorPartners(data.hamkorlar)
+        if (data.hamkorlar_sections?.length) saveHamkorSections(data.hamkorlar_sections)
+        if (data.settings?.rates) updateSettings(data.settings)
+        if (data.categories?.length) saveCategories(data.categories)
+        setImportSuccess(`✓ Muvaffaqiyatli tiklandi! ${data.transactions?.length || 0} ta tranzaksiya, ${data.debts?.length || 0} ta qarz yuklandi.`)
+      } catch { setImportError('Faylni o\'qishda xatolik') }
+    }
+    reader.readAsText(file)
+    e.target.value = ''
+  }
 
   const handleDeleteAccount = async () => {
     if (!deletePass) return setDeleteError('Parolni kiriting')
@@ -293,6 +343,31 @@ export default function Settings() {
         <p className="text-gray-500 text-xs leading-relaxed">
           {t('appVersion')} — {t('tagline')}
         </p>
+      </div>
+
+      {/* Zaxira nusxa */}
+      <div className="card">
+        <h2 className="text-white font-semibold text-sm mb-3">Zaxira nusxa (Backup)</h2>
+        <div className="flex flex-col gap-2">
+          <button onClick={handleExport}
+            className="flex items-center gap-3 px-4 py-3 rounded-xl bg-blue-500/10 active:bg-blue-500/20 transition-colors text-left w-full">
+            <Download size={18} className="text-blue-400 flex-shrink-0" />
+            <div>
+              <p className="text-white text-sm font-medium">Yuklab olish</p>
+              <p className="text-gray-500 text-xs">Barcha ma'lumotlarni JSON faylga saqlash</p>
+            </div>
+          </button>
+          <label className="flex items-center gap-3 px-4 py-3 rounded-xl bg-green-500/10 active:bg-green-500/20 transition-colors text-left w-full cursor-pointer">
+            <Upload size={18} className="text-green-400 flex-shrink-0" />
+            <div>
+              <p className="text-white text-sm font-medium">Fayldan tiklash</p>
+              <p className="text-gray-500 text-xs">Zaxira fayldan ma'lumotlarni yuklash</p>
+            </div>
+            <input type="file" accept=".json" className="hidden" onChange={handleImport} />
+          </label>
+          {importError && <p className="text-red-400 text-sm bg-red-500/10 py-2 px-3 rounded-lg">{importError}</p>}
+          {importSuccess && <p className="text-green-400 text-sm bg-green-500/10 py-2 px-3 rounded-lg">{importSuccess}</p>}
+        </div>
       </div>
 
       {/* PIN Modal */}
