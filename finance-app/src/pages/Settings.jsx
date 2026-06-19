@@ -39,6 +39,7 @@ export default function Settings() {
     if (!user?.id) return
     setSyncing(true)
     setSyncDone(false)
+    const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 10000))
     try {
       const uid = user.id
       const tx = getData('transactions', uid)
@@ -47,13 +48,16 @@ export default function Settings() {
       const par = getData('hamkorlar', uid)
       const s = getSettings(uid)
       const cats = (() => { try { return JSON.parse(localStorage.getItem(`finance_${uid}_categories`) || 'null') } catch { return null } })()
-      await Promise.all([
-        tx?.length > 0 && syncToCloud(uid, 'transactions', tx),
-        db?.length > 0 && syncToCloud(uid, 'debts', db),
-        sec?.length > 0 && syncToCloud(uid, 'hamkorlar_sections', sec),
-        par?.length > 0 && syncToCloud(uid, 'hamkorlar', par),
-        s?.rates && syncToCloud(uid, 'settings', s),
-        cats?.length > 0 && syncToCloud(uid, 'categories', cats),
+      await Promise.race([
+        Promise.all([
+          tx?.length > 0 && syncToCloud(uid, 'transactions', tx),
+          db?.length > 0 && syncToCloud(uid, 'debts', db),
+          sec?.length > 0 && syncToCloud(uid, 'hamkorlar_sections', sec),
+          par?.length > 0 && syncToCloud(uid, 'hamkorlar', par),
+          s?.rates && syncToCloud(uid, 'settings', s),
+          cats?.length > 0 && syncToCloud(uid, 'categories', cats),
+        ]),
+        timeout
       ])
       setSyncDone(true)
       setTimeout(() => setSyncDone(false), 3000)
