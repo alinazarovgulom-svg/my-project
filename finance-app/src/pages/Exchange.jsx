@@ -4,7 +4,7 @@ import { useApp } from '../store/AppContext'
 import Modal from '../components/Modal'
 import { format } from 'date-fns'
 import { generateId, getData, saveData } from '../store/storage'
-import { syncToCloud, loadFromCloud } from '../store/sync'
+import { syncToCloud, loadFromCloud, subscribeToCloud } from '../store/sync'
 import { fmtCur } from '../utils/format'
 
 const CURRENCIES = ['UZS', 'USD', 'EUR', 'RUB']
@@ -41,12 +41,24 @@ export default function Exchange() {
 
   useEffect(() => {
     if (!uid) return
-    const load = async () => {
-      const cloud = await loadFromCloud(uid, 'exchange_archive')
-      if (cloud) saveData('exchange_archive', uid, cloud)
-      setArchive(getArchive(uid))
-    }
-    load()
+    // Avval localStorage dan yuklash
+    setArchive(getArchive(uid))
+    // Keyin Firebase dan yangilash
+    loadFromCloud(uid, 'exchange_archive').then(cloud => {
+      if (cloud) {
+        saveData('exchange_archive', uid, cloud)
+        setArchive(getArchive(uid))
+      }
+    })
+    // Real-vaqt tinglash — boshqa qurilmadan o'zgarsa darhol yangilanadi
+    const unsub = subscribeToCloud(uid, 'exchange_archive', (data) => {
+      if (data) {
+        saveData('exchange_archive', uid, data)
+        const cutoff = Date.now() - ARCHIVE_DAYS * 24 * 60 * 60 * 1000
+        setArchive(data.filter(a => new Date(a.deletedAt).getTime() > cutoff))
+      }
+    })
+    return () => unsub()
   }, [uid])
 
   const refreshArchive = () => setArchive(getArchive(uid))
