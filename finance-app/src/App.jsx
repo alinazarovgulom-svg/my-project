@@ -12,6 +12,7 @@ import Categories from './pages/Categories'
 import Hamkorlar from './pages/Hamkorlar'
 import HamkorlarList from './pages/HamkorlarList'
 import HamkorDetail from './pages/HamkorDetail'
+import Korxona from './pages/Korxona'
 import AppLock from './components/AppLock'
 import Onboarding from './components/Onboarding'
 import { useState, useEffect, useRef } from 'react'
@@ -33,6 +34,7 @@ function ProtectedLayout() {
         <Route path="/hamkorlar" element={<Hamkorlar />} />
         <Route path="/hamkorlar/:sectionId" element={<HamkorlarList />} />
         <Route path="/hamkorlar/:sectionId/:id" element={<HamkorDetail />} />
+        <Route path="/korxona" element={<Korxona />} />
       </Routes>
       <BottomNav />
     </>

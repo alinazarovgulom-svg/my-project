@@ -1,8 +1,9 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react'
 import { getCurrentUser, getData, saveData, getSettings, saveSettings } from './storage'
-import { getUserFamily, getUserFamilyId, getFamily, getFamilyAsync, subscribeToFamily, updateMemberLastSeen } from './family'
+import { getUserFamily, getUserFamilyId, getFamily, subscribeToFamily, updateMemberLastSeen } from './family'
 import { syncToCloud, loadFromCloud, subscribeToCloud } from './sync'
 import { migrateLocalUsers } from './auth'
+import { getUserWorkspaceId, subscribeToWorkspace } from './workspace'
 
 const AppContext = createContext(null)
 
@@ -24,9 +25,18 @@ export function AppProvider({ children }) {
   const [family, setFamily] = useState(null)
   const [familyId, setFamilyId] = useState(() => getUserFamilyId(user?.id))
   const [syncing, setSyncing] = useState(false)
+  const [workspaceId, setWorkspaceId] = useState(() => getUserWorkspaceId(user?.id))
+  const [workspace, setWorkspace] = useState(null)
   const skipCloudUpdate = useRef(false)
 
   const uid = user?.id
+
+  // Workspace real-time subscription
+  useEffect(() => {
+    if (!workspaceId) { setWorkspace(null); return }
+    const unsub = subscribeToWorkspace(workspaceId, (data) => setWorkspace(data))
+    return () => unsub()
+  }, [workspaceId])
 
   // Boshlang'ich yuklash: avval localStorage, keyin cloud
   useEffect(() => {
@@ -35,12 +45,18 @@ export function AppProvider({ children }) {
     // Akkauntni Firestore ga sinxronlash (agar faqat telefonda qolgan bo'lsa)
     migrateLocalUsers()
 
-    // Lokal ma'lumotlarni darhol yuklash
-    setTransactions(getData('transactions', uid))
-    setDebts(getData('debts', uid))
-    const s = getSettings(uid)
-    setSettingsState(s.rates ? s : { rates: { USD: 12700, EUR: 13800, RUB: 140 } })
-    setFamily(getUserFamily(uid))
+    const wid = getUserWorkspaceId(uid)
+    const storeId = wid || uid
+    const col = wid ? 'workspaces' : 'users'
+
+    // Lokal ma'lumotlarni darhol yuklash (faqat shaxsiy rejimda)
+    if (!wid) {
+      setTransactions(getData('transactions', uid))
+      setDebts(getData('debts', uid))
+      const s = getSettings(uid)
+      setSettingsState(s.rates ? s : { rates: { USD: 12700, EUR: 13800, RUB: 140 } })
+      setFamily(getUserFamily(uid))
+    }
 
     // Lokal kategoriyalar va PIN
     try {
@@ -54,14 +70,14 @@ export function AppProvider({ children }) {
     const loadCloud = async () => {
       setSyncing(true)
       const [cloudTx, cloudDebts, cloudSettings, cloudCats, cloudPin] = await Promise.all([
-        loadFromCloud(uid, 'transactions'),
-        loadFromCloud(uid, 'debts'),
+        loadFromCloud(storeId, 'transactions', col),
+        loadFromCloud(storeId, 'debts', col),
         loadFromCloud(uid, 'settings'),
         loadFromCloud(uid, 'categories'),
         loadFromCloud(uid, 'pin'),
       ])
-      if (cloudTx) { setTransactions(cloudTx); saveData('transactions', uid, cloudTx) }
-      if (cloudDebts) { setDebts(cloudDebts); saveData('debts', uid, cloudDebts) }
+      if (cloudTx) { setTransactions(cloudTx); if (!wid) saveData('transactions', uid, cloudTx) }
+      if (cloudDebts) { setDebts(cloudDebts); if (!wid) saveData('debts', uid, cloudDebts) }
       if (cloudSettings?.rates) { setSettingsState(cloudSettings); saveSettings(uid, cloudSettings) }
       if (cloudCats) {
         setCategoriesState(cloudCats)
@@ -75,17 +91,17 @@ export function AppProvider({ children }) {
     }
     loadCloud()
 
-    // Real-vaqt tinglash — boshqa qurilmadan o'zgarish bo'lsa darhol yangilanadi
-    const unsubTx = subscribeToCloud(uid, 'transactions', (data) => {
+    // Real-vaqt tinglash
+    const unsubTx = subscribeToCloud(storeId, 'transactions', (data) => {
       if (skipCloudUpdate.current) return
       setTransactions(data)
-      saveData('transactions', uid, data)
-    })
-    const unsubDebts = subscribeToCloud(uid, 'debts', (data) => {
+      if (!wid) saveData('transactions', uid, data)
+    }, col)
+    const unsubDebts = subscribeToCloud(storeId, 'debts', (data) => {
       if (skipCloudUpdate.current) return
       setDebts(data)
-      saveData('debts', uid, data)
-    })
+      if (!wid) saveData('debts', uid, data)
+    }, col)
     const unsubSettings = subscribeToCloud(uid, 'settings', (data) => {
       if (skipCloudUpdate.current) return
       if (data?.rates) { setSettingsState(data); saveSettings(uid, data) }
@@ -101,17 +117,12 @@ export function AppProvider({ children }) {
     return () => { unsubTx(); unsubDebts(); unsubSettings(); unsubCats(); unsubPin() }
   }, [uid])
 
-  // Oila real-vaqt sinxronizatsiyasi — har qanday a'zo o'zgartirganda darhol yangilanadi
+  // Oila real-vaqt sinxronizatsiyasi
   useEffect(() => {
     if (!familyId) { setFamily(null); return }
-    // Avval localStorage dan darhol ko'rsatish
     const local = getFamily(familyId)
     if (local) setFamily(local)
-    // Keyin Firestore dan real-vaqt tinglash
-    const unsub = subscribeToFamily(familyId, (data) => {
-      setFamily(data)
-    })
-    // lastSeen yangilash (faqat bir marta, har sessiyada)
+    const unsub = subscribeToFamily(familyId, (data) => setFamily(data))
     if (uid) updateMemberLastSeen(familyId, uid)
     return () => unsub()
   }, [familyId])
@@ -119,7 +130,6 @@ export function AppProvider({ children }) {
   const refreshFamily = useCallback(() => {
     if (uid) {
       const fid = getUserFamilyId(uid) || null
-      // Faqat familyId o'zgarganda re-subscribe qilish
       setFamilyId(prev => (prev === fid ? prev : fid))
     }
   }, [uid])
@@ -127,9 +137,12 @@ export function AppProvider({ children }) {
   const saveTransactions = useCallback((data) => {
     setTransactions(data)
     if (uid) {
-      saveData('transactions', uid, data)
+      const wid = getUserWorkspaceId(uid)
+      const storeId = wid || uid
+      const col = wid ? 'workspaces' : 'users'
+      if (!wid) saveData('transactions', uid, data)
       skipCloudUpdate.current = true
-      syncToCloud(uid, 'transactions', data).finally(() => {
+      syncToCloud(storeId, 'transactions', data, col).finally(() => {
         setTimeout(() => { skipCloudUpdate.current = false }, 500)
       })
     }
@@ -138,9 +151,12 @@ export function AppProvider({ children }) {
   const saveDebts = useCallback((data) => {
     setDebts(data)
     if (uid) {
-      saveData('debts', uid, data)
+      const wid = getUserWorkspaceId(uid)
+      const storeId = wid || uid
+      const col = wid ? 'workspaces' : 'users'
+      if (!wid) saveData('debts', uid, data)
       skipCloudUpdate.current = true
-      syncToCloud(uid, 'debts', data).finally(() => {
+      syncToCloud(storeId, 'debts', data, col).finally(() => {
         setTimeout(() => { skipCloudUpdate.current = false }, 500)
       })
     }
@@ -199,6 +215,27 @@ export function AppProvider({ children }) {
 
   const canAdd = () => userRole === 'admin' || userRole === 'member'
 
+  // Workspace permission helpers
+  const myWorkspacePerms = workspace
+    ? (workspace.members?.find(m => m.userId === uid)?.permissions || {})
+    : null
+
+  const myRole = workspace
+    ? (workspace.members?.find(m => m.userId === uid)?.role || null)
+    : null
+
+  const canViewSection = (section) => {
+    if (!workspace) return true
+    if (!myWorkspacePerms) return false
+    return myWorkspacePerms[section] === 'edit' || myWorkspacePerms[section] === 'view'
+  }
+
+  const canEditSection = (section) => {
+    if (!workspace) return true
+    if (!myWorkspacePerms) return false
+    return myWorkspacePerms[section] === 'edit'
+  }
+
   return (
     <AppContext.Provider value={{
       user, setUser,
@@ -212,7 +249,10 @@ export function AppProvider({ children }) {
       userRole, familyMembers,
       familyTransactions, familyDebts,
       canEdit, canAdd,
-      syncing
+      syncing,
+      workspace, setWorkspace,
+      workspaceId, setWorkspaceId,
+      myRole, canViewSection, canEditSection,
     }}>
       {children}
     </AppContext.Provider>

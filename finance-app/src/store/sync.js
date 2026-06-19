@@ -1,14 +1,15 @@
 import { db } from './firebase'
 import {
-  doc, setDoc, getDoc, collection, getDocs,
+  doc, setDoc, getDoc,
   onSnapshot, serverTimestamp
 } from 'firebase/firestore'
 
 // Firestore ga ma'lumot saqlash
-export const syncToCloud = async (userId, key, data) => {
-  if (!userId) return
+// col: 'users' (default) yoki 'workspaces'
+export const syncToCloud = async (storeId, key, data, col = 'users') => {
+  if (!storeId) return
   try {
-    await setDoc(doc(db, 'users', userId, 'data', key), {
+    await setDoc(doc(db, col, storeId, 'data', key), {
       value: JSON.stringify(data),
       updatedAt: serverTimestamp()
     })
@@ -18,10 +19,10 @@ export const syncToCloud = async (userId, key, data) => {
 }
 
 // Firestore dan ma'lumot olish
-export const loadFromCloud = async (userId, key) => {
-  if (!userId) return null
+export const loadFromCloud = async (storeId, key, col = 'users') => {
+  if (!storeId) return null
   try {
-    const snap = await getDoc(doc(db, 'users', userId, 'data', key))
+    const snap = await getDoc(doc(db, col, storeId, 'data', key))
     if (snap.exists()) {
       return JSON.parse(snap.data().value)
     }
@@ -30,10 +31,10 @@ export const loadFromCloud = async (userId, key) => {
 }
 
 // Real-vaqt tinglash (boshqa qurilmadan o'zgarish bo'lsa darhol yangilanadi)
-export const subscribeToCloud = (userId, key, callback) => {
-  if (!userId) return () => {}
+export const subscribeToCloud = (storeId, key, callback, col = 'users') => {
+  if (!storeId) return () => {}
   return onSnapshot(
-    doc(db, 'users', userId, 'data', key),
+    doc(db, col, storeId, 'data', key),
     (snap) => {
       if (snap.exists()) {
         try {
@@ -41,6 +42,6 @@ export const subscribeToCloud = (userId, key, callback) => {
         } catch (e) {}
       }
     },
-    () => {} // xato bo'lsa e'tiborsiz
+    () => {}
   )
 }
