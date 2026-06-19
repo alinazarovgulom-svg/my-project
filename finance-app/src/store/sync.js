@@ -4,10 +4,13 @@ import {
   onSnapshot, serverTimestamp
 } from 'firebase/firestore'
 
-export const syncToCloud = async (userId, key, data) => {
+// col = 'users' (shaxsiy) yoki 'families' (guruh uchun)
+const getRef = (col, id, key) => doc(db, col, id, 'data', key)
+
+export const syncToCloud = async (userId, key, data, col = 'users') => {
   if (!userId) return
   try {
-    await setDoc(doc(db, 'users', userId, 'data', key), {
+    await setDoc(getRef(col, userId, key), {
       value: JSON.stringify(data),
       updatedAt: serverTimestamp()
     })
@@ -16,11 +19,10 @@ export const syncToCloud = async (userId, key, data) => {
   }
 }
 
-// getDocFromServer — keshni chetlab, serverdan majburiy o'qiydi
-export const loadFromCloud = async (userId, key) => {
+export const loadFromCloud = async (userId, key, col = 'users') => {
   if (!userId) return null
   try {
-    const snap = await getDocFromServer(doc(db, 'users', userId, 'data', key))
+    const snap = await getDocFromServer(getRef(col, userId, key))
     if (snap.exists()) return JSON.parse(snap.data().value)
     return null
   } catch (e) {
@@ -29,10 +31,10 @@ export const loadFromCloud = async (userId, key) => {
   }
 }
 
-export const subscribeToCloud = (userId, key, callback) => {
+export const subscribeToCloud = (userId, key, callback, col = 'users') => {
   if (!userId) return () => {}
   return onSnapshot(
-    doc(db, 'users', userId, 'data', key),
+    getRef(col, userId, key),
     (snap) => {
       if (snap.exists()) {
         try { callback(JSON.parse(snap.data().value)) } catch (e) {}

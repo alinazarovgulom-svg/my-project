@@ -105,10 +105,11 @@ export const createFamily = async (userId, username, fullName, familyName) => {
     categories: pick(cloudCats, (() => { try { return JSON.parse(localStorage.getItem(`finance_${userId}_categories`) || 'null') } catch { return null } })()),
   }
 
+  // families/{familyId}/data/{key} ga yozish — barcha a'zolar o'qiy oladi
   await Promise.all(Object.entries(migrationData).map(([k, v]) => {
     if (!v || (Array.isArray(v) && v.length === 0)) return null
     if (k === 'categories') localStorage.setItem(`finance_${familyId}_categories`, JSON.stringify(v))
-    return syncToCloud(familyId, k, v)
+    return syncToCloud(familyId, k, v, 'families')
   }))
 
   return familyId
