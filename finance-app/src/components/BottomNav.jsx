@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { Home, ArrowLeftRight, Users, RefreshCw, BarChart2, Settings, UsersRound, Handshake } from 'lucide-react'
+import { Home, ArrowLeftRight, Users, RefreshCw, BarChart2, Settings, Handshake } from 'lucide-react'
 import { useLang } from '../i18n/LangContext'
 
 export default function BottomNav() {
@@ -12,7 +12,6 @@ export default function BottomNav() {
     { to: '/exchange', icon: RefreshCw, label: t('exchange') },
     { to: '/reports', icon: BarChart2, label: t('reports') },
     { to: '/hamkorlar', icon: Handshake, label: 'Hamkorlar' },
-    { to: '/family', icon: UsersRound, label: t('family') },
     { to: '/settings', icon: Settings, label: t('settings') },
   ]
 
@@ -27,7 +26,7 @@ export default function BottomNav() {
             className={({ isActive }) =>
               `flex flex-col items-center gap-0.5 px-0.5 py-1 rounded-xl transition-colors min-w-0 ${
                 isActive
-                  ? (to === '/family' ? 'text-purple-400' : to === '/hamkorlar' ? 'text-orange-400' : 'text-blue-400')
+                  ? (to === '/hamkorlar' ? 'text-orange-400' : 'text-blue-400')
                   : 'text-gray-500'
               }`
             }

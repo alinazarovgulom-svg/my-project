@@ -9,7 +9,6 @@ import Exchange from './pages/Exchange'
 import Reports from './pages/Reports'
 import Settings from './pages/Settings'
 import Categories from './pages/Categories'
-import Family from './pages/Family'
 import Hamkorlar from './pages/Hamkorlar'
 import HamkorlarList from './pages/HamkorlarList'
 import HamkorDetail from './pages/HamkorDetail'
@@ -31,7 +30,6 @@ function ProtectedLayout() {
         <Route path="/reports" element={<Reports />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/categories" element={<Categories />} />
-        <Route path="/family" element={<Family />} />
         <Route path="/hamkorlar" element={<Hamkorlar />} />
         <Route path="/hamkorlar/:sectionId" element={<HamkorlarList />} />
         <Route path="/hamkorlar/:sectionId/:id" element={<HamkorDetail />} />
