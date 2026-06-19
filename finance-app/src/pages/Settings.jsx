@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { LogOut, Lock, User, Eye, EyeOff, Info, Tag, Globe, KeyRound, Trash2 } from 'lucide-react'
+import { LogOut, Lock, User, Eye, EyeOff, Info, Tag, Globe, KeyRound, Trash2, Loader } from 'lucide-react'
 import { useApp } from '../store/AppContext'
-import { getUsers, saveUsers, hashPassword, setCurrentUser } from '../store/storage'
+import { setCurrentUser } from '../store/storage'
+import { changePassword, changeUsername } from '../store/auth'
 import Modal from '../components/Modal'
 import { useLang } from '../i18n/LangContext'
 
@@ -24,6 +25,7 @@ export default function Settings() {
   const [success, setSuccess] = useState('')
   const [loginError, setLoginError] = useState('')
   const [loginSuccess, setLoginSuccess] = useState('')
+  const [saving, setSaving] = useState(false)
   const [pinError, setPinError] = useState('')
   const [pinSuccess, setPinSuccess] = useState('')
   const hasPin = user?.id ? !!localStorage.getItem(`finance_pin_${user.id}`) : false
@@ -38,43 +40,37 @@ export default function Settings() {
     }
   }
 
-  const handleChangePass = () => {
+  const handleChangePass = async () => {
     setError(''); setSuccess('')
     if (!form.current || !form.newPass || !form.confirm) return setError('Barcha maydonlarni to\'ldiring')
     if (form.newPass.length < 4) return setError('Yangi parol kamida 4 belgi bo\'lsin')
     if (form.newPass !== form.confirm) return setError('Parollar mos kelmaydi')
-
-    const users = getUsers()
-    const idx = users.findIndex(u => u.id === user.id)
-    if (idx === -1 || users[idx].password !== hashPassword(form.current)) return setError('Joriy parol noto\'g\'ri')
-
-    users[idx] = { ...users[idx], password: hashPassword(form.newPass) }
-    saveUsers(users)
-    setCurrentUser(users[idx])
-    setSuccess('Parol muvaffaqiyatli o\'zgartirildi!')
-    setForm({ current: '', newPass: '', confirm: '' })
-    setTimeout(() => setPassModal(false), 1500)
+    setSaving(true)
+    try {
+      const res = await changePassword(user.id, form.current, form.newPass)
+      if (res.error) return setError(res.error)
+      setSuccess('Parol muvaffaqiyatli o\'zgartirildi!')
+      setForm({ current: '', newPass: '', confirm: '' })
+      setTimeout(() => setPassModal(false), 1500)
+    } catch { setError('Tarmoq xatosi') } finally { setSaving(false) }
   }
 
   const showField = (k) => setShowPass(s => ({ ...s, [k]: !s[k] }))
 
-  const handleChangeLogin = () => {
+  const handleChangeLogin = async () => {
     setLoginError(''); setLoginSuccess('')
     const { newUsername, currentPass } = loginForm
     if (!newUsername.trim() || !currentPass) return setLoginError('Barcha maydonlarni to\'ldiring')
     if (newUsername.trim().length < 3) return setLoginError('Login kamida 3 belgi bo\'lsin')
-    const users = getUsers()
-    const idx = users.findIndex(u => u.id === user.id)
-    if (idx === -1 || users[idx].password !== hashPassword(currentPass)) return setLoginError('Joriy parol noto\'g\'ri')
-    const taken = users.find(u => u.username === newUsername.trim() && u.id !== user.id)
-    if (taken) return setLoginError('Bu login band, boshqa tanlang')
-    users[idx] = { ...users[idx], username: newUsername.trim() }
-    saveUsers(users)
-    setCurrentUser(users[idx])
-    setUser(users[idx])
-    setLoginSuccess(`Login "${newUsername.trim()}" ga o'zgartirildi!`)
-    setLoginForm({ newUsername: '', currentPass: '' })
-    setTimeout(() => setLoginModal(false), 1500)
+    setSaving(true)
+    try {
+      const res = await changeUsername(user.id, newUsername.trim(), currentPass)
+      if (res.error) return setLoginError(res.error)
+      setUser(res.user)
+      setLoginSuccess(`Login "${newUsername.trim()}" ga o'zgartirildi!`)
+      setLoginForm({ newUsername: '', currentPass: '' })
+      setTimeout(() => setLoginModal(false), 1500)
+    } catch { setLoginError('Tarmoq xatosi') } finally { setSaving(false) }
   }
 
   const handleSetPin = () => {
@@ -272,7 +268,9 @@ export default function Settings() {
           </div>
           {loginError && <p className="text-red-400 text-sm bg-red-500/10 py-2 px-3 rounded-lg">{loginError}</p>}
           {loginSuccess && <p className="text-green-400 text-sm bg-green-500/10 py-2 px-3 rounded-lg">{loginSuccess}</p>}
-          <button onClick={handleChangeLogin} className="btn-primary mt-2">O'zgartirish</button>
+          <button onClick={handleChangeLogin} disabled={saving} className="btn-primary mt-2 flex items-center justify-center gap-2">
+            {saving ? <><Loader size={16} className="animate-spin" />Saqlanmoqda...</> : 'O\'zgartirish'}
+          </button>
         </div>
       </Modal>
 
@@ -298,7 +296,9 @@ export default function Settings() {
           ))}
           {error && <p className="text-red-400 text-sm bg-red-500/10 py-2 px-3 rounded-lg">{error}</p>}
           {success && <p className="text-green-400 text-sm bg-green-500/10 py-2 px-3 rounded-lg">{success}</p>}
-          <button onClick={handleChangePass} className="btn-primary mt-2">O'zgartirish</button>
+          <button onClick={handleChangePass} disabled={saving} className="btn-primary mt-2 flex items-center justify-center gap-2">
+            {saving ? <><Loader size={16} className="animate-spin" />Saqlanmoqda...</> : 'O\'zgartirish'}
+          </button>
         </div>
       </Modal>
     </div>

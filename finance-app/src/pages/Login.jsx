@@ -1,9 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Lock, User, Eye, EyeOff, Mail, Phone, Send } from 'lucide-react'
-import { getUsers, saveUsers, hashPassword, setCurrentUser, generateId } from '../store/storage'
+import { Lock, User, Eye, EyeOff, Mail, Phone, Send, Loader } from 'lucide-react'
 import { useApp } from '../store/AppContext'
 import { useLang } from '../i18n/LangContext'
+import { loginUser, registerUser, migrateLocalUsers } from '../store/auth'
 
 export default function Login() {
   const { setUser } = useApp()
@@ -13,31 +13,35 @@ export default function Login() {
   const [form, setForm] = useState({ name: '', username: '', password: '' })
   const [showPass, setShowPass] = useState(false)
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  // Eski localStorage akkauntlarini Firestore ga ko'chirish
+  useEffect(() => { migrateLocalUsers() }, [])
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
-    const users = getUsers()
-
-    if (mode === 'login') {
-      const byUsername = users.find(u => u.username === form.username)
-      if (!byUsername) return setError(`"${form.username}" foydalanuvchisi topilmadi. Ro'yxatdan o'ting.`)
-      const u = users.find(u => u.username === form.username && u.password === hashPassword(form.password))
-      if (!u) return setError('Parol noto\'g\'ri. Qayta urinib ko\'ring.')
-      setCurrentUser(u)
-      setUser(u)
-      nav('/')
-    } else {
-      if (!form.name || !form.username || !form.password) return setError(t('fillAll'))
-      if (form.password.length < 4) return setError(t('passwordShort'))
-      if (users.find(u => u.username === form.username)) return setError(t('usernameTaken'))
-      const newUser = { id: generateId(), name: form.name, username: form.username, password: hashPassword(form.password) }
-      saveUsers([...users, newUser])
-      setCurrentUser(newUser)
-      setUser(newUser)
-      nav('/')
+    setLoading(true)
+    try {
+      if (mode === 'login') {
+        const res = await loginUser(form.username, form.password)
+        if (res.error) return setError(res.error)
+        setUser(res.user)
+        nav('/')
+      } else {
+        if (!form.name || !form.username || !form.password) return setError(t('fillAll'))
+        if (form.password.length < 4) return setError(t('passwordShort'))
+        const res = await registerUser(form.name, form.username, form.password)
+        if (res.error) return setError(res.error)
+        setUser(res.user)
+        nav('/')
+      }
+    } catch {
+      setError('Tarmoq xatosi. Internet aloqasini tekshiring.')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -128,9 +132,9 @@ export default function Login() {
                 ⚠ {error}
               </div>
             )}
-            <button type="submit" className="w-full py-3.5 rounded-2xl font-bold text-white text-base mt-1 active:scale-95 transition-transform"
+            <button type="submit" disabled={loading} className="w-full py-3.5 rounded-2xl font-bold text-white text-base mt-1 active:scale-95 transition-transform flex items-center justify-center gap-2 disabled:opacity-60"
               style={{ background: 'linear-gradient(135deg, #1d4ed8 0%, #7c3aed 100%)', boxShadow: '0 4px 20px rgba(59,130,246,0.3)' }}>
-              {mode === 'login' ? t('enterBtn') : t('registerBtn')}
+              {loading ? <><Loader size={18} className="animate-spin" /> Tekshirilmoqda...</> : (mode === 'login' ? t('enterBtn') : t('registerBtn'))}
             </button>
           </form>
         </div>
