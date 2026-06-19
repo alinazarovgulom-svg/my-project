@@ -1,13 +1,16 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Plus, CreditCard, Trash2, Package, Wrench, Banknote, Pencil, ArchiveRestore, Archive } from 'lucide-react'
+import { ArrowLeft, Plus, CreditCard, Trash2, Package, Wrench, Banknote, Pencil, ArchiveRestore, Archive, FileDown, FileSpreadsheet } from 'lucide-react'
 import { useApp } from '../store/AppContext'
 import Modal from '../components/Modal'
 import { getData, saveData, generateId } from '../store/storage'
 import { calcDebt, archiveEntry, getArchive, restoreEntry, deleteFromArchive } from '../store/hamkorlar'
 import { fmtCur } from '../utils/format'
-import { formatDistanceToNow } from 'date-fns'
+import { formatDistanceToNow, format } from 'date-fns'
 import { uz } from 'date-fns/locale'
+import jsPDF from 'jspdf'
+import autoTable from 'jspdf-autotable'
+import * as XLSX from 'xlsx'
 
 const CURRENCIES = ['UZS', 'USD', 'EUR', 'RUB']
 const UNITS = ['kg', 'g', 'tonna', 'litr', 'ml', 'dona', 'm', 'm²', 'm³']
@@ -30,6 +33,8 @@ export default function HamkorDetail() {
   const [editingEntry, setEditingEntry] = useState(null)
   const [showArchive, setShowArchive] = useState(false)
   const [archive, setArchive] = useState([])
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
 
   const [xForm, setXForm] = useState({ name: '', qty: '', unit: 'kg', price: '', note: '', date: today(), currency: 'UZS' })
   const [zForm, setZForm] = useState({ amount: '', note: '', date: today(), currency: 'UZS' })
@@ -104,6 +109,66 @@ export default function HamkorDetail() {
     setPayModal(false)
   }
 
+  const filterEntries = (entries) => {
+    return entries.filter(e => {
+      if (dateFrom && e.date < dateFrom) return false
+      if (dateTo && e.date > dateTo) return false
+      return true
+    })
+  }
+
+  const entryRow = (e) => {
+    const type = e.entryType === 'xomashyo' ? 'Xomashyo' : e.entryType === 'xizmat' ? 'Xizmat haqi' : "To'lov"
+    const desc = e.entryType === 'xomashyo'
+      ? `${e.name} ${e.qty} ${e.unit} × ${e.price}`
+      : (e.note || '')
+    const amount = e.entryType === 'xomashyo' ? e.totalPrice : e.amount
+    const sign = e.entryType === 'tolov' ? '-' : '+'
+    return { type, desc, amount: `${sign}${fmtCur(amount, e.currency)}`, date: e.date, currency: e.currency }
+  }
+
+  const exportPDF = (entries) => {
+    const doc = new jsPDF()
+    const period = dateFrom || dateTo ? `${dateFrom || '...'} — ${dateTo || '...'}` : 'Barcha davr'
+    doc.setFontSize(16)
+    doc.text(`${hamkor.name} — Hisobot`, 14, 20)
+    doc.setFontSize(10)
+    doc.text(`Davr: ${period}`, 14, 28)
+    doc.text(`Sana: ${format(new Date(), 'dd.MM.yyyy')}`, 14, 34)
+
+    const rows = entries.map(e => {
+      const r = entryRow(e)
+      return [r.date, r.type, r.desc, r.amount]
+    })
+
+    autoTable(doc, {
+      startY: 40,
+      head: [['Sana', 'Tur', 'Izoh', 'Summa']],
+      body: rows,
+      styles: { fontSize: 9 },
+      headStyles: { fillColor: [29, 78, 216] },
+    })
+
+    // Qoldiq
+    const debt = calcDebt(entries)
+    const finalY = doc.lastAutoTable.finalY + 8
+    doc.setFontSize(11)
+    doc.text(`Qolgan qarz: ${fmtCur(Math.abs(debt), 'UZS')}${debt < 0 ? ' (ortiqcha to\'langan)' : ''}`, 14, finalY)
+
+    doc.save(`${hamkor.name}_hisobot.pdf`)
+  }
+
+  const exportExcel = (entries) => {
+    const rows = entries.map(e => {
+      const r = entryRow(e)
+      return { 'Sana': r.date, 'Tur': r.type, 'Izoh': r.desc, 'Summa': r.amount, 'Valyuta': r.currency }
+    })
+    const ws = XLSX.utils.json_to_sheet(rows)
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, hamkor.name.slice(0, 30))
+    XLSX.writeFile(wb, `${hamkor.name}_hisobot.xlsx`)
+  }
+
   // Edit entry
   const openEdit = (entry) => {
     setEditingEntry({ ...entry })
@@ -156,8 +221,9 @@ export default function HamkorDetail() {
 
   if (!hamkor) return null
 
-  const debt = calcDebt(hamkor.entries || [])
-  const sortedEntries = [...(hamkor.entries || [])].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+  const allEntries = [...(hamkor.entries || [])].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+  const sortedEntries = filterEntries(allEntries)
+  const debt = calcDebt(sortedEntries)
 
   const entryLabel = (e) => {
     if (e.entryType === 'xomashyo') return `${e.name} — ${e.qty} ${e.unit} × ${fmtCur(e.price, e.currency)} = ${fmtCur(e.totalPrice, e.currency)}`
@@ -202,7 +268,28 @@ export default function HamkorDetail() {
           </div>
         </div>
 
+        {/* Davr filtri + Export */}
         <div className="px-4 mt-3 flex flex-col gap-2">
+          <div className="flex gap-2">
+            <input type="date" className="flex-1 bg-gray-800 text-white rounded-xl px-3 py-2 outline-none text-sm" value={dateFrom} onChange={e => setDateFrom(e.target.value)} />
+            <input type="date" className="flex-1 bg-gray-800 text-white rounded-xl px-3 py-2 outline-none text-sm" value={dateTo} onChange={e => setDateTo(e.target.value)} />
+          </div>
+          <div className="flex gap-2">
+            <button onClick={() => exportPDF(sortedEntries)} className="flex-1 flex items-center justify-center gap-2 bg-red-600/20 border border-red-500/30 text-red-400 rounded-xl py-2.5 text-sm font-medium active:opacity-70">
+              <FileDown size={15} /> PDF
+            </button>
+            <button onClick={() => exportExcel(sortedEntries)} className="flex-1 flex items-center justify-center gap-2 bg-green-600/20 border border-green-500/30 text-green-400 rounded-xl py-2.5 text-sm font-medium active:opacity-70">
+              <FileSpreadsheet size={15} /> Excel
+            </button>
+            {(dateFrom || dateTo) && (
+              <button onClick={() => { setDateFrom(''); setDateTo('') }} className="px-3 bg-gray-700 text-gray-400 rounded-xl text-sm active:opacity-70">
+                ✕
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div className="px-4 mt-1 flex flex-col gap-2">
           {/* Archive view */}
           {showArchive && (
             <div className="mb-2">
