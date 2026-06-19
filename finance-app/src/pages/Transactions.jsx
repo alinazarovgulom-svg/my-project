@@ -23,7 +23,7 @@ const localNow = () => { const d = new Date(); return new Date(d.getTime() - d.g
 const defaultForm = { type: 'expense', amount: '', category: '', currency: 'UZS', note: '', date: localNow() }
 
 export default function Transactions() {
-  const { transactions, saveTransactions, user, family, familyTransactions, familyMembers, canEdit, canAdd, refreshFamily } = useApp()
+  const { transactions, saveTransactions, user, family, familyTransactions, familyMembers, canEdit, canAdd, refreshFamily, categories: contextCategories } = useApp()
   const [modal, setModal] = useState(false)
   const [editModal, setEditModal] = useState(false)
   const [editingTx, setEditingTx] = useState(null)
@@ -40,12 +40,7 @@ export default function Transactions() {
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   const [currencyFilter, setCurrencyFilter] = useState('all')
-  const [customCategories] = useState(() => {
-    try {
-      const saved = localStorage.getItem(`finance_${user?.id}_categories`)
-      return saved ? JSON.parse(saved) : null
-    } catch { return null }
-  })
+  const customCategories = contextCategories.length > 0 ? contextCategories : null
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
