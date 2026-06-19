@@ -3,563 +3,536 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Finance App</title>
+<title>Finance App — Dizayn</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-  *{margin:0;padding:0;box-sizing:border-box;}
-  body{
-    background:#070709;
-    min-height:100vh;
-    display:flex;
-    align-items:flex-start;
-    justify-content:center;
-    gap:28px;
-    padding:36px 24px;
-    flex-wrap:wrap;
-    font-family:'Inter',-apple-system,sans-serif;
-  }
-  .wrap{display:flex;flex-direction:column;align-items:center;gap:12px;}
-  .screen-label{color:#333;font-size:10px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;}
-  .phone{
-    width:340px;
-    height:740px;
-    background:#090910;
-    border-radius:46px;
-    border:1px solid rgba(255,255,255,0.07);
-    overflow:hidden;
-    position:relative;
-    box-shadow:0 0 0 1px rgba(255,255,255,0.03),0 40px 100px rgba(0,0,0,0.9),inset 0 1px 0 rgba(255,255,255,0.08);
-    display:flex;
-    flex-direction:column;
-  }
-  .notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:110px;height:28px;background:#090910;border-radius:0 0 18px 18px;z-index:99;}
-  .statusbar{height:46px;display:flex;align-items:flex-end;justify-content:space-between;padding:0 24px 7px;flex-shrink:0;z-index:10;}
-  .statusbar .time{color:#fff;font-size:13px;font-weight:700;}
-  .sb-right{display:flex;align-items:center;gap:5px;}
-  .scroll{flex:1;overflow-y:auto;overflow-x:hidden;}
-  .scroll::-webkit-scrollbar{display:none;}
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+  background:#060608;
+  min-height:100vh;
+  display:flex;
+  align-items:flex-start;
+  justify-content:center;
+  gap:24px;
+  padding:32px 20px 60px;
+  flex-wrap:wrap;
+  font-family:'Inter',-apple-system,sans-serif;
+}
+.col{display:flex;flex-direction:column;align-items:center;gap:10px;}
+.lbl{color:#2a2a35;font-size:10px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;}
 
-  /* BOTTOM NAV */
-  .bottom-nav{
-    height:70px;
-    background:rgba(9,9,16,0.97);
-    backdrop-filter:blur(30px);
-    border-top:1px solid rgba(255,255,255,0.04);
-    display:flex;align-items:center;justify-content:space-around;
-    padding:0 6px 8px;
-    flex-shrink:0;
-  }
-  .nav-item{display:flex;flex-direction:column;align-items:center;gap:4px;padding:5px 12px;border-radius:14px;cursor:pointer;}
-  .nav-item.active{background:rgba(99,102,241,0.1);}
-  .nav-item svg{width:21px;height:21px;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round;}
-  .nav-item.active svg{stroke:#818cf8;}
-  .nav-item:not(.active) svg{stroke:#374151;}
-  .nav-label{font-size:9px;font-weight:700;letter-spacing:.02em;}
-  .nav-item.active .nav-label{color:#818cf8;}
-  .nav-item:not(.active) .nav-label{color:#374151;}
-  .nav-dot{width:4px;height:4px;background:#6366f1;border-radius:50%;margin-top:1px;}
+/* ── PHONE SHELL ── */
+.phone{
+  width:330px;height:714px;
+  background:#08080f;
+  border-radius:44px;
+  border:1px solid rgba(255,255,255,0.06);
+  overflow:hidden;position:relative;
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.025),
+    0 30px 80px rgba(0,0,0,0.95),
+    inset 0 1px 0 rgba(255,255,255,0.07);
+  display:flex;flex-direction:column;
+}
+.notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:100px;height:26px;background:#08080f;border-radius:0 0 16px 16px;z-index:99;}
 
-  /* ── SCREEN 1: HOME ── */
-  .home-top{padding:2px 20px 0;}
-  .greeting-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
-  .greeting-sub{color:#555;font-size:11px;font-weight:500;margin-bottom:2px;}
-  .greeting-name{color:#fff;font-size:19px;font-weight:800;}
-  .avatar-btn{
-    width:40px;height:40px;border-radius:50%;
-    background:linear-gradient(135deg,#6366f1,#8b5cf6);
-    display:flex;align-items:center;justify-content:center;
-    font-size:15px;font-weight:800;color:#fff;
-    box-shadow:0 4px 16px rgba(99,102,241,0.5);
-    flex-shrink:0;position:relative;
-    overflow:hidden;
-  }
-  .avatar-btn img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
-  .avatar-dot{position:absolute;bottom:1px;right:1px;width:10px;height:10px;background:#22c55e;border-radius:50%;border:2px solid #090910;z-index:2;}
+/* STATUS BAR */
+.sb{height:44px;display:flex;align-items:flex-end;justify-content:space-between;padding:0 22px 6px;flex-shrink:0;z-index:10;}
+.sb-time{color:#fff;font-size:13px;font-weight:700;}
+.sb-icons{display:flex;align-items:center;gap:5px;}
 
-  .bal-card{
-    background:linear-gradient(135deg,#1a1060 0%,#2d1b69 40%,#1e0d4e 100%);
-    border-radius:24px;padding:18px 18px;margin-bottom:8px;
-    position:relative;overflow:hidden;
-    border:1px solid rgba(139,92,246,0.2);
-  }
-  .bal-glow{position:absolute;top:-50px;right:-50px;width:160px;height:160px;background:radial-gradient(circle,rgba(139,92,246,0.3) 0%,transparent 70%);pointer-events:none;}
-  .bal-label{color:rgba(255,255,255,0.5);font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px;}
-  .bal-amount{color:#fff;font-size:28px;font-weight:900;letter-spacing:-1px;line-height:1;margin-bottom:4px;}
-  .bal-change{display:flex;align-items:center;gap:4px;margin-bottom:14px;}
-  .bal-pill{background:rgba(34,197,94,0.18);color:#4ade80;font-size:9px;font-weight:700;padding:2px 7px;border-radius:20px;display:flex;align-items:center;gap:2px;}
-  .bal-hint{color:rgba(255,255,255,0.3);font-size:10px;}
-  .bal-row{display:flex;gap:8px;}
-  .bal-item{flex:1;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.06);border-radius:14px;padding:10px 12px;}
-  .bal-item-top{display:flex;align-items:center;gap:5px;margin-bottom:4px;}
-  .bal-dot{width:18px;height:18px;border-radius:7px;display:flex;align-items:center;justify-content:center;}
-  .bal-item-label{color:rgba(255,255,255,0.45);font-size:9px;font-weight:600;}
-  .bal-item-val{color:#fff;font-size:14px;font-weight:800;}
-  .bal-item-sub{color:rgba(255,255,255,0.3);font-size:9px;margin-top:1px;}
+/* SCROLL */
+.pg{flex:1;overflow-y:auto;overflow-x:hidden;}
+.pg::-webkit-scrollbar{display:none;}
 
-  /* ONLINE USERS ROW */
-  .section-header{display:flex;align-items:center;justify-content:space-between;padding:14px 20px 10px;}
-  .section-title{color:#fff;font-size:14px;font-weight:700;}
-  .section-more{color:#6366f1;font-size:11px;font-weight:600;}
+/* BOTTOM NAV */
+.bnav{
+  height:68px;
+  background:rgba(8,8,15,0.98);
+  backdrop-filter:blur(30px);
+  border-top:1px solid rgba(255,255,255,0.04);
+  display:flex;align-items:center;justify-content:space-around;
+  padding:0 4px 8px;flex-shrink:0;
+}
+.ni{display:flex;flex-direction:column;align-items:center;gap:3px;padding:5px 14px;border-radius:14px;cursor:pointer;position:relative;}
+.ni.on{background:rgba(99,102,241,0.1);}
+.ni svg{width:21px;height:21px;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round;}
+.ni.on svg{stroke:#818cf8;}
+.ni:not(.on) svg{stroke:#2d2d3d;}
+.ni-l{font-size:9px;font-weight:700;}
+.ni.on .ni-l{color:#818cf8;}
+.ni:not(.on) .ni-l{color:#2d2d3d;}
+.ni-dot{width:4px;height:4px;border-radius:50%;background:#6366f1;position:absolute;bottom:3px;}
 
-  .online-row{display:flex;gap:12px;padding:0 20px 4px;overflow-x:auto;}
-  .online-row::-webkit-scrollbar{display:none;}
-  .online-user{display:flex;flex-direction:column;align-items:center;gap:5px;flex-shrink:0;}
-  .ou-avatar{width:46px;height:46px;border-radius:50%;position:relative;}
-  .ou-avatar-inner{
-    width:46px;height:46px;border-radius:50%;
-    display:flex;align-items:center;justify-content:center;
-    font-size:15px;font-weight:800;color:#fff;
-    overflow:hidden;
-  }
-  .ou-avatar-inner img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
-  .ou-ring-online{position:absolute;inset:-2px;border-radius:50%;border:2px solid #22c55e;}
-  .ou-ring-offline{position:absolute;inset:-2px;border-radius:50%;border:2px solid #374151;}
-  .ou-status-dot{
-    position:absolute;bottom:1px;right:1px;
-    width:11px;height:11px;border-radius:50%;
-    border:2px solid #090910;
-  }
-  .dot-online{background:#22c55e;}
-  .dot-offline{background:#4b5563;}
-  .dot-away{background:#f59e0b;}
-  .ou-name{color:#9ca3af;font-size:9px;font-weight:600;text-align:center;}
-  .ou-label{font-size:8px;font-weight:700;padding:2px 6px;border-radius:20px;}
-  .lbl-online{background:rgba(34,197,94,0.15);color:#4ade80;}
-  .lbl-offline{background:rgba(75,85,99,0.2);color:#6b7280;}
-  .lbl-away{background:rgba(245,158,11,0.15);color:#fbbf24;}
+/* ════════════════════════════
+   SCREEN 1 — BOSH SAHIFA
+════════════════════════════ */
 
-  /* TX LIST */
-  .tx-list{padding:0 20px;display:flex;flex-direction:column;gap:7px;margin-bottom:14px;}
-  .tx-item{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.04);border-radius:14px;padding:11px 12px;}
-  .tx-icon{width:38px;height:38px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-  .tx-icon svg{width:17px;height:17px;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round;}
-  .tx-body{flex:1;}
-  .tx-name{color:#e5e7eb;font-size:12px;font-weight:600;}
-  .tx-date{color:#4b5563;font-size:9px;margin-top:1px;}
-  .tx-cat{display:inline-block;background:rgba(255,255,255,0.05);color:#6b7280;font-size:8px;font-weight:600;padding:2px 6px;border-radius:20px;margin-top:2px;}
-  .tx-amount{font-size:13px;font-weight:800;}
-  .tx-in{color:#4ade80;}.tx-out{color:#f87171;}
+/* TOP BAR with avatar + online */
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:6px 18px 14px;
+}
+.tb-left{display:flex;align-items:center;gap:10px;}
+.tb-avatar{
+  width:40px;height:40px;border-radius:50%;
+  position:relative;flex-shrink:0;
+}
+.tb-av-inner{
+  width:40px;height:40px;border-radius:50%;
+  background:linear-gradient(135deg,#f97316,#ef4444);
+  display:flex;align-items:center;justify-content:center;
+  font-size:15px;font-weight:900;color:#fff;
+  overflow:hidden;
+}
+.tb-av-inner img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
+.tb-ring{position:absolute;inset:-2px;border-radius:50%;border:2px solid #22c55e;}
+.tb-dot{position:absolute;bottom:1px;right:1px;width:10px;height:10px;border-radius:50%;background:#22c55e;border:2px solid #08080f;z-index:2;}
+.tb-info{}
+.tb-name{color:#fff;font-size:15px;font-weight:800;line-height:1.1;}
+.tb-online{display:flex;align-items:center;gap:4px;margin-top:2px;}
+.tb-online-dot{width:6px;height:6px;border-radius:50%;background:#22c55e;box-shadow:0 0 6px rgba(34,197,94,.7);}
+.tb-online-text{color:#4ade80;font-size:10px;font-weight:600;}
+.tb-last{color:#4b5563;font-size:10px;}
+.tb-notif{
+  width:36px;height:36px;border-radius:12px;
+  background:rgba(255,255,255,0.04);
+  border:1px solid rgba(255,255,255,0.06);
+  display:flex;align-items:center;justify-content:center;
+  position:relative;
+}
+.tb-notif svg{width:16px;height:16px;stroke:#6b7280;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round;}
+.tb-badge{position:absolute;top:-3px;right:-3px;width:14px;height:14px;border-radius:50%;background:#ef4444;border:2px solid #08080f;display:flex;align-items:center;justify-content:center;color:#fff;font-size:7px;font-weight:800;}
 
-  /* ── SCREEN 2: PROFILE ── */
-  .profile-page{}
-  .profile-hero{
-    background:linear-gradient(180deg,#12112a 0%,#0d0d1a 100%);
-    padding:6px 20px 24px;
-    display:flex;flex-direction:column;align-items:center;
-    position:relative;
-  }
-  .profile-top-bar{width:100%;display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
-  .ptb-title{color:#fff;font-size:16px;font-weight:800;}
-  .ptb-btn{width:34px;height:34px;border-radius:11px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;justify-content:center;}
-  .ptb-btn svg{width:15px;height:15px;stroke:#9ca3af;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round;}
+/* BALANCE */
+.balcard{
+  margin:0 16px 12px;
+  background:linear-gradient(135deg,#1a1060,#2d1b69 50%,#1e0d4e);
+  border-radius:24px;padding:18px;
+  border:1px solid rgba(139,92,246,0.18);
+  position:relative;overflow:hidden;
+}
+.balcard::before{content:'';position:absolute;top:-50px;right:-50px;width:150px;height:150px;background:radial-gradient(circle,rgba(139,92,246,0.35),transparent 70%);pointer-events:none;}
+.balcard::after{content:'';position:absolute;bottom:-30px;left:20px;width:100px;height:100px;background:radial-gradient(circle,rgba(99,102,241,0.2),transparent 70%);pointer-events:none;}
+.bal-lbl{color:rgba(255,255,255,0.45);font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px;}
+.bal-amt{color:#fff;font-size:28px;font-weight:900;letter-spacing:-1px;line-height:1;margin-bottom:4px;}
+.bal-row{display:flex;gap:8px;margin-top:14px;}
+.bi{flex:1;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.05);border-radius:14px;padding:10px 12px;}
+.bi-t{display:flex;align-items:center;gap:5px;margin-bottom:4px;}
+.bi-ico{width:16px;height:16px;border-radius:5px;display:flex;align-items:center;justify-content:center;}
+.bi-l{color:rgba(255,255,255,0.4);font-size:9px;font-weight:600;}
+.bi-v{font-size:14px;font-weight:800;}
+.bi-s{color:rgba(255,255,255,0.25);font-size:9px;margin-top:1px;}
 
-  .profile-avatar-wrap{position:relative;margin-bottom:14px;}
-  .profile-avatar{
-    width:88px;height:88px;border-radius:50%;
-    background:linear-gradient(135deg,#6366f1,#8b5cf6);
-    display:flex;align-items:center;justify-content:center;
-    font-size:32px;font-weight:900;color:#fff;
-    box-shadow:0 8px 32px rgba(99,102,241,0.5);
-    overflow:hidden;
-    position:relative;
-  }
-  .profile-avatar img{width:100%;height:100%;object-fit:cover;}
-  .profile-avatar-ring{
-    position:absolute;inset:-3px;border-radius:50%;
-    border:2px solid rgba(99,102,241,0.5);
-  }
-  .profile-camera{
-    position:absolute;bottom:2px;right:2px;
-    width:26px;height:26px;border-radius:50%;
-    background:#6366f1;
-    border:2px solid #090910;
-    display:flex;align-items:center;justify-content:center;
-    cursor:pointer;
-  }
-  .profile-camera svg{width:13px;height:13px;stroke:#fff;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round;}
+/* QUICK ACTIONS */
+.sh{display:flex;align-items:center;justify-content:space-between;padding:10px 18px 8px;}
+.sh-t{color:#fff;font-size:13px;font-weight:700;}
+.sh-m{color:#6366f1;font-size:11px;font-weight:600;}
 
-  .profile-name{color:#fff;font-size:20px;font-weight:800;margin-bottom:2px;}
-  .profile-username{color:#6b7280;font-size:12px;margin-bottom:10px;}
-  .profile-status-row{display:flex;align-items:center;gap:6px;}
-  .profile-status-dot{width:8px;height:8px;border-radius:50%;background:#22c55e;box-shadow:0 0 8px rgba(34,197,94,0.6);}
-  .profile-status-text{color:#4ade80;font-size:11px;font-weight:600;}
+.qrow{display:flex;gap:10px;padding:0 18px 4px;overflow-x:auto;}
+.qrow::-webkit-scrollbar{display:none;}
+.qb{display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0;cursor:pointer;}
+.qi{width:50px;height:50px;border-radius:16px;display:flex;align-items:center;justify-content:center;}
+.qi svg{width:20px;height:20px;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round;}
+.ql{color:#4b5563;font-size:9px;font-weight:700;text-align:center;}
+.qi1{background:rgba(99,102,241,0.12);border:1px solid rgba(99,102,241,0.2);}  .qi1 svg{stroke:#818cf8;}
+.qi2{background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.18);}   .qi2 svg{stroke:#f87171;}
+.qi3{background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.18);}   .qi3 svg{stroke:#4ade80;}
+.qi4{background:rgba(251,191,36,0.1);border:1px solid rgba(251,191,36,0.18);} .qi4 svg{stroke:#fbbf24;}
+.qi5{background:rgba(6,182,212,0.1);border:1px solid rgba(6,182,212,0.18);}   .qi5 svg{stroke:#22d3ee;}
 
-  .profile-stats{
-    display:flex;gap:1px;
-    background:rgba(255,255,255,0.04);
-    border-radius:18px;
-    margin:16px 20px 0;
-    overflow:hidden;
-    border:1px solid rgba(255,255,255,0.05);
-  }
-  .ps-item{flex:1;padding:12px 8px;display:flex;flex-direction:column;align-items:center;gap:2px;border-right:1px solid rgba(255,255,255,0.04);}
-  .ps-item:last-child{border-right:none;}
-  .ps-val{color:#fff;font-size:16px;font-weight:800;}
-  .ps-label{color:#4b5563;font-size:9px;font-weight:600;text-align:center;}
+/* ONLINE MEMBERS */
+.orow{display:flex;gap:10px;padding:0 18px 2px;overflow-x:auto;}
+.orow::-webkit-scrollbar{display:none;}
+.ou{display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0;}
+.ou-av{width:44px;height:44px;position:relative;}
+.ou-in{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;overflow:hidden;}
+.ou-in img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
+.ou-ring-g{position:absolute;inset:-2px;border-radius:50%;border:2px solid #22c55e;}
+.ou-ring-y{position:absolute;inset:-2px;border-radius:50%;border:2px solid #f59e0b;opacity:.7;}
+.ou-ring-k{position:absolute;inset:-2px;border-radius:50%;border:2px solid #1f2937;}
+.ou-dot{position:absolute;bottom:1px;right:1px;width:10px;height:10px;border-radius:50%;border:2px solid #08080f;}
+.dg{background:#22c55e;}.dy{background:#f59e0b;}.dk{background:#374151;}
+.ou-name{color:#6b7280;font-size:9px;font-weight:600;text-align:center;max-width:48px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+.ou-t{font-size:8px;font-weight:700;padding:2px 5px;border-radius:10px;}
+.t-g{background:rgba(34,197,94,0.12);color:#4ade80;}
+.t-y{background:rgba(245,158,11,0.12);color:#fbbf24;}
+.t-k{background:rgba(75,85,99,0.15);color:#4b5563;}
 
-  .profile-section{padding:14px 20px 0;}
-  .ps-title{color:#4b5563;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px;}
-  .ps-card{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.05);border-radius:16px;overflow:hidden;}
-  .ps-row{display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid rgba(255,255,255,0.04);}
-  .ps-row:last-child{border-bottom:none;}
-  .ps-icon{width:34px;height:34px;border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-  .ps-icon svg{width:16px;height:16px;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round;}
-  .ps-row-label{color:#d1d5db;font-size:13px;font-weight:500;flex:1;}
-  .ps-row-val{color:#6b7280;font-size:11px;}
-  .ps-row-arr{color:#374151;}
-  .ps-row-arr svg{width:14px;height:14px;stroke:#374151;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round;}
+/* TX */
+.txl{padding:0 18px;display:flex;flex-direction:column;gap:7px;margin-bottom:12px;}
+.txi{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.025);border:1px solid rgba(255,255,255,0.04);border-radius:14px;padding:10px 12px;}
+.tx-ic{width:36px;height:36px;border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.tx-ic svg{width:16px;height:16px;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round;}
+.tx-b{flex:1;}
+.tx-n{color:#e5e7eb;font-size:12px;font-weight:600;}
+.tx-d{color:#374151;font-size:9px;margin-top:1px;}
+.tx-c{display:inline-block;background:rgba(255,255,255,0.04);color:#4b5563;font-size:8px;font-weight:600;padding:2px 6px;border-radius:10px;margin-top:2px;}
+.txa{font-size:13px;font-weight:800;}
+.ain{color:#4ade80;}.aout{color:#f87171;}
 
-  /* ONLINE STATUS PILL on profile */
-  .status-picker{
-    display:flex;gap:6px;
-    background:rgba(255,255,255,0.04);
-    border:1px solid rgba(255,255,255,0.06);
-    border-radius:14px;
-    padding:6px;
-    margin:0 20px;
-  }
-  .sp-item{flex:1;display:flex;align-items:center;justify-content:center;gap:5px;padding:7px 4px;border-radius:10px;cursor:pointer;}
-  .sp-item.active-sp{background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.2);}
-  .sp-dot{width:7px;height:7px;border-radius:50%;}
-  .sp-text{font-size:10px;font-weight:700;}
-  .sp-item.active-sp .sp-text{color:#818cf8;}
-  .sp-item:not(.active-sp) .sp-text{color:#4b5563;}
+/* ════════════════════════════
+   SCREEN 2 — MENYU
+════════════════════════════ */
+.menu-tb{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:6px 18px 16px;
+}
+.mtb-left{display:flex;align-items:center;gap:10px;}
+.mtb-av{width:36px;height:36px;border-radius:50%;position:relative;}
+.mtb-av-in{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#f97316,#ef4444);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:#fff;}
+.mtb-ring{position:absolute;inset:-2px;border-radius:50%;border:2px solid #22c55e;}
+.mtb-dot{position:absolute;bottom:0;right:0;width:9px;height:9px;border-radius:50%;background:#22c55e;border:2px solid #08080f;}
+.mtb-info .mtb-name{color:#fff;font-size:13px;font-weight:700;}
+.mtb-info .mtb-status{color:#4ade80;font-size:10px;font-weight:600;}
+.mtb-right{
+  width:34px;height:34px;border-radius:11px;
+  background:rgba(255,255,255,0.04);
+  border:1px solid rgba(255,255,255,0.06);
+  display:flex;align-items:center;justify-content:center;
+}
+.mtb-right svg{width:15px;height:15px;stroke:#6b7280;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round;}
+
+.mgrid{display:grid;grid-template-columns:1fr 1fr;gap:9px;padding:0 15px;}
+.mc{border-radius:22px;padding:16px 14px;display:flex;flex-direction:column;position:relative;overflow:hidden;cursor:pointer;min-height:120px;border:1px solid rgba(255,255,255,0.035);}
+.mc::before{content:'';position:absolute;top:-25px;right:-25px;width:90px;height:90px;border-radius:50%;filter:blur(22px);opacity:.65;}
+.mc1{background:linear-gradient(145deg,#1e1b4b,#312e81);} .mc1::before{background:#6366f1;}
+.mc2{background:linear-gradient(145deg,#052e16,#14532d);} .mc2::before{background:#22c55e;}
+.mc3{background:linear-gradient(145deg,#431407,#7c2d12);} .mc3::before{background:#f97316;}
+.mc4{background:linear-gradient(145deg,#2e1065,#4c1d95);} .mc4::before{background:#a855f7;}
+.mc5{background:linear-gradient(145deg,#083344,#164e63);} .mc5::before{background:#06b6d4;}
+.mc6{background:linear-gradient(145deg,#4a044e,#7e1d7e);} .mc6::before{background:#e879f9;}
+.mc-ibox{width:38px;height:38px;border-radius:13px;background:rgba(255,255,255,0.14);display:flex;align-items:center;justify-content:center;margin-bottom:10px;position:relative;z-index:1;}
+.mc-ibox svg{width:18px;height:18px;stroke:#fff;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round;}
+.mc-t{color:#fff;font-size:12px;font-weight:800;position:relative;z-index:1;line-height:1.2;}
+.mc-s{color:rgba(255,255,255,0.4);font-size:9px;margin-top:3px;position:relative;z-index:1;line-height:1.4;}
+.mc-b{position:absolute;top:12px;right:12px;background:rgba(255,255,255,0.16);color:#fff;font-size:9px;font-weight:800;padding:2px 7px;border-radius:20px;z-index:1;}
+.mc-arr{position:absolute;bottom:12px;right:12px;opacity:.22;z-index:1;}
+.mc-arr svg{width:13px;height:13px;stroke:#fff;stroke-width:2.5;fill:none;stroke-linecap:round;stroke-linejoin:round;}
+
+/* ════════════════════════════
+   SCREEN 3 — PROFIL
+════════════════════════════ */
+.prof-hero{
+  background:linear-gradient(180deg,#11102a 0%,#0a0a18 100%);
+  padding:4px 18px 22px;
+  display:flex;flex-direction:column;align-items:center;
+}
+.prof-topbar{width:100%;display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+.ptb-t{color:#fff;font-size:15px;font-weight:800;}
+.ptb-edit{width:32px;height:32px;border-radius:10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;justify-content:center;}
+.ptb-edit svg{width:14px;height:14px;stroke:#6b7280;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round;}
+
+.prof-av-wrap{position:relative;margin-bottom:12px;}
+.prof-av{
+  width:84px;height:84px;border-radius:50%;
+  background:linear-gradient(135deg,#f97316,#ef4444);
+  display:flex;align-items:center;justify-content:center;
+  font-size:30px;font-weight:900;color:#fff;
+  overflow:hidden;
+  box-shadow:0 8px 28px rgba(249,115,22,0.45);
+}
+.prof-av img{width:100%;height:100%;object-fit:cover;}
+.prof-av-ring{position:absolute;inset:-3px;border-radius:50%;border:2.5px solid rgba(99,102,241,0.5);}
+.prof-cam{
+  position:absolute;bottom:2px;right:2px;
+  width:26px;height:26px;border-radius:50%;
+  background:#6366f1;border:2.5px solid #08080f;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 2px 8px rgba(99,102,241,0.5);
+}
+.prof-cam svg{width:12px;height:12px;stroke:#fff;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round;}
+
+.prof-name{color:#fff;font-size:18px;font-weight:800;margin-bottom:2px;}
+.prof-user{color:#4b5563;font-size:11px;margin-bottom:8px;}
+.prof-online{display:flex;align-items:center;gap:5px;}
+.pod{width:7px;height:7px;border-radius:50%;background:#22c55e;box-shadow:0 0 8px rgba(34,197,94,0.7);}
+.pot{color:#4ade80;font-size:10px;font-weight:700;}
+
+.prof-stats{display:flex;gap:1px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.05);border-radius:16px;margin:14px 18px 0;overflow:hidden;}
+.psi{flex:1;padding:10px 6px;display:flex;flex-direction:column;align-items:center;gap:2px;border-right:1px solid rgba(255,255,255,0.04);}
+.psi:last-child{border-right:none;}
+.psv{color:#fff;font-size:15px;font-weight:800;}
+.psl{color:#374151;font-size:8px;font-weight:600;text-align:center;}
+
+/* STATUS PICKER */
+.spick{display:flex;gap:5px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.05);border-radius:14px;padding:5px;margin:12px 18px 0;}
+.spi{flex:1;display:flex;align-items:center;justify-content:center;gap:4px;padding:7px 4px;border-radius:10px;cursor:pointer;}
+.spi.ac{background:rgba(99,102,241,0.14);border:1px solid rgba(99,102,241,0.2);}
+.sp-d{width:7px;height:7px;border-radius:50%;}
+.sp-t{font-size:9px;font-weight:700;}
+.spi.ac .sp-t{color:#818cf8;}
+.spi:not(.ac) .sp-t{color:#374151;}
+
+/* PROFILE ROWS */
+.psec{padding:12px 18px 0;}
+.psec-t{color:#2a2a3a;font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:7px;}
+.pcard{background:rgba(255,255,255,0.025);border:1px solid rgba(255,255,255,0.045);border-radius:14px;overflow:hidden;}
+.prow{display:flex;align-items:center;gap:10px;padding:11px 13px;border-bottom:1px solid rgba(255,255,255,0.035);}
+.prow:last-child{border-bottom:none;}
+.pr-ic{width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.pr-ic svg{width:15px;height:15px;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round;}
+.pr-l{color:#d1d5db;font-size:12px;font-weight:500;flex:1;}
+.pr-v{color:#374151;font-size:10px;}
+.arr svg{width:13px;height:13px;stroke:#2a2a3a;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round;}
 </style>
 </head>
 <body>
 
-<!-- SCREEN 1: HOME with online users -->
-<div class="wrap">
-  <div class="screen-label">Bosh sahifa</div>
-  <div class="phone">
-    <div class="notch"></div>
-    <div class="statusbar">
-      <span class="time">9:41</span>
-      <div class="sb-right">
-        <svg width="14" height="10" viewBox="0 0 14 10" fill="none"><rect x="0" y="4" width="2" height="6" rx=".6" fill="white" opacity=".4"/><rect x="3.2" y="2.5" width="2" height="7.5" rx=".6" fill="white" opacity=".65"/><rect x="6.4" y="1" width="2" height="9" rx=".6" fill="white" opacity=".85"/><rect x="9.6" y="0" width="2" height="10" rx=".6" fill="white"/></svg>
-        <svg width="20" height="11" viewBox="0 0 20 11" fill="none"><rect x=".5" y=".5" width="16" height="10" rx="2.5" stroke="white" stroke-opacity=".3"/><rect x="2" y="2" width="11" height="7" rx="1.2" fill="white"/><path d="M18 3.8v3.4c.7-.3 1.2-.9 1.2-1.7s-.5-1.4-1.2-1.7z" fill="white" opacity=".5"/></svg>
+<!-- ── SCREEN 1: BOSH SAHIFA ── -->
+<div class="col">
+<div class="lbl">Bosh sahifa</div>
+<div class="phone">
+  <div class="notch"></div>
+  <div class="sb">
+    <span class="sb-time">9:41</span>
+    <div class="sb-icons">
+      <svg width="14" height="10" viewBox="0 0 14 10" fill="none"><rect x="0" y="4" width="2.2" height="6" rx=".6" fill="white" opacity=".35"/><rect x="3.2" y="2.5" width="2.2" height="7.5" rx=".6" fill="white" opacity=".6"/><rect x="6.4" y="1" width="2.2" height="9" rx=".6" fill="white" opacity=".82"/><rect x="9.6" y="0" width="2.2" height="10" rx=".6" fill="white"/></svg>
+      <svg width="20" height="11" viewBox="0 0 20 11" fill="none"><rect x=".5" y=".5" width="16" height="10" rx="2.5" stroke="white" stroke-opacity=".28"/><rect x="2" y="2" width="11" height="7" rx="1.2" fill="white"/><path d="M18 3.8v3.4c.7-.3 1.2-.9 1.2-1.7s-.5-1.4-1.2-1.7z" fill="white" opacity=".45"/></svg>
+    </div>
+  </div>
+
+  <div class="pg">
+    <!-- TOP BAR: avatar + online vaqt -->
+    <div class="topbar">
+      <div class="tb-left">
+        <div class="tb-avatar">
+          <div class="tb-ring"></div>
+          <div class="tb-av-inner">G</div>
+          <div class="tb-dot"></div>
+        </div>
+        <div class="tb-info">
+          <div class="tb-name">Gulom</div>
+          <div class="tb-online">
+            <div class="tb-online-dot"></div>
+            <span class="tb-online-text">Onlayn · 9:41 dan</span>
+          </div>
+        </div>
+      </div>
+      <div class="tb-notif">
+        <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <div class="tb-badge">3</div>
       </div>
     </div>
 
-    <div class="scroll">
-      <div class="home-top">
-        <div class="greeting-row">
-          <div>
-            <div class="greeting-sub">Xush kelibsiz 👋</div>
-            <div class="greeting-name">Gulom</div>
-          </div>
-          <div class="avatar-btn">
-            <!-- avatar with photo -->
-            <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#f97316,#ef4444);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#fff;">G</div>
-            <div class="avatar-dot"></div>
-          </div>
+    <!-- BALANCE -->
+    <div class="balcard">
+      <div class="bal-lbl">UMUMIY BALANS</div>
+      <div class="bal-amt">12 450 000 <span style="font-size:14px;font-weight:600;opacity:.5">so'm</span></div>
+      <div style="display:flex;align-items:center;gap:6px;margin-top:4px;margin-bottom:14px;">
+        <div style="background:rgba(34,197,94,.16);color:#4ade80;font-size:9px;font-weight:700;padding:2px 7px;border-radius:20px;display:flex;align-items:center;gap:2px;">
+          <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><polyline points="18 15 12 9 6 15"/></svg>+8.2%
         </div>
-
-        <div class="bal-card">
-          <div class="bal-glow"></div>
-          <div class="bal-label">UMUMIY BALANS</div>
-          <div class="bal-amount">12 450 000</div>
-          <div class="bal-change">
-            <div class="bal-pill">
-              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><polyline points="18 15 12 9 6 15"/></svg>
-              +8.2%
-            </div>
-            <span class="bal-hint">o'tgan oyga nisbatan</span>
-          </div>
-          <div class="bal-row">
-            <div class="bal-item">
-              <div class="bal-item-top">
-                <div class="bal-dot" style="background:rgba(74,222,128,.15)">
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="3" stroke-linecap="round"><polyline points="18 15 12 9 6 15"/></svg>
-                </div>
-                <span class="bal-item-label">Kirim</span>
-              </div>
-              <div class="bal-item-val" style="color:#4ade80">24 500 000</div>
-              <div class="bal-item-sub">so'm</div>
-            </div>
-            <div class="bal-item">
-              <div class="bal-item-top">
-                <div class="bal-dot" style="background:rgba(248,113,113,.15)">
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="3" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
-                </div>
-                <span class="bal-item-label">Chiqim</span>
-              </div>
-              <div class="bal-item-val" style="color:#f87171">12 050 000</div>
-              <div class="bal-item-sub">so'm</div>
-            </div>
-          </div>
-        </div>
+        <span style="color:rgba(255,255,255,.28);font-size:10px;">o'tgan oyga nisbatan</span>
       </div>
-
-      <!-- ONLINE USERS -->
-      <div class="section-header">
-        <span class="section-title">Korxona a'zolari</span>
-        <span class="section-more">Barchasi →</span>
-      </div>
-      <div class="online-row">
-
-        <!-- Online -->
-        <div class="online-user">
-          <div class="ou-avatar">
-            <div class="ou-ring-online"></div>
-            <div class="ou-avatar-inner" style="background:linear-gradient(135deg,#f97316,#ef4444)">A</div>
-            <div class="ou-status-dot dot-online"></div>
+      <div class="bal-row">
+        <div class="bi">
+          <div class="bi-t">
+            <div class="bi-ico" style="background:rgba(74,222,128,.15)"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="3" stroke-linecap="round"><polyline points="18 15 12 9 6 15"/></svg></div>
+            <span class="bi-l">Kirim</span>
           </div>
-          <span class="ou-name">Alisher</span>
-          <span class="ou-label lbl-online">Onlayn</span>
+          <div class="bi-v" style="color:#4ade80">24 500 000</div>
+          <div class="bi-s">so'm</div>
         </div>
-
-        <!-- Online with photo feel -->
-        <div class="online-user">
-          <div class="ou-avatar">
-            <div class="ou-ring-online"></div>
-            <div class="ou-avatar-inner" style="background:linear-gradient(135deg,#0ea5e9,#6366f1)">M</div>
-            <div class="ou-status-dot dot-online"></div>
+        <div class="bi">
+          <div class="bi-t">
+            <div class="bi-ico" style="background:rgba(248,113,113,.15)"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="3" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg></div>
+            <span class="bi-l">Chiqim</span>
           </div>
-          <span class="ou-name">Muhammadyusuf</span>
-          <span class="ou-label lbl-online">Onlayn</span>
-        </div>
-
-        <!-- Away -->
-        <div class="online-user">
-          <div class="ou-avatar">
-            <div class="ou-ring-offline" style="border-color:#f59e0b;opacity:.6"></div>
-            <div class="ou-avatar-inner" style="background:linear-gradient(135deg,#a855f7,#ec4899)">S</div>
-            <div class="ou-status-dot dot-away"></div>
-          </div>
-          <span class="ou-name">Sarvinoz</span>
-          <span class="ou-label lbl-away">Faol emas</span>
-        </div>
-
-        <!-- Offline -->
-        <div class="online-user">
-          <div class="ou-avatar">
-            <div class="ou-ring-offline"></div>
-            <div class="ou-avatar-inner" style="background:linear-gradient(135deg,#374151,#1f2937)">B</div>
-            <div class="ou-status-dot dot-offline"></div>
-          </div>
-          <span class="ou-name">Bobur</span>
-          <span class="ou-label lbl-offline">Oflayn</span>
-        </div>
-
-        <!-- Offline -->
-        <div class="online-user">
-          <div class="ou-avatar">
-            <div class="ou-ring-offline"></div>
-            <div class="ou-avatar-inner" style="background:linear-gradient(135deg,#065f46,#059669)">N</div>
-            <div class="ou-status-dot dot-offline"></div>
-          </div>
-          <span class="ou-name">Nodira</span>
-          <span class="ou-label lbl-offline">Oflayn</span>
-        </div>
-
-      </div>
-
-      <!-- RECENT TX -->
-      <div class="section-header">
-        <span class="section-title">So'nggi harakatlar</span>
-        <span class="section-more">Barchasi →</span>
-      </div>
-      <div class="tx-list">
-        <div class="tx-item">
-          <div class="tx-icon" style="background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.15)">
-            <svg viewBox="0 0 24 24" stroke="#4ade80"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
-          </div>
-          <div class="tx-body">
-            <div class="tx-name">Maosh</div>
-            <div class="tx-date">Bugun, 10:30</div>
-            <span class="tx-cat">Kirim</span>
-          </div>
-          <div class="tx-amount tx-in">+5 000 000</div>
-        </div>
-        <div class="tx-item">
-          <div class="tx-icon" style="background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.15)">
-            <svg viewBox="0 0 24 24" stroke="#f87171"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/></svg>
-          </div>
-          <div class="tx-body">
-            <div class="tx-name">Oziq-ovqat</div>
-            <div class="tx-date">Kecha, 18:45</div>
-            <span class="tx-cat">Chiqim</span>
-          </div>
-          <div class="tx-amount tx-out">-320 000</div>
-        </div>
-        <div class="tx-item">
-          <div class="tx-icon" style="background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.15)">
-            <svg viewBox="0 0 24 24" stroke="#818cf8"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-          </div>
-          <div class="tx-body">
-            <div class="tx-name">Kommunal to'lov</div>
-            <div class="tx-date">14-iyun</div>
-            <span class="tx-cat">Chiqim</span>
-          </div>
-          <div class="tx-amount tx-out">-180 000</div>
+          <div class="bi-v" style="color:#f87171">12 050 000</div>
+          <div class="bi-s">so'm</div>
         </div>
       </div>
     </div>
 
-    <div class="bottom-nav">
-      <div class="nav-item active">
-        <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-        <span class="nav-label">Asosiy</span>
-        <div class="nav-dot"></div>
+    <!-- QUICK -->
+    <div class="sh"><span class="sh-t">Tezkor amallar</span></div>
+    <div class="qrow">
+      <div class="qb"><div class="qi qi1"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div><span class="ql">Kirim</span></div>
+      <div class="qb"><div class="qi qi2"><svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/></svg></div><span class="ql">Chiqim</span></div>
+      <div class="qb"><div class="qi qi3"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div><span class="ql">Qarz</span></div>
+      <div class="qb"><div class="qi qi4"><svg viewBox="0 0 24 24"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div><span class="ql">Valyuta</span></div>
+      <div class="qb"><div class="qi qi5"><svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div><span class="ql">Hisobot</span></div>
+    </div>
+
+    <!-- ONLINE -->
+    <div class="sh"><span class="sh-t">A'zolar holati</span><span class="sh-m">Barchasi →</span></div>
+    <div class="orow">
+      <div class="ou"><div class="ou-av"><div class="ou-ring-g"></div><div class="ou-in" style="background:linear-gradient(135deg,#0ea5e9,#6366f1)">M</div><div class="ou-dot dg"></div></div><span class="ou-name">Muhammad</span><span class="ou-t t-g">Onlayn</span></div>
+      <div class="ou"><div class="ou-av"><div class="ou-ring-g"></div><div class="ou-in" style="background:linear-gradient(135deg,#a855f7,#ec4899)">S</div><div class="ou-dot dg"></div></div><span class="ou-name">Sarvinoz</span><span class="ou-t t-g">Onlayn</span></div>
+      <div class="ou"><div class="ou-av"><div class="ou-ring-y"></div><div class="ou-in" style="background:linear-gradient(135deg,#78350f,#f59e0b)">A</div><div class="ou-dot dy"></div></div><span class="ou-name">Alisher</span><span class="ou-t t-y">Band</span></div>
+      <div class="ou"><div class="ou-av"><div class="ou-ring-k"></div><div class="ou-in" style="background:linear-gradient(135deg,#1f2937,#374151)">B</div><div class="ou-dot dk"></div></div><span class="ou-name">Bobur</span><span class="ou-t t-k">Oflayn</span></div>
+      <div class="ou"><div class="ou-av"><div class="ou-ring-k"></div><div class="ou-in" style="background:linear-gradient(135deg,#065f46,#059669)">N</div><div class="ou-dot dk"></div></div><span class="ou-name">Nodira</span><span class="ou-t t-k">2s oldin</span></div>
+    </div>
+
+    <!-- TX -->
+    <div class="sh"><span class="sh-t">So'nggi harakatlar</span><span class="sh-m">Barchasi →</span></div>
+    <div class="txl">
+      <div class="txi">
+        <div class="tx-ic" style="background:rgba(74,222,128,.09);border:1px solid rgba(74,222,128,.13)"><svg viewBox="0 0 24 24" stroke="#4ade80"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg></div>
+        <div class="tx-b"><div class="tx-n">Maosh</div><div class="tx-d">Bugun, 10:30</div><span class="tx-c">Kirim</span></div>
+        <div class="txa ain">+5 000 000</div>
       </div>
-      <div class="nav-item">
-        <svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-        <span class="nav-label">Menyu</span>
+      <div class="txi">
+        <div class="tx-ic" style="background:rgba(248,113,113,.09);border:1px solid rgba(248,113,113,.13)"><svg viewBox="0 0 24 24" stroke="#f87171"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/></svg></div>
+        <div class="tx-b"><div class="tx-n">Oziq-ovqat</div><div class="tx-d">Kecha, 18:45</div><span class="tx-c">Chiqim</span></div>
+        <div class="txa aout">−320 000</div>
       </div>
-      <div class="nav-item">
-        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <span class="nav-label">Qidirish</span>
-      </div>
-      <div class="nav-item">
-        <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-        <span class="nav-label">Profil</span>
+      <div class="txi">
+        <div class="tx-ic" style="background:rgba(99,102,241,.09);border:1px solid rgba(99,102,241,.13)"><svg viewBox="0 0 24 24" stroke="#818cf8"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div>
+        <div class="tx-b"><div class="tx-n">Kommunal</div><div class="tx-d">14-iyun</div><span class="tx-c">Chiqim</span></div>
+        <div class="txa aout">−180 000</div>
       </div>
     </div>
+  </div>
+
+  <div class="bnav">
+    <div class="ni on"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span class="ni-l">Asosiy</span><div class="ni-dot"></div></div>
+    <div class="ni"><svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg><span class="ni-l">Menyu</span></div>
+    <div class="ni"><svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="ni-l">Xabar</span></div>
+    <div class="ni"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span class="ni-l">Profil</span></div>
   </div>
 </div>
+</div>
 
-<!-- SCREEN 2: PROFILE PAGE -->
-<div class="wrap">
-  <div class="screen-label">Profil sahifasi</div>
-  <div class="phone">
-    <div class="notch"></div>
-    <div class="statusbar">
-      <span class="time">9:41</span>
-      <div class="sb-right">
-        <svg width="14" height="10" viewBox="0 0 14 10" fill="none"><rect x="0" y="4" width="2" height="6" rx=".6" fill="white" opacity=".4"/><rect x="3.2" y="2.5" width="2" height="7.5" rx=".6" fill="white" opacity=".65"/><rect x="6.4" y="1" width="2" height="9" rx=".6" fill="white" opacity=".85"/><rect x="9.6" y="0" width="2" height="10" rx=".6" fill="white"/></svg>
-        <svg width="20" height="11" viewBox="0 0 20 11" fill="none"><rect x=".5" y=".5" width="16" height="10" rx="2.5" stroke="white" stroke-opacity=".3"/><rect x="2" y="2" width="11" height="7" rx="1.2" fill="white"/></svg>
+<!-- ── SCREEN 2: MENYU ── -->
+<div class="col">
+<div class="lbl">Menyu</div>
+<div class="phone">
+  <div class="notch"></div>
+  <div class="sb"><span class="sb-time">9:41</span><div class="sb-icons"><svg width="14" height="10" viewBox="0 0 14 10" fill="none"><rect x="0" y="4" width="2.2" height="6" rx=".6" fill="white" opacity=".35"/><rect x="3.2" y="2.5" width="2.2" height="7.5" rx=".6" fill="white" opacity=".6"/><rect x="6.4" y="1" width="2.2" height="9" rx=".6" fill="white" opacity=".82"/><rect x="9.6" y="0" width="2.2" height="10" rx=".6" fill="white"/></svg><svg width="20" height="11" viewBox="0 0 20 11" fill="none"><rect x=".5" y=".5" width="16" height="10" rx="2.5" stroke="white" stroke-opacity=".28"/><rect x="2" y="2" width="11" height="7" rx="1.2" fill="white"/></svg></div></div>
+
+  <div class="pg">
+    <!-- TOP BAR with avatar + online -->
+    <div class="menu-tb">
+      <div class="mtb-left">
+        <div class="mtb-av">
+          <div class="mtb-ring"></div>
+          <div class="mtb-av-in">G</div>
+          <div class="mtb-dot"></div>
+        </div>
+        <div class="mtb-info">
+          <div class="mtb-name">Gulom · Admin</div>
+          <div class="mtb-status">● Onlayn · 9:41 dan beri</div>
+        </div>
+      </div>
+      <div class="mtb-right"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
+    </div>
+
+    <div style="padding:0 15px 10px;"><div style="color:#2a2a3a;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;">Bo'limlar</div></div>
+
+    <div class="mgrid">
+      <div class="mc mc1"><div class="mc-ibox"><svg viewBox="0 0 24 24"><path d="M7 16V4m0 0L3 8m4-4l4 4"/><path d="M17 8v12m0 0l4-4m-4 4l-4-4"/></svg></div><div class="mc-t">Kirim /<br>Chiqim</div><div class="mc-s">Barcha to'lovlar</div><div class="mc-b">24</div><div class="mc-arr"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div></div>
+      <div class="mc mc2"><div class="mc-ibox"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div><div class="mc-t">Qarzlar</div><div class="mc-s">Bergan va olgan</div><div class="mc-b">3</div><div class="mc-arr"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div></div>
+      <div class="mc mc3"><div class="mc-ibox"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div><div class="mc-t">Hamkorlar</div><div class="mc-s">Mijozlar</div><div class="mc-arr"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div></div>
+      <div class="mc mc4"><div class="mc-ibox"><svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div><div class="mc-t">Hisobot</div><div class="mc-s">Grafik va tahlil</div><div class="mc-arr"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div></div>
+      <div class="mc mc5"><div class="mc-ibox"><svg viewBox="0 0 24 24"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div><div class="mc-t">Valyuta</div><div class="mc-s">USD · EUR · RUB</div><div class="mc-arr"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div></div>
+      <div class="mc mc6"><div class="mc-ibox"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div><div class="mc-t">Korxona</div><div class="mc-s">Jamoa · 5 a'zo</div><div class="mc-arr"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div></div>
+    </div>
+  </div>
+
+  <div class="bnav">
+    <div class="ni"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span class="ni-l">Asosiy</span></div>
+    <div class="ni on"><svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg><span class="ni-l">Menyu</span><div class="ni-dot"></div></div>
+    <div class="ni"><svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="ni-l">Xabar</span></div>
+    <div class="ni"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span class="ni-l">Profil</span></div>
+  </div>
+</div>
+</div>
+
+<!-- ── SCREEN 3: PROFIL ── -->
+<div class="col">
+<div class="lbl">Profil</div>
+<div class="phone">
+  <div class="notch"></div>
+  <div class="sb"><span class="sb-time">9:41</span><div class="sb-icons"><svg width="14" height="10" viewBox="0 0 14 10" fill="none"><rect x="0" y="4" width="2.2" height="6" rx=".6" fill="white" opacity=".35"/><rect x="3.2" y="2.5" width="2.2" height="7.5" rx=".6" fill="white" opacity=".6"/><rect x="6.4" y="1" width="2.2" height="9" rx=".6" fill="white" opacity=".82"/><rect x="9.6" y="0" width="2.2" height="10" rx=".6" fill="white"/></svg><svg width="20" height="11" viewBox="0 0 20 11" fill="none"><rect x=".5" y=".5" width="16" height="10" rx="2.5" stroke="white" stroke-opacity=".28"/><rect x="2" y="2" width="11" height="7" rx="1.2" fill="white"/></svg></div></div>
+
+  <div class="pg">
+    <div class="prof-hero">
+      <div class="prof-topbar">
+        <div style="color:#fff;font-size:15px;font-weight:800;">Profil</div>
+        <div class="ptb-edit"><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div>
+      </div>
+
+      <div class="prof-av-wrap">
+        <div class="prof-av">G</div>
+        <div class="prof-av-ring"></div>
+        <div class="prof-cam"><svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div>
+      </div>
+
+      <div class="prof-name">Gulom Alinazarov</div>
+      <div class="prof-user">@qwerty · Admin</div>
+      <div class="prof-online">
+        <div class="pod"></div>
+        <span class="pot">Onlayn · bugun 9:41 dan beri</span>
       </div>
     </div>
 
-    <div class="scroll">
-      <div class="profile-hero">
-        <div class="profile-top-bar">
-          <div class="ptb-title">Profil</div>
-          <div class="ptb-btn">
-            <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-          </div>
-        </div>
-
-        <!-- AVATAR with camera button -->
-        <div class="profile-avatar-wrap">
-          <div class="profile-avatar">
-            <!-- Gradient avatar (rasm yo'q holatda) -->
-            <div style="width:100%;height:100%;background:linear-gradient(135deg,#f97316,#ef4444);display:flex;align-items:center;justify-content:center;font-size:34px;font-weight:900;color:#fff;">G</div>
-          </div>
-          <div class="profile-avatar-ring"></div>
-          <div class="profile-camera">
-            <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-          </div>
-        </div>
-
-        <div class="profile-name">Gulom Alinazarov</div>
-        <div class="profile-username">@qwerty · Admin</div>
-        <div class="profile-status-row">
-          <div class="profile-status-dot"></div>
-          <span class="profile-status-text">Hozir onlayn</span>
-        </div>
-      </div>
-
-      <!-- STATS -->
-      <div class="profile-stats">
-        <div class="ps-item">
-          <div class="ps-val">247</div>
-          <div class="ps-label">Jami tranzaksiya</div>
-        </div>
-        <div class="ps-item">
-          <div class="ps-val">12</div>
-          <div class="ps-label">Faol qarz</div>
-        </div>
-        <div class="ps-item">
-          <div class="ps-val">5</div>
-          <div class="ps-label">A'zolar</div>
-        </div>
-      </div>
-
-      <!-- STATUS PICKER -->
-      <div class="profile-section">
-        <div class="ps-title">Holat</div>
-      </div>
-      <div class="status-picker">
-        <div class="sp-item active-sp">
-          <div class="sp-dot" style="background:#22c55e;box-shadow:0 0 6px rgba(34,197,94,.6)"></div>
-          <span class="sp-text">Onlayn</span>
-        </div>
-        <div class="sp-item">
-          <div class="sp-dot" style="background:#f59e0b"></div>
-          <span class="sp-text">Band</span>
-        </div>
-        <div class="sp-item">
-          <div class="sp-dot" style="background:#4b5563"></div>
-          <span class="sp-text">Ko'rinmas</span>
-        </div>
-      </div>
-
-      <!-- SETTINGS ROWS -->
-      <div class="profile-section">
-        <div class="ps-title">Hisob ma'lumotlari</div>
-        <div class="ps-card">
-          <div class="ps-row">
-            <div class="ps-icon" style="background:rgba(99,102,241,.12)">
-              <svg viewBox="0 0 24 24" stroke="#818cf8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            </div>
-            <span class="ps-row-label">To'liq ism</span>
-            <span class="ps-row-val">Gulom A.</span>
-            <div class="ps-row-arr"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
-          </div>
-          <div class="ps-row">
-            <div class="ps-icon" style="background:rgba(34,197,94,.1)">
-              <svg viewBox="0 0 24 24" stroke="#4ade80"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-            </div>
-            <span class="ps-row-label">Parolni o'zgartirish</span>
-            <div class="ps-row-arr"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
-          </div>
-          <div class="ps-row">
-            <div class="ps-icon" style="background:rgba(251,191,36,.1)">
-              <svg viewBox="0 0 24 24" stroke="#fbbf24"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
-            </div>
-            <span class="ps-row-label">PIN kod</span>
-            <span class="ps-row-val">•••• faol</span>
-            <div class="ps-row-arr"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
-          </div>
-        </div>
-      </div>
-
-      <div class="profile-section" style="padding-bottom:16px;">
-        <div class="ps-title">Boshqa</div>
-        <div class="ps-card">
-          <div class="ps-row">
-            <div class="ps-icon" style="background:rgba(239,68,68,.1)">
-              <svg viewBox="0 0 24 24" stroke="#f87171"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-            </div>
-            <span class="ps-row-label" style="color:#f87171">Chiqish</span>
-          </div>
-        </div>
-      </div>
-
+    <!-- STATS -->
+    <div class="prof-stats">
+      <div class="psi"><div class="psv">247</div><div class="psl">Tranzaksiya</div></div>
+      <div class="psi"><div class="psv">12</div><div class="psl">Faol qarz</div></div>
+      <div class="psi"><div class="psv" style="color:#4ade80">5</div><div class="psl">A'zolar</div></div>
     </div>
 
-    <div class="bottom-nav">
-      <div class="nav-item">
-        <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-        <span class="nav-label">Asosiy</span>
+    <!-- STATUS PICKER -->
+    <div class="spick">
+      <div class="spi ac"><div class="sp-d" style="background:#22c55e;box-shadow:0 0 6px rgba(34,197,94,.6)"></div><span class="sp-t">Onlayn</span></div>
+      <div class="spi"><div class="sp-d" style="background:#f59e0b"></div><span class="sp-t">Band</span></div>
+      <div class="spi"><div class="sp-d" style="background:#374151"></div><span class="sp-t">Ko'rinmas</span></div>
+    </div>
+
+    <!-- ROWS -->
+    <div class="psec">
+      <div class="psec-t">Hisob</div>
+      <div class="pcard">
+        <div class="prow">
+          <div class="pr-ic" style="background:rgba(99,102,241,.1)"><svg viewBox="0 0 24 24" stroke="#818cf8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+          <span class="pr-l">To'liq ism</span><span class="pr-v">Gulom A.</span><div class="arr"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
+        </div>
+        <div class="prow">
+          <div class="pr-ic" style="background:rgba(34,197,94,.08)"><svg viewBox="0 0 24 24" stroke="#4ade80"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+          <span class="pr-l">Parolni o'zgartirish</span><div class="arr"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
+        </div>
+        <div class="prow">
+          <div class="pr-ic" style="background:rgba(251,191,36,.08)"><svg viewBox="0 0 24 24" stroke="#fbbf24"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg></div>
+          <span class="pr-l">PIN kod</span><span class="pr-v">●●●● faol</span><div class="arr"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
+        </div>
       </div>
-      <div class="nav-item">
-        <svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-        <span class="nav-label">Menyu</span>
+    </div>
+
+    <div class="psec">
+      <div class="psec-t">Ma'lumotlar</div>
+      <div class="pcard">
+        <div class="prow">
+          <div class="pr-ic" style="background:rgba(6,182,212,.08)"><svg viewBox="0 0 24 24" stroke="#22d3ee"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg></div>
+          <span class="pr-l">Zahira nusxa</span><div class="arr"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
+        </div>
+        <div class="prow">
+          <div class="pr-ic" style="background:rgba(167,139,250,.08)"><svg viewBox="0 0 24 24" stroke="#a78bfa"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
+          <span class="pr-l">Sozlamalar</span><div class="arr"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
+        </div>
       </div>
-      <div class="nav-item">
-        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <span class="nav-label">Qidirish</span>
-      </div>
-      <div class="nav-item active">
-        <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-        <span class="nav-label">Profil</span>
-        <div class="nav-dot"></div>
+    </div>
+
+    <div class="psec" style="padding-bottom:14px;">
+      <div class="psec-t"> </div>
+      <div class="pcard">
+        <div class="prow">
+          <div class="pr-ic" style="background:rgba(239,68,68,.08)"><svg viewBox="0 0 24 24" stroke="#f87171"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></div>
+          <span class="pr-l" style="color:#f87171">Chiqish</span>
+        </div>
       </div>
     </div>
   </div>
+
+  <div class="bnav">
+    <div class="ni"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span class="ni-l">Asosiy</span></div>
+    <div class="ni"><svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg><span class="ni-l">Menyu</span></div>
+    <div class="ni"><svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="ni-l">Xabar</span></div>
+    <div class="ni on"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span class="ni-l">Profil</span><div class="ni-dot"></div></div>
+  </div>
+</div>
 </div>
 
 </body>
