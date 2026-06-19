@@ -4,7 +4,6 @@ import { useApp, INCOME_CATEGORIES, EXPENSE_CATEGORIES } from '../store/AppConte
 import Modal from '../components/Modal'
 import SwipeableRow from '../components/SwipeableRow'
 import { generateId } from '../store/storage'
-import { addFamilyTransaction, deleteFamilyTransaction, updateFamilyTransaction } from '../store/family'
 import { format } from 'date-fns'
 import * as XLSX from 'xlsx'
 import { fmtCur } from '../utils/format'
@@ -23,7 +22,7 @@ const localNow = () => { const d = new Date(); return new Date(d.getTime() - d.g
 const defaultForm = { type: 'expense', amount: '', category: '', currency: 'UZS', note: '', date: localNow() }
 
 export default function Transactions() {
-  const { transactions, saveTransactions, user, family, familyTransactions, familyMembers, canEdit, canAdd, refreshFamily } = useApp()
+  const { transactions, saveTransactions, user, family, familyMembers, canEdit, canAdd } = useApp()
   const [modal, setModal] = useState(false)
   const [editModal, setEditModal] = useState(false)
   const [editingTx, setEditingTx] = useState(null)
@@ -31,7 +30,6 @@ export default function Transactions() {
   const [exportModal, setExportModal] = useState(false)
   const [selectMode, setSelectMode] = useState(false)
   const [selected, setSelected] = useState(new Set())
-  const familyMode = !!family
   const [form, setForm] = useState(defaultForm)
   const [extraAmounts, setExtraAmounts] = useState([])
   const [filter, setFilter] = useState('all')
@@ -72,11 +70,7 @@ export default function Transactions() {
         .filter(e => e.amount && parseFloat(e.amount) > 0)
         .map(e => ({ id: generateId(), ...baseFields, amount: parseFloat(e.amount), currency: e.currency }))
     ]
-    if (familyMode && family) {
-      newTxs.forEach(t => addFamilyTransaction(family.id, t))
-    } else {
-      saveTransactions([...transactions, ...newTxs])
-    }
+    saveTransactions([...transactions, ...newTxs])
     setModal(false)
   }
 
@@ -98,31 +92,19 @@ export default function Transactions() {
         emoji: savedTx.emoji, userId: savedTx.userId, userName: savedTx.userName,
         amount: parseFloat(e.amount), currency: e.currency
       }))
-    if (familyMode && family) {
-      updateFamilyTransaction(family.id, savedTx).then(() => {
-        extraTxs.forEach(t => addFamilyTransaction(family.id, t))
-        refreshFamily()
-      })
-    } else {
-      const updated = transactions.map(t => t.id === savedTx.id ? savedTx : t)
-      saveTransactions([...updated, ...extraTxs])
-    }
+    const updated = transactions.map(t => t.id === savedTx.id ? savedTx : t)
+    saveTransactions([...updated, ...extraTxs])
     setEditModal(false)
     setEditingTx(null)
     setEditExtraAmounts([])
   }
 
-  const handleDelete = (id, isFamily = false) => {
+  const handleDelete = (id) => {
     if (!confirm('O\'chirishni tasdiqlaysizmi?')) return
-    if (isFamily && family) {
-      deleteFamilyTransaction(family.id, id).then(() => refreshFamily())
-    } else {
-      saveTransactions(transactions.filter(t => t.id !== id))
-    }
+    saveTransactions(transactions.filter(t => t.id !== id))
   }
 
-  const activeList = (familyMode && family ? familyTransactions : transactions)
-    .filter(t => t.category !== 'Valyuta ayirboshlash')
+  const activeList = transactions.filter(t => t.category !== 'Valyuta ayirboshlash')
 
   const filtered = activeList
     .filter(t => filter === 'all' || t.type === filter)
@@ -251,9 +233,8 @@ export default function Transactions() {
           </div>
         ) : (
           filtered.map(t => {
-            const isFamily = familyMode && family
-            const showDelete = isFamily ? canEdit(t.userId) : true
-            const canEditTx = isFamily ? canEdit(t.userId) : true
+            const showDelete = canEdit(t.userId)
+            const canEditTx = canEdit(t.userId)
             const isSelected = selected.has(t.id)
             return selectMode ? (
               <div key={t.id} onClick={() => {
@@ -278,7 +259,7 @@ export default function Transactions() {
             ) : (
               <SwipeableRow
                 key={t.id}
-                onDelete={showDelete ? () => handleDelete(t.id, isFamily) : null}
+                onDelete={showDelete ? () => handleDelete(t.id) : null}
                 onEdit={canEditTx ? () => openEdit(t) : null}
               >
                 <div className="card flex items-center gap-3">
@@ -288,7 +269,7 @@ export default function Transactions() {
                   <div className="flex-1 min-w-0">
                     <p className="text-white text-sm font-medium truncate">{t.category}</p>
                     <p className="text-gray-500 text-xs">
-                      {isFamily && t.userId ? `${getMemberName(t.userId)} · ` : ''}
+                      {family && t.userId ? `${getMemberName(t.userId)} · ` : ''}
                       {t.note ? `${t.note} · ` : ''}{format(new Date(t.date), t.date?.includes('T') ? 'dd.MM.yyyy HH:mm' : 'dd.MM.yyyy')}
                     </p>
                   </div>
@@ -319,7 +300,7 @@ export default function Transactions() {
 
       </div>{/* end page-animate */}
 
-      {(!familyMode || canAdd()) && !selectMode && (
+      {canAdd() && !selectMode && (
         <div className="fixed bottom-24 right-4 z-40 flex flex-col gap-2">
           <button onClick={() => openAdd('income')} className="w-12 h-12 rounded-full bg-green-500 text-white flex items-center justify-center shadow-lg shadow-green-500/30 active:opacity-80">
             <TrendingUp size={20} />
@@ -472,9 +453,9 @@ export default function Transactions() {
               className="text-blue-400 text-xs py-2 border border-dashed border-blue-400/40 rounded-xl w-full"
             >+ Valyuta qo'shish</button>
           )}
-          {familyMode && family && (
+          {family && (
             <p className="text-purple-400 text-xs bg-purple-500/10 py-2 px-3 rounded-lg">
-              Bu tranzaksiya oilaviy rejimga saqlanadi
+              Bu tranzaksiya guruh barcha a'zolariga ko'rinadi
             </p>
           )}
           <button onClick={handleSave} className="btn-primary mt-2">Saqlash</button>

@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react'
-import { getCurrentUser, getData, saveData, getSettings, saveSettings, generateId } from './storage'
+import { getCurrentUser, getData, saveData, getSettings, saveSettings } from './storage'
 import { getUserFamily, getUserFamilyId, getFamily, subscribeToFamily, updateMemberLastSeen } from './family'
 import { syncToCloud, loadFromCloud, subscribeToCloud } from './sync'
 
@@ -35,94 +35,82 @@ export function AppProvider({ children }) {
   const skipCloudUpdate = useRef(false)
   const uid = user?.id
 
+  // Guruh bo'lsa familyId, aks holda uid — barcha data shu path ostida
+  const storeId = familyId || uid
+
   useEffect(() => {
-    if (!uid) return
+    if (!storeId) return
 
     // 1. LocalStorage dan darhol ko'rsatish
-    setTransactions(getData('transactions', uid))
-    setDebts(getData('debts', uid))
-    const s = getSettings(uid)
+    setTransactions(getData('transactions', storeId))
+    setDebts(getData('debts', storeId))
+    const s = getSettings(storeId)
     setSettingsState(s.rates ? s : { rates: { USD: 12700, EUR: 13800, RUB: 140 } })
-    setFamily(getUserFamily(uid))
+    if (uid) setFamily(getUserFamily(uid))
     try {
-      const lc = localStorage.getItem(`finance_${uid}_categories`)
+      const lc = localStorage.getItem(`finance_${storeId}_categories`)
       if (lc) setCategoriesState(JSON.parse(lc))
       const lp = localStorage.getItem(`finance_pin_${uid}`)
       if (lp) setPinState(lp)
     } catch {}
-    setHamkorSections(getData('hamkorlar_sections', uid))
-    setHamkorPartners(getData('hamkorlar', uid))
+    setHamkorSections(getData('hamkorlar_sections', storeId))
+    setHamkorPartners(getData('hamkorlar', storeId))
 
     // 2. Firebase serverdan o'qib, local bilan merge qilish
     const loadCloud = async () => {
       setSyncing(true)
-      const [cloudTx, cloudDebts, cloudSettings, cloudCats, cloudPin,
+      const [cloudTx, cloudDebts, cloudSettings, cloudCats,
              cloudSections, cloudPartners] = await Promise.all([
-        loadFromCloud(uid, 'transactions'),
-        loadFromCloud(uid, 'debts'),
-        loadFromCloud(uid, 'settings'),
-        loadFromCloud(uid, 'categories'),
-        loadFromCloud(uid, 'pin'),
-        loadFromCloud(uid, 'hamkorlar_sections'),
-        loadFromCloud(uid, 'hamkorlar'),
+        loadFromCloud(storeId, 'transactions'),
+        loadFromCloud(storeId, 'debts'),
+        loadFromCloud(storeId, 'settings'),
+        loadFromCloud(storeId, 'categories'),
+        loadFromCloud(storeId, 'hamkorlar_sections'),
+        loadFromCloud(storeId, 'hamkorlar'),
       ])
 
-      const localTx = getData('transactions', uid)
-      const localDebts = getData('debts', uid)
-      const localSec = getData('hamkorlar_sections', uid)
-      const localPar = getData('hamkorlar', uid)
+      const localTx = getData('transactions', storeId)
+      const localDebts = getData('debts', storeId)
+      const localSec = getData('hamkorlar_sections', storeId)
+      const localPar = getData('hamkorlar', storeId)
 
-      // Transactions — ko'pini saqlash
       if (cloudTx?.length >= localTx.length) {
-        setTransactions(cloudTx); saveData('transactions', uid, cloudTx)
+        setTransactions(cloudTx); saveData('transactions', storeId, cloudTx)
       } else if (localTx.length > 0) {
-        await syncToCloud(uid, 'transactions', localTx)
+        await syncToCloud(storeId, 'transactions', localTx)
       }
 
-      // Debts
       if (cloudDebts?.length >= localDebts.length) {
-        setDebts(cloudDebts); saveData('debts', uid, cloudDebts)
+        setDebts(cloudDebts); saveData('debts', storeId, cloudDebts)
       } else if (localDebts.length > 0) {
-        await syncToCloud(uid, 'debts', localDebts)
+        await syncToCloud(storeId, 'debts', localDebts)
       }
 
-      // Settings
       if (cloudSettings?.rates) {
-        setSettingsState(cloudSettings); saveSettings(uid, cloudSettings)
+        setSettingsState(cloudSettings); saveSettings(storeId, cloudSettings)
       } else if (s.rates) {
-        await syncToCloud(uid, 'settings', s)
+        await syncToCloud(storeId, 'settings', s)
       }
 
-      // Categories
       if (cloudCats?.length > 0) {
         setCategoriesState(cloudCats)
-        localStorage.setItem(`finance_${uid}_categories`, JSON.stringify(cloudCats))
+        localStorage.setItem(`finance_${storeId}_categories`, JSON.stringify(cloudCats))
       } else {
-        const lc2 = (() => { try { return JSON.parse(localStorage.getItem(`finance_${uid}_categories`) || 'null') } catch { return null } })()
-        if (lc2?.length > 0) await syncToCloud(uid, 'categories', lc2)
+        const lc2 = (() => { try { return JSON.parse(localStorage.getItem(`finance_${storeId}_categories`) || 'null') } catch { return null } })()
+        if (lc2?.length > 0) await syncToCloud(storeId, 'categories', lc2)
       }
 
-      // PIN
-      if (cloudPin) {
-        setPinState(cloudPin); localStorage.setItem(`finance_pin_${uid}`, cloudPin)
-      } else {
-        const lp2 = localStorage.getItem(`finance_pin_${uid}`)
-        if (lp2) await syncToCloud(uid, 'pin', lp2)
-      }
-
-      // Hamkorlar sections — local + cloud merge
       const mergedSec = mergeById(localSec, cloudSections || [])
       if (mergedSec.length > 0) {
         setHamkorSections(mergedSec)
-        saveData('hamkorlar_sections', uid, mergedSec)
+        saveData('hamkorlar_sections', storeId, mergedSec)
         if (!cloudSections || mergedSec.length > (cloudSections?.length || 0))
-          await syncToCloud(uid, 'hamkorlar_sections', mergedSec)
+          await syncToCloud(storeId, 'hamkorlar_sections', mergedSec)
       } else if (cloudSections?.length > 0) {
         setHamkorSections(cloudSections)
-        saveData('hamkorlar_sections', uid, cloudSections)
+        saveData('hamkorlar_sections', storeId, cloudSections)
       }
 
-      // Hamkorlar partners — local + cloud merge (entries ham)
       const mergedPar = mergeById(localPar, cloudPartners || []).map(p => {
         const lp3 = localPar.find(x => x.id === p.id)
         const cp = (cloudPartners || []).find(x => x.id === p.id)
@@ -131,51 +119,56 @@ export function AppProvider({ children }) {
       })
       if (mergedPar.length > 0) {
         setHamkorPartners(mergedPar)
-        saveData('hamkorlar', uid, mergedPar)
+        saveData('hamkorlar', storeId, mergedPar)
         if (!cloudPartners || mergedPar.length > (cloudPartners?.length || 0))
-          await syncToCloud(uid, 'hamkorlar', mergedPar)
+          await syncToCloud(storeId, 'hamkorlar', mergedPar)
       } else if (cloudPartners?.length > 0) {
         setHamkorPartners(cloudPartners)
-        saveData('hamkorlar', uid, cloudPartners)
+        saveData('hamkorlar', storeId, cloudPartners)
       }
 
       setSyncing(false)
     }
     loadCloud()
 
-    // 3. Real-vaqt tinglash
-    const unsubTx = subscribeToCloud(uid, 'transactions', (data) => {
+    // 3. Real-vaqt tinglash — istalgan a'zo o'zgartirganda barchada yangilanadi
+    const unsubTx = subscribeToCloud(storeId, 'transactions', (data) => {
       if (skipCloudUpdate.current) return
-      setTransactions(data); saveData('transactions', uid, data)
+      setTransactions(data); saveData('transactions', storeId, data)
     })
-    const unsubDebts = subscribeToCloud(uid, 'debts', (data) => {
+    const unsubDebts = subscribeToCloud(storeId, 'debts', (data) => {
       if (skipCloudUpdate.current) return
-      setDebts(data); saveData('debts', uid, data)
+      setDebts(data); saveData('debts', storeId, data)
     })
-    const unsubSettings = subscribeToCloud(uid, 'settings', (data) => {
+    const unsubSettings = subscribeToCloud(storeId, 'settings', (data) => {
       if (skipCloudUpdate.current) return
-      if (data?.rates) { setSettingsState(data); saveSettings(uid, data) }
+      if (data?.rates) { setSettingsState(data); saveSettings(storeId, data) }
     })
-    const unsubCats = subscribeToCloud(uid, 'categories', (data) => {
+    const unsubCats = subscribeToCloud(storeId, 'categories', (data) => {
       setCategoriesState(data)
-      localStorage.setItem(`finance_${uid}_categories`, JSON.stringify(data))
+      localStorage.setItem(`finance_${storeId}_categories`, JSON.stringify(data))
     })
-    const unsubPin = subscribeToCloud(uid, 'pin', (data) => {
-      if (data) { setPinState(data); localStorage.setItem(`finance_pin_${uid}`, data) }
+    const unsubSec = subscribeToCloud(storeId, 'hamkorlar_sections', (data) => {
+      setHamkorSections(data); saveData('hamkorlar_sections', storeId, data)
     })
-    const unsubSec = subscribeToCloud(uid, 'hamkorlar_sections', (data) => {
-      setHamkorSections(data); saveData('hamkorlar_sections', uid, data)
-    })
-    const unsubPar = subscribeToCloud(uid, 'hamkorlar', (data) => {
-      setHamkorPartners(data); saveData('hamkorlar', uid, data)
+    const unsubPar = subscribeToCloud(storeId, 'hamkorlar', (data) => {
+      setHamkorPartners(data); saveData('hamkorlar', storeId, data)
     })
 
     return () => {
       unsubTx(); unsubDebts(); unsubSettings()
-      unsubCats(); unsubPin(); unsubSec(); unsubPar()
+      unsubCats(); unsubSec(); unsubPar()
     }
+  }, [storeId])
+
+  // PIN alohida — foydalanuvchiga xususiy
+  useEffect(() => {
+    if (!uid) return
+    const lp = localStorage.getItem(`finance_pin_${uid}`)
+    if (lp) setPinState(lp)
   }, [uid])
 
+  // Oila a'zolari va roli — real-vaqt
   useEffect(() => {
     if (!familyId) { setFamily(null); return }
     const local = getFamily(familyId)
@@ -194,56 +187,56 @@ export function AppProvider({ children }) {
 
   const saveTransactions = useCallback((data) => {
     setTransactions(data)
-    if (uid) {
-      saveData('transactions', uid, data)
+    if (storeId) {
+      saveData('transactions', storeId, data)
       skipCloudUpdate.current = true
-      syncToCloud(uid, 'transactions', data).finally(() => {
+      syncToCloud(storeId, 'transactions', data).finally(() => {
         setTimeout(() => { skipCloudUpdate.current = false }, 500)
       })
     }
-  }, [uid])
+  }, [storeId])
 
   const saveDebts = useCallback((data) => {
     setDebts(data)
-    if (uid) {
-      saveData('debts', uid, data)
+    if (storeId) {
+      saveData('debts', storeId, data)
       skipCloudUpdate.current = true
-      syncToCloud(uid, 'debts', data).finally(() => {
+      syncToCloud(storeId, 'debts', data).finally(() => {
         setTimeout(() => { skipCloudUpdate.current = false }, 500)
       })
     }
-  }, [uid])
+  }, [storeId])
 
   const updateSettings = useCallback((s) => {
     setSettingsState(s)
-    if (uid) { saveSettings(uid, s); syncToCloud(uid, 'settings', s) }
-  }, [uid])
+    if (storeId) { saveSettings(storeId, s); syncToCloud(storeId, 'settings', s) }
+  }, [storeId])
 
   const saveCategories = useCallback((cats) => {
     setCategoriesState(cats)
-    if (uid) {
-      localStorage.setItem(`finance_${uid}_categories`, JSON.stringify(cats))
-      syncToCloud(uid, 'categories', cats)
+    if (storeId) {
+      localStorage.setItem(`finance_${storeId}_categories`, JSON.stringify(cats))
+      syncToCloud(storeId, 'categories', cats)
     }
-  }, [uid])
+  }, [storeId])
 
   const savePin = useCallback((newPin) => {
     setPinState(newPin)
     if (uid) {
-      if (newPin) { localStorage.setItem(`finance_pin_${uid}`, newPin); syncToCloud(uid, 'pin', newPin) }
-      else { localStorage.removeItem(`finance_pin_${uid}`); syncToCloud(uid, 'pin', null) }
+      if (newPin) { localStorage.setItem(`finance_pin_${uid}`, newPin) }
+      else { localStorage.removeItem(`finance_pin_${uid}`) }
     }
   }, [uid])
 
   const saveHamkorSections = useCallback((data) => {
     setHamkorSections(data)
-    if (uid) { saveData('hamkorlar_sections', uid, data); syncToCloud(uid, 'hamkorlar_sections', data) }
-  }, [uid])
+    if (storeId) { saveData('hamkorlar_sections', storeId, data); syncToCloud(storeId, 'hamkorlar_sections', data) }
+  }, [storeId])
 
   const saveHamkorPartners = useCallback((data) => {
     setHamkorPartners(data)
-    if (uid) { saveData('hamkorlar', uid, data); syncToCloud(uid, 'hamkorlar', data) }
-  }, [uid])
+    if (storeId) { saveData('hamkorlar', storeId, data); syncToCloud(storeId, 'hamkorlar', data) }
+  }, [storeId])
 
   const balance = transactions.reduce((sum, t) =>
     t.type === 'income' ? sum + t.amount : sum - t.amount, 0)
@@ -252,16 +245,14 @@ export function AppProvider({ children }) {
 
   const userRole = family ? (family.members.find(m => m.userId === uid)?.role || null) : null
   const familyMembers = family?.members || []
-  const familyTransactions = family?.transactions || []
-  const familyDebts = family?.debts || []
 
   const canEdit = (ownerId) => {
-    if (!userRole) return false
+    if (!family) return true
     if (userRole === 'admin') return true
     if (userRole === 'member' && ownerId === uid) return true
     return false
   }
-  const canAdd = () => userRole === 'admin' || userRole === 'member'
+  const canAdd = () => !family || userRole === 'admin' || userRole === 'member'
 
   return (
     <AppContext.Provider value={{
@@ -273,7 +264,7 @@ export function AppProvider({ children }) {
       pin, savePin,
       balance, totalIncome, totalExpense,
       family, setFamily, refreshFamily,
-      userRole, familyMembers, familyTransactions, familyDebts,
+      userRole, familyMembers,
       canEdit, canAdd, syncing,
       hamkorSections, saveHamkorSections,
       hamkorPartners, saveHamkorPartners,

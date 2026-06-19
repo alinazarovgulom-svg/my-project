@@ -3,7 +3,6 @@ import { Plus, ChevronDown, ChevronUp, Trash2, AlertTriangle, Pencil } from 'luc
 import { useApp } from '../store/AppContext'
 import Modal from '../components/Modal'
 import { generateId } from '../store/storage'
-import { addFamilyDebt, deleteFamilyDebt, updateFamilyDebt, addFamilyTransaction } from '../store/family'
 import { format, differenceInDays, isToday, isTomorrow, isPast, parseISO } from 'date-fns'
 import { fmtCur } from '../utils/format'
 
@@ -25,8 +24,7 @@ function getDueDateWarning(debt) {
 }
 
 export default function Debts() {
-  const { debts, saveDebts, transactions, saveTransactions, user, family, familyDebts, canAdd } = useApp()
-  const activeDebts = family ? familyDebts : debts
+  const { debts, saveDebts, transactions, saveTransactions, user, family, canAdd } = useApp()
   const isViewer = family && !canAdd()
   const [modal, setModal] = useState(false)
   const [payModal, setPayModal] = useState(null)
@@ -62,13 +60,8 @@ export default function Debts() {
       ? `Qarz olindi: ${form.person}${form.note ? ' · ' + form.note : ''}`
       : `Qarz berildi: ${form.person}${form.note ? ' · ' + form.note : ''}`
     const tx = createTx(txType, amount, form.currency, txNote, form.date)
-    if (family) {
-      addFamilyDebt(family.id, debt)
-      addFamilyTransaction(family.id, tx)
-    } else {
-      saveDebts([...debts, debt])
-      saveTransactions([...transactions, tx])
-    }
+    saveDebts([...debts, debt])
+    saveTransactions([...transactions, tx])
     setModal(false)
     setForm(defaultForm)
   }
@@ -86,24 +79,15 @@ export default function Debts() {
       ? `Qarz qaytarildi: ${payModal.person}`
       : `Qarz qaytib keldi: ${payModal.person}`
     const tx = createTx(txType, paid, payModal.currency || 'UZS', txNote, today)
-    if (family) {
-      updateFamilyDebt(family.id, updatedDebt)
-      addFamilyTransaction(family.id, tx)
-    } else {
-      saveDebts(debts.map(d => d.id === payModal.id ? updatedDebt : d))
-      saveTransactions([...transactions, tx])
-    }
+    saveDebts(debts.map(d => d.id === payModal.id ? updatedDebt : d))
+    saveTransactions([...transactions, tx])
     setPayModal(null)
     setPayAmount('')
   }
 
   const handleDelete = (id) => {
     if (confirm('O\'chirishni tasdiqlaysizmi?')) {
-      if (family) {
-        deleteFamilyDebt(family.id, id)
-      } else {
-        saveDebts(debts.filter(d => d.id !== id))
-      }
+      saveDebts(debts.filter(d => d.id !== id))
     }
   }
 
@@ -118,24 +102,19 @@ export default function Debts() {
     const alreadyPaid = editingDebt.amount - editingDebt.remaining
     const newRemaining = Math.max(0, newAmount - alreadyPaid)
     const updatedDebt = { ...editingDebt, amount: newAmount, remaining: newRemaining }
-    if (family) {
-      updateFamilyDebt(family.id, updatedDebt)
-    } else {
-      saveDebts(debts.map(d => d.id === editingDebt.id ? updatedDebt : d))
-    }
+    saveDebts(debts.map(d => d.id === editingDebt.id ? updatedDebt : d))
     setEditModal(false)
     setEditingDebt(null)
   }
 
-  const filtered = activeDebts
+  const filtered = debts
     .filter(d => filter === 'all' || d.direction === filter || (filter === 'active' && d.remaining > 0) || (filter === 'done' && d.remaining <= 0))
     .sort((a, b) => new Date(b.date) - new Date(a.date))
 
-  const borrowed = activeDebts.filter(d => d.direction === 'borrowed' && d.remaining > 0)
-  const lent = activeDebts.filter(d => d.direction === 'lent' && d.remaining > 0)
+  const borrowed = debts.filter(d => d.direction === 'borrowed' && d.remaining > 0)
+  const lent = debts.filter(d => d.direction === 'lent' && d.remaining > 0)
 
-  // Collect all warnings
-  const warnings = activeDebts.filter(d => d.remaining > 0).map(d => getDueDateWarning(d)).filter(Boolean)
+  const warnings = debts.filter(d => d.remaining > 0).map(d => getDueDateWarning(d)).filter(Boolean)
 
   return (
     <div className="flex flex-col min-h-dvh pb-24">

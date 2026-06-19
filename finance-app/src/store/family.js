@@ -2,6 +2,7 @@ import { db } from './firebase'
 import {
   doc, setDoc, getDoc, updateDoc, deleteDoc, onSnapshot, arrayUnion, arrayRemove
 } from 'firebase/firestore'
+import { loadFromCloud, syncToCloud } from './sync'
 
 const FAMILY_PREFIX = 'finance_family_'
 const USER_FAMILY_KEY = (userId) => `finance_${userId}_familyId`
@@ -61,7 +62,7 @@ export const getUserFamilyId = (userId) => {
   return localStorage.getItem(USER_FAMILY_KEY(userId))
 }
 
-export const createFamily = async (userId, username, fullName, familyName, personalTransactions = [], personalDebts = []) => {
+export const createFamily = async (userId, username, fullName, familyName) => {
   const familyId = generateFamilyCode()
   const family = {
     id: familyId,
@@ -71,12 +72,23 @@ export const createFamily = async (userId, username, fullName, familyName, perso
     members: [
       { userId, username, fullName, role: 'admin', joinedAt: new Date().toISOString() }
     ],
-    transactions: personalTransactions,
-    debts: personalDebts
   }
   saveFamilyLocal(family)
   localStorage.setItem(USER_FAMILY_KEY(userId), familyId)
   await saveFamilyToCloud(family)
+
+  // Admin mavjud ma'lumotlarini guruh namespace ga ko'chirish
+  const keys = ['transactions', 'debts', 'settings', 'categories', 'hamkorlar_sections', 'hamkorlar']
+  const items = await Promise.all(keys.map(k => loadFromCloud(userId, k)))
+  await Promise.all(keys.map((k, i) => {
+    if (items[i] != null) {
+      // localStorage ham yangilash
+      const lsKey = k === 'categories' ? `finance_${familyId}_categories` : null
+      if (lsKey) localStorage.setItem(lsKey, JSON.stringify(items[i]))
+      return syncToCloud(familyId, k, items[i])
+    }
+  }))
+
   return familyId
 }
 

@@ -22,7 +22,7 @@ const ROLE_COLORS = {
 }
 
 export default function Family() {
-  const { user, family, userRole, familyMembers, refreshFamily, transactions, debts } = useApp()
+  const { user, family, userRole, familyMembers, refreshFamily } = useApp()
   const [createModal, setCreateModal] = useState(false)
   const [joinModal, setJoinModal] = useState(false)
   const [roleModal, setRoleModal] = useState(null) // { member }
@@ -33,7 +33,7 @@ export default function Family() {
 
   const handleCreate = async () => {
     if (!familyName.trim()) return setError('Guruh nomini kiriting')
-    await createFamily(user.id, user.username, user.name, familyName.trim(), transactions, debts)
+    await createFamily(user.id, user.username, user.name, familyName.trim())
     refreshFamily()
     setCreateModal(false)
     setFamilyName('')
