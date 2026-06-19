@@ -1,24 +1,48 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 440" fill="none">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 80">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#1d4ed8"/>
-      <stop offset="100%" stop-color="#3b82f6"/>
+    <linearGradient id="gold3d" x1="0%" y1="0%" x2="20%" y2="100%">
+      <stop offset="0%"   stop-color="#FFF5A0"/>
+      <stop offset="20%"  stop-color="#FFD700"/>
+      <stop offset="50%"  stop-color="#F5C518"/>
+      <stop offset="75%"  stop-color="#C8960C"/>
+      <stop offset="100%" stop-color="#7B5800"/>
     </linearGradient>
+    <linearGradient id="shine" x1="0%" y1="0%" x2="60%" y2="100%">
+      <stop offset="0%"   stop-color="#FFFDE0" stop-opacity="0.9"/>
+      <stop offset="50%"  stop-color="#FFD700" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#7B5800" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="emboss">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="1.5" result="blur"/>
+      <feOffset dx="1.5" dy="2.5" result="shadow"/>
+      <feFlood flood-color="#000000" flood-opacity="0.7" result="color"/>
+      <feComposite in="color" in2="shadow" operator="in" result="coloredShadow"/>
+      <feMerge>
+        <feMergeNode in="coloredShadow"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
   </defs>
 
-  <!-- Icon background -->
-  <rect x="50" y="10" width="300" height="300" rx="68" fill="url(#bg)"/>
+  <!-- Dollar - shadow -->
+  <text x="5" y="69" font-family="Georgia, serif" font-size="76" font-weight="bold" fill="#3D2200" opacity="0.9">$</text>
+  <!-- Dollar - mid -->
+  <text x="3" y="67" font-family="Georgia, serif" font-size="76" font-weight="bold" fill="#C8960C">$</text>
+  <!-- Dollar - main -->
+  <text x="2" y="66" font-family="Georgia, serif" font-size="76" font-weight="bold" fill="url(#gold3d)" filter="url(#emboss)">$</text>
+  <!-- Dollar - shine -->
+  <text x="2" y="66" font-family="Georgia, serif" font-size="76" font-weight="bold" fill="url(#shine)" opacity="0.7">$</text>
 
-  <!-- Crown -->
-  <path d="M 118,218 L 118,186 L 158,136 L 200,168 L 242,136 L 282,186 L 282,218 Z" fill="white"/>
-  <rect x="112" y="208" width="176" height="28" rx="8" fill="white"/>
+  <!-- Divider -->
+  <rect x="68" y="64" width="248" height="3" rx="1.5" fill="url(#gold3d)" opacity="0.6"/>
+  <rect x="68" y="64" width="248" height="1.5" rx="0.75" fill="#FFF5A0" opacity="0.4"/>
 
-  <!-- Coin -->
-  <circle cx="200" cy="318" r="72" fill="none" stroke="white" stroke-width="16"/>
-  <line x1="170" y1="305" x2="230" y2="305" stroke="white" stroke-width="13" stroke-linecap="round"/>
-  <line x1="170" y1="331" x2="230" y2="331" stroke="white" stroke-width="13" stroke-linecap="round"/>
-
-  <!-- PULBEK text -->
-  <text x="200" y="412" font-family="'Helvetica Neue', Arial, sans-serif" font-size="46" font-weight="900"
-        text-anchor="middle" letter-spacing="6" fill="#1d4ed8">PULBEK</text>
+  <!-- BEK - shadow -->
+  <text x="72" y="60" font-family="'Arial Black', sans-serif" font-size="52" font-weight="900" fill="#3D2200" opacity="0.9" letter-spacing="4">BEK</text>
+  <!-- BEK - mid -->
+  <text x="70" y="58" font-family="'Arial Black', sans-serif" font-size="52" font-weight="900" fill="#C8960C" letter-spacing="4">BEK</text>
+  <!-- BEK - main -->
+  <text x="69" y="57" font-family="'Arial Black', sans-serif" font-size="52" font-weight="900" fill="url(#gold3d)" filter="url(#emboss)" letter-spacing="4">BEK</text>
+  <!-- BEK - shine -->
+  <text x="69" y="57" font-family="'Arial Black', sans-serif" font-size="52" font-weight="900" fill="url(#shine)" opacity="0.6" letter-spacing="4">BEK</text>
 </svg>
