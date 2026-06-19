@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Plus, CreditCard, Trash2, Package, Wrench, Banknote } from 'lucide-react'
+import { ArrowLeft, Plus, CreditCard, Trash2, Package, Wrench, Banknote, Pencil, ArchiveRestore, Archive } from 'lucide-react'
 import { useApp } from '../store/AppContext'
 import Modal from '../components/Modal'
 import { getData, saveData, generateId } from '../store/storage'
-import { calcDebt } from '../store/hamkorlar'
+import { calcDebt, archiveEntry, getArchive, restoreEntry, deleteFromArchive } from '../store/hamkorlar'
 import { fmtCur } from '../utils/format'
-import { format } from 'date-fns'
+import { formatDistanceToNow } from 'date-fns'
 import { uz } from 'date-fns/locale'
 
 const CURRENCIES = ['UZS', 'USD', 'EUR', 'RUB']
@@ -16,42 +16,45 @@ const today = () => new Date().toISOString().split('T')[0]
 export default function HamkorDetail() {
   const { sectionId, id } = useParams()
   const nav = useNavigate()
-  const { user, saveTransactions, transactions } = useApp()
+  const { user, saveTransactions, transactions, family, familyMembers } = useApp()
   const uid = user?.id
+
+  // Admin check: no family = always admin; family = must be admin role
+  const isAdmin = !family || familyMembers.find(m => m.userId === uid)?.role === 'admin'
+
   const [hamkor, setHamkor] = useState(null)
   const [addModal, setAddModal] = useState(false)
-  const [addTab, setAddTab] = useState('xomashyo') // 'xomashyo' | 'xizmat'
+  const [addTab, setAddTab] = useState('xomashyo')
   const [payModal, setPayModal] = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState(false)
+  const [editingEntry, setEditingEntry] = useState(null)
+  const [showArchive, setShowArchive] = useState(false)
+  const [archive, setArchive] = useState([])
 
-  // Xomashyo form
   const [xForm, setXForm] = useState({ name: '', qty: '', unit: 'kg', price: '', note: '', date: today(), currency: 'UZS' })
-  // Xizmat form
   const [zForm, setZForm] = useState({ amount: '', note: '', date: today(), currency: 'UZS' })
-  // Tolov form
   const [tForm, setTForm] = useState({ amount: '', note: '', date: today(), currency: 'UZS' })
 
   const load = () => {
     const all = getData('hamkorlar', uid)
-    const found = all.find(h => h.id === id)
-    setHamkor(found || null)
+    setHamkor(all.find(h => h.id === id) || null)
+    setArchive(getArchive(uid).filter(a => a.hamkorId === id))
   }
 
   useEffect(() => { if (uid) load() }, [uid, id])
 
   const updateEntries = (newEntry) => {
     const all = getData('hamkorlar', uid)
-    const updated = all.map(h => h.id === id ? { ...h, entries: [...(h.entries || []), newEntry] } : h)
-    saveData('hamkorlar', uid, updated)
+    saveData('hamkorlar', uid, all.map(h =>
+      h.id === id ? { ...h, entries: [...(h.entries || []), newEntry] } : h
+    ))
     load()
   }
 
   const handleAddXomashyo = () => {
     if (!xForm.name || !xForm.qty || !xForm.price) return
-    const qty = parseFloat(xForm.qty)
-    const price = parseFloat(xForm.price)
-    const totalPrice = qty * price
-    updateEntries({ id: generateId(), entryType: 'xomashyo', ...xForm, qty, price, totalPrice, createdAt: new Date().toISOString() })
+    const qty = parseFloat(xForm.qty), price = parseFloat(xForm.price)
+    updateEntries({ id: generateId(), entryType: 'xomashyo', ...xForm, qty, price, totalPrice: qty * price, createdAt: new Date().toISOString() })
     setXForm({ name: '', qty: '', unit: 'kg', price: '', note: '', date: today(), currency: 'UZS' })
     setAddModal(false)
   }
@@ -66,30 +69,58 @@ export default function HamkorDetail() {
   const handleTolov = () => {
     if (!tForm.amount) return
     const amount = parseFloat(tForm.amount)
-    // Add to partner entries
     updateEntries({ id: generateId(), entryType: 'tolov', ...tForm, amount, createdAt: new Date().toISOString() })
-    // Deduct from main wallet as expense
-    const tx = {
-      id: generateId(),
-      type: 'expense',
-      amount,
-      currency: tForm.currency,
-      category: 'Hamkorlar',
-      emoji: '🤝',
+    saveTransactions([{
+      id: generateId(), type: 'expense', amount, currency: tForm.currency,
+      category: 'Hamkorlar', emoji: '🤝',
       note: `${hamkor?.name} ga to'lov${tForm.note ? ': ' + tForm.note : ''}`,
-      date: tForm.date,
-      userId: uid,
-      userName: user?.name,
-    }
-    saveTransactions([tx, ...transactions])
+      date: tForm.date, userId: uid, userName: user?.name,
+    }, ...transactions])
     setTForm({ amount: '', note: '', date: today(), currency: 'UZS' })
     setPayModal(false)
   }
 
-  const handleDeleteEntry = (entryId) => {
+  // Edit entry
+  const openEdit = (entry) => {
+    setEditingEntry({ ...entry })
+  }
+
+  const handleEditSave = () => {
+    if (!editingEntry) return
+    const e = editingEntry
+    const updated = { ...e }
+    if (e.entryType === 'xomashyo') {
+      updated.qty = parseFloat(e.qty)
+      updated.price = parseFloat(e.price)
+      updated.totalPrice = updated.qty * updated.price
+    } else {
+      updated.amount = parseFloat(e.amount)
+    }
     const all = getData('hamkorlar', uid)
-    const updated = all.map(h => h.id === id ? { ...h, entries: (h.entries || []).filter(e => e.id !== entryId) } : h)
-    saveData('hamkorlar', uid, updated)
+    saveData('hamkorlar', uid, all.map(h =>
+      h.id === id ? { ...h, entries: (h.entries || []).map(en => en.id === updated.id ? updated : en) } : h
+    ))
+    setEditingEntry(null)
+    load()
+  }
+
+  // Delete (archive)
+  const handleDeleteEntry = (entry) => {
+    archiveEntry(uid, id, hamkor?.name, sectionId, entry)
+    const all = getData('hamkorlar', uid)
+    saveData('hamkorlar', uid, all.map(h =>
+      h.id === id ? { ...h, entries: (h.entries || []).filter(e => e.id !== entry.id) } : h
+    ))
+    load()
+  }
+
+  const handleRestoreEntry = (archiveId) => {
+    restoreEntry(uid, archiveId)
+    load()
+  }
+
+  const handleDeleteFromArchive = (archiveId) => {
+    deleteFromArchive(uid, archiveId)
     load()
   }
 
@@ -121,9 +152,16 @@ export default function HamkorDetail() {
               <ArrowLeft size={22} />
             </button>
             <h1 className="text-lg font-bold text-white flex-1 truncate">{hamkor.name}</h1>
-            <button onClick={() => setDeleteConfirm(true)} className="text-gray-500 active:text-red-400 p-1">
-              <Trash2 size={18} />
-            </button>
+            {isAdmin && (
+              <>
+                <button onClick={() => setShowArchive(v => !v)} className={`p-1 ${showArchive ? 'text-orange-400' : 'text-gray-500'} active:opacity-70`} title="Arxiv">
+                  <Archive size={18} />
+                </button>
+                <button onClick={() => setDeleteConfirm(true)} className="text-gray-500 active:text-red-400 p-1">
+                  <Trash2 size={18} />
+                </button>
+              </>
+            )}
           </div>
 
           {/* Debt badge */}
@@ -135,9 +173,33 @@ export default function HamkorDetail() {
           </div>
         </div>
 
-        {/* Entries */}
         <div className="px-4 mt-3 flex flex-col gap-2">
-          {sortedEntries.length === 0 && (
+          {/* Archive view */}
+          {showArchive && (
+            <div className="mb-2">
+              <p className="text-orange-400 text-sm font-semibold mb-2">🗃 Arxiv ({archive.length} ta)</p>
+              {archive.length === 0 && <p className="text-gray-500 text-sm text-center py-4">Arxiv bo'sh</p>}
+              {archive.map(a => (
+                <div key={a.id} className="bg-gray-800/60 border border-orange-500/20 rounded-2xl px-4 py-3 flex items-center gap-3 mb-2 opacity-70">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-gray-300 text-sm">{entryLabel(a)}</p>
+                    <p className="text-gray-500 text-xs mt-0.5">
+                      O'chirildi: {formatDistanceToNow(new Date(a.deletedAt), { addSuffix: true, locale: uz })}
+                    </p>
+                  </div>
+                  <button onClick={() => handleRestoreEntry(a.id)} className="text-green-400 active:opacity-70 p-1" title="Tiklash">
+                    <ArchiveRestore size={16} />
+                  </button>
+                  <button onClick={() => handleDeleteFromArchive(a.id)} className="text-red-400 active:opacity-70 p-1" title="Butunlay o'chirish">
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Active entries */}
+          {sortedEntries.length === 0 && !showArchive && (
             <p className="text-center text-gray-500 py-12">Hali ma'lumot kiritilmagan</p>
           )}
           {sortedEntries.map(e => (
@@ -157,13 +219,19 @@ export default function HamkorDetail() {
               <div className="text-right flex-shrink-0">
                 <p className={`text-sm font-bold ${e.entryType === 'tolov' ? 'text-green-400' : 'text-red-400'}`}>
                   {e.entryType === 'tolov' ? '-' : '+'}{fmtCur(
-                    e.entryType === 'xomashyo' ? e.totalPrice : e.amount,
-                    e.currency
+                    e.entryType === 'xomashyo' ? e.totalPrice : e.amount, e.currency
                   )}
                 </p>
-                <button onClick={() => handleDeleteEntry(e.id)} className="text-gray-600 active:text-red-400 mt-1">
-                  <Trash2 size={13} />
-                </button>
+                {isAdmin && (
+                  <div className="flex gap-2 justify-end mt-1">
+                    <button onClick={() => openEdit(e)} className="text-gray-500 active:text-blue-400">
+                      <Pencil size={13} />
+                    </button>
+                    <button onClick={() => handleDeleteEntry(e)} className="text-gray-600 active:text-red-400">
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           ))}
@@ -172,25 +240,20 @@ export default function HamkorDetail() {
 
       {/* FABs */}
       <div className="fixed bottom-24 right-4 z-40 flex flex-col gap-2">
-        <button
-          onClick={() => setPayModal(true)}
-          className="w-13 h-13 w-14 h-14 rounded-full bg-green-600 flex items-center justify-center shadow-lg active:scale-95 transition-transform"
-          title="To'lov"
-        >
+        <button onClick={() => setPayModal(true)}
+          className="w-14 h-14 rounded-full bg-green-600 flex items-center justify-center shadow-lg active:scale-95 transition-transform"
+          title="To'lov">
           <CreditCard size={20} className="text-white" />
         </button>
-        <button
-          onClick={() => setAddModal(true)}
+        <button onClick={() => setAddModal(true)}
           className="w-14 h-14 rounded-full bg-blue-600 flex items-center justify-center shadow-lg active:scale-95 transition-transform"
-          title="Qo'shish"
-        >
+          title="Qo'shish">
           <Plus size={24} className="text-white" />
         </button>
       </div>
 
       {/* Add entry modal */}
       <Modal open={addModal} onClose={() => setAddModal(false)} title="Qo'shish">
-        {/* Tab */}
         <div className="flex gap-2 mb-1">
           <button onClick={() => setAddTab('xomashyo')} className={`flex-1 py-2 rounded-xl text-sm font-semibold transition-colors ${addTab === 'xomashyo' ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-400'}`}>
             📦 Xomashyo
@@ -199,7 +262,6 @@ export default function HamkorDetail() {
             🔧 Xizmat haqi
           </button>
         </div>
-
         {addTab === 'xomashyo' ? (
           <div className="flex flex-col gap-3">
             <input className="w-full bg-gray-700 text-white rounded-xl px-3 py-3 outline-none" placeholder="Xomashyo nomi *" value={xForm.name} onChange={e => setXForm(f => ({ ...f, name: e.target.value }))} />
@@ -217,7 +279,7 @@ export default function HamkorDetail() {
             </div>
             {xForm.qty && xForm.price && (
               <p className="text-blue-400 text-sm text-center font-semibold">
-                Jami: {fmtCur(parseFloat(xForm.qty || 0) * parseFloat(xForm.price || 0), xForm.currency)}
+                Jami: {fmtCur(parseFloat(xForm.qty) * parseFloat(xForm.price), xForm.currency)}
               </p>
             )}
             <input className="w-full bg-gray-700 text-white rounded-xl px-3 py-3 outline-none" placeholder="Izoh (ixtiyoriy)" value={xForm.note} onChange={e => setXForm(f => ({ ...f, note: e.target.value }))} />
@@ -239,6 +301,47 @@ export default function HamkorDetail() {
         )}
       </Modal>
 
+      {/* Edit modal */}
+      <Modal open={!!editingEntry} onClose={() => setEditingEntry(null)} title="Tahrirlash">
+        {editingEntry && (
+          <div className="flex flex-col gap-3">
+            {editingEntry.entryType === 'xomashyo' && (
+              <>
+                <input className="w-full bg-gray-700 text-white rounded-xl px-3 py-3 outline-none" placeholder="Xomashyo nomi *" value={editingEntry.name} onChange={e => setEditingEntry(v => ({ ...v, name: e.target.value }))} />
+                <div className="flex gap-2">
+                  <input className="flex-1 bg-gray-700 text-white rounded-xl px-3 py-3 outline-none" placeholder="Miqdor *" type="number" value={editingEntry.qty} onChange={e => setEditingEntry(v => ({ ...v, qty: e.target.value }))} />
+                  <select className="bg-gray-700 text-white rounded-xl px-3 py-3 outline-none" value={editingEntry.unit} onChange={e => setEditingEntry(v => ({ ...v, unit: e.target.value }))}>
+                    {UNITS.map(u => <option key={u}>{u}</option>)}
+                  </select>
+                </div>
+                <div className="flex gap-2">
+                  <input className="flex-1 bg-gray-700 text-white rounded-xl px-3 py-3 outline-none" placeholder="Narx *" type="number" value={editingEntry.price} onChange={e => setEditingEntry(v => ({ ...v, price: e.target.value }))} />
+                  <select className="bg-gray-700 text-white rounded-xl px-3 py-3 outline-none" value={editingEntry.currency} onChange={e => setEditingEntry(v => ({ ...v, currency: e.target.value }))}>
+                    {CURRENCIES.map(c => <option key={c}>{c}</option>)}
+                  </select>
+                </div>
+                {editingEntry.qty && editingEntry.price && (
+                  <p className="text-blue-400 text-sm text-center font-semibold">
+                    Jami: {fmtCur(parseFloat(editingEntry.qty) * parseFloat(editingEntry.price), editingEntry.currency)}
+                  </p>
+                )}
+              </>
+            )}
+            {(editingEntry.entryType === 'xizmat' || editingEntry.entryType === 'tolov') && (
+              <div className="flex gap-2">
+                <input className="flex-1 bg-gray-700 text-white rounded-xl px-3 py-3 outline-none" placeholder="Summa *" type="number" value={editingEntry.amount} onChange={e => setEditingEntry(v => ({ ...v, amount: e.target.value }))} />
+                <select className="bg-gray-700 text-white rounded-xl px-3 py-3 outline-none" value={editingEntry.currency} onChange={e => setEditingEntry(v => ({ ...v, currency: e.target.value }))}>
+                  {CURRENCIES.map(c => <option key={c}>{c}</option>)}
+                </select>
+              </div>
+            )}
+            <input className="w-full bg-gray-700 text-white rounded-xl px-3 py-3 outline-none" placeholder="Izoh" value={editingEntry.note || ''} onChange={e => setEditingEntry(v => ({ ...v, note: e.target.value }))} />
+            <input className="w-full bg-gray-700 text-white rounded-xl px-3 py-3 outline-none" type="date" value={editingEntry.date} onChange={e => setEditingEntry(v => ({ ...v, date: e.target.value }))} />
+            <button onClick={handleEditSave} className="w-full bg-blue-600 text-white rounded-xl py-3 font-semibold">Saqlash</button>
+          </div>
+        )}
+      </Modal>
+
       {/* To'lov modal */}
       <Modal open={payModal} onClose={() => setPayModal(false)} title="To'lov qilish">
         <div className="flex flex-col gap-3">
@@ -250,12 +353,12 @@ export default function HamkorDetail() {
           </div>
           <input className="w-full bg-gray-700 text-white rounded-xl px-3 py-3 outline-none" placeholder="Izoh (ixtiyoriy)" value={tForm.note} onChange={e => setTForm(f => ({ ...f, note: e.target.value }))} />
           <input className="w-full bg-gray-700 text-white rounded-xl px-3 py-3 outline-none" type="date" value={tForm.date} onChange={e => setTForm(f => ({ ...f, date: e.target.value }))} />
-          <p className="text-gray-400 text-xs text-center">To'lov summa hisobingizdan chiqim sifatida yoziladi</p>
+          <p className="text-gray-400 text-xs text-center">To'lov hisobingizdan chiqim sifatida yoziladi</p>
           <button onClick={handleTolov} className="w-full bg-green-600 text-white rounded-xl py-3 font-semibold">To'lov qilish</button>
         </div>
       </Modal>
 
-      {/* Delete confirm */}
+      {/* Delete hamkor confirm */}
       <Modal open={deleteConfirm} onClose={() => setDeleteConfirm(false)} title="Hamkorni o'chirish">
         <p className="text-gray-300 mb-4">"{hamkor.name}" ni barcha ma'lumotlari bilan o'chirasizmi?</p>
         <div className="flex gap-2">
