@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Plus, Trash2, ArrowRight, ArrowLeftRight, Pencil, Archive, RotateCcw, X } from 'lucide-react'
+import AmountInput from '../components/AmountInput'
 import { useApp } from '../store/AppContext'
 import Modal from '../components/Modal'
 import { format } from 'date-fns'
@@ -310,14 +311,14 @@ export default function Exchange() {
 
           <div>
             <label className="text-gray-400 text-xs mb-1 block">Summa ({form.from})</label>
-            <input className="input-field" type="number" placeholder="0" value={form.fromAmount} onChange={e => set('fromAmount', e.target.value)} />
+            <AmountInput className="input-field" value={form.fromAmount} onChange={v => set('fromAmount', v)} />
           </div>
 
           <div>
             <label className="text-gray-400 text-xs mb-1 block">
               Kurs {form.from !== 'UZS' && form.to !== 'UZS' ? `(1 ${form.from} = ? ${form.to})` : form.from === 'UZS' ? `(1 ${form.to} = ? UZS)` : `(1 ${form.from} = ? UZS)`}
             </label>
-            <input className="input-field" type="number" placeholder="Kursni kiriting..." value={form.rate} onChange={e => set('rate', e.target.value)} />
+            <AmountInput className="input-field" placeholder="Kursni kiriting..." value={form.rate} onChange={v => set('rate', v)} />
           </div>
 
           {computedTo !== null && form.fromAmount && (

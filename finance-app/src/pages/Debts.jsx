@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Plus, ChevronDown, ChevronUp, Trash2, AlertTriangle, Pencil } from 'lucide-react'
 import { useApp } from '../store/AppContext'
 import Modal from '../components/Modal'
+import AmountInput from '../components/AmountInput'
 import { generateId } from '../store/storage'
 import { addFamilyDebt, deleteFamilyDebt, updateFamilyDebt, addFamilyTransaction } from '../store/family'
 import { format, differenceInDays, isToday, isTomorrow, isPast, parseISO } from 'date-fns'
@@ -282,7 +283,7 @@ export default function Debts() {
           <div className="flex gap-2">
             <div className="flex-1">
               <label className="text-gray-400 text-xs mb-1 block">Summa</label>
-              <input className="input-field" type="number" placeholder="0" value={form.amount} onChange={e => set('amount', e.target.value)} />
+              <AmountInput className="input-field" value={form.amount} onChange={v => set('amount', v)} />
             </div>
             <div className="w-28">
               <label className="text-gray-400 text-xs mb-1 block">Valyuta</label>
@@ -322,7 +323,7 @@ export default function Debts() {
             <div className="flex gap-2">
               <div className="flex-1">
                 <label className="text-gray-400 text-xs mb-1 block">Summa</label>
-                <input className="input-field" type="number" placeholder="0" value={editingDebt.amount} onChange={e => setEditingDebt(d => ({ ...d, amount: e.target.value }))} />
+                <AmountInput className="input-field" value={editingDebt.amount} onChange={v => setEditingDebt(d => ({ ...d, amount: v }))} />
               </div>
               <div className="w-28">
                 <label className="text-gray-400 text-xs mb-1 block">Valyuta</label>
@@ -359,7 +360,7 @@ export default function Debts() {
             <button onClick={() => setPayAmount(String(payModal.remaining))} className="text-blue-400 text-sm text-left">
               To'liq to'lash ({fmt(payModal.remaining, payModal.currency || 'UZS')} {payModal.currency || 'UZS'})
             </button>
-            <input className="input-field" type="number" placeholder="To'lov summasi" value={payAmount} onChange={e => setPayAmount(e.target.value)} />
+            <AmountInput className="input-field" placeholder="To'lov summasi" value={payAmount} onChange={v => setPayAmount(v)} />
             <button onClick={handlePay} className="btn-primary">To'lash</button>
           </div>
         )}

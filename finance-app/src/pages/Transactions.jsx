@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Plus, Trash2, Search, TrendingUp, TrendingDown, Users, Download, SlidersHorizontal, CheckSquare, Square, X } from 'lucide-react'
 import { useApp, INCOME_CATEGORIES, EXPENSE_CATEGORIES } from '../store/AppContext'
 import Modal from '../components/Modal'
+import AmountInput from '../components/AmountInput'
 import SwipeableRow from '../components/SwipeableRow'
 import { generateId } from '../store/storage'
 import { addFamilyTransaction, deleteFamilyTransaction, updateFamilyTransaction } from '../store/family'
@@ -352,7 +353,7 @@ export default function Transactions() {
             </div>
             <div>
               <label className="text-gray-400 text-xs mb-1 block">Summa</label>
-              <input className="input-field" type="number" placeholder="0" value={editingTx.amount} onChange={e => setEditingTx(t => ({ ...t, amount: e.target.value }))} />
+              <AmountInput className="input-field" value={editingTx.amount} onChange={v => setEditingTx(t => ({ ...t, amount: v }))} />
             </div>
             <div>
               <label className="text-gray-400 text-xs mb-1 block">Valyuta</label>
@@ -378,8 +379,8 @@ export default function Transactions() {
               <div key={i} className="flex gap-2 items-end">
                 <div className="flex-1">
                   <label className="text-gray-400 text-xs mb-1 block">Summa {i + 2}</label>
-                  <input className="input-field" type="number" placeholder="0" value={ea.amount}
-                    onChange={e => setEditExtraAmounts(prev => prev.map((x, j) => j === i ? { ...x, amount: e.target.value } : x))} />
+                  <AmountInput className="input-field" value={ea.amount}
+                    onChange={v => setEditExtraAmounts(prev => prev.map((x, j) => j === i ? { ...x, amount: v } : x))} />
                 </div>
                 <div className="flex-1">
                   <label className="text-gray-400 text-xs mb-1 block">Valyuta</label>
@@ -415,7 +416,7 @@ export default function Transactions() {
           </div>
           <div>
             <label className="text-gray-400 text-xs mb-1 block">Summa</label>
-            <input className="input-field" type="number" placeholder="0" value={form.amount} onChange={e => set('amount', e.target.value)} />
+            <AmountInput className="input-field" value={form.amount} onChange={v => set('amount', v)} />
           </div>
           <div>
             <label className="text-gray-400 text-xs mb-1 block">Valyuta</label>
@@ -441,12 +442,10 @@ export default function Transactions() {
             <div key={i} className="flex gap-2 items-end">
               <div className="flex-1">
                 <label className="text-gray-400 text-xs mb-1 block">Summa {i + 2}</label>
-                <input
+                <AmountInput
                   className="input-field"
-                  type="number"
-                  placeholder="0"
                   value={ea.amount}
-                  onChange={e => setExtraAmounts(prev => prev.map((x, j) => j === i ? { ...x, amount: e.target.value } : x))}
+                  onChange={v => setExtraAmounts(prev => prev.map((x, j) => j === i ? { ...x, amount: v } : x))}
                 />
               </div>
               <div className="flex-1">
