@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { LogOut, Lock, User, Eye, EyeOff, Info, Tag, Globe, KeyRound, Trash2, Loader } from 'lucide-react'
+import { LogOut, Lock, User, Eye, EyeOff, Info, Tag, Globe, KeyRound, Trash2, Loader, RefreshCw } from 'lucide-react'
 import { useApp } from '../store/AppContext'
-import { setCurrentUser } from '../store/storage'
+import { setCurrentUser, getData, getSettings } from '../store/storage'
 import { changePassword, changeUsername } from '../store/auth'
+import { syncToCloud } from '../store/sync'
 import Modal from '../components/Modal'
 import { useLang } from '../i18n/LangContext'
 
@@ -26,6 +27,37 @@ export default function Settings() {
   const [loginError, setLoginError] = useState('')
   const [loginSuccess, setLoginSuccess] = useState('')
   const [saving, setSaving] = useState(false)
+  const [syncing, setSyncing] = useState(false)
+  const [syncDone, setSyncDone] = useState(false)
+
+  const handleForceSync = async () => {
+    if (!user?.id) return
+    setSyncing(true)
+    setSyncDone(false)
+    try {
+      const uid = user.id
+      const tx = getData('transactions', uid)
+      const db = getData('debts', uid)
+      const sec = getData('hamkorlar_sections', uid)
+      const par = getData('hamkorlar', uid)
+      const s = getSettings(uid)
+      const cats = (() => { try { return JSON.parse(localStorage.getItem(`finance_${uid}_categories`) || 'null') } catch { return null } })()
+      await Promise.all([
+        tx?.length > 0 && syncToCloud(uid, 'transactions', tx),
+        db?.length > 0 && syncToCloud(uid, 'debts', db),
+        sec?.length > 0 && syncToCloud(uid, 'hamkorlar_sections', sec),
+        par?.length > 0 && syncToCloud(uid, 'hamkorlar', par),
+        s?.rates && syncToCloud(uid, 'settings', s),
+        cats?.length > 0 && syncToCloud(uid, 'categories', cats),
+      ])
+      setSyncDone(true)
+      setTimeout(() => setSyncDone(false), 3000)
+    } catch (e) {
+      console.warn('Force sync error:', e)
+    } finally {
+      setSyncing(false)
+    }
+  }
   const [pinError, setPinError] = useState('')
   const [pinSuccess, setPinSuccess] = useState('')
   const hasPin = !!pin
@@ -176,6 +208,19 @@ export default function Settings() {
           <div>
             <p className="text-white text-sm font-medium">Arxiv</p>
             <p className="text-gray-500 text-xs">O'chirilgan tranzaksiyalar (30 kun)</p>
+          </div>
+        </button>
+
+        <div className="h-px bg-white/5 mx-4" />
+
+        <button onClick={handleForceSync} disabled={syncing}
+          className="flex items-center gap-3 px-4 py-4 active:bg-dark-600 transition-colors text-left w-full disabled:opacity-60">
+          <div className="w-9 h-9 rounded-xl bg-green-500/15 flex items-center justify-center">
+            {syncing ? <Loader size={18} className="text-green-400 animate-spin" /> : <RefreshCw size={18} className={`text-green-400 ${syncDone ? 'text-green-300' : ''}`} />}
+          </div>
+          <div>
+            <p className="text-white text-sm font-medium">Ma'lumotlarni yuklash</p>
+            <p className="text-gray-500 text-xs">{syncDone ? '✓ Muvaffaqiyatli yuklandi!' : syncing ? 'Yuklanmoqda...' : 'Barcha ma\'lumotlarni Firebase\'ga yuklash'}</p>
           </div>
         </button>
 
