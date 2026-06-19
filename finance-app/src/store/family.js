@@ -3,6 +3,7 @@ import {
   doc, setDoc, getDoc, updateDoc, deleteDoc, onSnapshot, arrayUnion, arrayRemove
 } from 'firebase/firestore'
 import { loadFromCloud, syncToCloud } from './sync'
+import { getData, getSettings } from './storage'
 
 const FAMILY_PREFIX = 'finance_family_'
 const USER_FAMILY_KEY = (userId) => `finance_${userId}_familyId`
@@ -78,15 +79,36 @@ export const createFamily = async (userId, username, fullName, familyName) => {
   await saveFamilyToCloud(family)
 
   // Admin mavjud ma'lumotlarini guruh namespace ga ko'chirish
-  const keys = ['transactions', 'debts', 'settings', 'categories', 'hamkorlar_sections', 'hamkorlar']
-  const items = await Promise.all(keys.map(k => loadFromCloud(userId, k)))
-  await Promise.all(keys.map((k, i) => {
-    if (items[i] != null) {
-      // localStorage ham yangilash
-      const lsKey = k === 'categories' ? `finance_${familyId}_categories` : null
-      if (lsKey) localStorage.setItem(lsKey, JSON.stringify(items[i]))
-      return syncToCloud(familyId, k, items[i])
-    }
+  // Firebase + localStorage ikkalasini tekshirib, ko'proq bo'lganini oladi
+  const arrayKeys = ['transactions', 'debts', 'hamkorlar_sections', 'hamkorlar']
+  const [cloudTx, cloudDebts, cloudSec, cloudPar, cloudSettings, cloudCats] = await Promise.all([
+    loadFromCloud(userId, 'transactions'),
+    loadFromCloud(userId, 'debts'),
+    loadFromCloud(userId, 'hamkorlar_sections'),
+    loadFromCloud(userId, 'hamkorlar'),
+    loadFromCloud(userId, 'settings'),
+    loadFromCloud(userId, 'categories'),
+  ])
+
+  const pick = (cloud, local) => {
+    if (Array.isArray(cloud) && Array.isArray(local))
+      return cloud.length >= local.length ? cloud : local
+    return cloud ?? local ?? null
+  }
+
+  const migrationData = {
+    transactions: pick(cloudTx, getData('transactions', userId)),
+    debts: pick(cloudDebts, getData('debts', userId)),
+    hamkorlar_sections: pick(cloudSec, getData('hamkorlar_sections', userId)),
+    hamkorlar: pick(cloudPar, getData('hamkorlar', userId)),
+    settings: cloudSettings || getSettings(userId),
+    categories: pick(cloudCats, (() => { try { return JSON.parse(localStorage.getItem(`finance_${userId}_categories`) || 'null') } catch { return null } })()),
+  }
+
+  await Promise.all(Object.entries(migrationData).map(([k, v]) => {
+    if (!v || (Array.isArray(v) && v.length === 0)) return null
+    if (k === 'categories') localStorage.setItem(`finance_${familyId}_categories`, JSON.stringify(v))
+    return syncToCloud(familyId, k, v)
   }))
 
   return familyId
