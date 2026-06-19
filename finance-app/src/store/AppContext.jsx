@@ -35,16 +35,15 @@ export function AppProvider({ children }) {
   const skipCloudUpdate = useRef(false)
   const uid = user?.id
 
-  // Guruhda bo'lsa familyId (families collection), solo bo'lsa uid (users collection)
   const storeId = familyId || uid
   const col = familyId ? 'families' : 'users'
 
-  const sync = (key, data) => syncToCloud(storeId, key, data, col)
-  const load = (key) => loadFromCloud(storeId, key, col)
-  const subscribe = (key, cb) => subscribeToCloud(storeId, key, cb, col)
-
   useEffect(() => {
     if (!storeId) return
+
+    const sync = (key, data) => syncToCloud(storeId, key, data, col)
+    const load = (key) => loadFromCloud(storeId, key, col)
+    const subscribe = (key, cb) => subscribeToCloud(storeId, key, cb, col)
 
     // 1. LocalStorage dan darhol ko'rsatish
     setTransactions(getData('transactions', storeId))

@@ -80,7 +80,6 @@ export const createFamily = async (userId, username, fullName, familyName) => {
 
   // Admin mavjud ma'lumotlarini guruh namespace ga ko'chirish
   // Firebase + localStorage ikkalasini tekshirib, ko'proq bo'lganini oladi
-  const arrayKeys = ['transactions', 'debts', 'hamkorlar_sections', 'hamkorlar']
   const [cloudTx, cloudDebts, cloudSec, cloudPar, cloudSettings, cloudCats] = await Promise.all([
     loadFromCloud(userId, 'transactions'),
     loadFromCloud(userId, 'debts'),
