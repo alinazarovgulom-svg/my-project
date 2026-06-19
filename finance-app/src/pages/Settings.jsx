@@ -10,7 +10,8 @@ import { useLang } from '../i18n/LangContext'
 
 export default function Settings() {
   const { user, setUser, transactions: personalTx, familyTransactions, family, debts, userRole, pin, savePin,
-    saveTransactions, saveDebts, saveCategories, saveHamkorSections, saveHamkorPartners, updateSettings } = useApp()
+    saveTransactions, saveDebts, saveCategories, saveHamkorSections, saveHamkorPartners, updateSettings,
+    categories, settings, hamkorSections, hamkorPartners } = useApp()
   const transactions = family ? familyTransactions : personalTx
   const { t, lang, setLang } = useLang()
   const nav = useNavigate()
@@ -75,17 +76,16 @@ export default function Settings() {
 
   const handleExport = () => {
     if (!user?.id) return
-    const uid = user.id
     const backup = {
       version: 1,
       exportedAt: new Date().toISOString(),
       user: { name: user.name, username: user.username },
-      transactions: getData('transactions', uid),
-      debts: getData('debts', uid),
-      hamkorlar: getData('hamkorlar', uid),
-      hamkorlar_sections: getData('hamkorlar_sections', uid),
-      settings: getSettings(uid),
-      categories: (() => { try { return JSON.parse(localStorage.getItem(`finance_${uid}_categories`) || 'null') } catch { return null } })(),
+      transactions: personalTx,
+      debts: debts,
+      hamkorlar: hamkorPartners,
+      hamkorlar_sections: hamkorSections,
+      settings: settings,
+      categories: categories,
     }
     const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
