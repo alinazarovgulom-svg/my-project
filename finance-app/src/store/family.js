@@ -243,15 +243,36 @@ export const updateMemberLastSeen = async (familyId, userId) => {
 
 export const subscribeToFamily = (familyId, callback) => {
   if (!familyId) return () => {}
-  return onSnapshot(
-    doc(db, 'families', familyId),
-    (snap) => {
-      if (snap.exists()) {
-        const data = snap.data()
-        saveFamilyLocal(data)
-        callback(data)
+
+  let unsub = null
+
+  const subscribe = () => {
+    if (unsub) unsub()
+    unsub = onSnapshot(
+      doc(db, 'families', familyId),
+      (snap) => {
+        if (snap.exists()) {
+          const data = snap.data()
+          saveFamilyLocal(data)
+          callback(data)
+        }
+      },
+      (err) => {
+        console.warn('[family] onSnapshot error:', err?.code || err?.message)
       }
-    },
-    () => {}
-  )
+    )
+  }
+
+  subscribe()
+
+  // iOS Safari background dan qaytganda reconnect
+  const onVisible = () => {
+    if (document.visibilityState === 'visible') subscribe()
+  }
+  document.addEventListener('visibilitychange', onVisible)
+
+  return () => {
+    if (unsub) unsub()
+    document.removeEventListener('visibilitychange', onVisible)
+  }
 }

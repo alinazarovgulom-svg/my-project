@@ -96,7 +96,6 @@ export default function Transactions() {
     if (familyMode && family) {
       updateFamilyTransaction(family.id, savedTx).then(() => {
         extraTxs.forEach(t => addFamilyTransaction(family.id, t))
-        refreshFamily()
       })
     } else {
       const updated = transactions.map(t => t.id === savedTx.id ? savedTx : t)
@@ -110,7 +109,7 @@ export default function Transactions() {
   const handleDelete = (id, isFamily = false) => {
     if (!confirm('O\'chirishni tasdiqlaysizmi?')) return
     if (isFamily && family) {
-      deleteFamilyTransaction(family.id, id).then(() => refreshFamily())
+      deleteFamilyTransaction(family.id, id)
     } else {
       saveTransactions(transactions.filter(t => t.id !== id))
     }

@@ -24,7 +24,7 @@ const saveArchive = (uid, data) => {
 }
 
 export default function Exchange() {
-  const { settings, user, transactions, saveTransactions, family, familyTransactions, refreshFamily, userRole } = useApp()
+  const { settings, user, transactions, saveTransactions, family, familyTransactions, userRole } = useApp()
   const uid = user?.id
   const rates = settings?.rates || { USD: 12700, EUR: 13800, RUB: 140 }
   const isAdmin = !family || userRole === 'admin'
@@ -110,7 +110,6 @@ export default function Exchange() {
         const { addFamilyTransaction } = await import('../store/family')
         await addFamilyTransaction(family.id, txOut)
         await addFamilyTransaction(family.id, txIn)
-        refreshFamily()
       } else {
         saveTransactions([...transactions, txOut, txIn])
       }

@@ -114,8 +114,9 @@ export function AppProvider({ children }) {
 
   const refreshFamily = useCallback(() => {
     if (uid) {
-      const fid = getUserFamilyId(uid)
-      setFamilyId(fid || null)
+      const fid = getUserFamilyId(uid) || null
+      // Faqat familyId o'zgarganda re-subscribe qilish
+      setFamilyId(prev => (prev === fid ? prev : fid))
     }
   }, [uid])
 
