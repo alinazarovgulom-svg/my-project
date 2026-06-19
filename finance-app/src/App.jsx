@@ -12,7 +12,7 @@ import Categories from './pages/Categories'
 import Family from './pages/Family'
 import Hamkorlar from './pages/Hamkorlar'
 import HamkorlarList from './pages/HamkorlarList'
-import HamkorlarDetail from './pages/HamkorlarDetail'
+import HamkorDetail from './pages/HamkorDetail'
 import AppLock from './components/AppLock'
 import Onboarding from './components/Onboarding'
 import { useState, useEffect, useRef } from 'react'
@@ -33,10 +33,8 @@ function ProtectedLayout() {
         <Route path="/categories" element={<Categories />} />
         <Route path="/family" element={<Family />} />
         <Route path="/hamkorlar" element={<Hamkorlar />} />
-        <Route path="/hamkorlar/yetkazib-beruvchilar" element={<HamkorlarList />} />
-        <Route path="/hamkorlar/yetkazib-beruvchilar/:id" element={<HamkorlarDetail />} />
-        <Route path="/hamkorlar/ishlab-chiqaruvchilar" element={<HamkorlarList />} />
-        <Route path="/hamkorlar/ishlab-chiqaruvchilar/:id" element={<HamkorlarDetail />} />
+        <Route path="/hamkorlar/:sectionId" element={<HamkorlarList />} />
+        <Route path="/hamkorlar/:sectionId/:id" element={<HamkorDetail />} />
       </Routes>
       <BottomNav />
     </>

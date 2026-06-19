@@ -1,139 +1,131 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Plus, Trash2, ChevronRight, Phone } from 'lucide-react'
+import { ArrowLeft, Plus, ChevronRight, Phone, Users } from 'lucide-react'
 import { useApp } from '../store/AppContext'
 import Modal from '../components/Modal'
-import { getHamkorlar, saveHamkorlar, addHamkor, deleteHamkor, getPartnerDebt } from '../store/hamkorlarStorage'
+import { getData, saveData, generateId } from '../store/storage'
+import { calcDebt } from '../store/hamkorlar'
 import { fmtCur } from '../utils/format'
 
-const fmt = (n, cur) => fmtCur(n, cur || 'UZS')
-
 export default function HamkorlarList() {
-  const navigate = useNavigate()
-  const { type } = useParams() // 'yetkazib-beruvchilar' or 'ishlab-chiqaruvchilar'
+  const { sectionId } = useParams()
+  const nav = useNavigate()
   const { user } = useApp()
+  const uid = user?.id
 
-  const partnerType = type === 'yetkazib-beruvchilar' ? 'yetkazib-beruvchi' : 'ishlab-chiqaruvchi'
-  const title = type === 'yetkazib-beruvchilar' ? 'Yetkazib beruvchilar' : 'Ishlab chiqaruvchilar'
-
-  const [partners, setPartners] = useState([])
+  const [section, setSection] = useState(null)
+  const [list, setList] = useState([])
   const [modal, setModal] = useState(false)
-  const [form, setForm] = useState({ name: '', phone: '' })
+  const [name, setName] = useState('')
+  const [phone, setPhone] = useState('')
 
-  const loadPartners = () => {
-    if (!user?.id) return
-    const all = getHamkorlar(user.id)
-    setPartners(all.filter(p => p.type === partnerType))
+  const load = () => {
+    const sections = getData('hamkorlar_sections', uid)
+    setSection(sections.find(s => s.id === sectionId) || null)
+    const all = getData('hamkorlar', uid)
+    setList(all.filter(h => h.sectionId === sectionId))
   }
 
-  useEffect(() => {
-    loadPartners()
-  }, [user?.id, partnerType])
+  useEffect(() => { if (uid) load() }, [uid, sectionId])
 
   const handleAdd = () => {
-    if (!form.name.trim()) return
-    addHamkor(user.id, { type: partnerType, name: form.name.trim(), phone: form.phone.trim() })
-    setForm({ name: '', phone: '' })
-    setModal(false)
-    loadPartners()
-  }
-
-  const handleDelete = (id) => {
-    if (confirm('O\'chirishni tasdiqlaysizmi?')) {
-      deleteHamkor(user.id, id)
-      loadPartners()
+    if (!name.trim()) return
+    const all = getData('hamkorlar', uid)
+    const hamkor = {
+      id: generateId(),
+      sectionId,
+      name: name.trim(),
+      phone: phone.trim(),
+      createdAt: new Date().toISOString(),
+      entries: [],
     }
+    saveData('hamkorlar', uid, [...all, hamkor])
+    setName(''); setPhone(''); setModal(false)
+    load()
   }
 
   return (
     <div className="flex flex-col min-h-dvh pb-24">
       <div className="page-animate">
-        <div className="sticky top-0 z-10 bg-dark-900 px-4 pt-4 pb-3">
-          <div className="flex items-center gap-3 mb-1">
-            <button onClick={() => navigate('/hamkorlar')} className="p-2 rounded-xl bg-dark-700 text-gray-400 active:opacity-70">
-              <ArrowLeft size={18} />
-            </button>
-            <h1 className="text-xl font-bold text-white">{title}</h1>
-          </div>
-          <p className="text-gray-500 text-sm ml-11">{partners.length} ta hamkor</p>
+        <div className="sticky top-0 z-10 bg-gray-900 px-4 pt-4 pb-3 flex items-center gap-3">
+          <button onClick={() => nav('/hamkorlar')} className="text-gray-400 active:text-white">
+            <ArrowLeft size={22} />
+          </button>
+          <h1 className="text-lg font-bold text-white flex-1 truncate">{section?.name || 'Hamkorlar'}</h1>
         </div>
 
-        <div className="px-4 flex flex-col gap-2 mt-1">
-          {partners.length === 0 ? (
-            <div className="card text-center py-10 mt-4">
-              <p className="text-gray-500">Hamkorlar yo'q</p>
-              <p className="text-gray-600 text-sm mt-1">+ tugmasi orqali qo'shing</p>
+        <div className="px-4 flex flex-col gap-3 mt-2">
+          {list.length === 0 && (
+            <div className="text-center py-16 text-gray-500">
+              <Users size={40} className="mx-auto mb-3 opacity-30" />
+              <p>Hali hamkor qo'shilmagan</p>
             </div>
-          ) : (
-            partners.map(p => {
-              const debt = getPartnerDebt(p)
-              return (
-                <button
-                  key={p.id}
-                  className="card flex items-center gap-3 active:opacity-80 text-left w-full"
-                  onClick={() => navigate(`/hamkorlar/${type}/${p.id}`)}
-                >
-                  <div className="w-10 h-10 rounded-xl bg-blue-500/15 flex items-center justify-center flex-shrink-0">
-                    <span className="text-white font-bold text-sm">{p.name.charAt(0).toUpperCase()}</span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-white font-medium truncate">{p.name}</p>
-                    {p.phone && (
-                      <div className="flex items-center gap-1 mt-0.5">
-                        <Phone size={11} className="text-gray-500" />
-                        <span className="text-gray-500 text-xs">{p.phone}</span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className={`text-sm font-semibold ${debt > 0 ? 'text-red-400' : 'text-green-400'}`}>
-                      {debt > 0 ? fmt(debt, 'UZS') : '✓'}
-                    </span>
-                    <button
-                      onClick={e => { e.stopPropagation(); handleDelete(p.id) }}
-                      className="p-1.5 rounded-lg bg-dark-600 text-gray-500 active:text-red-400"
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                    <ChevronRight size={16} className="text-gray-600" />
-                  </div>
-                </button>
-              )
-            })
           )}
+          {list.map(h => {
+            const debt = calcDebt(h.entries)
+            return (
+              <button
+                key={h.id}
+                onClick={() => nav(`/hamkorlar/${sectionId}/${h.id}`)}
+                className="flex items-center gap-3 bg-gray-800 rounded-2xl p-4 w-full text-left active:scale-95 transition-transform"
+              >
+                <div className="w-11 h-11 rounded-xl bg-blue-500/20 flex items-center justify-center flex-shrink-0">
+                  <span className="text-white font-bold text-base">{h.name.charAt(0).toUpperCase()}</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-white font-semibold truncate">{h.name}</p>
+                  {h.phone && (
+                    <p className="text-gray-500 text-xs flex items-center gap-1 mt-0.5">
+                      <Phone size={10} />{h.phone}
+                    </p>
+                  )}
+                </div>
+                <div className="text-right flex-shrink-0">
+                  <p className={`text-sm font-bold ${debt > 0 ? 'text-red-400' : 'text-green-400'}`}>
+                    {debt > 0 ? fmtCur(debt, 'UZS') : 'Qarz yo\'q'}
+                  </p>
+                  {debt > 0 && <p className="text-gray-500 text-xs">qarz</p>}
+                </div>
+                <ChevronRight size={16} className="text-gray-600 ml-1" />
+              </button>
+            )
+          })}
         </div>
       </div>
 
-      {/* FAB — outside page-animate */}
+      {/* FAB */}
       <button
         onClick={() => setModal(true)}
-        className="fixed bottom-24 right-4 z-40 w-14 h-14 rounded-full bg-blue-500 text-white flex items-center justify-center shadow-lg shadow-blue-500/30 active:opacity-80"
+        className="fixed bottom-24 right-4 z-40 w-14 h-14 rounded-full bg-blue-600 flex items-center justify-center shadow-lg active:scale-95 transition-transform"
       >
-        <Plus size={24} />
+        <Plus size={24} className="text-white" />
       </button>
 
-      <Modal open={modal} onClose={() => setModal(false)} title="Hamkor qo'shish">
-        <div className="flex flex-col gap-3 pb-4">
+      <Modal open={modal} onClose={() => { setModal(false); setName(''); setPhone('') }} title="Yangi hamkor qo'shish">
+        <div className="flex flex-col gap-3">
           <div>
-            <label className="text-gray-400 text-xs mb-1 block">Nomi *</label>
+            <label className="text-gray-400 text-xs mb-1 block">Ism *</label>
             <input
-              className="input-field"
-              placeholder="Hamkor nomi..."
-              value={form.name}
-              onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+              className="w-full bg-gray-700 text-white rounded-xl px-3 py-3 outline-none"
+              placeholder="Hamkor ismi"
+              value={name}
+              onChange={e => setName(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleAdd()}
+              autoFocus
             />
           </div>
           <div>
             <label className="text-gray-400 text-xs mb-1 block">Telefon (ixtiyoriy)</label>
             <input
-              className="input-field"
-              placeholder="+998 ..."
-              type="tel"
-              value={form.phone}
-              onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
+              className="w-full bg-gray-700 text-white rounded-xl px-3 py-3 outline-none"
+              placeholder="+998 90 000 00 00"
+              value={phone}
+              onChange={e => setPhone(e.target.value)}
             />
           </div>
-          <button onClick={handleAdd} className="btn-primary mt-2">Saqlash</button>
+          <button onClick={handleAdd} className="w-full bg-blue-600 text-white rounded-xl py-3 font-semibold mt-1">
+            Qo'shish
+          </button>
         </div>
       </Modal>
     </div>
