@@ -259,10 +259,10 @@ export default function Exchange() {
                 </div>
                 {isAdmin && (
                   <div className="flex items-center gap-1">
-                    <button onClick={() => startEdit(tx, pair)} className="p-1.5 rounded-lg bg-dark-600 text-gray-500 active:text-blue-400">
+                    <button onClick={() => startEdit(tx, pair)} className="p-1.5 rounded-lg text-gray-500 active:text-blue-400" style={{ background: 'rgba(255,255,255,0.05)' }}>
                       <Pencil size={14} />
                     </button>
-                    <button onClick={() => setDeleteConfirm({ tx, pair })} className="p-1.5 rounded-lg bg-dark-600 text-gray-500 active:text-red-400">
+                    <button onClick={() => setDeleteConfirm({ tx, pair })} className="p-1.5 rounded-lg text-gray-500 active:text-red-400" style={{ background: 'rgba(255,255,255,0.05)' }}>
                       <Trash2 size={14} />
                     </button>
                   </div>
@@ -296,7 +296,7 @@ export default function Exchange() {
             </div>
             {!editingPairId && (
               <button onClick={() => setForm(f => ({ ...f, from: f.to, to: f.from, rate: '' }))}
-                className="mt-5 w-10 h-10 rounded-xl bg-dark-600 flex items-center justify-center text-blue-400 flex-shrink-0">
+                className="mt-5 w-10 h-10 rounded-xl flex items-center justify-center text-blue-400 flex-shrink-0" style={{ background: 'rgba(99,102,241,0.12)' }}>
                 <ArrowLeftRight size={18} />
               </button>
             )}
@@ -347,7 +347,7 @@ export default function Exchange() {
       <Modal open={!!deleteConfirm} onClose={() => setDeleteConfirm(null)} title="O'chirishni tasdiqlang">
         {deleteConfirm && (
           <div className="flex flex-col gap-4">
-            <div className="bg-dark-600 rounded-xl p-3 text-center">
+            <div className="rounded-xl p-3 text-center" style={{ background: 'rgba(255,255,255,0.05)' }}>
               <p className="text-white font-semibold">
                 {fmt(deleteConfirm.tx.amount, deleteConfirm.tx.currency)} {deleteConfirm.tx.currency}
                 {' → '}
@@ -359,7 +359,7 @@ export default function Exchange() {
               Ma'lumot o'chiriladi va <span className="text-orange-400">30 kun arxivda</span> saqlanadi. Kerak bo'lsa tiklab olish mumkin.
             </p>
             <div className="flex gap-2">
-              <button onClick={() => setDeleteConfirm(null)} className="flex-1 bg-dark-600 text-white rounded-xl py-3">Bekor</button>
+              <button onClick={() => setDeleteConfirm(null)} className="flex-1 text-white rounded-xl py-3" style={{ background: 'rgba(255,255,255,0.07)' }}>Bekor</button>
               <button onClick={handleDelete} className="flex-1 bg-red-600 text-white rounded-xl py-3 font-semibold">O'chirish</button>
             </div>
           </div>

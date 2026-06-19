@@ -80,7 +80,7 @@ export default function Korxona() {
 
   if (!workspace) {
     return (
-      <div className="min-h-screen bg-dark-900 text-white p-4 pb-24">
+      <div className="min-h-screen text-white p-4 pb-24" style={{ background: '#08080f' }}>
         <h1 className="text-xl font-bold mb-6 flex items-center gap-2">
           <Building2 size={20} /> Korxona
         </h1>
@@ -90,7 +90,7 @@ export default function Korxona() {
               <div className="font-semibold">Korxona yaratish</div>
               <div className="text-sm text-blue-200 mt-1">Yangi ish joyi yarating va a'zolarni qo'shing</div>
             </button>
-            <button onClick={() => setMode('join')} className="bg-dark-800 hover:bg-dark-700 border border-white/10 rounded-xl p-4 text-left transition-colors">
+            <button onClick={() => setMode('join')} className="border border-white/10 rounded-xl p-4 text-left transition-colors" style={{ background: 'rgba(255,255,255,0.03)' }}>
               <div className="font-semibold">Korxonaga qo'shilish</div>
               <div className="text-sm text-gray-400 mt-1">Mavjud korxona kodini kiriting</div>
             </button>
@@ -102,7 +102,7 @@ export default function Korxona() {
               value={workspaceName}
               onChange={e => setWorkspaceName(e.target.value)}
               placeholder="Korxona nomi"
-              className="bg-dark-800 border border-white/10 rounded-xl px-4 py-3 w-full text-white placeholder-gray-500"
+              className="input-field"
             />
             {error && <p className="text-red-400 text-sm">{error}</p>}
             <button onClick={handleCreate} disabled={loading} className="bg-blue-600 hover:bg-blue-700 rounded-xl py-3 font-semibold disabled:opacity-50 transition-colors">
@@ -116,7 +116,7 @@ export default function Korxona() {
               value={joinCode}
               onChange={e => setJoinCode(e.target.value)}
               placeholder="Korxona kodi (KASSA-XXXXXX)"
-              className="bg-dark-800 border border-white/10 rounded-xl px-4 py-3 w-full text-white placeholder-gray-500 uppercase"
+              className="input-field uppercase"
             />
             {error && <p className="text-red-400 text-sm">{error}</p>}
             <button onClick={handleJoin} disabled={loading} className="bg-blue-600 hover:bg-blue-700 rounded-xl py-3 font-semibold disabled:opacity-50 transition-colors">
@@ -132,7 +132,7 @@ export default function Korxona() {
   const isAdmin = myRole === 'admin'
 
   return (
-    <div className="min-h-screen bg-dark-900 text-white p-4 pb-24">
+    <div className="min-h-screen text-white p-4 pb-24" style={{ background: '#08080f' }}>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-xl font-bold flex items-center gap-2">
           <Building2 size={20} /> {workspace.name}
@@ -144,7 +144,7 @@ export default function Korxona() {
         )}
       </div>
 
-      <div className="bg-dark-800 border border-white/10 rounded-xl p-4 mb-4">
+      <div className="rounded-xl p-4 mb-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
         <div className="text-xs text-gray-400 mb-1">Korxona kodi</div>
         <div className="flex items-center gap-2">
           <span className="font-mono font-bold text-blue-400 text-lg">{workspaceId}</span>
@@ -156,7 +156,7 @@ export default function Korxona() {
       </div>
 
       {isAdmin && (
-        <div className="bg-dark-800 border border-white/10 rounded-xl p-4 mb-4">
+        <div className="rounded-xl p-4 mb-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
           <div className="text-sm font-semibold mb-3 flex items-center gap-2">
             <UserPlus size={14} /> A'zo qo'shish
           </div>
@@ -165,12 +165,12 @@ export default function Korxona() {
               value={addUsername}
               onChange={e => setAddUsername(e.target.value)}
               placeholder="Username"
-              className="bg-dark-700 border border-white/10 rounded-lg px-3 py-2 flex-1 text-sm text-white placeholder-gray-500"
+              className="input-field text-sm py-2 flex-1"
             />
             <select
               value={addRole}
               onChange={e => setAddRole(e.target.value)}
-              className="bg-dark-700 border border-white/10 rounded-lg px-2 py-2 text-sm text-white"
+              className="input-field text-sm py-2 px-2"
             >
               <option value="kassir">Kassir</option>
               <option value="rahbar">Rahbar</option>
@@ -184,7 +184,7 @@ export default function Korxona() {
         </div>
       )}
 
-      <div className="bg-dark-800 border border-white/10 rounded-xl p-4">
+      <div className="rounded-xl p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
         <div className="text-sm font-semibold mb-3 flex items-center gap-2">
           <Users size={14} /> A'zolar ({members.length})
         </div>
@@ -202,7 +202,7 @@ export default function Korxona() {
                       value={m.role}
                       onChange={e => handleRoleChange(m.userId, e.target.value, members)}
                       disabled={loading}
-                      className="bg-dark-700 border border-white/10 rounded-lg px-2 py-1 text-xs text-white"
+                      className="input-field text-xs py-1 px-2"
                     >
                       <option value="kassir">Kassir</option>
                       <option value="rahbar">Rahbar</option>

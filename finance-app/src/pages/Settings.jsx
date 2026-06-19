@@ -330,7 +330,8 @@ export default function Settings() {
         <div className="flex gap-2">
           {[['uz','🇺🇿','O\'zbek'],['ru','🇷🇺','Русский'],['en','🇬🇧','English']].map(([l, flag, label]) => (
             <button key={l} onClick={() => setLang(l)}
-              className={`flex-1 py-2 rounded-xl text-sm font-medium transition-all flex flex-col items-center gap-0.5 ${lang === l ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' : 'bg-dark-600 text-gray-500'}`}>
+              className={`flex-1 py-2 rounded-xl text-sm font-medium transition-all flex flex-col items-center gap-0.5 ${lang === l ? 'text-indigo-300' : 'text-gray-500'}`}
+              style={lang === l ? { background: 'rgba(99,102,241,0.15)', border: '1px solid rgba(99,102,241,0.3)' } : { background: 'rgba(255,255,255,0.04)' }}>
               <span className="text-lg">{flag}</span>
               <span className="text-xs">{label}</span>
             </button>

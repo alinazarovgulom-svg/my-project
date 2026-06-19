@@ -140,7 +140,7 @@ export default function Debts() {
   return (
     <div className="flex flex-col min-h-dvh pb-24">
       <div className="page-animate">
-      <div className="sticky top-0 z-10 bg-dark-900 px-4 pt-4 pb-3">
+      <div className="sticky top-0 z-10 px-4 pt-4 pb-3" style={{ background: '#08080f' }}>
         <h1 className="text-xl font-bold text-white mb-3">Qarzlar</h1>
 
         {/* Warnings */}
@@ -169,7 +169,7 @@ export default function Debts() {
 
         <div className="flex gap-2 overflow-x-auto scrollbar-hide">
           {[['all', 'Barchasi'], ['active', 'Faol'], ['borrowed', 'Qarz oldim'], ['lent', 'Qarz berdim'], ['done', 'Tugatilgan']].map(([v, l]) => (
-            <button key={v} onClick={() => setFilter(v)} className={`flex-shrink-0 px-3 py-1.5 rounded-xl text-xs font-medium transition-colors ${filter === v ? 'bg-blue-500 text-white' : 'bg-dark-700 text-gray-400'}`}>
+            <button key={v} onClick={() => setFilter(v)} className={`flex-shrink-0 px-3 py-1.5 rounded-xl text-xs font-medium transition-colors ${filter === v ? 'text-white' : 'text-gray-500'}`} style={filter === v ? { background: '#6366f1' } : { background: 'rgba(255,255,255,0.04)' }}>
               {l}
             </button>
           ))}
@@ -224,7 +224,7 @@ export default function Debts() {
                         <span className="text-gray-500">Qoldi: <span className={isDone ? 'text-green-400' : 'text-white'}>{fmt(d.remaining, cur)} {cur}</span></span>
                         <span className="text-gray-500">Jami: {fmt(d.amount, cur)} {cur}</span>
                       </div>
-                      <div className="w-full bg-dark-600 rounded-full h-1.5">
+                      <div className="w-full rounded-full h-1.5" style={{ background: 'rgba(255,255,255,0.06)' }}>
                         <div className="h-1.5 rounded-full bg-blue-500 transition-all" style={{ width: `${progress}%` }} />
                       </div>
                     </div>
@@ -237,7 +237,7 @@ export default function Debts() {
                     {isOpen && (
                       <div className="mt-2 flex flex-col gap-1">
                         {d.payments.map(p => (
-                          <div key={p.id} className="flex justify-between text-xs bg-dark-600 rounded-lg px-2 py-1">
+                          <div key={p.id} className="flex justify-between text-xs rounded-lg px-2 py-1" style={{ background: 'rgba(255,255,255,0.04)' }}>
                             <span className="text-gray-400">{format(new Date(p.date), 'dd.MM.yyyy')}</span>
                             <span className="text-green-400">+{fmt(p.amount, cur)} {cur}</span>
                           </div>
@@ -264,10 +264,10 @@ export default function Debts() {
       <Modal open={modal} onClose={() => setModal(false)} title="Qarz qo'shish">
         <div className="flex flex-col gap-3 pb-4">
           <div className="flex gap-2">
-            <button onClick={() => set('direction', 'borrowed')} className={`flex-1 py-2 rounded-xl text-sm font-medium transition-colors ${form.direction === 'borrowed' ? 'bg-red-500 text-white' : 'bg-dark-600 text-gray-400'}`}>
+            <button onClick={() => set('direction', 'borrowed')} className={`flex-1 py-2 rounded-xl text-sm font-medium transition-colors ${form.direction === 'borrowed' ? 'bg-red-500 text-white' : 'text-gray-500'}`} style={form.direction !== 'borrowed' ? { background: 'rgba(255,255,255,0.04)' } : {}}>
               Qarz oldim
             </button>
-            <button onClick={() => set('direction', 'lent')} className={`flex-1 py-2 rounded-xl text-sm font-medium transition-colors ${form.direction === 'lent' ? 'bg-green-500 text-white' : 'bg-dark-600 text-gray-400'}`}>
+            <button onClick={() => set('direction', 'lent')} className={`flex-1 py-2 rounded-xl text-sm font-medium transition-colors ${form.direction === 'lent' ? 'bg-green-500 text-white' : 'text-gray-500'}`} style={form.direction !== 'lent' ? { background: 'rgba(255,255,255,0.04)' } : {}}>
               Qarz berdim
             </button>
           </div>
@@ -308,8 +308,8 @@ export default function Debts() {
         {editingDebt && (
           <div className="flex flex-col gap-3 pb-4">
             <div className="flex gap-2">
-              <button onClick={() => setEditingDebt(d => ({ ...d, direction: 'borrowed' }))} className={`flex-1 py-2 rounded-xl text-sm font-medium transition-colors ${editingDebt.direction === 'borrowed' ? 'bg-red-500 text-white' : 'bg-dark-600 text-gray-400'}`}>Qarz oldim</button>
-              <button onClick={() => setEditingDebt(d => ({ ...d, direction: 'lent' }))} className={`flex-1 py-2 rounded-xl text-sm font-medium transition-colors ${editingDebt.direction === 'lent' ? 'bg-green-500 text-white' : 'bg-dark-600 text-gray-400'}`}>Qarz berdim</button>
+              <button onClick={() => setEditingDebt(d => ({ ...d, direction: 'borrowed' }))} className={`flex-1 py-2 rounded-xl text-sm font-medium transition-colors ${editingDebt.direction === 'borrowed' ? 'bg-red-500 text-white' : 'text-gray-500'}`} style={editingDebt.direction !== 'borrowed' ? { background: 'rgba(255,255,255,0.04)' } : {}}>Qarz oldim</button>
+              <button onClick={() => setEditingDebt(d => ({ ...d, direction: 'lent' }))} className={`flex-1 py-2 rounded-xl text-sm font-medium transition-colors ${editingDebt.direction === 'lent' ? 'bg-green-500 text-white' : 'text-gray-500'}`} style={editingDebt.direction !== 'lent' ? { background: 'rgba(255,255,255,0.04)' } : {}}>Qarz berdim</button>
             </div>
             <div>
               <label className="text-gray-400 text-xs mb-1 block">Shaxs ismi</label>
@@ -348,7 +348,7 @@ export default function Debts() {
       <Modal open={!!payModal} onClose={() => setPayModal(null)} title="To'lov qilish">
         {payModal && (
           <div className="flex flex-col gap-3">
-            <div className="bg-dark-600 rounded-xl p-3">
+            <div className="rounded-xl p-3" style={{ background: 'rgba(255,255,255,0.04)' }}>
               <p className="text-gray-400 text-sm">{payModal.person}</p>
               <p className="text-white font-bold">{fmt(payModal.remaining, payModal.currency || 'UZS')} {payModal.currency || 'UZS'} qoldi</p>
             </div>

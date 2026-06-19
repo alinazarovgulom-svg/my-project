@@ -161,19 +161,19 @@ export default function Transactions() {
   return (
     <div className="flex flex-col min-h-dvh pb-24">
       <div className="page-animate">
-      <div className="sticky top-0 z-10 bg-dark-900 px-4 pt-4 pb-3">
+      <div className="sticky top-0 z-10 px-4 pt-4 pb-3" style={{ background: '#08080f' }}>
         <div className="flex items-center justify-between mb-3">
           <h1 className="text-xl font-bold text-white">Kirim / Chiqim</h1>
           <div className="flex gap-2">
-            <button onClick={() => setExportModal(true)} className="p-2 rounded-xl bg-dark-700 text-gray-400 active:opacity-70">
+            <button onClick={() => setExportModal(true)} className="p-2 rounded-xl text-gray-400 active:opacity-70" style={{ background: 'rgba(255,255,255,0.05)' }}>
               <Download size={18} />
             </button>
-            <button onClick={() => { setSelectMode(s => !s); setSelected(new Set()) }} className={`p-2 rounded-xl active:opacity-70 ${selectMode ? 'bg-blue-500/20 text-blue-400' : 'bg-dark-700 text-gray-400'}`}>
+            <button onClick={() => { setSelectMode(s => !s); setSelected(new Set()) }} className={`p-2 rounded-xl active:opacity-70 ${selectMode ? 'bg-indigo-500/20 text-indigo-400' : 'text-gray-400'}`} style={!selectMode ? { background: 'rgba(255,255,255,0.05)' } : {}}>
               <CheckSquare size={18} />
             </button>
-            <button onClick={() => setShowFilter(f => !f)} className={`relative p-2 rounded-xl active:opacity-70 ${showFilter || activeFilterCount > 0 ? 'bg-blue-500/20 text-blue-400' : 'bg-dark-700 text-gray-400'}`}>
+            <button onClick={() => setShowFilter(f => !f)} className={`relative p-2 rounded-xl active:opacity-70 ${showFilter || activeFilterCount > 0 ? 'bg-indigo-500/20 text-indigo-400' : 'text-gray-400'}`} style={!(showFilter || activeFilterCount > 0) ? { background: 'rgba(255,255,255,0.05)' } : {}}>
               <SlidersHorizontal size={18} />
-              {activeFilterCount > 0 && <span className="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 rounded-full text-white text-[10px] flex items-center justify-center">{activeFilterCount}</span>}
+              {activeFilterCount > 0 && <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full text-white text-[10px] flex items-center justify-center" style={{ background: '#6366f1' }}>{activeFilterCount}</span>}
             </button>
             {family && (
               <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-purple-500/20 text-purple-400">
@@ -190,13 +190,14 @@ export default function Transactions() {
         <div className="flex gap-2">
           {['all', 'income', 'expense'].map(f => (
             <button key={f} onClick={() => setFilter(f)}
-              className={`flex-1 py-2 rounded-xl text-xs font-medium transition-colors ${filter === f ? (f === 'income' ? 'bg-green-500 text-white' : f === 'expense' ? 'bg-red-500 text-white' : 'bg-blue-500 text-white') : 'bg-dark-700 text-gray-400'}`}>
+              className={`flex-1 py-2 rounded-xl text-xs font-medium transition-colors ${filter === f ? (f === 'income' ? 'bg-green-500 text-white' : f === 'expense' ? 'bg-red-500 text-white' : 'text-white') : 'text-gray-500'}`}
+              style={filter === f && f === 'all' ? { background: '#6366f1' } : filter !== f ? { background: 'rgba(255,255,255,0.04)' } : {}}>
               {f === 'all' ? 'Barchasi' : f === 'income' ? 'Kirim' : 'Chiqim'}
             </button>
           ))}
         </div>
         {showFilter && (
-          <div className="mt-3 flex flex-col gap-2 bg-dark-800 rounded-xl p-3">
+          <div className="mt-3 flex flex-col gap-2 rounded-xl p-3" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
             <div className="flex gap-2">
               <div className="flex-1">
                 <label className="text-gray-500 text-xs mb-1 block">Dan</label>
@@ -210,7 +211,8 @@ export default function Transactions() {
             <div className="flex gap-2">
               {['all', 'UZS', 'USD', 'EUR', 'RUB'].map(c => (
                 <button key={c} onClick={() => setCurrencyFilter(c)}
-                  className={`flex-1 py-1.5 rounded-lg text-xs font-medium ${currencyFilter === c ? 'bg-blue-500 text-white' : 'bg-dark-600 text-gray-400'}`}>
+                  className={`flex-1 py-1.5 rounded-lg text-xs font-medium ${currencyFilter === c ? 'text-white' : 'text-gray-500'}`}
+                  style={currencyFilter === c ? { background: '#6366f1' } : { background: 'rgba(255,255,255,0.04)' }}>
                   {c === 'all' ? 'Barchasi' : c}
                 </button>
               ))}
@@ -226,7 +228,7 @@ export default function Transactions() {
 
       {/* Select mode toolbar */}
       {selectMode && (
-        <div className="px-4 py-2 flex items-center justify-between bg-dark-800 border-b border-dark-600">
+        <div className="px-4 py-2 flex items-center justify-between" style={{ background: 'rgba(255,255,255,0.03)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
           <button onClick={() => {
             if (selected.size === filtered.length) setSelected(new Set())
             else setSelected(new Set(filtered.map(t => t.id)))
@@ -298,14 +300,14 @@ export default function Transactions() {
 
       {/* Select mode bottom panel */}
       {selectMode && selected.size > 0 && (
-        <div className="fixed bottom-20 left-4 right-4 z-40 bg-dark-700 rounded-2xl p-3 flex gap-2 shadow-xl">
+        <div className="fixed bottom-20 left-4 right-4 z-40 rounded-2xl p-3 flex gap-2 shadow-xl" style={{ background: '#16162a', border: '1px solid rgba(255,255,255,0.07)' }}>
           <button onClick={exportPDF} className="flex-1 py-3 rounded-xl bg-red-500/20 border border-red-500/30 text-red-400 text-sm font-semibold">
             📄 PDF ({selected.size} ta)
           </button>
           <button onClick={exportExcel} className="flex-1 py-3 rounded-xl bg-green-500/20 border border-green-500/30 text-green-400 text-sm font-semibold">
             📊 Excel ({selected.size} ta)
           </button>
-          <button onClick={() => setSelected(new Set())} className="p-3 rounded-xl bg-dark-600 text-gray-400">
+          <button onClick={() => setSelected(new Set())} className="p-3 rounded-xl text-gray-400" style={{ background: 'rgba(255,255,255,0.06)' }}>
             <X size={18} />
           </button>
         </div>
@@ -342,8 +344,8 @@ export default function Transactions() {
         {editingTx && (
           <div className="flex flex-col gap-3 pb-4">
             <div className="flex gap-2">
-              <button onClick={() => setEditingTx(tx => ({ ...tx, type: 'income', category: (customCategories || INCOME_CATEGORIES)[0] }))} className={`flex-1 py-2 rounded-xl text-sm font-medium transition-colors ${editingTx.type === 'income' ? 'bg-green-500 text-white' : 'bg-dark-600 text-gray-400'}`}>Kirim</button>
-              <button onClick={() => setEditingTx(tx => ({ ...tx, type: 'expense', category: (customCategories || EXPENSE_CATEGORIES)[0] }))} className={`flex-1 py-2 rounded-xl text-sm font-medium transition-colors ${editingTx.type === 'expense' ? 'bg-red-500 text-white' : 'bg-dark-600 text-gray-400'}`}>Chiqim</button>
+              <button onClick={() => setEditingTx(tx => ({ ...tx, type: 'income', category: (customCategories || INCOME_CATEGORIES)[0] }))} className={`flex-1 py-2 rounded-xl text-sm font-medium transition-colors ${editingTx.type === 'income' ? 'bg-green-500 text-white' : 'text-gray-500'}`} style={editingTx?.type !== 'income' ? { background: 'rgba(255,255,255,0.04)' } : {}}>Kirim</button>
+              <button onClick={() => setEditingTx(tx => ({ ...tx, type: 'expense', category: (customCategories || EXPENSE_CATEGORIES)[0] }))} className={`flex-1 py-2 rounded-xl text-sm font-medium transition-colors ${editingTx.type === 'expense' ? 'bg-red-500 text-white' : 'text-gray-500'}`} style={editingTx?.type !== 'expense' ? { background: 'rgba(255,255,255,0.04)' } : {}}>Chiqim</button>
             </div>
             <div>
               <label className="text-gray-400 text-xs mb-1 block">Summa</label>
@@ -384,7 +386,7 @@ export default function Transactions() {
                   </select>
                 </div>
                 <button onClick={() => setEditExtraAmounts(prev => prev.filter((_, j) => j !== i))}
-                  className="mb-0.5 px-3 py-2.5 rounded-xl bg-dark-600 text-gray-400 text-sm">×</button>
+                  className="mb-0.5 px-3 py-2.5 rounded-xl text-gray-400 text-sm" style={{ background: 'rgba(255,255,255,0.06)' }}>×</button>
               </div>
             ))}
             {editExtraAmounts.length < 3 && (
@@ -401,10 +403,10 @@ export default function Transactions() {
       <Modal open={modal} onClose={() => setModal(false)} title={form.type === 'income' ? 'Kirim qo\'shish' : 'Chiqim qo\'shish'}>
         <div className="flex flex-col gap-3 pb-4">
           <div className="flex gap-2">
-            <button onClick={() => set('type', 'income')} className={`flex-1 py-2 rounded-xl text-sm font-medium transition-colors ${form.type === 'income' ? 'bg-green-500 text-white' : 'bg-dark-600 text-gray-400'}`}>
+            <button onClick={() => set('type', 'income')} className={`flex-1 py-2 rounded-xl text-sm font-medium transition-colors ${form.type === 'income' ? 'bg-green-500 text-white' : 'text-gray-500'}`} style={form.type !== 'income' ? { background: 'rgba(255,255,255,0.04)' } : {}}>
               Kirim
             </button>
-            <button onClick={() => set('type', 'expense')} className={`flex-1 py-2 rounded-xl text-sm font-medium transition-colors ${form.type === 'expense' ? 'bg-red-500 text-white' : 'bg-dark-600 text-gray-400'}`}>
+            <button onClick={() => set('type', 'expense')} className={`flex-1 py-2 rounded-xl text-sm font-medium transition-colors ${form.type === 'expense' ? 'bg-red-500 text-white' : 'text-gray-500'}`} style={form.type !== 'expense' ? { background: 'rgba(255,255,255,0.04)' } : {}}>
               Chiqim
             </button>
           </div>
@@ -456,7 +458,7 @@ export default function Transactions() {
               </div>
               <button
                 onClick={() => setExtraAmounts(prev => prev.filter((_, j) => j !== i))}
-                className="mb-0.5 px-3 py-2.5 rounded-xl bg-dark-600 text-gray-400 text-sm"
+                className="mb-0.5 px-3 py-2.5 rounded-xl text-gray-400 text-sm" style={{ background: 'rgba(255,255,255,0.06)' }}
               >×</button>
             </div>
           ))}

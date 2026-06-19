@@ -41,15 +41,26 @@ input, select, textarea {
 
 @layer components {
   .card {
-    @apply bg-dark-700 rounded-2xl p-4 border border-white/5;
+    background: rgba(255,255,255,0.025);
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 18px;
+    padding: 16px;
   }
   .btn-primary {
-    @apply bg-accent-blue text-white font-semibold py-3 px-6 rounded-xl active:opacity-80 transition-opacity w-full;
+    @apply text-white font-semibold py-3 px-6 rounded-xl active:opacity-80 transition-opacity w-full;
+    background: #6366f1;
   }
   .btn-secondary {
-    @apply bg-dark-600 text-white font-semibold py-3 px-6 rounded-xl active:opacity-80 transition-opacity border border-white/10 w-full;
+    @apply text-white font-semibold py-3 px-6 rounded-xl active:opacity-80 transition-opacity w-full;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.09);
   }
   .input-field {
-    @apply w-full bg-dark-600 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500/60 transition-colors;
+    @apply w-full rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:outline-none transition-colors;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+  .input-field:focus {
+    border-color: rgba(99,102,241,0.5);
   }
 }

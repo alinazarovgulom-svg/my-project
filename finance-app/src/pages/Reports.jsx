@@ -160,7 +160,7 @@ export default function Reports() {
             ['Bu yil', () => { setStartDate(format(new Date(new Date().getFullYear(), 0, 1), 'yyyy-MM-dd')); setEndDate(format(new Date(new Date().getFullYear(), 11, 31), 'yyyy-MM-dd')) }],
             ['Barchasi', () => { setStartDate('2020-01-01'); setEndDate('2099-12-31') }],
           ].map(([l, fn]) => (
-            <button key={l} onClick={fn} className="flex-1 py-1.5 rounded-lg bg-dark-600 text-gray-400 text-xs">
+            <button key={l} onClick={fn} className="flex-1 py-1.5 rounded-lg text-gray-400 text-xs" style={{ background: 'rgba(255,255,255,0.05)' }}>
               {l}
             </button>
           ))}
@@ -270,7 +270,7 @@ export default function Reports() {
               {dailyBalances.map(({ date, balance, dayIncome, dayExpense }) => {
                 const activeCurs = CURRENCIES.filter(c => balance[c] !== 0 || dayIncome[c] || dayExpense[c])
                 return (
-                  <div key={date} className="bg-dark-600 rounded-xl p-3">
+                  <div key={date} className="rounded-xl p-3" style={{ background: 'rgba(255,255,255,0.04)' }}>
                     <p className="text-gray-400 text-xs mb-2 font-medium">
                       {format(new Date(date), 'dd.MM.yyyy')}
                     </p>
