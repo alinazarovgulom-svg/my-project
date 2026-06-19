@@ -27,6 +27,7 @@ export default function Transactions() {
   const [modal, setModal] = useState(false)
   const [editModal, setEditModal] = useState(false)
   const [editingTx, setEditingTx] = useState(null)
+  const [editExtraAmounts, setEditExtraAmounts] = useState([])
   const [exportModal, setExportModal] = useState(false)
   const [selectMode, setSelectMode] = useState(false)
   const [selected, setSelected] = useState(new Set())
@@ -81,19 +82,34 @@ export default function Transactions() {
 
   const openEdit = (tx) => {
     setEditingTx({ ...tx })
+    setEditExtraAmounts([])
     setEditModal(true)
   }
 
   const handleEditSave = () => {
     if (!editingTx?.amount || !editingTx?.category) return
     const savedTx = { ...editingTx, amount: parseFloat(editingTx.amount) }
+    const extraTxs = editExtraAmounts
+      .filter(e => e.amount && parseFloat(e.amount) > 0)
+      .map(e => ({
+        id: generateId(),
+        type: savedTx.type, category: savedTx.category,
+        note: savedTx.note, date: savedTx.date,
+        emoji: savedTx.emoji, userId: savedTx.userId, userName: savedTx.userName,
+        amount: parseFloat(e.amount), currency: e.currency
+      }))
     if (familyMode && family) {
-      updateFamilyTransaction(family.id, savedTx).then(() => refreshFamily())
+      updateFamilyTransaction(family.id, savedTx).then(() => {
+        extraTxs.forEach(t => addFamilyTransaction(family.id, t))
+        refreshFamily()
+      })
     } else {
-      saveTransactions(transactions.map(t => t.id === savedTx.id ? savedTx : t))
+      const updated = transactions.map(t => t.id === savedTx.id ? savedTx : t)
+      saveTransactions([...updated, ...extraTxs])
     }
     setEditModal(false)
     setEditingTx(null)
+    setEditExtraAmounts([])
   }
 
   const handleDelete = (id, isFamily = false) => {
@@ -359,6 +375,30 @@ export default function Transactions() {
               <label className="text-gray-400 text-xs mb-1 block">Sana</label>
               <input className="input-field" type="datetime-local" value={editingTx.date} onChange={e => setEditingTx(t => ({ ...t, date: e.target.value }))} />
             </div>
+            {editExtraAmounts.map((ea, i) => (
+              <div key={i} className="flex gap-2 items-end">
+                <div className="flex-1">
+                  <label className="text-gray-400 text-xs mb-1 block">Summa {i + 2}</label>
+                  <input className="input-field" type="number" placeholder="0" value={ea.amount}
+                    onChange={e => setEditExtraAmounts(prev => prev.map((x, j) => j === i ? { ...x, amount: e.target.value } : x))} />
+                </div>
+                <div className="flex-1">
+                  <label className="text-gray-400 text-xs mb-1 block">Valyuta</label>
+                  <select className="input-field" value={ea.currency}
+                    onChange={e => setEditExtraAmounts(prev => prev.map((x, j) => j === i ? { ...x, currency: e.target.value } : x))}>
+                    {['UZS', 'USD', 'EUR', 'RUB'].map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+                <button onClick={() => setEditExtraAmounts(prev => prev.filter((_, j) => j !== i))}
+                  className="mb-0.5 px-3 py-2.5 rounded-xl bg-dark-600 text-gray-400 text-sm">×</button>
+              </div>
+            ))}
+            {editExtraAmounts.length < 3 && (
+              <button onClick={() => setEditExtraAmounts(prev => [...prev, { amount: '', currency: 'USD' }])}
+                className="text-blue-400 text-xs py-2 border border-dashed border-blue-400/40 rounded-xl w-full">
+                + Valyuta qo'shish
+              </button>
+            )}
             <button onClick={handleEditSave} className="btn-primary mt-2">Saqlash</button>
           </div>
         )}
