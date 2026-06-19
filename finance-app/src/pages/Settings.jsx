@@ -200,8 +200,8 @@ export default function Settings() {
   ]
 
   return (
-    <div className="flex flex-col px-4 pt-4 pb-24 gap-4 page-animate">
-      <h1 className="text-xl font-bold text-white">Sozlamalar</h1>
+    <div className="flex flex-col px-4 pt-4 pb-24 gap-4 page-animate page-bg min-h-screen" style={{ color: 'var(--text-primary)' }}>
+      <h1 className="text-xl font-bold">Sozlamalar</h1>
 
       {/* Profile */}
       <div className="card flex items-center gap-4">

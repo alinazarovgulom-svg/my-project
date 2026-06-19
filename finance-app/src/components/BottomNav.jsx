@@ -13,7 +13,7 @@ export default function BottomNav() {
 
   return (
     <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] z-50"
-      style={{background:'rgba(8,8,15,0.97)', backdropFilter:'blur(30px)', borderTop:'1px solid rgba(255,255,255,0.04)'}}>
+      style={{background:'var(--nav-bg)', backdropFilter:'blur(30px)', borderTop:'1px solid var(--nav-border)'}}>
       <div className="flex items-center justify-around px-2 pt-2 pb-3" style={{paddingBottom:'max(12px,env(safe-area-inset-bottom))'}}>
         {links.map(({ to, icon: Icon, label, exact }) => {
           const isActive = exact ? location.pathname === to : location.pathname.startsWith(to)

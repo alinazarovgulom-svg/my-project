@@ -80,7 +80,7 @@ export default function Korxona() {
 
   if (!workspace) {
     return (
-      <div className="min-h-screen text-white p-4 pb-24" style={{ background: '#08080f' }}>
+      <div className="min-h-screen text-white p-4 pb-24" style={{ background: 'var(--bg-page)' }}>
         <h1 className="text-xl font-bold mb-6 flex items-center gap-2">
           <Building2 size={20} /> Korxona
         </h1>
@@ -132,7 +132,7 @@ export default function Korxona() {
   const isAdmin = myRole === 'admin'
 
   return (
-    <div className="min-h-screen text-white p-4 pb-24" style={{ background: '#08080f' }}>
+    <div className="min-h-screen text-white p-4 pb-24" style={{ background: 'var(--bg-page)' }}>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-xl font-bold flex items-center gap-2">
           <Building2 size={20} /> {workspace.name}

@@ -21,7 +21,7 @@ export default function MenuPage() {
   const timeLabel = hour < 12 ? 'Xayrli tong' : hour < 17 ? 'Xayrli kun' : 'Xayrli kech'
 
   return (
-    <div className="min-h-screen bg-[#08080f] text-white pb-24">
+    <div className="min-h-screen pb-24 page-bg" style={{ color: 'var(--text-primary)' }}>
       {/* Top bar */}
       <div className="flex items-center justify-between px-5 pt-4 pb-4">
         <div className="flex items-center gap-3">

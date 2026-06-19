@@ -1,11 +1,11 @@
 import { useState, useRef } from 'react'
 import { useApp } from '../store/AppContext'
 import { useNavigate } from 'react-router-dom'
-import { Camera, Lock, LogOut, ChevronRight, Download, Settings, Shield } from 'lucide-react'
+import { Camera, Lock, LogOut, ChevronRight, Download, Settings, Shield, Sun, Moon } from 'lucide-react'
 import { format } from 'date-fns'
 
 export default function Profile() {
-  const { user, setUser, transactions, debts, workspace, myRole, updatePresence } = useApp()
+  const { user, setUser, transactions, debts, workspace, myRole, updatePresence, theme, toggleTheme } = useApp()
   const nav = useNavigate()
   const [status, setStatus] = useState('online')
   const [avatarUrl, setAvatarUrl] = useState(() => {
@@ -43,14 +43,26 @@ export default function Profile() {
   const now = new Date()
 
   return (
-    <div className="min-h-screen bg-[#08080f] text-white pb-24">
+    <div className="min-h-screen pb-24 page-bg" style={{ color: 'var(--text-primary)' }}>
       {/* Hero */}
       <div className="bg-gradient-to-b from-[#11102a] to-[#08080f] px-5 pt-4 pb-6 flex flex-col items-center">
         <div className="w-full flex items-center justify-between mb-5">
           <div className="text-white text-[15px] font-black">Profil</div>
-          <button onClick={() => nav('/settings')} className="w-8 h-8 rounded-[10px] bg-white/5 border border-white/6 flex items-center justify-center">
-            <Settings size={14} className="text-gray-500" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={toggleTheme}
+              className="w-8 h-8 rounded-[10px] flex items-center justify-center transition-all"
+              style={{ background: theme === 'light' ? 'rgba(99,102,241,0.15)' : 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)' }}
+            >
+              {theme === 'light'
+                ? <Moon size={14} style={{ color: '#818cf8' }} />
+                : <Sun size={14} style={{ color: '#fbbf24' }} />
+              }
+            </button>
+            <button onClick={() => nav('/settings')} className="w-8 h-8 rounded-[10px] flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <Settings size={14} className="text-gray-500" />
+            </button>
+          </div>
         </div>
 
         {/* Avatar */}

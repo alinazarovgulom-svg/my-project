@@ -2,6 +2,37 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Theme variables ── */
+:root {
+  --bg-page:    #08080f;
+  --bg-card:    rgba(255,255,255,0.025);
+  --bg-card2:   rgba(255,255,255,0.04);
+  --bg-input:   rgba(255,255,255,0.04);
+  --border-card: rgba(255,255,255,0.05);
+  --border-input: rgba(255,255,255,0.08);
+  --border-soft: rgba(255,255,255,0.06);
+  --text-primary: #ffffff;
+  --text-secondary: #9ca3af;
+  --text-muted: #4b5563;
+  --nav-bg: rgba(8,8,15,0.97);
+  --nav-border: rgba(255,255,255,0.04);
+}
+
+[data-theme="light"] {
+  --bg-page:    #f0f2f8;
+  --bg-card:    #ffffff;
+  --bg-card2:   #f5f7ff;
+  --bg-input:   #f0f2f8;
+  --border-card: rgba(0,0,0,0.07);
+  --border-input: rgba(0,0,0,0.1);
+  --border-soft: rgba(0,0,0,0.06);
+  --text-primary: #111827;
+  --text-secondary: #6b7280;
+  --text-muted: #9ca3af;
+  --nav-bg: rgba(240,242,248,0.97);
+  --nav-border: rgba(0,0,0,0.07);
+}
+
 * {
   -webkit-tap-highlight-color: transparent;
   box-sizing: border-box;
@@ -10,10 +41,11 @@
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background: #0a0a0f;
-  color: #f1f5f9;
+  background: var(--bg-page);
+  color: var(--text-primary);
   min-height: 100dvh;
   overflow-x: hidden;
+  transition: background 0.3s ease, color 0.3s ease;
 }
 
 #root {
@@ -39,10 +71,13 @@ input, select, textarea {
   animation: pageSlideUp 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
 }
 
+/* Page background helper */
+.page-bg { background: var(--bg-page) !important; }
+
 @layer components {
   .card {
-    background: rgba(255,255,255,0.025);
-    border: 1px solid rgba(255,255,255,0.05);
+    background: var(--bg-card);
+    border: 1px solid var(--border-card);
     border-radius: 18px;
     padding: 16px;
   }
@@ -51,16 +86,20 @@ input, select, textarea {
     background: #6366f1;
   }
   .btn-secondary {
-    @apply text-white font-semibold py-3 px-6 rounded-xl active:opacity-80 transition-opacity w-full;
-    background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(255,255,255,0.09);
+    @apply font-semibold py-3 px-6 rounded-xl active:opacity-80 transition-opacity w-full;
+    color: var(--text-primary);
+    background: var(--bg-card2);
+    border: 1px solid var(--border-soft);
   }
   .input-field {
-    @apply w-full rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:outline-none transition-colors;
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.08);
+    @apply w-full rounded-xl px-4 py-3 focus:outline-none transition-colors;
+    color: var(--text-primary);
+    background: var(--bg-input);
+    border: 1px solid var(--border-input);
   }
-  .input-field:focus {
-    border-color: rgba(99,102,241,0.5);
-  }
+  .input-field::placeholder { color: var(--text-muted); }
+  .input-field:focus { border-color: rgba(99,102,241,0.5); }
+
+  /* Light mode select arrow fix */
+  [data-theme="light"] select.input-field { color-scheme: light; }
 }

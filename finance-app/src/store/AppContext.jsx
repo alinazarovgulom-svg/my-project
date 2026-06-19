@@ -32,6 +32,17 @@ export function AppProvider({ children }) {
   const [workspace, setWorkspace] = useState(null)
   const [onlineMembers, setOnlineMembers] = useState([])
   const skipCloudUpdate = useRef(false)
+
+  const [theme, setThemeState] = useState(() => localStorage.getItem('fin_theme') || 'dark')
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme)
+    localStorage.setItem('fin_theme', theme)
+  }, [theme])
+
+  const toggleTheme = useCallback(() => {
+    setThemeState(t => t === 'dark' ? 'light' : 'dark')
+  }, [])
   const [toasts, setToasts] = useState([])
   const toastId = useRef(0)
 
@@ -291,6 +302,7 @@ export function AppProvider({ children }) {
       myRole, canViewSection, canEditSection,
       onlineMembers, updatePresence,
       showToast,
+      theme, toggleTheme,
     }}>
       {children}
       <ToastContainer toasts={toasts} onRemove={removeToast} />

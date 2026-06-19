@@ -145,7 +145,7 @@ export default function Debts() {
   return (
     <div className="flex flex-col min-h-dvh pb-24">
       <div className="page-animate">
-      <div className="sticky top-0 z-10 px-4 pt-4 pb-3" style={{ background: '#08080f' }}>
+      <div className="sticky top-0 z-10 px-4 pt-4 pb-3 page-bg">
         <h1 className="text-xl font-bold text-white mb-3">Qarzlar</h1>
 
         {/* Warnings */}

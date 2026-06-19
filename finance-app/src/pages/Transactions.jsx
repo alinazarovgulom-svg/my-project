@@ -165,7 +165,7 @@ export default function Transactions() {
   return (
     <div className="flex flex-col min-h-dvh pb-24">
       <div className="page-animate">
-      <div className="sticky top-0 z-10 px-4 pt-4 pb-3" style={{ background: '#08080f' }}>
+      <div className="sticky top-0 z-10 px-4 pt-4 pb-3 page-bg">
         <div className="flex items-center justify-between mb-3">
           <h1 className="text-xl font-bold text-white">Kirim / Chiqim</h1>
           <div className="flex gap-2">
