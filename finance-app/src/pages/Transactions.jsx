@@ -28,7 +28,6 @@ const defaultForm = { type: 'expense', amount: '', category: '', currency: 'UZS'
 export default function Transactions() {
   const { transactions, saveTransactions, user, family, familyTransactions, familyMembers, canEdit, canAdd, refreshFamily, categories: contextCategories, showToast } = useApp()
   const [modal, setModal] = useState(false)
-  const [editModal, setEditModal] = useState(false)
   const [editingTx, setEditingTx] = useState(null)
   const [editExtraAmounts, setEditExtraAmounts] = useState([])
   const [exportModal, setExportModal] = useState(false)
@@ -81,11 +80,9 @@ export default function Transactions() {
   }
 
   const openEdit = (tx) => {
-    // datetime-local input YYYY-MM-DDTHH:mm formatini talab qiladi
     const date = tx.date?.length === 10 ? tx.date + 'T00:00' : tx.date || ''
-    setEditingTx({ ...tx, date })
     setEditExtraAmounts([])
-    setEditModal(true)
+    setEditingTx({ ...tx, date })
   }
 
   const handleEditSave = () => {
@@ -108,7 +105,6 @@ export default function Transactions() {
       const updated = transactions.map(t => t.id === savedTx.id ? savedTx : t)
       saveTransactions([...updated, ...extraTxs])
     }
-    setEditModal(false)
     setEditingTx(null)
     setEditExtraAmounts([])
     showToast('Tahrirlash saqlandi ✓')
@@ -347,7 +343,7 @@ export default function Transactions() {
       </Modal>
 
       {/* Edit Modal */}
-      <Modal open={editModal} onClose={() => { setEditModal(false); setEditingTx(null) }} title="Tahrirlash">
+      <Modal open={!!editingTx} onClose={() => { setEditingTx(null); setEditExtraAmounts([]) }} title="Tahrirlash">
         {editingTx && (
           <div className="flex flex-col gap-3 pb-4">
             <div className="flex gap-2">
