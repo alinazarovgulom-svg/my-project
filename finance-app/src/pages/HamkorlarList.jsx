@@ -74,21 +74,23 @@ export default function HamkorlarList() {
                 </div>
                 <div className="text-right flex-shrink-0">
                   {debts.filter(d => d.val > 0).map(({ cur, val }) => (
-                    <p key={cur} className="text-sm font-bold text-red-400 leading-tight">
-                      {fmtCur(val, cur)} <span className="text-xs font-normal opacity-70">{cur}</span>
-                    </p>
+                    <div key={cur}>
+                      <p className="text-sm font-bold text-red-400 leading-tight">
+                        {fmtCur(val, cur)} <span className="text-xs font-normal opacity-70">{cur}</span>
+                      </p>
+                      <p className="text-xs font-semibold text-red-400 mt-0.5">Siz qarzdorsiz</p>
+                    </div>
                   ))}
                   {debts.filter(d => d.val < 0).map(({ cur, val }) => (
-                    <p key={cur} className="text-sm font-bold text-blue-400 leading-tight">
-                      {fmtCur(Math.abs(val), cur)} <span className="text-xs font-normal opacity-70">{cur}</span>
-                    </p>
+                    <div key={cur}>
+                      <p className="text-sm font-bold text-green-400 leading-tight">
+                        {fmtCur(Math.abs(val), cur)} <span className="text-xs font-normal opacity-70">{cur}</span>
+                      </p>
+                      <p className="text-xs font-semibold text-green-400 mt-0.5">Siz haqdorsiz</p>
+                    </div>
                   ))}
-                  {debts.length === 0 || debts.every(d => d.val === 0) ? (
+                  {(debts.length === 0 || debts.every(d => d.val === 0)) && (
                     <p className="text-sm font-bold text-green-400">Qarz yo'q</p>
-                  ) : null}
-                  {hasDebt && <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>qarz</p>}
-                  {debts.some(d => d.val < 0) && !hasDebt && (
-                    <p className="text-xs mt-0.5 text-blue-400">haqdor</p>
                   )}
                 </div>
                 <ChevronRight size={16} className="ml-1" style={{ color: 'var(--text-muted)' }} />

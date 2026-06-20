@@ -422,7 +422,7 @@ export default function HamkorDetail() {
                   <>
                     <p className="text-xs mb-1" style={{ color: 'var(--text-secondary)' }}>Siz haqdorsiz</p>
                     {credit.map(({ cur, val }) => (
-                      <p key={cur} className="text-2xl font-black text-blue-400 leading-tight">
+                      <p key={cur} className="text-2xl font-black text-green-400 leading-tight">
                         {fmtCur(Math.abs(val), cur)} <span className="text-sm font-medium opacity-70">{cur}</span>
                       </p>
                     ))}
