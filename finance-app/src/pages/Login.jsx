@@ -328,18 +328,19 @@ export default function Login() {
 
               {/* Tagline typewriter */}
               <div style={{
-                marginTop: 18, minHeight: 20,
-                fontSize: 13, fontWeight: 500,
-                color: 'rgba(255,255,255,0.5)',
-                letterSpacing: '0.04em', fontStyle: 'italic',
+                marginTop: 24, minHeight: 36,
+                fontSize: 22, fontWeight: 800,
+                color: '#ffffff',
+                letterSpacing: '0.06em', textAlign: 'center',
                 opacity: introPhase >= 3 ? 1 : 0,
-                transition: 'opacity 0.3s',
+                transition: 'opacity 0.4s',
+                textShadow: '0 0 30px rgba(255,255,255,0.3)',
               }}>
                 {typedTagline}
                 {typedTagline.length > 0 && typedTagline.length < 38 && (
                   <span style={{
-                    display: 'inline-block', width: 2, height: 13,
-                    background: '#ffd700', marginLeft: 2,
+                    display: 'inline-block', width: 2, height: 22,
+                    background: '#ffffff', marginLeft: 2,
                     verticalAlign: 'middle',
                     animation: 'ringPulse 0.5s infinite',
                   }} />
