@@ -101,7 +101,7 @@ export default function HamkorlarDetail() {
     return (
       <div className="flex flex-col min-h-dvh pb-24">
         <div className="page-animate px-4 pt-4">
-          <button onClick={() => navigate(-1)} className="p-2 rounded-xl bg-dark-700 text-gray-400">
+          <button onClick={() => navigate(-1)} className="p-2 rounded-xl text-gray-400" style={{ background: 'var(--bg-card2)' }}>
             <ArrowLeft size={18} />
           </button>
           <p className="text-gray-500 mt-8 text-center">Hamkor topilmadi</p>
@@ -127,13 +127,13 @@ export default function HamkorlarDetail() {
     <div className="flex flex-col min-h-dvh pb-24">
       <div className="page-animate">
         {/* Header */}
-        <div className="sticky top-0 z-10 bg-dark-900 px-4 pt-4 pb-3">
+        <div className="sticky top-0 z-10 page-bg px-4 pt-4 pb-3">
           <div className="flex items-center gap-3 mb-3">
-            <button onClick={() => navigate(-1)} className="p-2 rounded-xl bg-dark-700 text-gray-400 active:opacity-70">
+            <button onClick={() => navigate(-1)} className="p-2 rounded-xl text-gray-400 active:opacity-70" style={{ background: 'var(--bg-card2)' }}>
               <ArrowLeft size={18} />
             </button>
             <div className="flex-1 min-w-0">
-              <h1 className="text-xl font-bold text-white truncate">{partner.name}</h1>
+              <h1 className="text-[18px] font-black truncate" style={{ color: 'var(--text-primary)' }}>{partner.name}</h1>
               {partner.phone && <p className="text-gray-500 text-xs">{partner.phone}</p>}
             </div>
             <span className={`text-sm font-bold px-3 py-1 rounded-xl ${debt > 0 ? 'bg-red-500/20 text-red-400' : 'bg-green-500/20 text-green-400'}`}>
@@ -158,7 +158,7 @@ export default function HamkorlarDetail() {
             </button>
             <button
               onClick={handlePrint}
-              className="py-2.5 px-3 rounded-xl bg-dark-700 text-gray-400 active:opacity-70"
+              className="py-2.5 px-3 rounded-xl text-gray-400 active:opacity-70" style={{ background: 'var(--bg-card2)' }}
             >
               <Printer size={16} />
             </button>
@@ -187,7 +187,7 @@ export default function HamkorlarDetail() {
             {(dateFrom || dateTo) && (
               <button
                 onClick={() => { setDateFrom(''); setDateTo('') }}
-                className="px-3 rounded-xl bg-dark-700 text-gray-400 text-xs active:opacity-70"
+                className="px-3 rounded-xl text-gray-400 text-xs active:opacity-70" style={{ background: 'var(--bg-card2)' }}
               >
                 ✕
               </button>
@@ -242,7 +242,7 @@ export default function HamkorlarDetail() {
               </div>
             </div>
             {xomashyoForm.qty && xomashyoForm.price && (
-              <div className="bg-dark-700 rounded-xl px-3 py-2 text-sm text-white">
+              <div className="rounded-xl px-3 py-2 text-sm" style={{ background: 'var(--bg-card2)', color: 'var(--text-primary)' }}>
                 Jami: {fmt(parseFloat(xomashyoForm.qty) * parseFloat(xomashyoForm.price), xomashyoForm.currency)} {xomashyoForm.currency}
               </div>
             )}
@@ -335,7 +335,7 @@ function EntryCard({ entry }) {
               <span className="text-xs bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-lg">Xomashyo</span>
               <span className="text-gray-500 text-xs">{format(new Date(entry.date), 'dd.MM.yyyy')}</span>
             </div>
-            <p className="text-white font-medium text-sm">
+            <p className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>
               {entry.name} {entry.qty} {entry.unit} × {fmt(entry.price, entry.currency)} = {fmt(entry.totalPrice, entry.currency)} {entry.currency}
             </p>
             {entry.note && <p className="text-gray-400 text-xs mt-0.5">{entry.note}</p>}
@@ -357,7 +357,7 @@ function EntryCard({ entry }) {
               <span className="text-xs bg-purple-500/20 text-purple-400 px-2 py-0.5 rounded-lg">Xizmat</span>
               <span className="text-gray-500 text-xs">{format(new Date(entry.date), 'dd.MM.yyyy')}</span>
             </div>
-            {entry.note && <p className="text-white text-sm">{entry.note}</p>}
+            {entry.note && <p className="text-sm" style={{ color: 'var(--text-primary)' }}>{entry.note}</p>}
           </div>
           <span className="text-red-400 font-semibold text-sm whitespace-nowrap">
             -{fmt(entry.amount, entry.currency)} {entry.currency}

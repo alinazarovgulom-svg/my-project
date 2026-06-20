@@ -159,3 +159,10 @@ nav button:active { transform: scale(0.90); }
   /* Light mode select arrow fix */
   [data-theme="light"] select.input-field { color-scheme: light; }
 }
+
+[data-theme="light"] .text-white { color: #111827 !important; }
+[data-theme="light"] .text-gray-400 { color: #6b7280 !important; }
+[data-theme="light"] .text-gray-500 { color: #9ca3af !important; }
+[data-theme="light"] .text-gray-600 { color: #6b7280 !important; }
+[data-theme="light"] .placeholder-gray-600::placeholder { color: #9ca3af !important; }
+[data-theme="light"] .bg-dark-900, [data-theme="light"] .bg-dark-800, [data-theme="light"] .bg-dark-700, [data-theme="light"] .bg-dark-600 { background-color: #f0f2f8 !important; }

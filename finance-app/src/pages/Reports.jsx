@@ -139,7 +139,7 @@ export default function Reports() {
 
   return (
     <div className="flex flex-col px-4 pt-4 pb-24 gap-4 page-animate">
-      <h1 className="text-xl font-bold text-white">Hisobotlar</h1>
+      <h1 className="text-[18px] font-black" style={{ color: 'var(--text-primary)' }}>Hisobotlar</h1>
 
       {/* Date Range */}
       <div className="card">
@@ -169,13 +169,13 @@ export default function Reports() {
 
       {/* Summary */}
       <div className="card">
-        <h2 className="text-white font-semibold mb-3">Davr xulosasi</h2>
+        <h2 className="font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>Davr xulosasi</h2>
         <div className="flex flex-col gap-2">
           {/* Income by currency */}
           <div className="bg-green-500/10 rounded-xl p-3">
             <div className="flex items-center gap-2 mb-2">
               <TrendingUp size={16} className="text-green-400" />
-              <span className="text-gray-300 text-sm font-medium">Jami kirim</span>
+              <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Jami kirim</span>
             </div>
             {currencyStats.filter(x => x.inc > 0).length > 0 ? (
               currencyStats.filter(x => x.inc > 0).map(({ cur, inc }) => (
@@ -193,7 +193,7 @@ export default function Reports() {
           <div className="bg-red-500/10 rounded-xl p-3">
             <div className="flex items-center gap-2 mb-2">
               <TrendingDown size={16} className="text-red-400" />
-              <span className="text-gray-300 text-sm font-medium">Jami chiqim</span>
+              <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Jami chiqim</span>
             </div>
             {currencyStats.filter(x => x.exp > 0).length > 0 ? (
               currencyStats.filter(x => x.exp > 0).map(({ cur, exp }) => (
@@ -231,7 +231,7 @@ export default function Reports() {
       {/* By Category */}
       {Object.keys(byCategoryCur).length > 0 && (
         <div className="card">
-          <h2 className="text-white font-semibold mb-3 flex items-center gap-2">
+          <h2 className="font-semibold mb-3 flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
             <PieChart size={16} className="text-blue-400" />
             Kategoriyalar bo'yicha
           </h2>
@@ -239,7 +239,7 @@ export default function Reports() {
             {Object.entries(byCategoryCur)
               .map(([cat, curData]) => (
                 <div key={cat} className="flex items-center justify-between">
-                  <span className="text-gray-300 text-sm">{cat}</span>
+                  <span className="text-sm" style={{ color: 'var(--text-primary)' }}>{cat}</span>
                   <div className="text-right">
                     {Object.entries(curData).map(([cur, vals]) => (
                       <div key={cur}>
@@ -260,7 +260,7 @@ export default function Reports() {
           <button onClick={() => setShowDailyBalance(v => !v)} className="flex items-center justify-between w-full">
             <div className="flex items-center gap-2">
               <CalendarDays size={16} className="text-blue-400" />
-              <h2 className="text-white font-semibold">Kunlik qoldiq</h2>
+              <h2 className="font-semibold" style={{ color: 'var(--text-primary)' }}>Kunlik qoldiq</h2>
             </div>
             {showDailyBalance ? <ChevronUp size={16} className="text-gray-400" /> : <ChevronDown size={16} className="text-gray-400" />}
           </button>
@@ -283,7 +283,7 @@ export default function Reports() {
                             {dayExpense[cur] > 0 && <span className="text-red-400">-{fmt(dayExpense[cur], cur)}</span>}
                           </div>
                         </div>
-                        <span className={`text-sm font-bold ${balance[cur] >= 0 ? 'text-white' : 'text-red-400'}`}>
+                        <span className={`text-sm font-bold ${balance[cur] < 0 ? 'text-red-400' : ''}`} style={balance[cur] >= 0 ? { color: 'var(--text-primary)' } : {}}>
                           {balance[cur] >= 0 ? '' : '-'}{fmt(Math.abs(balance[cur]), cur)} {cur}
                         </span>
                       </div>

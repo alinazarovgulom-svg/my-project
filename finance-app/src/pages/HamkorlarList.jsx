@@ -37,11 +37,11 @@ export default function HamkorlarList() {
   return (
     <div className="flex flex-col min-h-dvh pb-24">
       <div className="page-animate">
-        <div className="sticky top-0 z-10 bg-gray-900 px-4 pt-4 pb-3 flex items-center gap-3">
-          <button onClick={() => nav('/hamkorlar')} className="text-gray-400 active:text-white">
+        <div className="sticky top-0 z-10 page-bg px-4 pt-4 pb-3 flex items-center gap-3">
+          <button onClick={() => nav('/hamkorlar')} className="text-gray-400 active:opacity-70">
             <ArrowLeft size={22} />
           </button>
-          <h1 className="text-lg font-bold text-white flex-1 truncate">{section?.name || 'Hamkorlar'}</h1>
+          <h1 className="text-[18px] font-black flex-1 truncate" style={{ color: 'var(--text-primary)' }}>{section?.name || 'Hamkorlar'}</h1>
         </div>
 
         <div className="px-4 flex flex-col gap-3 mt-2">
@@ -57,13 +57,13 @@ export default function HamkorlarList() {
               <button
                 key={h.id}
                 onClick={() => nav(`/hamkorlar/${sectionId}/${h.id}`)}
-                className="flex items-center gap-3 bg-gray-800 rounded-2xl p-4 w-full text-left active:scale-95 transition-transform"
+                className="flex items-center gap-3 rounded-2xl p-4 w-full text-left active:scale-95 transition-transform" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-card)' }}
               >
                 <div className="w-11 h-11 rounded-xl bg-blue-500/20 flex items-center justify-center flex-shrink-0">
                   <span className="text-white font-bold text-base">{h.name.charAt(0).toUpperCase()}</span>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-white font-semibold truncate">{h.name}</p>
+                  <p className="font-semibold truncate" style={{ color: 'var(--text-primary)' }}>{h.name}</p>
                   {h.phone && (
                     <p className="text-gray-500 text-xs flex items-center gap-1 mt-0.5">
                       <Phone size={10} />{h.phone}
@@ -96,7 +96,7 @@ export default function HamkorlarList() {
           <div>
             <label className="text-gray-400 text-xs mb-1 block">Ism *</label>
             <input
-              className="w-full bg-gray-700 text-white rounded-xl px-3 py-3 outline-none"
+              className="input-field"
               placeholder="Hamkor ismi"
               value={name}
               onChange={e => setName(e.target.value)}
@@ -107,7 +107,7 @@ export default function HamkorlarList() {
           <div>
             <label className="text-gray-400 text-xs mb-1 block">Telefon (ixtiyoriy)</label>
             <input
-              className="w-full bg-gray-700 text-white rounded-xl px-3 py-3 outline-none"
+              className="input-field"
               placeholder="+998 90 000 00 00"
               value={phone}
               onChange={e => setPhone(e.target.value)}

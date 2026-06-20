@@ -34,7 +34,7 @@ export default function Modal({ open, onClose, title, children }) {
           background: 'var(--bg-card)',
           border: '1px solid var(--border-card)',
           maxHeight: '82dvh',
-          marginBottom: 'calc(64px + env(safe-area-inset-bottom, 0px))',
+          marginBottom: 0,
           transform: visible ? 'translateY(0)' : 'translateY(100%)',
           transition: 'transform 0.35s cubic-bezier(0.34,1.1,0.64,1)',
         }}
@@ -54,7 +54,7 @@ export default function Modal({ open, onClose, title, children }) {
             <X size={16} />
           </button>
         </div>
-        <div className="overflow-y-auto px-5 pb-6 flex flex-col gap-3">
+        <div className="overflow-y-auto px-5 flex flex-col gap-3" style={{ paddingBottom: 'calc(80px + env(safe-area-inset-bottom, 16px))' }}>
           {children}
         </div>
       </div>

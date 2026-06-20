@@ -7,6 +7,7 @@ import { generateId } from '../store/storage'
 import { addFamilyDebt, deleteFamilyDebt, updateFamilyDebt, addFamilyTransaction } from '../store/family'
 import { format, differenceInDays, isToday, isTomorrow, isPast, parseISO } from 'date-fns'
 import { fmtCur } from '../utils/format'
+import EmptyState from '../components/EmptyState'
 
 const fmt = (n, cur) => fmtCur(n, cur || 'UZS')
 const CURRENCIES = ['UZS', 'USD', 'EUR', 'RUB']
@@ -146,7 +147,7 @@ export default function Debts() {
     <div className="flex flex-col min-h-dvh pb-24">
       <div className="page-animate">
       <div className="sticky top-0 z-10 px-4 pt-4 pb-3 page-bg">
-        <h1 className="text-xl font-bold text-white mb-3">Qarzlar</h1>
+        <h1 className="text-[18px] font-black mb-3" style={{ color: 'var(--text-primary)' }}>Qarzlar</h1>
 
         {/* Warnings */}
         {warnings.length > 0 && (
@@ -164,11 +165,11 @@ export default function Debts() {
         <div className="grid grid-cols-2 gap-2 mb-3">
           <div className="bg-red-500/10 rounded-xl p-3">
             <p className="text-red-400 text-xs">Men qarzman</p>
-            <p className="text-white font-bold text-sm">{borrowed.length} ta</p>
+            <p className="font-bold text-sm" style={{ color: 'var(--text-primary)' }}>{borrowed.length} ta</p>
           </div>
           <div className="bg-green-500/10 rounded-xl p-3">
             <p className="text-green-400 text-xs">Menga qarz</p>
-            <p className="text-white font-bold text-sm">{lent.length} ta</p>
+            <p className="font-bold text-sm" style={{ color: 'var(--text-primary)' }}>{lent.length} ta</p>
           </div>
         </div>
 
@@ -183,9 +184,7 @@ export default function Debts() {
 
       <div className="flex-1 px-4 flex flex-col gap-2">
         {filtered.length === 0 ? (
-          <div className="card text-center py-10 mt-4">
-            <p className="text-gray-500">Qarzlar yo'q</p>
-          </div>
+          <EmptyState icon="🤝" title="Qarzlar yo'q" subtitle="Yangi qarz qo'shish uchun + tugmasini bosing" />
         ) : (
           filtered.map(d => {
             const isOpen = expanded[d.id]
@@ -201,7 +200,7 @@ export default function Debts() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
-                      <p className="text-white font-medium truncate">{d.person}</p>
+                      <p className="font-medium truncate" style={{ color: 'var(--text-primary)' }}>{d.person}</p>
                       <div className="flex items-center gap-1">
                         {isDone ? (
                           <span className="text-xs bg-green-500/20 text-green-400 px-2 py-0.5 rounded-lg">✓ Tugatildi</span>
@@ -226,7 +225,7 @@ export default function Debts() {
                     )}
                     <div className="mt-2">
                       <div className="flex justify-between text-xs mb-1">
-                        <span className="text-gray-500">Qoldi: <span className={isDone ? 'text-green-400' : 'text-white'}>{fmt(d.remaining, cur)} {cur}</span></span>
+                        <span className="text-gray-500">Qoldi: <span className={isDone ? 'text-green-400' : ''} style={!isDone ? { color: 'var(--text-primary)' } : {}}>{fmt(d.remaining, cur)} {cur}</span></span>
                         <span className="text-gray-500">Jami: {fmt(d.amount, cur)} {cur}</span>
                       </div>
                       <div className="w-full rounded-full h-1.5" style={{ background: 'rgba(255,255,255,0.06)' }}>
@@ -355,7 +354,7 @@ export default function Debts() {
           <div className="flex flex-col gap-3">
             <div className="rounded-xl p-3" style={{ background: 'rgba(255,255,255,0.04)' }}>
               <p className="text-gray-400 text-sm">{payModal.person}</p>
-              <p className="text-white font-bold">{fmt(payModal.remaining, payModal.currency || 'UZS')} {payModal.currency || 'UZS'} qoldi</p>
+              <p className="font-bold" style={{ color: 'var(--text-primary)' }}>{fmt(payModal.remaining, payModal.currency || 'UZS')} {payModal.currency || 'UZS'} qoldi</p>
             </div>
             <button onClick={() => setPayAmount(String(payModal.remaining))} className="text-blue-400 text-sm text-left">
               To'liq to'lash ({fmt(payModal.remaining, payModal.currency || 'UZS')} {payModal.currency || 'UZS'})

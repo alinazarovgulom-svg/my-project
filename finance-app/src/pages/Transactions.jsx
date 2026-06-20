@@ -10,6 +10,7 @@ import { format } from 'date-fns'
 import * as XLSX from 'xlsx'
 import { fmtCur } from '../utils/format'
 import { exportTransactionsPDF } from '../utils/pdfExport'
+import EmptyState from '../components/EmptyState'
 
 const EMOJIS = { income: '💰', expense: '💸' }
 const fmt = (n, cur) => fmtCur(n, cur)
@@ -167,7 +168,7 @@ export default function Transactions() {
       <div className="page-animate">
       <div className="sticky top-0 z-10 px-4 pt-4 pb-3 page-bg">
         <div className="flex items-center justify-between mb-3">
-          <h1 className="text-xl font-bold text-white">Kirim / Chiqim</h1>
+          <h1 className="text-[18px] font-black" style={{ color: 'var(--text-primary)' }}>Kirim / Chiqim</h1>
           <div className="flex gap-2">
             <button onClick={() => setExportModal(true)} className="p-2 rounded-xl text-gray-400 active:opacity-70" style={{ background: 'rgba(255,255,255,0.05)' }}>
               <Download size={18} />
@@ -246,9 +247,7 @@ export default function Transactions() {
 
       <div className="flex-1 px-4 flex flex-col gap-2">
         {filtered.length === 0 ? (
-          <div className="card text-center py-10 mt-4">
-            <p className="text-gray-500">Hech narsa topilmadi</p>
-          </div>
+          <EmptyState icon="🔍" title="Hech narsa topilmadi" subtitle="Qidiruv yoki filtr natijasi bo'sh" />
         ) : (
           filtered.map(t => {
             const isFamily = familyMode && family
@@ -268,7 +267,7 @@ export default function Transactions() {
                   {t.emoji}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-white text-sm font-medium truncate">{t.category}</p>
+                  <p className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>{t.category}</p>
                   <p className="text-gray-500 text-xs">{t.note ? `${t.note} · ` : ''}{format(new Date(t.date), t.date?.includes('T') ? 'dd.MM.yyyy HH:mm' : 'dd.MM.yyyy')}</p>
                 </div>
                 <p className={`text-sm font-semibold flex-shrink-0 ${t.type === 'income' ? 'text-green-400' : 'text-red-400'}`}>
@@ -286,7 +285,7 @@ export default function Transactions() {
                     {t.emoji}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-white text-sm font-medium truncate">{t.category}</p>
+                    <p className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>{t.category}</p>
                     <p className="text-gray-500 text-xs">
                       {isFamily && t.userId ? `${getMemberName(t.userId)} · ` : ''}
                       {t.note ? `${t.note} · ` : ''}{format(new Date(t.date), t.date?.includes('T') ? 'dd.MM.yyyy HH:mm' : 'dd.MM.yyyy')}
@@ -320,7 +319,7 @@ export default function Transactions() {
       </div>{/* end page-animate */}
 
       {(!familyMode || canAdd()) && !selectMode && (
-        <div className="fixed bottom-24 right-4 z-40 flex flex-col gap-2">
+        <div className="fixed z-40 flex flex-col gap-2" style={{ bottom: 'calc(80px + env(safe-area-inset-bottom, 0px))', right: 16 }}>
           <button onClick={() => openAdd('income')} className="w-12 h-12 rounded-full bg-green-500 text-white flex items-center justify-center shadow-lg shadow-green-500/30 active:opacity-80">
             <TrendingUp size={20} />
           </button>
