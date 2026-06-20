@@ -56,7 +56,7 @@ export default function Hamkorlar() {
     <div className="flex flex-col min-h-dvh pb-24">
       <div className="page-animate">
         <div className="px-4 pt-4 pb-3">
-          <h1 className="text-xl font-bold text-white">Hamkorlar</h1>
+          <h1 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>Hamkorlar</h1>
         </div>
 
         <div className="px-4 flex flex-col gap-3">
@@ -71,7 +71,7 @@ export default function Hamkorlar() {
             const c = COLORS[s.colorIdx % COLORS.length]
             const count = partnerCount(s.id)
             return (
-              <div key={s.id} className="flex items-center gap-3 bg-gray-800 rounded-2xl p-4">
+              <div key={s.id} className="flex items-center gap-3 rounded-2xl p-4" style={{ background: 'var(--bg-card2)', border: '1px solid var(--border-card)' }}>
                 <button
                   onClick={() => nav(`/hamkorlar/${s.id}`)}
                   className="flex items-center gap-3 flex-1 text-left"
@@ -80,10 +80,10 @@ export default function Hamkorlar() {
                     <Users size={20} className={c.text} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-white font-semibold truncate">{s.name}</p>
-                    <p className="text-gray-500 text-xs mt-0.5">{count} ta hamkor</p>
+                    <p className="font-semibold truncate" style={{ color: 'var(--text-primary)' }}>{s.name}</p>
+                    <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>{count} ta hamkor</p>
                   </div>
-                  <ChevronRight size={16} className="text-gray-600" />
+                  <ChevronRight size={16} style={{ color: 'var(--text-muted)' }} />
                 </button>
                 <button
                   onClick={() => setDeleteId(s.id)}
@@ -109,7 +109,7 @@ export default function Hamkorlar() {
       <Modal open={modal} onClose={() => { setModal(false); setSectionName('') }} title="Yangi bo'lim qo'shish">
         <div className="flex flex-col gap-3">
           <input
-            className="w-full bg-gray-700 text-white rounded-xl px-3 py-3 outline-none"
+            className="w-full rounded-xl px-3 py-3 outline-none input-field"
             placeholder="Bo'lim nomi (masalan: Yetkazib beruvchilar)"
             value={sectionName}
             onChange={e => setSectionName(e.target.value)}
@@ -124,9 +124,9 @@ export default function Hamkorlar() {
 
       {/* Delete confirm */}
       <Modal open={!!deleteId} onClose={() => setDeleteId(null)} title="Bo'limni o'chirish">
-        <p className="text-gray-300 mb-4">Bu bo'lim va undagi barcha hamkorlar o'chib ketadi. Tasdiqlaysizmi?</p>
+        <p className="mb-4" style={{ color: 'var(--text-secondary)' }}>Bu bo'lim va undagi barcha hamkorlar o'chib ketadi. Tasdiqlaysizmi?</p>
         <div className="flex gap-2">
-          <button onClick={() => setDeleteId(null)} className="flex-1 bg-gray-700 text-white rounded-xl py-3">Bekor</button>
+          <button onClick={() => setDeleteId(null)} className="flex-1 rounded-xl py-3" style={{ background: 'var(--bg-card)', color: 'var(--text-primary)', border: '1px solid var(--border-card)' }}>Bekor</button>
           <button onClick={() => handleDelete(deleteId)} className="flex-1 bg-red-600 text-white rounded-xl py-3 font-semibold">O'chirish</button>
         </div>
       </Modal>
