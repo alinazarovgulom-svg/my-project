@@ -79,51 +79,51 @@ export default function Dashboard() {
       </div>
 
       {/* Balance card */}
-      <div className="mx-4 mb-3 rounded-[24px] p-[18px] relative overflow-hidden border border-purple-900/30"
-        style={{background:'linear-gradient(135deg,#1a1060,#2d1b69 50%,#1e0d4e)'}}>
-        <div className="absolute -top-10 -right-10 w-36 h-36 rounded-full blur-2xl opacity-30" style={{background:'#8b5cf6'}}></div>
-        <div className="absolute -bottom-6 left-5 w-24 h-24 rounded-full blur-2xl opacity-20" style={{background:'#6366f1'}}></div>
+      <div className="mx-4 mb-3 rounded-[24px] p-[18px] relative overflow-hidden"
+        style={{ background: 'var(--bg-card2)', border: '1px solid var(--border-card)' }}>
+        <div className="absolute -top-10 -right-10 w-36 h-36 rounded-full blur-2xl opacity-10" style={{background:'#8b5cf6'}}></div>
+        <div className="absolute -bottom-6 left-5 w-24 h-24 rounded-full blur-2xl opacity-10" style={{background:'#6366f1'}}></div>
         <div className="relative z-10">
-          <div className="text-[10px] font-bold tracking-widest text-white/40 uppercase mb-1">{t('balance')}</div>
+          <div className="text-[10px] font-bold tracking-widest uppercase mb-1" style={{ color: 'var(--text-muted)' }}>{t('balance')}</div>
           {currencyBalances.length > 0 ? (
             currencyBalances.map(({ cur, bal }) => (
-              <div key={cur} className="text-white font-black text-[28px] tracking-tight leading-none mb-1">
-                {bal < 0 ? '-' : ''}{fmt(Math.abs(bal), cur)} <span className="text-[14px] font-medium opacity-50">{cur}</span>
+              <div key={cur} className="font-black text-[28px] tracking-tight leading-none mb-1" style={{ color: 'var(--text-primary)' }}>
+                {bal < 0 ? '-' : ''}{fmt(Math.abs(bal), cur)} <span className="text-[14px] font-medium" style={{ color: 'var(--text-muted)' }}>{cur}</span>
               </div>
             ))
           ) : (
-            <div className="text-white font-black text-[28px] tracking-tight">0 <span className="text-[14px] font-medium opacity-50">so'm</span></div>
+            <div className="font-black text-[28px] tracking-tight" style={{ color: 'var(--text-primary)' }}>0 <span className="text-[14px] font-medium" style={{ color: 'var(--text-muted)' }}>so'm</span></div>
           )}
           <div className="flex items-center gap-1.5 mt-1 mb-3">
-            <div className="bg-green-500/15 text-green-400 text-[9px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+            <div className="bg-green-500/15 text-green-500 text-[9px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
               <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><polyline points="18 15 12 9 6 15"/></svg>
               Bugun
             </div>
           </div>
           <div className="flex gap-2">
-            <div className="flex-1 bg-white/[0.07] border border-white/[0.05] rounded-2xl p-2.5">
+            <div className="flex-1 rounded-2xl p-2.5" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-soft)' }}>
               <div className="flex items-center gap-1 mb-1">
                 <div className="w-4 h-4 rounded-md bg-green-500/20 flex items-center justify-center">
                   <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="3" strokeLinecap="round"><polyline points="18 15 12 9 6 15"/></svg>
                 </div>
-                <span className="text-white/40 text-[9px] font-semibold">Kirim</span>
+                <span className="text-[9px] font-semibold" style={{ color: 'var(--text-muted)' }}>Kirim</span>
               </div>
               {currencyBreakdown.filter(x=>x.income>0).map(({cur,income:inc})=>(
-                <div key={cur} className="text-green-400 text-[13px] font-black leading-tight">+{fmt(inc,cur)} <span className="text-[9px] font-medium opacity-70">{cur}</span></div>
+                <div key={cur} className="text-green-500 text-[13px] font-black leading-tight">+{fmt(inc,cur)} <span className="text-[9px] font-medium opacity-70">{cur}</span></div>
               ))}
-              {!currencyBreakdown.some(x=>x.income>0) && <div className="text-white/30 text-[13px] font-black">0</div>}
+              {!currencyBreakdown.some(x=>x.income>0) && <div className="text-[13px] font-black" style={{ color: 'var(--text-muted)' }}>0</div>}
             </div>
-            <div className="flex-1 bg-white/[0.07] border border-white/[0.05] rounded-2xl p-2.5">
+            <div className="flex-1 rounded-2xl p-2.5" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-soft)' }}>
               <div className="flex items-center gap-1 mb-1">
                 <div className="w-4 h-4 rounded-md bg-red-500/20 flex items-center justify-center">
                   <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#f87171" strokeWidth="3" strokeLinecap="round"><polyline points="6 9 12 15 18 9"/></svg>
                 </div>
-                <span className="text-white/40 text-[9px] font-semibold">Chiqim</span>
+                <span className="text-[9px] font-semibold" style={{ color: 'var(--text-muted)' }}>Chiqim</span>
               </div>
               {currencyBreakdown.filter(x=>x.expense>0).map(({cur,expense:exp})=>(
                 <div key={cur} className="text-red-400 text-[13px] font-black leading-tight">-{fmt(exp,cur)} <span className="text-[9px] font-medium opacity-70">{cur}</span></div>
               ))}
-              {!currencyBreakdown.some(x=>x.expense>0) && <div className="text-white/30 text-[13px] font-black">0</div>}
+              {!currencyBreakdown.some(x=>x.expense>0) && <div className="text-[13px] font-black" style={{ color: 'var(--text-muted)' }}>0</div>}
             </div>
           </div>
         </div>
