@@ -185,11 +185,11 @@ export default function Exchange() {
   }
 
   return (
-    <div className="flex flex-col pb-24 min-h-dvh">
-      <div className="px-4 pt-4 pb-3 flex items-center justify-between">
-        <h1 className="text-xl font-bold text-white">Valyuta ayirboshlash</h1>
+    <div className="flex flex-col pb-24 min-h-dvh page-animate">
+      <div className="sticky top-0 z-10 px-4 pt-4 pb-3 flex items-center justify-between page-bg">
+        <h1 className="text-[18px] font-black" style={{ color: 'var(--text-primary)' }}>Valyuta ayirboshlash</h1>
         {archive.length > 0 && (
-          <button onClick={() => setShowArchive(v => !v)} className="flex items-center gap-1.5 text-xs text-gray-400 active:text-white">
+          <button onClick={() => setShowArchive(v => !v)} className="flex items-center gap-1.5 text-xs active:opacity-60" style={{ color: 'var(--text-secondary)' }}>
             <Archive size={14} />
             Arxiv ({archive.length})
           </button>
@@ -234,12 +234,12 @@ export default function Exchange() {
       )}
 
       {/* Exchange list */}
-      <div className="flex-1 px-4 flex flex-col gap-2">
+      <div className="flex-1 px-4 flex flex-col gap-2 stagger">
         {exchangeTx.length === 0 ? (
           <div className="card text-center py-10 mt-4">
             <p className="text-4xl mb-2">💱</p>
-            <p className="text-gray-500 text-sm">Ayirboshlashlar yo'q</p>
-            <p className="text-gray-600 text-xs mt-1">+ tugmasini bosib qo'shing</p>
+            <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Ayirboshlashlar yo'q</p>
+            <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>+ tugmasini bosib qo'shing</p>
           </div>
         ) : (
           exchangeTx.map(tx => {
@@ -251,19 +251,19 @@ export default function Exchange() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5">
-                    <span className="text-white text-sm font-semibold">{fmt(tx.amount, tx.currency)} {tx.currency}</span>
-                    <ArrowRight size={12} className="text-gray-500 flex-shrink-0" />
+                    <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{fmt(tx.amount, tx.currency)} {tx.currency}</span>
+                    <ArrowRight size={12} className="flex-shrink-0" style={{ color: 'var(--text-muted)' }} />
                     {pair && <span className="text-blue-400 text-sm font-semibold">{fmt(pair.amount, pair.currency)} {pair.currency}</span>}
                   </div>
-                  {tx.note && <p className="text-gray-500 text-xs truncate">{tx.note}</p>}
-                  <p className="text-gray-600 text-xs">{format(new Date(tx.date), 'dd.MM.yyyy')}</p>
+                  {tx.note && <p className="text-xs truncate" style={{ color: 'var(--text-secondary)' }}>{tx.note}</p>}
+                  <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{format(new Date(tx.date), 'dd.MM.yyyy')}</p>
                 </div>
                 {isAdmin && (
                   <div className="flex items-center gap-1">
-                    <button onClick={() => startEdit(tx, pair)} className="p-1.5 rounded-lg text-gray-500 active:text-blue-400" style={{ background: 'rgba(255,255,255,0.05)' }}>
+                    <button onClick={() => startEdit(tx, pair)} className="p-1.5 rounded-lg active:opacity-60" style={{ background: 'var(--bg-card2)', color: 'var(--text-secondary)' }}>
                       <Pencil size={14} />
                     </button>
-                    <button onClick={() => setDeleteConfirm({ tx, pair })} className="p-1.5 rounded-lg text-gray-500 active:text-red-400" style={{ background: 'rgba(255,255,255,0.05)' }}>
+                    <button onClick={() => setDeleteConfirm({ tx, pair })} className="p-1.5 rounded-lg active:opacity-60" style={{ background: 'var(--bg-card2)', color: 'var(--text-secondary)' }}>
                       <Trash2 size={14} />
                     </button>
                   </div>
@@ -290,7 +290,7 @@ export default function Exchange() {
         <div className="flex flex-col gap-3">
           <div className="flex items-center gap-3">
             <div className="flex-1">
-              <label className="text-gray-400 text-xs mb-1 block">Dan</label>
+              <label className="text-xs mb-1 block" style={{ color: 'var(--text-secondary)' }}>Dan</label>
               <select className="input-field" value={form.from} onChange={e => { set('from', e.target.value); set('rate', '') }} disabled={!!editingPairId}>
                 {CURRENCIES.map(c => <option key={c} value={c}>{FLAGS[c]} {c}</option>)}
               </select>
@@ -302,7 +302,7 @@ export default function Exchange() {
               </button>
             )}
             <div className="flex-1">
-              <label className="text-gray-400 text-xs mb-1 block">Ga</label>
+              <label className="text-xs mb-1 block" style={{ color: 'var(--text-secondary)' }}>Ga</label>
               <select className="input-field" value={form.to} onChange={e => { set('to', e.target.value); set('rate', '') }} disabled={!!editingPairId}>
                 {CURRENCIES.map(c => <option key={c} value={c}>{FLAGS[c]} {c}</option>)}
               </select>
@@ -310,12 +310,12 @@ export default function Exchange() {
           </div>
 
           <div>
-            <label className="text-gray-400 text-xs mb-1 block">Summa ({form.from})</label>
+            <label className="text-xs mb-1 block" style={{ color: 'var(--text-secondary)' }}>Summa ({form.from})</label>
             <AmountInput className="input-field" value={form.fromAmount} onChange={v => set('fromAmount', v)} />
           </div>
 
           <div>
-            <label className="text-gray-400 text-xs mb-1 block">
+            <label className="text-xs mb-1 block" style={{ color: 'var(--text-secondary)' }}>
               Kurs {form.from !== 'UZS' && form.to !== 'UZS' ? `(1 ${form.from} = ? ${form.to})` : form.from === 'UZS' ? `(1 ${form.to} = ? UZS)` : `(1 ${form.from} = ? UZS)`}
             </label>
             <AmountInput className="input-field" placeholder="Kursni kiriting..." value={form.rate} onChange={v => set('rate', v)} />
@@ -329,12 +329,12 @@ export default function Exchange() {
           )}
 
           <div>
-            <label className="text-gray-400 text-xs mb-1 block">Izoh (ixtiyoriy)</label>
+            <label className="text-xs mb-1 block" style={{ color: 'var(--text-secondary)' }}>Izoh (ixtiyoriy)</label>
             <input className="input-field" placeholder="Izoh..." value={form.note} onChange={e => set('note', e.target.value)} />
           </div>
 
           <div>
-            <label className="text-gray-400 text-xs mb-1 block">Sana</label>
+            <label className="text-xs mb-1 block" style={{ color: 'var(--text-secondary)' }}>Sana</label>
             <input className="input-field" type="date" value={form.date} onChange={e => set('date', e.target.value)} />
           </div>
 
@@ -348,19 +348,19 @@ export default function Exchange() {
       <Modal open={!!deleteConfirm} onClose={() => setDeleteConfirm(null)} title="O'chirishni tasdiqlang">
         {deleteConfirm && (
           <div className="flex flex-col gap-4">
-            <div className="rounded-xl p-3 text-center" style={{ background: 'rgba(255,255,255,0.05)' }}>
-              <p className="text-white font-semibold">
+            <div className="rounded-xl p-3 text-center" style={{ background: 'var(--bg-card2)' }}>
+              <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>
                 {fmt(deleteConfirm.tx.amount, deleteConfirm.tx.currency)} {deleteConfirm.tx.currency}
                 {' → '}
                 {deleteConfirm.pair && `${fmt(deleteConfirm.pair.amount, deleteConfirm.pair.currency)} ${deleteConfirm.pair.currency}`}
               </p>
-              <p className="text-gray-500 text-xs mt-1">{deleteConfirm.tx.date?.slice(0, 10)}</p>
+              <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>{deleteConfirm.tx.date?.slice(0, 10)}</p>
             </div>
-            <p className="text-gray-400 text-sm text-center">
+            <p className="text-sm text-center" style={{ color: 'var(--text-secondary)' }}>
               Ma'lumot o'chiriladi va <span className="text-orange-400">30 kun arxivda</span> saqlanadi. Kerak bo'lsa tiklab olish mumkin.
             </p>
             <div className="flex gap-2">
-              <button onClick={() => setDeleteConfirm(null)} className="flex-1 text-white rounded-xl py-3" style={{ background: 'rgba(255,255,255,0.07)' }}>Bekor</button>
+              <button onClick={() => setDeleteConfirm(null)} className="flex-1 rounded-xl py-3" style={{ background: 'var(--bg-card2)', color: 'var(--text-primary)' }}>Bekor</button>
               <button onClick={handleDelete} className="flex-1 bg-red-600 text-white rounded-xl py-3 font-semibold">O'chirish</button>
             </div>
           </div>

@@ -54,19 +54,25 @@ export default function SwipeableRow({ onDelete, onEdit, children }) {
     <div className="relative overflow-hidden rounded-2xl">
       {/* Delete bg (right side) */}
       <div className="absolute inset-0 flex items-center justify-end pr-4 rounded-2xl"
-        style={{ background: 'rgba(239,68,68,0.15)', opacity: offset < 0 ? Math.min(1, Math.abs(offset) / 60) : 0 }}>
+        style={{
+          background: 'var(--swipe-delete-bg, rgba(239,68,68,0.15))',
+          opacity: offset < 0 ? Math.min(1, Math.abs(offset) / 60) : 0,
+        }}>
         <div className="flex items-center gap-1.5">
-          <Trash2 size={18} className="text-red-400" />
-          <span className="text-red-400 text-xs font-semibold">O'chirish</span>
+          <Trash2 size={18} style={{ color: 'var(--swipe-delete-color, #f87171)' }} />
+          <span className="text-xs font-semibold" style={{ color: 'var(--swipe-delete-color, #f87171)' }}>O'chirish</span>
         </div>
       </div>
 
       {/* Edit bg (left side) */}
       <div className="absolute inset-0 flex items-center justify-start pl-4 rounded-2xl"
-        style={{ background: 'rgba(59,130,246,0.15)', opacity: offset > 0 ? Math.min(1, offset / 60) : 0 }}>
+        style={{
+          background: 'var(--swipe-edit-bg, rgba(59,130,246,0.15))',
+          opacity: offset > 0 ? Math.min(1, offset / 60) : 0,
+        }}>
         <div className="flex items-center gap-1.5">
-          <Pencil size={18} className="text-blue-400" />
-          <span className="text-blue-400 text-xs font-semibold">Tahrirlash</span>
+          <Pencil size={18} style={{ color: 'var(--swipe-edit-color, #60a5fa)' }} />
+          <span className="text-xs font-semibold" style={{ color: 'var(--swipe-edit-color, #60a5fa)' }}>Tahrirlash</span>
         </div>
       </div>
 

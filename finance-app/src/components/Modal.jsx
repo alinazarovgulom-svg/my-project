@@ -1,7 +1,7 @@
-import { X } from 'lucide-react'
+import { X, Loader2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
-export default function Modal({ open, onClose, title, children }) {
+export default function Modal({ open, onClose, title, children, loading }) {
   const [visible, setVisible] = useState(false)
 
   useEffect(() => {
@@ -55,7 +55,18 @@ export default function Modal({ open, onClose, title, children }) {
           </button>
         </div>
         <div className="overflow-y-auto px-5 flex flex-col gap-3" style={{ paddingBottom: 'calc(80px + env(safe-area-inset-bottom, 16px))' }}>
-          {children}
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-12 gap-3">
+              <div style={{
+                width: 36, height: 36,
+                border: '3px solid var(--border-input)',
+                borderTopColor: '#6366f1',
+                borderRadius: '50%',
+                animation: 'spin 0.7s linear infinite',
+              }} />
+              <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Yuklanmoqda...</p>
+            </div>
+          ) : children}
         </div>
       </div>
     </div>

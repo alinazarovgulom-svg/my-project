@@ -16,6 +16,10 @@
   --text-muted: #4b5563;
   --nav-bg: rgba(8,8,15,0.97);
   --nav-border: rgba(255,255,255,0.04);
+  --swipe-delete-bg: rgba(239,68,68,0.15);
+  --swipe-delete-color: #f87171;
+  --swipe-edit-bg: rgba(59,130,246,0.15);
+  --swipe-edit-color: #60a5fa;
 }
 
 [data-theme="light"] {
@@ -31,6 +35,10 @@
   --text-muted: #9ca3af;
   --nav-bg: rgba(240,242,248,0.97);
   --nav-border: rgba(0,0,0,0.07);
+  --swipe-delete-bg: rgba(239,68,68,0.1);
+  --swipe-delete-color: #dc2626;
+  --swipe-edit-bg: rgba(59,130,246,0.1);
+  --swipe-edit-color: #2563eb;
 }
 
 * {
@@ -91,6 +99,9 @@ input, select, textarea {
 @keyframes scaleIn {
   from { opacity: 0; transform: scale(0.92); }
   to   { opacity: 1; transform: scale(1); }
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 @keyframes confetti {
   0%   { transform: translateY(0) rotate(0deg); opacity: 1; }
