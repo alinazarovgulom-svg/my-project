@@ -1,0 +1,1330 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KAFTIMDA — Google Sheets Ilova</title>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://apis.google.com/js/api.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --primary: #2563eb; --primary-dark: #1d4ed8;
+    --success: #16a34a; --danger: #dc2626; --warning: #d97706;
+    --bg: #f1f5f9; --card: #ffffff; --border: #e2e8f0;
+    --text: #1e293b; --text2: #64748b;
+  }
+  body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  /* LOGIN */
+  #login-screen {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    min-height: 100vh; gap: 24px;
+  }
+  .login-card {
+    background: var(--card); border-radius: 16px; padding: 48px 40px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.08); text-align: center; max-width: 420px; width: 90%;
+  }
+  .login-logo { font-size: 48px; margin-bottom: 8px; }
+  .login-title { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
+  .login-sub { color: var(--text2); margin-bottom: 32px; font-size: 14px; }
+  .btn-google {
+    display: flex; align-items: center; gap: 12px; background: var(--primary);
+    color: white; border: none; padding: 14px 28px; border-radius: 10px;
+    font-size: 16px; font-weight: 600; cursor: pointer; width: 100%; justify-content: center;
+    transition: background 0.2s;
+  }
+  .btn-google:hover { background: var(--primary-dark); }
+  .config-hint {
+    background: #fef9c3; border: 1px solid #fde68a; border-radius: 10px;
+    padding: 16px; font-size: 13px; color: #92400e; text-align: left;
+  }
+  .config-hint code { background: #fde68a; padding: 2px 6px; border-radius: 4px; font-family: monospace; }
+
+  /* LAYOUT */
+  #app { display: none; min-height: 100vh; }
+  .sidebar {
+    position: fixed; left: 0; top: 0; bottom: 0; width: 240px;
+    background: #1e293b; color: white; display: flex; flex-direction: column; z-index: 100;
+    transition: transform 0.3s;
+  }
+  .sidebar-logo { padding: 20px 20px 16px; border-bottom: 1px solid #334155; }
+  .sidebar-logo h1 { font-size: 18px; font-weight: 700; color: #f8fafc; }
+  .sidebar-logo p { font-size: 11px; color: #94a3b8; margin-top: 2px; }
+  .sidebar-nav { flex: 1; padding: 12px 8px; overflow-y: auto; }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+    border-radius: 8px; cursor: pointer; font-size: 14px; color: #94a3b8;
+    transition: all 0.15s; margin-bottom: 2px;
+  }
+  .nav-item:hover { background: #334155; color: white; }
+  .nav-item.active { background: var(--primary); color: white; }
+  .nav-icon { font-size: 18px; width: 22px; text-align: center; }
+  .sidebar-user {
+    padding: 16px; border-top: 1px solid #334155; display: flex; align-items: center; gap: 10px;
+  }
+  .user-avatar {
+    width: 34px; height: 34px; border-radius: 50%; background: var(--primary);
+    display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px;
+  }
+  .user-name { font-size: 13px; color: #f1f5f9; font-weight: 500; }
+  .btn-logout { background: none; border: none; color: #ef4444; cursor: pointer; font-size: 12px; padding: 0; }
+
+  .main { margin-left: 240px; min-height: 100vh; }
+  .topbar {
+    background: var(--card); border-bottom: 1px solid var(--border);
+    padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 50;
+  }
+  .topbar-title { font-size: 18px; font-weight: 700; }
+  .sync-status { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text2); }
+  .sync-dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  .sync-dot.loading { background: #f59e0b; }
+  .sync-dot.error { background: #ef4444; animation: none; }
+
+  .content { padding: 24px; }
+
+  /* CARDS */
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+  .stat-card {
+    background: var(--card); border-radius: 12px; padding: 20px;
+    border: 1px solid var(--border); display: flex; align-items: center; gap: 16px;
+  }
+  .stat-icon { font-size: 32px; }
+  .stat-value { font-size: 22px; font-weight: 700; line-height: 1; }
+  .stat-label { font-size: 12px; color: var(--text2); margin-top: 4px; }
+
+  /* TABLE */
+  .table-card { background: var(--card); border-radius: 12px; border: 1px solid var(--border); overflow: hidden; }
+  .table-header {
+    padding: 16px 20px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  }
+  .table-header h3 { font-size: 16px; font-weight: 600; }
+  .table-controls { display: flex; gap: 8px; flex-wrap: wrap; }
+  .search-box {
+    padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px;
+    font-size: 14px; outline: none; width: 220px;
+  }
+  .search-box:focus { border-color: var(--primary); }
+  .btn {
+    padding: 8px 16px; border-radius: 8px; font-size: 14px; font-weight: 500;
+    cursor: pointer; border: none; transition: all 0.15s; display: inline-flex; align-items: center; gap: 6px;
+  }
+  .btn-primary { background: var(--primary); color: white; }
+  .btn-primary:hover { background: var(--primary-dark); }
+  .btn-success { background: var(--success); color: white; }
+  .btn-danger { background: var(--danger); color: white; }
+  .btn-outline { background: transparent; color: var(--text); border: 1px solid var(--border); }
+  .btn-outline:hover { background: var(--bg); }
+  .btn-sm { padding: 5px 10px; font-size: 12px; }
+
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th { background: #f8fafc; padding: 10px 14px; text-align: left; font-weight: 600; font-size: 12px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  td { padding: 11px 14px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #f8fafc; }
+
+  .badge {
+    display: inline-flex; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 500;
+  }
+  .badge-green { background: #dcfce7; color: #15803d; }
+  .badge-red { background: #fee2e2; color: #dc2626; }
+  .badge-blue { background: #dbeafe; color: #2563eb; }
+  .badge-yellow { background: #fef9c3; color: #92400e; }
+  .badge-gray { background: #f1f5f9; color: #64748b; }
+
+  .table-footer { padding: 12px 20px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; font-size: 13px; color: var(--text2); }
+  .pagination { display: flex; gap: 4px; }
+  .page-btn { padding: 4px 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--card); cursor: pointer; font-size: 13px; }
+  .page-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+  .page-btn:hover:not(.active) { background: var(--bg); }
+
+  /* MODAL */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+    z-index: 200; align-items: center; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--card); border-radius: 14px; padding: 28px;
+    max-width: 560px; width: 95%; max-height: 90vh; overflow-y: auto;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.15);
+  }
+  .modal-title { font-size: 18px; font-weight: 700; margin-bottom: 20px; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .form-grid.single { grid-template-columns: 1fr; }
+  .form-group { display: flex; flex-direction: column; gap: 5px; }
+  .form-group.full { grid-column: 1 / -1; }
+  label { font-size: 13px; font-weight: 500; color: var(--text2); }
+  input, select, textarea {
+    padding: 9px 12px; border: 1px solid var(--border); border-radius: 8px;
+    font-size: 14px; outline: none; transition: border-color 0.15s; font-family: inherit;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--primary); }
+  .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+
+  /* TABS */
+  .tabs { display: flex; gap: 2px; background: #f1f5f9; border-radius: 10px; padding: 4px; margin-bottom: 20px; }
+  .tab { padding: 8px 16px; border-radius: 7px; cursor: pointer; font-size: 14px; font-weight: 500; color: var(--text2); transition: all 0.15s; }
+  .tab.active { background: white; color: var(--primary); box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+
+  /* LOADING */
+  .loading-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(255,255,255,0.8);
+    z-index: 300; align-items: center; justify-content: center; flex-direction: column; gap: 12px;
+  }
+  .loading-overlay.show { display: flex; }
+  .spinner { width: 40px; height: 40px; border: 4px solid #e2e8f0; border-top-color: var(--primary); border-radius: 50%; animation: spin 0.7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* TOAST */
+  #toast-container { position: fixed; top: 20px; right: 20px; z-index: 400; display: flex; flex-direction: column; gap: 8px; }
+  .toast {
+    background: #1e293b; color: white; padding: 12px 16px; border-radius: 10px;
+    font-size: 14px; min-width: 260px; display: flex; align-items: center; gap: 10px;
+    animation: slideIn 0.3s ease; box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+  }
+  .toast.success { background: #15803d; }
+  .toast.error { background: #dc2626; }
+  .toast.warning { background: #d97706; }
+  @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+  /* DASHBOARD CHART */
+  .chart-bars { display: flex; align-items: flex-end; gap: 8px; height: 120px; padding: 0 4px; }
+  .chart-bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .chart-bar { width: 100%; background: var(--primary); border-radius: 4px 4px 0 0; min-height: 4px; transition: height 0.5s; opacity: 0.85; }
+  .chart-label { font-size: 10px; color: var(--text2); }
+
+  /* RESPONSIVE */
+  @media (max-width: 768px) {
+    .sidebar { transform: translateX(-100%); }
+    .sidebar.open { transform: translateX(0); }
+    .main { margin-left: 0; }
+    .form-grid { grid-template-columns: 1fr; }
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+  }
+
+  .number { font-family: 'Courier New', monospace; font-weight: 600; }
+  .money { color: var(--success); }
+  .money-neg { color: var(--danger); }
+  .empty-state { text-align: center; padding: 60px 20px; color: var(--text2); }
+  .empty-icon { font-size: 48px; margin-bottom: 12px; }
+
+  /* CONFIG MODAL */
+  .config-box { background: #f8fafc; border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-bottom: 16px; }
+  .config-box h4 { font-size: 13px; font-weight: 600; margin-bottom: 8px; color: var(--text2); }
+  .step-num { display: inline-flex; width: 22px; height: 22px; background: var(--primary); color: white; border-radius: 50%; font-size: 12px; font-weight: 700; align-items: center; justify-content: center; margin-right: 6px; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SOZLAMALAR — bu yerga API ma'lumotlarini kiriting
+═══════════════════════════════════════════════════════════ -->
+<script>
+const CONFIG = {
+  // Google Cloud Console → OAuth 2.0 Client ID
+  CLIENT_ID: 'YOUR_CLIENT_ID.apps.googleusercontent.com',
+
+  // Google Sheets URL dan olingan ID
+  // Masalan: https://docs.google.com/spreadsheets/d/XXXXX/edit
+  //                                                  ^^^^^
+  SPREADSHEET_ID: 'YOUR_SPREADSHEET_ID',
+
+  // Avtomatik yangilanish intervali (millisekund)
+  REFRESH_INTERVAL: 30000,
+};
+</script>
+<!-- ═══════════════════════════════════════════════════════════ -->
+
+<!-- LOGIN SCREEN -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">👔</div>
+    <div class="login-title">KAFTIMDA ERP</div>
+    <div class="login-sub">Google Sheets bilan sinxronlashgan boshqaruv tizimi</div>
+    <button class="btn-google" onclick="handleLogin()">
+      <svg width="20" height="20" viewBox="0 0 24 24"><path fill="white" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="white" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="white" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="white" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+      Google bilan kirish
+    </button>
+  </div>
+  <div class="config-hint" style="max-width:420px;width:90%;" id="config-warning">
+    ⚠️ <strong>Sozlash kerak:</strong> Ilovani ishlatishdan oldin <code>CONFIG</code> bo'limidagi
+    <code>CLIENT_ID</code> va <code>SPREADSHEET_ID</code> ni to'ldiring.
+    <br><br>
+    <a href="#" onclick="showConfigHelp()" style="color:#92400e;font-weight:600;">▶ Qanday qilish kerak?</a>
+  </div>
+</div>
+
+<!-- CONFIG HELP MODAL -->
+<div class="modal-overlay" id="config-help-modal">
+  <div class="modal" style="max-width:600px;">
+    <div class="modal-title">⚙️ API Sozlash Yo'riqnomasi</div>
+    <div class="config-box">
+      <h4><span class="step-num">1</span> Google Cloud Console</h4>
+      <p style="font-size:13px;color:#475569;">
+        1. <a href="https://console.cloud.google.com" target="_blank" style="color:var(--primary)">console.cloud.google.com</a> ga kiring<br>
+        2. Yangi loyiha yarating yoki mavjudini tanlang<br>
+        3. <strong>APIs & Services → Library</strong> → <em>Google Sheets API</em> → Enable<br>
+        4. <strong>APIs & Services → Credentials → Create Credentials → OAuth 2.0 Client ID</strong><br>
+        5. Application type: <strong>Web application</strong><br>
+        6. Authorized origins: <code>https://alinazarovgulom-svg.github.io</code><br>
+        7. Client ID ni nusxalab oling
+      </p>
+    </div>
+    <div class="config-box">
+      <h4><span class="step-num">2</span> Spreadsheet ID</h4>
+      <p style="font-size:13px;color:#475569;">
+        Google Sheets URL'dan ID ni oling:<br>
+        <code style="background:#f1f5f9;padding:6px 10px;border-radius:6px;display:block;margin-top:8px;word-break:break-all;">
+          docs.google.com/spreadsheets/d/<strong style="color:var(--primary)">1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms</strong>/edit
+        </code>
+      </p>
+    </div>
+    <div class="config-box">
+      <h4><span class="step-num">3</span> sheets-app.html faylini tahrirlang</h4>
+      <p style="font-size:13px;color:#475569;">
+        Fayl boshidagi <code>CONFIG</code> bo'limini to'ldiring:<br>
+        <code style="background:#f1f5f9;padding:8px 10px;border-radius:6px;display:block;margin-top:8px;font-size:12px;">
+          CLIENT_ID: 'xxxx.apps.googleusercontent.com'<br>
+          SPREADSHEET_ID: 'your_id_here'
+        </code>
+      </p>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" onclick="closeModal('config-help-modal')">Yaxshi, tushunarli</button>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app">
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <h1>👔 KAFTIMDA</h1>
+      <p>ERP Boshqaruv Tizimi</p>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-item active" onclick="showPage('dashboard')">
+        <span class="nav-icon">📊</span> Dashboard
+      </div>
+      <div class="nav-item" onclick="showPage('xodimlar')">
+        <span class="nav-icon">👥</span> Xodimlar
+      </div>
+      <div class="nav-item" onclick="showPage('tolovi')">
+        <span class="nav-icon">💰</span> To'lovlar
+      </div>
+      <div class="nav-item" onclick="showPage('hisobot')">
+        <span class="nav-icon">📅</span> Oylik Hisobotlar
+      </div>
+      <div class="nav-item" onclick="showPage('qarz')">
+        <span class="nav-icon">🏦</span> Qarz
+      </div>
+      <div class="nav-item" onclick="showPage('chiqimlar')">
+        <span class="nav-icon">📤</span> Chiqimlar
+      </div>
+    </nav>
+    <div class="sidebar-user">
+      <div class="user-avatar" id="user-avatar">G</div>
+      <div style="flex:1;min-width:0;">
+        <div class="user-name" id="user-name">Foydalanuvchi</div>
+        <button class="btn-logout" onclick="handleLogout()">Chiqish</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="topbar">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <button class="btn btn-outline btn-sm" id="menu-btn" onclick="toggleSidebar()" style="display:none;">☰</button>
+        <span class="topbar-title" id="page-title">Dashboard</span>
+      </div>
+      <div class="sync-status">
+        <div class="sync-dot" id="sync-dot"></div>
+        <span id="sync-text">Sinxronlashtirildi</span>
+        <button class="btn btn-outline btn-sm" onclick="syncNow()">🔄 Yangilash</button>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <div id="page-dashboard">
+        <div class="stats-grid" id="dashboard-stats"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;" id="dashboard-charts-row">
+          <div class="table-card" style="padding:20px;">
+            <h3 style="font-size:15px;font-weight:600;margin-bottom:16px;">📈 Naqd to'lovlar (oylar bo'yicha)</h3>
+            <div class="chart-bars" id="payments-chart"></div>
+          </div>
+          <div class="table-card" style="padding:20px;">
+            <h3 style="font-size:15px;font-weight:600;margin-bottom:16px;">🏭 Bo'limlar bo'yicha xodimlar</h3>
+            <div id="bolimlar-chart"></div>
+          </div>
+        </div>
+        <div style="margin-top:16px;" class="table-card">
+          <div class="table-header"><h3>🕐 So'nggi to'lovlar</h3></div>
+          <div class="table-wrap"><table id="recent-payments-table">
+            <thead><tr><th>Sana</th><th>ID</th><th>Xodim</th><th>Tur</th><th>Miqdor</th><th>Oy</th></tr></thead>
+            <tbody id="recent-payments-body"></tbody>
+          </table></div>
+        </div>
+      </div>
+
+      <!-- XODIMLAR -->
+      <div id="page-xodimlar" style="display:none;">
+        <div class="table-card">
+          <div class="table-header">
+            <h3>Xodimlar ro'yxati</h3>
+            <div class="table-controls">
+              <input type="text" class="search-box" placeholder="🔍 Ism, ID, bo'lim..." id="xodim-search" oninput="filterXodimlar()">
+              <select class="search-box" style="width:140px;" id="xodim-bolim-filter" onchange="filterXodimlar()">
+                <option value="">Barcha bo'limlar</option>
+              </select>
+              <select class="search-box" style="width:130px;" id="xodim-holat-filter" onchange="filterXodimlar()">
+                <option value="">Barcha holat</option>
+                <option value="Ishlayapti">Ishlayapti</option>
+                <option value="Chiqib ketgan">Chiqib ketgan</option>
+              </select>
+              <button class="btn btn-primary" onclick="openModal('xodim-modal')">+ Yangi xodim</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>ID</th><th>Ism Familya</th><th>Bo'lim</th><th>Lavozim</th><th>Qabul sanasi</th><th>Oylik</th><th>Holat</th><th>Amal</th></tr></thead>
+              <tbody id="xodimlar-body"></tbody>
+            </table>
+          </div>
+          <div class="table-footer">
+            <span id="xodim-count">0 ta xodim</span>
+            <div class="pagination" id="xodim-pagination"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TO'LOVLAR -->
+      <div id="page-tolovi" style="display:none;">
+        <div class="tabs" id="tolov-tabs">
+          <div class="tab active" onclick="switchTab('naqd')">💵 Naqd</div>
+          <div class="tab" onclick="switchTab('karta')">💳 Karta</div>
+        </div>
+        <div class="table-card">
+          <div class="table-header">
+            <h3 id="tolov-tab-title">Naqd to'lovlar</h3>
+            <div class="table-controls">
+              <input type="text" class="search-box" placeholder="🔍 Xodim, ID..." id="tolov-search" oninput="filterTolov()">
+              <select class="search-box" style="width:120px;" id="tolov-oy-filter" onchange="filterTolov()">
+                <option value="">Barcha oylar</option>
+              </select>
+              <button class="btn btn-primary" onclick="openTolovModal()">+ Yangi to'lov</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Sana</th><th>ID</th><th>Xodim</th><th>Tur</th><th>Miqdor</th><th>Oy</th><th>Izoh</th><th>Amal</th></tr></thead>
+              <tbody id="tolov-body"></tbody>
+            </table>
+          </div>
+          <div class="table-footer">
+            <span id="tolov-count">0 ta to'lov</span>
+            <div style="font-weight:700;" id="tolov-jami"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- OYLIK HISOBOTLAR -->
+      <div id="page-hisobot" style="display:none;">
+        <div style="display:flex;gap:12px;margin-bottom:20px;align-items:center;flex-wrap:wrap;">
+          <select class="search-box" style="width:160px;" id="hisobot-oy-select" onchange="loadHisobot()">
+            <option value="Yanvar">Yanvar</option><option value="Fevral">Fevral</option>
+            <option value="Mart">Mart</option><option value="Aprel">Aprel</option>
+            <option value="May">May</option><option value="Iyun">Iyun</option>
+            <option value="Iyul">Iyul</option><option value="Avgust">Avgust</option>
+            <option value="Sentyabr">Sentyabr</option><option value="Oktyabr">Oktyabr</option>
+            <option value="Noyabr">Noyabr</option><option value="Dekabr">Dekabr</option>
+          </select>
+          <input type="text" class="search-box" placeholder="🔍 Xodim qidirish..." id="hisobot-search" oninput="filterHisobot()">
+          <button class="btn btn-outline" onclick="exportCSV()">📥 CSV yuklash</button>
+        </div>
+        <div class="stats-grid" id="hisobot-stats"></div>
+        <div class="table-card">
+          <div class="table-header"><h3 id="hisobot-title">Yanvar — Hisobot</h3></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>ID</th><th>Xodim</th><th>Bo'lim</th><th>Lavozim</th><th>Avvalgi qoldiq</th><th>Kelishilgan maosh</th><th>To'liq maosh</th><th>Naqd</th><th>Karta</th><th>Hisob</th></tr></thead>
+              <tbody id="hisobot-body"></tbody>
+            </table>
+          </div>
+          <div class="table-footer"><span id="hisobot-count">0 ta xodim</span></div>
+        </div>
+      </div>
+
+      <!-- QARZ -->
+      <div id="page-qarz" style="display:none;">
+        <div class="table-card">
+          <div class="table-header">
+            <h3>Qarz ro'yxati</h3>
+            <div class="table-controls">
+              <input type="text" class="search-box" placeholder="🔍 Xodim, ID..." id="qarz-search" oninput="filterQarz()">
+              <button class="btn btn-primary" onclick="openModal('qarz-modal')">+ Yangi qarz</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Sana</th><th>ID</th><th>Xodim</th><th>Berilgan</th><th>To'langan</th><th>Qoldiq</th><th>Izoh</th></tr></thead>
+              <tbody id="qarz-body"></tbody>
+            </table>
+          </div>
+          <div class="table-footer"><span id="qarz-count">0 ta yozuv</span></div>
+        </div>
+      </div>
+
+      <!-- CHIQIMLAR -->
+      <div id="page-chiqimlar" style="display:none;">
+        <div class="table-card">
+          <div class="table-header">
+            <h3>Qo'shimcha chiqimlar</h3>
+            <div class="table-controls">
+              <input type="text" class="search-box" placeholder="🔍 Xodim, tur..." id="chiqim-search" oninput="filterChiqim()">
+              <select class="search-box" style="width:120px;" id="chiqim-oy-filter" onchange="filterChiqim()">
+                <option value="">Barcha oylar</option>
+              </select>
+              <button class="btn btn-primary" onclick="openModal('chiqim-modal')">+ Yangi chiqim</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Sana</th><th>ID</th><th>Xodim</th><th>Tur</th><th>Miqdor</th><th>Oy</th><th>Izoh</th><th>Amal</th></tr></thead>
+              <tbody id="chiqim-body"></tbody>
+            </table>
+          </div>
+          <div class="table-footer">
+            <span id="chiqim-count">0 ta yozuv</span>
+            <div style="font-weight:700;" id="chiqim-jami"></div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<!-- MODALS -->
+
+<!-- Xodim Modal -->
+<div class="modal-overlay" id="xodim-modal">
+  <div class="modal">
+    <div class="modal-title" id="xodim-modal-title">Yangi xodim qo'shish</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>ID *</label>
+        <input type="text" id="xodim-id" placeholder="AA0001">
+      </div>
+      <div class="form-group">
+        <label>Ism Familya *</label>
+        <input type="text" id="xodim-ism" placeholder="Aliyev Ali">
+      </div>
+      <div class="form-group">
+        <label>Bo'lim *</label>
+        <select id="xodim-bolim">
+          <option>Bichuv</option><option>Shim</option><option>Kamzul</option>
+          <option>Kamzul OTK</option><option>Tana</option><option>Astar</option>
+          <option>Montaj</option><option>Preslash</option><option>Qaqodlash</option>
+          <option>Xojalik</option><option>Savdo</option><option>Bugalteriya</option>
+          <option>Ombor</option><option>Mexanik</option><option>Dizayner</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Lavozim *</label>
+        <select id="xodim-lavozim">
+          <option>Tikuvchi</option><option>Dazmolchi</option><option>Universal</option>
+          <option>Yordamchi</option><option>Boshqaruvchi</option><option>Sotuvchi</option>
+          <option>Qoriqlovchi</option><option>Export raxbari</option><option>Export yordamchisi</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Qabul sanasi</label>
+        <input type="date" id="xodim-sana">
+      </div>
+      <div class="form-group">
+        <label>Oylik (so'm) *</label>
+        <input type="number" id="xodim-oylik" placeholder="3000000">
+      </div>
+      <div class="form-group">
+        <label>Holati</label>
+        <select id="xodim-holat">
+          <option value="Ishlayapti">Ishlayapti</option>
+          <option value="Chiqib ketgan">Chiqib ketgan</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Ketish sanasi</label>
+        <input type="date" id="xodim-ketish-sana">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal('xodim-modal')">Bekor qilish</button>
+      <button class="btn btn-primary" onclick="saveXodim()">💾 Saqlash</button>
+    </div>
+  </div>
+</div>
+
+<!-- To'lov Modal -->
+<div class="modal-overlay" id="tolov-modal">
+  <div class="modal">
+    <div class="modal-title" id="tolov-modal-title">Yangi to'lov</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Sana *</label>
+        <input type="date" id="tolov-sana">
+      </div>
+      <div class="form-group">
+        <label>Xodim ID *</label>
+        <input type="text" id="tolov-id" placeholder="AA0001" oninput="autoFillXodim('tolov')">
+      </div>
+      <div class="form-group full">
+        <label>Xodim ismi</label>
+        <input type="text" id="tolov-ism" placeholder="Avtomatik to'ladi" readonly style="background:#f8fafc;">
+      </div>
+      <div class="form-group">
+        <label>To'lov turi *</label>
+        <select id="tolov-tur">
+          <option>avans</option>
+          <option>qo'shimcha avans</option>
+          <option>raschyot</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Miqdor (so'm) *</label>
+        <input type="number" id="tolov-miqdor" placeholder="500000">
+      </div>
+      <div class="form-group">
+        <label>Qaysi oy *</label>
+        <select id="tolov-oy">
+          <option>Yanvar</option><option>Fevral</option><option>Mart</option>
+          <option>Aprel</option><option>May</option><option>Iyun</option>
+          <option>Iyul</option><option>Avgust</option><option>Sentyabr</option>
+          <option>Oktyabr</option><option>Noyabr</option><option>Dekabr</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>To'lov usuli</label>
+        <select id="tolov-usul">
+          <option value="Naqd">Naqd</option>
+          <option value="Karta">Karta</option>
+        </select>
+      </div>
+      <div class="form-group full">
+        <label>Izoh</label>
+        <input type="text" id="tolov-izoh" placeholder="Ixtiyoriy">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal('tolov-modal')">Bekor qilish</button>
+      <button class="btn btn-success" onclick="saveTolov()">✅ To'lovni saqlash</button>
+    </div>
+  </div>
+</div>
+
+<!-- Qarz Modal -->
+<div class="modal-overlay" id="qarz-modal">
+  <div class="modal">
+    <div class="modal-title">Yangi qarz</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Sana *</label>
+        <input type="date" id="qarz-sana">
+      </div>
+      <div class="form-group">
+        <label>Xodim ID *</label>
+        <input type="text" id="qarz-id" placeholder="AA0001" oninput="autoFillXodim('qarz')">
+      </div>
+      <div class="form-group full">
+        <label>Xodim ismi</label>
+        <input type="text" id="qarz-ism" placeholder="Avtomatik to'ladi" readonly style="background:#f8fafc;">
+      </div>
+      <div class="form-group">
+        <label>Miqdor (so'm) *</label>
+        <input type="number" id="qarz-miqdor" placeholder="1000000">
+      </div>
+      <div class="form-group">
+        <label>Qaysi oy *</label>
+        <select id="qarz-oy">
+          <option>Yanvar</option><option>Fevral</option><option>Mart</option>
+          <option>Aprel</option><option>May</option><option>Iyun</option>
+          <option>Iyul</option><option>Avgust</option><option>Sentyabr</option>
+          <option>Oktyabr</option><option>Noyabr</option><option>Dekabr</option>
+        </select>
+      </div>
+      <div class="form-group full">
+        <label>Izoh</label>
+        <input type="text" id="qarz-izoh" placeholder="Sababini yozing">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal('qarz-modal')">Bekor qilish</button>
+      <button class="btn btn-primary" onclick="saveQarz()">💾 Saqlash</button>
+    </div>
+  </div>
+</div>
+
+<!-- Chiqim Modal -->
+<div class="modal-overlay" id="chiqim-modal">
+  <div class="modal">
+    <div class="modal-title">Yangi chiqim</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Sana *</label>
+        <input type="date" id="chiqim-sana">
+      </div>
+      <div class="form-group">
+        <label>Xodim ID *</label>
+        <input type="text" id="chiqim-id" placeholder="AA0001" oninput="autoFillXodim('chiqim')">
+      </div>
+      <div class="form-group full">
+        <label>Xodim ismi</label>
+        <input type="text" id="chiqim-ism" placeholder="Avtomatik to'ladi" readonly style="background:#f8fafc;">
+      </div>
+      <div class="form-group">
+        <label>Tur</label>
+        <select id="chiqim-tur">
+          <option>bonus</option><option>yo'l haqqi</option><option>jarima</option>
+          <option>boshqa</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Miqdor (so'm) *</label>
+        <input type="number" id="chiqim-miqdor" placeholder="300000">
+      </div>
+      <div class="form-group">
+        <label>Qaysi oy *</label>
+        <select id="chiqim-oy">
+          <option>Yanvar</option><option>Fevral</option><option>Mart</option>
+          <option>Aprel</option><option>May</option><option>Iyun</option>
+          <option>Iyul</option><option>Avgust</option><option>Sentyabr</option>
+          <option>Oktyabr</option><option>Noyabr</option><option>Dekabr</option>
+        </select>
+      </div>
+      <div class="form-group full">
+        <label>Izoh</label>
+        <input type="text" id="chiqim-izoh">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal('chiqim-modal')">Bekor qilish</button>
+      <button class="btn btn-primary" onclick="saveChiqim()">💾 Saqlash</button>
+    </div>
+  </div>
+</div>
+
+<!-- LOADING -->
+<div class="loading-overlay" id="loading"><div class="spinner"></div><span>Yuklanmoqda...</span></div>
+
+<!-- TOAST -->
+<div id="toast-container"></div>
+
+<script>
+// ═══════════════ STATE ═══════════════
+let tokenClient, accessToken = null;
+let DATA = { xodimlar: [], naqd: [], karta: [], qarz: [], chiqimlar: [], oylar: {} };
+let currentPage = 'dashboard';
+let currentTolovTab = 'naqd';
+let xodimPage = 1, tolovPage = 1;
+const PAGE_SIZE = 50;
+const OYLAR = ['Yanvar','Fevral','Mart','Aprel','May','Iyun','Iyul','Avgust','Sentyabr','Oktyabr','Noyabr','Dekabr'];
+
+// ═══════════════ GOOGLE AUTH ═══════════════
+function handleLogin() {
+  if (CONFIG.CLIENT_ID === 'YOUR_CLIENT_ID.apps.googleusercontent.com') {
+    showConfigHelp(); return;
+  }
+  if (!tokenClient) {
+    tokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: CONFIG.CLIENT_ID,
+      scope: 'https://www.googleapis.com/auth/spreadsheets',
+      callback: (resp) => {
+        if (resp.error) { toast('Xatolik: ' + resp.error, 'error'); return; }
+        accessToken = resp.access_token;
+        onLoginSuccess();
+      }
+    });
+  }
+  tokenClient.requestAccessToken();
+}
+
+function handleLogout() {
+  if (accessToken) google.accounts.oauth2.revoke(accessToken);
+  accessToken = null;
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+}
+
+async function onLoginSuccess() {
+  const profile = await gapi.client.request({ path: 'https://www.googleapis.com/oauth2/v3/userinfo' }).catch(() => null);
+  if (profile) {
+    const name = profile.result.name || profile.result.email;
+    document.getElementById('user-name').textContent = name;
+    document.getElementById('user-avatar').textContent = name[0].toUpperCase();
+  }
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  await loadAllData();
+  startAutoRefresh();
+}
+
+// ═══════════════ GAPI INIT ═══════════════
+function gapiLoaded() {
+  gapi.load('client', () => {
+    gapi.client.init({ discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'] });
+  });
+}
+window.addEventListener('load', () => {
+  if (typeof gapi !== 'undefined') gapiLoaded();
+});
+
+// ═══════════════ SHEETS API ═══════════════
+async function sheetsGet(range) {
+  const r = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SPREADSHEET_ID}/values/${encodeURIComponent(range)}`,
+    { headers: { Authorization: 'Bearer ' + accessToken } }
+  );
+  if (!r.ok) throw new Error(await r.text());
+  const d = await r.json();
+  return d.values || [];
+}
+
+async function sheetsAppend(sheetName, values) {
+  const r = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SPREADSHEET_ID}/values/${encodeURIComponent(sheetName)}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`,
+    {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ values })
+    }
+  );
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+
+async function sheetsUpdate(range, values) {
+  const r = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SPREADSHEET_ID}/values/${encodeURIComponent(range)}?valueInputOption=USER_ENTERED`,
+    {
+      method: 'PUT',
+      headers: { Authorization: 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ values })
+    }
+  );
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+
+// ═══════════════ DATA LOADING ═══════════════
+async function loadAllData() {
+  setSyncStatus('loading');
+  showLoading(true);
+  try {
+    const [xRaw, naqdRaw, kartaRaw, qarzRaw, chiqRaw] = await Promise.all([
+      sheetsGet('Xodimlar!A2:H5502'),
+      sheetsGet('Naqd!A2:G5000'),
+      sheetsGet('Karta!A2:G5000'),
+      sheetsGet('Qarz!A2:F500'),
+      sheetsGet('Chiqimlar!A2:G500'),
+    ]);
+
+    DATA.xodimlar = xRaw.slice(1).filter(r => r[0]).map(r => ({
+      id: r[0], ism: r[1], bolim: r[2], lavozim: r[3],
+      qabulSana: r[4], ketishSana: r[5], holat: r[6], oylik: parseNum(r[7])
+    }));
+
+    DATA.naqd = naqdRaw.filter(r => r[0]).map(r => ({
+      sana: r[0], id: r[1], ism: r[2], tur: r[3], miqdor: parseNum(r[4]), oy: r[5], izoh: r[6]
+    }));
+
+    DATA.karta = kartaRaw.filter(r => r[0]).map(r => ({
+      sana: r[0], id: r[1], ism: r[2], tur: r[3], miqdor: parseNum(r[4]), oy: r[5], izoh: r[6]
+    }));
+
+    DATA.qarz = qarzRaw.filter(r => r[0]).map(r => ({
+      sana: r[0], id: r[1], ism: r[2], miqdor: parseNum(r[3]), oy: r[4], izoh: r[5]
+    }));
+
+    DATA.chiqimlar = chiqRaw.filter(r => r[0]).map(r => ({
+      sana: r[0], id: r[1], ism: r[2], tur: r[3], miqdor: parseNum(r[4]), oy: r[5], izoh: r[6]
+    }));
+
+    populateFilters();
+    refreshCurrentPage();
+    setSyncStatus('ok');
+    document.getElementById('sync-text').textContent = 'Yangilandi: ' + new Date().toLocaleTimeString('uz');
+  } catch(e) {
+    setSyncStatus('error');
+    toast('Ma\'lumot yuklashda xatolik: ' + e.message, 'error');
+  } finally {
+    showLoading(false);
+  }
+}
+
+function syncNow() { loadAllData(); }
+
+let refreshTimer;
+function startAutoRefresh() {
+  clearInterval(refreshTimer);
+  refreshTimer = setInterval(loadAllData, CONFIG.REFRESH_INTERVAL);
+}
+
+// ═══════════════ PAGES ═══════════════
+function showPage(name) {
+  document.querySelectorAll('[id^="page-"]').forEach(el => el.style.display = 'none');
+  document.getElementById('page-' + name).style.display = 'block';
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+  currentPage = name;
+  const titles = { dashboard:'Dashboard', xodimlar:'Xodimlar', tolovi:"To'lovlar", hisobot:'Oylik Hisobotlar', qarz:'Qarz', chiqimlar:'Chiqimlar' };
+  document.getElementById('page-title').textContent = titles[name] || name;
+  refreshCurrentPage();
+}
+
+function refreshCurrentPage() {
+  if (currentPage === 'dashboard') renderDashboard();
+  else if (currentPage === 'xodimlar') renderXodimlar();
+  else if (currentPage === 'tolovi') renderTolov();
+  else if (currentPage === 'hisobot') loadHisobot();
+  else if (currentPage === 'qarz') renderQarz();
+  else if (currentPage === 'chiqimlar') renderChiqim();
+}
+
+// ═══════════════ DASHBOARD ═══════════════
+function renderDashboard() {
+  const aktiv = DATA.xodimlar.filter(x => x.holat === 'Ishlayapti');
+  const naqdJami = DATA.naqd.reduce((s, r) => s + r.miqdor, 0);
+  const kartaJami = DATA.karta.reduce((s, r) => s + r.miqdor, 0);
+  const chiqJami = DATA.chiqimlar.reduce((s, r) => s + r.miqdor, 0);
+
+  document.getElementById('dashboard-stats').innerHTML = `
+    <div class="stat-card"><div class="stat-icon">👥</div><div><div class="stat-value">${aktiv.length}</div><div class="stat-label">Aktiv xodimlar</div></div></div>
+    <div class="stat-card"><div class="stat-icon">💰</div><div><div class="stat-value number">${fmt(naqdJami)}</div><div class="stat-label">Jami naqd to'lovlar</div></div></div>
+    <div class="stat-card"><div class="stat-icon">💳</div><div><div class="stat-value number">${fmt(kartaJami)}</div><div class="stat-label">Jami karta to'lovlar</div></div></div>
+    <div class="stat-card"><div class="stat-icon">📤</div><div><div class="stat-value number">${fmt(chiqJami)}</div><div class="stat-label">Qo'shimcha chiqimlar</div></div></div>
+  `;
+
+  // Chart
+  const oyTotals = {};
+  DATA.naqd.forEach(r => { oyTotals[r.oy] = (oyTotals[r.oy] || 0) + r.miqdor; });
+  const maxVal = Math.max(...Object.values(oyTotals), 1);
+  document.getElementById('payments-chart').innerHTML = OYLAR.filter(o => oyTotals[o]).map(o => `
+    <div class="chart-bar-wrap">
+      <div class="chart-bar" style="height:${Math.round(oyTotals[o]/maxVal*100)}px;" title="${fmt(oyTotals[o])}"></div>
+      <div class="chart-label">${o.slice(0,3)}</div>
+    </div>
+  `).join('');
+
+  // Bolimlar
+  const bolimlar = {};
+  aktiv.forEach(x => { bolimlar[x.bolim||'?'] = (bolimlar[x.bolim||'?']||0)+1; });
+  const sorted = Object.entries(bolimlar).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const maxB = Math.max(...sorted.map(s=>s[1]), 1);
+  document.getElementById('bolimlar-chart').innerHTML = sorted.map(([b,n]) => `
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+      <div style="width:80px;font-size:12px;color:var(--text2);text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${b}">${b}</div>
+      <div style="flex:1;height:18px;background:#f1f5f9;border-radius:4px;overflow:hidden;">
+        <div style="width:${n/maxB*100}%;height:100%;background:var(--primary);opacity:0.8;"></div>
+      </div>
+      <div style="font-size:12px;font-weight:600;width:24px;">${n}</div>
+    </div>
+  `).join('');
+
+  // So'nggi to'lovlar
+  const recent = [...DATA.naqd, ...DATA.karta].sort((a,b)=>new Date(b.sana)-new Date(a.sana)).slice(0,10);
+  document.getElementById('recent-payments-body').innerHTML = recent.map(r => `
+    <tr>
+      <td>${r.sana}</td><td><code>${r.id||''}</code></td><td>${r.ism||''}</td>
+      <td><span class="badge badge-blue">${r.tur||''}</span></td>
+      <td class="number money">${fmt(r.miqdor)}</td>
+      <td>${r.oy||''}</td>
+    </tr>
+  `).join('') || '<tr><td colspan="6" class="empty-state">Ma\'lumot yo\'q</td></tr>';
+}
+
+// ═══════════════ XODIMLAR ═══════════════
+let filteredXodimlar = [];
+function filterXodimlar() {
+  const q = document.getElementById('xodim-search').value.toLowerCase();
+  const bolim = document.getElementById('xodim-bolim-filter').value;
+  const holat = document.getElementById('xodim-holat-filter').value;
+  filteredXodimlar = DATA.xodimlar.filter(x =>
+    (!q || (x.id||'').toLowerCase().includes(q) || (x.ism||'').toLowerCase().includes(q) || (x.bolim||'').toLowerCase().includes(q)) &&
+    (!bolim || x.bolim === bolim) &&
+    (!holat || x.holat === holat)
+  );
+  xodimPage = 1;
+  renderXodimlarTable();
+}
+
+function renderXodimlar() { filterXodimlar(); }
+
+function renderXodimlarTable() {
+  const start = (xodimPage-1)*PAGE_SIZE;
+  const slice = filteredXodimlar.slice(start, start+PAGE_SIZE);
+  document.getElementById('xodimlar-body').innerHTML = slice.map((x,i) => `
+    <tr>
+      <td><code style="font-size:12px;">${x.id}</code></td>
+      <td><strong>${x.ism||''}</strong></td>
+      <td>${x.bolim||''}</td>
+      <td>${x.lavozim||''}</td>
+      <td style="font-size:12px;">${x.qabulSana||''}</td>
+      <td class="number">${fmt(x.oylik)}</td>
+      <td><span class="badge ${x.holat==='Ishlayapti'?'badge-green':'badge-gray'}">${x.holat||''}</span></td>
+      <td><button class="btn btn-outline btn-sm" onclick="editXodim(${start+i})">✏️</button></td>
+    </tr>
+  `).join('') || '<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">🔍</div>Natija topilmadi</div></td></tr>';
+
+  document.getElementById('xodim-count').textContent = `${filteredXodimlar.length} ta xodim`;
+  renderPagination('xodim-pagination', filteredXodimlar.length, xodimPage, (p)=>{ xodimPage=p; renderXodimlarTable(); });
+}
+
+function editXodim(idx) {
+  const x = filteredXodimlar[idx];
+  document.getElementById('xodim-modal-title').textContent = 'Xodimni tahrirlash';
+  document.getElementById('xodim-id').value = x.id;
+  document.getElementById('xodim-ism').value = x.ism||'';
+  document.getElementById('xodim-bolim').value = x.bolim||'';
+  document.getElementById('xodim-lavozim').value = x.lavozim||'';
+  document.getElementById('xodim-sana').value = formatDate(x.qabulSana);
+  document.getElementById('xodim-ketish-sana').value = formatDate(x.ketishSana);
+  document.getElementById('xodim-oylik').value = x.oylik||'';
+  document.getElementById('xodim-holat').value = x.holat||'Ishlayapti';
+  openModal('xodim-modal');
+}
+
+async function saveXodim() {
+  const id = val('xodim-id'), ism = val('xodim-ism'), oylik = val('xodim-oylik');
+  if (!id || !ism || !oylik) { toast('Majburiy maydonlarni to\'ldiring', 'warning'); return; }
+
+  const row = [id, ism, val('xodim-bolim'), val('xodim-lavozim'),
+    val('xodim-sana'), val('xodim-ketish-sana'), val('xodim-holat'), oylik];
+
+  // Mavjud xodimni topish
+  const existing = DATA.xodimlar.findIndex(x => x.id === id);
+  try {
+    if (existing >= 0) {
+      // Update — row 3 + index (header rows 1-2)
+      await sheetsUpdate(`Xodimlar!A${existing+3}:H${existing+3}`, [row]);
+      toast('Xodim yangilandi ✅', 'success');
+    } else {
+      await sheetsAppend('Xodimlar', [row]);
+      toast('Yangi xodim qo\'shildi ✅', 'success');
+    }
+    closeModal('xodim-modal');
+    await loadAllData();
+  } catch(e) { toast('Xatolik: ' + e.message, 'error'); }
+}
+
+// ═══════════════ TO'LOVLAR ═══════════════
+function switchTab(tab) {
+  currentTolovTab = tab;
+  document.querySelectorAll('#tolov-tabs .tab').forEach((t,i) => t.classList.toggle('active', (i===0&&tab==='naqd')||(i===1&&tab==='karta')));
+  document.getElementById('tolov-tab-title').textContent = tab === 'naqd' ? 'Naqd to\'lovlar' : 'Karta to\'lovlar';
+  filterTolov();
+}
+
+let filteredTolov = [];
+function filterTolov() {
+  const q = document.getElementById('tolov-search').value.toLowerCase();
+  const oy = document.getElementById('tolov-oy-filter').value;
+  const src = currentTolovTab === 'naqd' ? DATA.naqd : DATA.karta;
+  filteredTolov = src.filter(r =>
+    (!q || (r.id||'').toLowerCase().includes(q) || (r.ism||'').toLowerCase().includes(q)) &&
+    (!oy || r.oy === oy)
+  ).sort((a,b) => new Date(b.sana) - new Date(a.sana));
+  renderTolovTable();
+}
+
+function renderTolov() { filterTolov(); }
+
+function renderTolovTable() {
+  document.getElementById('tolov-body').innerHTML = filteredTolov.map(r => `
+    <tr>
+      <td style="font-size:12px;">${r.sana}</td>
+      <td><code style="font-size:12px;">${r.id||''}</code></td>
+      <td>${r.ism||''}</td>
+      <td><span class="badge badge-blue">${r.tur||''}</span></td>
+      <td class="number money">${fmt(r.miqdor)}</td>
+      <td>${r.oy||''}</td>
+      <td style="font-size:12px;color:var(--text2);">${r.izoh||''}</td>
+      <td></td>
+    </tr>
+  `).join('') || '<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">💸</div>To\'lovlar yo\'q</div></td></tr>';
+
+  const jami = filteredTolov.reduce((s,r)=>s+r.miqdor,0);
+  document.getElementById('tolov-count').textContent = `${filteredTolov.length} ta to'lov`;
+  document.getElementById('tolov-jami').innerHTML = `Jami: <span class="money">${fmt(jami)} so'm</span>`;
+}
+
+function openTolovModal() {
+  document.getElementById('tolov-sana').value = today();
+  document.getElementById('tolov-id').value = '';
+  document.getElementById('tolov-ism').value = '';
+  document.getElementById('tolov-miqdor').value = '';
+  document.getElementById('tolov-usul').value = currentTolovTab === 'karta' ? 'Karta' : 'Naqd';
+  openModal('tolov-modal');
+}
+
+async function saveTolov() {
+  const sana=val('tolov-sana'), id=val('tolov-id'), miqdor=val('tolov-miqdor'), oy=val('tolov-oy');
+  if (!sana||!id||!miqdor||!oy) { toast('Majburiy maydonlarni to\'ldiring','warning'); return; }
+  const usul = val('tolov-usul');
+  const sheet = usul === 'Karta' ? 'Karta' : 'Naqd';
+  const row = [sana, id, val('tolov-ism'), val('tolov-tur'), miqdor, oy, val('tolov-izoh')];
+  try {
+    await sheetsAppend(sheet, [row]);
+    toast(`${usul} to'lov saqlandi ✅`, 'success');
+    closeModal('tolov-modal');
+    await loadAllData();
+  } catch(e) { toast('Xatolik: '+e.message,'error'); }
+}
+
+// ═══════════════ HISOBOT ═══════════════
+let hisobotData = [];
+function loadHisobot() {
+  const oy = document.getElementById('hisobot-oy-select').value;
+  document.getElementById('hisobot-title').textContent = oy + ' — Hisobot';
+
+  // Xodimlar + o'sha oy to'lovlari birlashtirish
+  const naqdByID = {};
+  const kartaByID = {};
+  DATA.naqd.filter(r=>r.oy===oy).forEach(r => naqdByID[r.id] = (naqdByID[r.id]||0) + r.miqdor);
+  DATA.karta.filter(r=>r.oy===oy).forEach(r => kartaByID[r.id] = (kartaByID[r.id]||0) + r.miqdor);
+
+  hisobotData = DATA.xodimlar.filter(x => x.holat === 'Ishlayapti').map(x => ({
+    ...x,
+    naqdTolov: naqdByID[x.id]||0,
+    kartaTolov: kartaByID[x.id]||0,
+    hisob: (naqdByID[x.id]||0) + (kartaByID[x.id]||0),
+  }));
+
+  // Stats
+  const jami = hisobotData.reduce((s,r)=>s+r.oylik,0);
+  const naqdJ = hisobotData.reduce((s,r)=>s+r.naqdTolov,0);
+  const kartaJ = hisobotData.reduce((s,r)=>s+r.kartaTolov,0);
+  document.getElementById('hisobot-stats').innerHTML = `
+    <div class="stat-card"><div class="stat-icon">👥</div><div><div class="stat-value">${hisobotData.length}</div><div class="stat-label">Aktiv xodimlar</div></div></div>
+    <div class="stat-card"><div class="stat-icon">💼</div><div><div class="stat-value number">${fmt(jami)}</div><div class="stat-label">Jami oylik fond</div></div></div>
+    <div class="stat-card"><div class="stat-icon">💵</div><div><div class="stat-value number">${fmt(naqdJ)}</div><div class="stat-label">Naqd to'langan</div></div></div>
+    <div class="stat-card"><div class="stat-icon">💳</div><div><div class="stat-value number">${fmt(kartaJ)}</div><div class="stat-label">Karta to'langan</div></div></div>
+  `;
+  filterHisobot();
+}
+
+function filterHisobot() {
+  const q = document.getElementById('hisobot-search').value.toLowerCase();
+  const filtered = hisobotData.filter(x => !q || (x.id||'').toLowerCase().includes(q) || (x.ism||'').toLowerCase().includes(q));
+  document.getElementById('hisobot-body').innerHTML = filtered.map(x => `
+    <tr>
+      <td><code style="font-size:12px;">${x.id}</code></td>
+      <td>${x.ism||''}</td><td>${x.bolim||''}</td><td>${x.lavozim||''}</td>
+      <td class="number ${x.avvalgi<0?'money-neg':'money'}">${fmt(0)}</td>
+      <td class="number">${fmt(x.oylik)}</td>
+      <td class="number">${fmt(x.oylik)}</td>
+      <td class="number">${fmt(x.naqdTolov)}</td>
+      <td class="number">${fmt(x.kartaTolov)}</td>
+      <td class="number ${x.hisob<0?'money-neg':'money'}">${fmt(x.hisob)}</td>
+    </tr>
+  `).join('') || '<tr><td colspan="10"><div class="empty-state"><div class="empty-icon">📊</div>Ma\'lumot yo\'q</div></td></tr>';
+  document.getElementById('hisobot-count').textContent = filtered.length + ' ta xodim';
+}
+
+function exportCSV() {
+  const oy = document.getElementById('hisobot-oy-select').value;
+  const rows = [['ID','Xodim','Bolim','Lavozim','Oylik','Naqd','Karta','Hisob']];
+  hisobotData.forEach(x => rows.push([x.id,x.ism,x.bolim,x.lavozim,x.oylik,x.naqdTolov,x.kartaTolov,x.hisob]));
+  const csv = rows.map(r=>r.map(c=>`"${c||''}"`).join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,﻿'+encodeURIComponent(csv);
+  a.download = `hisobot_${oy}.csv`; a.click();
+}
+
+// ═══════════════ QARZ ═══════════════
+function filterQarz() {
+  const q = document.getElementById('qarz-search').value.toLowerCase();
+  const filtered = DATA.qarz.filter(r => !q || (r.id||'').toLowerCase().includes(q) || (r.ism||'').toLowerCase().includes(q));
+  document.getElementById('qarz-body').innerHTML = filtered.map(r => `
+    <tr>
+      <td style="font-size:12px;">${r.sana}</td>
+      <td><code style="font-size:12px;">${r.id||''}</code></td>
+      <td>${r.ism||''}</td>
+      <td class="number money">${fmt(r.miqdor)}</td>
+      <td class="number">—</td>
+      <td class="number money-neg">${fmt(r.miqdor)}</td>
+      <td style="font-size:12px;">${r.izoh||''}</td>
+    </tr>
+  `).join('') || '<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">🏦</div>Qarz yo\'q</div></td></tr>';
+  document.getElementById('qarz-count').textContent = filtered.length + ' ta yozuv';
+}
+function renderQarz() { filterQarz(); }
+
+async function saveQarz() {
+  const sana=val('qarz-sana'), id=val('qarz-id'), miqdor=val('qarz-miqdor'), oy=val('qarz-oy');
+  if (!sana||!id||!miqdor) { toast('Majburiy maydonlarni to\'ldiring','warning'); return; }
+  try {
+    await sheetsAppend('Qarz', [[sana, id, val('qarz-ism'), miqdor, oy, val('qarz-izoh')]]);
+    toast('Qarz saqlandi ✅', 'success');
+    closeModal('qarz-modal');
+    await loadAllData();
+  } catch(e) { toast('Xatolik: '+e.message,'error'); }
+}
+
+// ═══════════════ CHIQIMLAR ═══════════════
+function filterChiqim() {
+  const q = document.getElementById('chiqim-search').value.toLowerCase();
+  const oy = document.getElementById('chiqim-oy-filter').value;
+  const filtered = DATA.chiqimlar.filter(r =>
+    (!q || (r.id||'').toLowerCase().includes(q) || (r.ism||'').toLowerCase().includes(q) || (r.tur||'').toLowerCase().includes(q)) &&
+    (!oy || r.oy === oy)
+  );
+  document.getElementById('chiqim-body').innerHTML = filtered.map(r => `
+    <tr>
+      <td style="font-size:12px;">${r.sana}</td>
+      <td><code style="font-size:12px;">${r.id||''}</code></td>
+      <td>${r.ism||''}</td>
+      <td><span class="badge badge-yellow">${r.tur||''}</span></td>
+      <td class="number money">${fmt(r.miqdor)}</td>
+      <td>${r.oy||''}</td>
+      <td style="font-size:12px;">${r.izoh||''}</td>
+      <td></td>
+    </tr>
+  `).join('') || '<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">📤</div>Chiqim yo\'q</div></td></tr>';
+  const jami = filtered.reduce((s,r)=>s+r.miqdor,0);
+  document.getElementById('chiqim-count').textContent = filtered.length + ' ta yozuv';
+  document.getElementById('chiqim-jami').innerHTML = `Jami: <span class="money">${fmt(jami)} so'm</span>`;
+}
+function renderChiqim() { filterChiqim(); }
+
+async function saveChiqim() {
+  const sana=val('chiqim-sana'), id=val('chiqim-id'), miqdor=val('chiqim-miqdor'), oy=val('chiqim-oy');
+  if (!sana||!id||!miqdor) { toast('Majburiy maydonlarni to\'ldiring','warning'); return; }
+  try {
+    await sheetsAppend('Chiqimlar', [[sana, id, val('chiqim-ism'), val('chiqim-tur'), miqdor, oy, val('chiqim-izoh')]]);
+    toast('Chiqim saqlandi ✅', 'success');
+    closeModal('chiqim-modal');
+    await loadAllData();
+  } catch(e) { toast('Xatolik: '+e.message,'error'); }
+}
+
+// ═══════════════ HELPERS ═══════════════
+function populateFilters() {
+  // Xodim bolimlar
+  const bolimlar = [...new Set(DATA.xodimlar.map(x=>x.bolim).filter(Boolean))].sort();
+  const bf = document.getElementById('xodim-bolim-filter');
+  bf.innerHTML = '<option value="">Barcha bo\'limlar</option>' + bolimlar.map(b=>`<option>${b}</option>`).join('');
+
+  // To'lov oylar
+  const oySet = [...new Set([...DATA.naqd,...DATA.karta].map(r=>r.oy).filter(Boolean))];
+  const oyOpts = '<option value="">Barcha oylar</option>' + OYLAR.filter(o=>oySet.includes(o)).map(o=>`<option>${o}</option>`).join('');
+  document.getElementById('tolov-oy-filter').innerHTML = oyOpts;
+
+  // Chiqim oylar
+  const chiqOy = [...new Set(DATA.chiqimlar.map(r=>r.oy).filter(Boolean))];
+  document.getElementById('chiqim-oy-filter').innerHTML = '<option value="">Barcha oylar</option>' + OYLAR.filter(o=>chiqOy.includes(o)).map(o=>`<option>${o}</option>`).join('');
+
+  // Hisobot — joriy oy tanlash
+  const curMonth = OYLAR[new Date().getMonth()];
+  document.getElementById('hisobot-oy-select').value = curMonth;
+}
+
+function autoFillXodim(prefix) {
+  const id = val(prefix + '-id');
+  const x = DATA.xodimlar.find(x => x.id === id);
+  if (x) document.getElementById(prefix + '-ism').value = x.ism || '';
+}
+
+function renderPagination(containerId, total, current, onPage) {
+  const pages = Math.ceil(total / PAGE_SIZE);
+  if (pages <= 1) { document.getElementById(containerId).innerHTML = ''; return; }
+  let html = '';
+  for (let i = 1; i <= Math.min(pages, 10); i++) {
+    html += `<button class="page-btn ${i===current?'active':''}" onclick="(${onPage})(${i})">${i}</button>`;
+  }
+  document.getElementById(containerId).innerHTML = html;
+}
+
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+  // Set today's date for date fields
+  const dateFields = document.querySelectorAll(`#${id} input[type=date]`);
+  dateFields.forEach(f => { if(!f.value) f.value = today(); });
+}
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+function setSyncStatus(status) {
+  const dot = document.getElementById('sync-dot');
+  dot.className = 'sync-dot' + (status==='loading'?' loading':(status==='error'?' error':''));
+}
+
+function showLoading(show) {
+  document.getElementById('loading').classList.toggle('show', show);
+}
+
+function toast(msg, type='info') {
+  const c = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className = 'toast ' + (type==='success'?'success':type==='error'?'error':type==='warning'?'warning':'');
+  t.innerHTML = `<span>${type==='success'?'✅':type==='error'?'❌':type==='warning'?'⚠️':'ℹ️'}</span> ${msg}`;
+  c.appendChild(t);
+  setTimeout(() => t.remove(), 4000);
+}
+
+function fmt(n) {
+  if (!n || isNaN(n)) return '0';
+  return Math.round(n).toLocaleString('uz-UZ');
+}
+
+function parseNum(v) {
+  if (!v) return 0;
+  const n = parseFloat(String(v).replace(/[^\d.-]/g,''));
+  return isNaN(n) ? 0 : n;
+}
+
+function val(id) { return document.getElementById(id)?.value?.trim() || ''; }
+
+function today() { return new Date().toISOString().split('T')[0]; }
+
+function formatDate(d) {
+  if (!d) return '';
+  if (typeof d === 'string') return d.split('T')[0];
+  return '';
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+}
+
+function showConfigHelp() {
+  openModal('config-help-modal');
+}
+
+// Close modals on overlay click
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) overlay.classList.remove('open');
+  });
+});
+
+// Responsive
+if (window.innerWidth < 768) {
+  document.getElementById('menu-btn').style.display = 'flex';
+}
+
+// Check config
+if (CONFIG.CLIENT_ID === 'YOUR_CLIENT_ID.apps.googleusercontent.com' ||
+    CONFIG.SPREADSHEET_ID === 'YOUR_SPREADSHEET_ID') {
+  document.getElementById('config-warning').style.display = 'block';
+} else {
+  document.getElementById('config-warning').style.display = 'none';
+}
+</script>
+</body>
+</html>
