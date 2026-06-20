@@ -114,14 +114,15 @@ export default function Debts() {
   }
 
   const openEdit = (debt) => {
-    setEditingDebt({ ...debt, amount: String(debt.amount) })
+    setEditingDebt({ ...debt, amount: String(debt.amount), _originalAmount: debt.amount })
     setEditModal(true)
   }
 
   const handleEditSave = () => {
     if (!editingDebt?.person || !editingDebt?.amount) return
     const newAmount = parseFloat(editingDebt.amount)
-    const alreadyPaid = editingDebt.amount - editingDebt.remaining
+    const originalAmount = parseFloat(editingDebt._originalAmount || editingDebt.amount)
+    const alreadyPaid = originalAmount - editingDebt.remaining
     const newRemaining = Math.max(0, newAmount - alreadyPaid)
     const updatedDebt = { ...editingDebt, amount: newAmount, remaining: newRemaining }
     if (family) {
