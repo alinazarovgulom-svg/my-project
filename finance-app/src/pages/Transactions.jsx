@@ -81,7 +81,9 @@ export default function Transactions() {
   }
 
   const openEdit = (tx) => {
-    setEditingTx({ ...tx })
+    // datetime-local input YYYY-MM-DDTHH:mm formatini talab qiladi
+    const date = tx.date?.length === 10 ? tx.date + 'T00:00' : tx.date || ''
+    setEditingTx({ ...tx, date })
     setEditExtraAmounts([])
     setEditModal(true)
   }
