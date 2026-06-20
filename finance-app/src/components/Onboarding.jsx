@@ -29,7 +29,11 @@ export default function Onboarding({ onDone }) {
     const T = (fn, ms) => setTimeout(fn, ms)
     const timers = []
 
-    // Tagline typewriter — starts after KAFTIMDA appears
+    // phase 1: KAFTIMDA chiqadi (150ms)
+    timers.push(T(() => setPhase(1), 150))
+
+    // Tagline typewriter — KAFTIMDA chiqqandan keyin 900ms o'tib boshlaydi
+    // 38 harf × 60ms = ~2.3 soniya yoziladi
     let taglineIv = null
     timers.push(T(() => {
       const tagline = 'KAFTIMDA bilan biznesingiz kaftingizda'
@@ -38,17 +42,18 @@ export default function Onboarding({ onDone }) {
         i++
         setTypedTagline(tagline.slice(0, i))
         if (i >= tagline.length) clearInterval(taglineIv)
-      }, 38)
-    }, 700))
+      }, 60)
+    }, 900))
 
-    timers.push(T(() => setPhase(1), 150))
-    timers.push(T(() => setPhase(2), 2300))
+    // Typewriter tugagach 1 soniya o'qish uchun kutib, keyin o'tadi
+    // 900 + 38×60 + 1000 = ~4200ms
+    timers.push(T(() => setPhase(2), 4200))
     timers.push(T(() => {
       setPhase(3)
       setShowShockwave(true)
       setTimeout(() => setShowShockwave(false), 500)
-    }, 2600))
-    timers.push(T(() => setPhase(4), 2900))
+    }, 4600))
+    timers.push(T(() => setPhase(4), 4900))
 
     // Typewriter for PulBek title
     let typewriterIv = null
@@ -59,18 +64,18 @@ export default function Onboarding({ onDone }) {
         i++
         setTypedTitle(title.slice(0, i))
         if (i >= title.length) clearInterval(typewriterIv)
-      }, 50)
-    }, 2950))
+      }, 60)
+    }, 4950))
 
-    timers.push(T(() => setPhase(5), 3500))
+    timers.push(T(() => setPhase(5), 5600))
 
     FEATURES.forEach((_, idx) => {
       timers.push(T(() => {
         setVisibleFeatures(prev => [...prev, idx])
-      }, 3600 + idx * 60))
+      }, 5700 + idx * 70))
     })
 
-    timers.push(T(() => setShowBtn(true), 3600 + FEATURES.length * 60 + 80))
+    timers.push(T(() => setShowBtn(true), 5700 + FEATURES.length * 70 + 100))
 
     return () => {
       timers.forEach(t => { clearTimeout(t); clearInterval(t) })
@@ -209,7 +214,7 @@ export default function Onboarding({ onDone }) {
           fontStyle: 'italic',
         }}>
           {typedTagline}
-          {typedTagline.length > 0 && typedTagline.length < 38 && (
+          {typedTagline.length > 0 && typedTagline.length < 'KAFTIMDA bilan biznesingiz kaftingizda'.length && (
             <span style={{
               display: 'inline-block',
               width: '1.5px',
