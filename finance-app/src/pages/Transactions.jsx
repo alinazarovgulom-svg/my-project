@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus, Trash2, Search, TrendingUp, TrendingDown, Users, Download, SlidersHorizontal, CheckSquare, Square, X } from 'lucide-react'
+import { Plus, Trash2, Search, TrendingUp, TrendingDown, Users, Download, SlidersHorizontal, CheckSquare, Square, X, Pencil } from 'lucide-react'
 import { useApp, INCOME_CATEGORIES, EXPENSE_CATEGORIES } from '../store/AppContext'
 import Modal from '../components/Modal'
 import AmountInput from '../components/AmountInput'
@@ -291,9 +291,31 @@ export default function Transactions() {
                       {t.note ? `${t.note} · ` : ''}{format(new Date(t.date), t.date?.includes('T') ? 'dd.MM.yyyy HH:mm' : 'dd.MM.yyyy')}
                     </p>
                   </div>
-                  <p className={`text-sm font-semibold flex-shrink-0 ${t.type === 'income' ? 'text-green-400' : 'text-red-400'}`}>
-                    {t.type === 'income' ? '+' : '-'}{fmt(t.amount, t.currency || 'UZS')} {t.currency || 'UZS'}
-                  </p>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <p className={`text-sm font-semibold ${t.type === 'income' ? 'text-green-400' : 'text-red-400'}`}>
+                      {t.type === 'income' ? '+' : '-'}{fmt(t.amount, t.currency || 'UZS')} {t.currency || 'UZS'}
+                    </p>
+                    {canEditTx && (
+                      <button
+                        onPointerDown={e => e.stopPropagation()}
+                        onClick={e => { e.stopPropagation(); openEdit(t) }}
+                        className="p-1.5 rounded-lg active:opacity-60"
+                        style={{ color: 'var(--text-muted)', background: 'var(--bg-card2)' }}
+                      >
+                        <Pencil size={13} />
+                      </button>
+                    )}
+                    {showDelete && (
+                      <button
+                        onPointerDown={e => e.stopPropagation()}
+                        onClick={e => { e.stopPropagation(); handleDelete(t.id, isFamily) }}
+                        className="p-1.5 rounded-lg active:opacity-60"
+                        style={{ color: '#f87171', background: 'rgba(239,68,68,0.08)' }}
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    )}
+                  </div>
                 </div>
               </SwipeableRow>
             )
