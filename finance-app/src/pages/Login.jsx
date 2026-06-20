@@ -25,6 +25,7 @@ export default function Login() {
   const [typedTagline, setTypedTagline] = useState('')
   const [glitchActive, setGlitchActive] = useState(false)
   const [splitOpen, setSplitOpen] = useState(false)
+  const [splitDone, setSplitDone] = useState(false)
   const [showForm, setShowForm] = useState(false)
   const [formMounted, setFormMounted] = useState(false)
 
@@ -75,11 +76,12 @@ export default function Login() {
       setSplitOpen(true)
     }, 4200))
 
-    // Show form
+    // Show form, then remove curtain
     timers.push(T(() => {
       setShowForm(true)
       requestAnimationFrame(() => requestAnimationFrame(() => setFormMounted(true)))
     }, 4600))
+    timers.push(T(() => setSplitDone(true), 5200))
 
     return () => {
       timers.forEach(clearTimeout)
@@ -349,7 +351,7 @@ export default function Login() {
       )}
 
       {/* ── SPLIT CURTAIN ── */}
-      {splitOpen && (
+      {splitOpen && !splitDone && (
         <>
           <div style={{
             position: 'fixed', inset: 0, zIndex: 200,
