@@ -4,18 +4,18 @@
 
 /* ── Theme variables ── */
 :root {
-  --bg-page:    #08080f;
-  --bg-card:    rgba(255,255,255,0.025);
-  --bg-card2:   rgba(255,255,255,0.04);
-  --bg-input:   rgba(255,255,255,0.04);
-  --border-card: rgba(255,255,255,0.05);
-  --border-input: rgba(255,255,255,0.08);
-  --border-soft: rgba(255,255,255,0.06);
+  --bg-page:    #000000;
+  --bg-card:    rgba(255,255,255,0.06);
+  --bg-card2:   rgba(255,255,255,0.09);
+  --bg-input:   rgba(255,255,255,0.06);
+  --border-card: rgba(255,255,255,0.08);
+  --border-input: rgba(255,255,255,0.12);
+  --border-soft: rgba(255,255,255,0.08);
   --text-primary: #ffffff;
-  --text-secondary: #9ca3af;
-  --text-muted: #4b5563;
-  --nav-bg: rgba(8,8,15,0.97);
-  --nav-border: rgba(255,255,255,0.04);
+  --text-secondary: #a1a1aa;
+  --text-muted: #52525b;
+  --nav-bg: rgba(0,0,0,0.97);
+  --nav-border: rgba(255,255,255,0.08);
   --swipe-delete-bg: rgba(239,68,68,0.15);
   --swipe-delete-color: #f87171;
   --swipe-edit-bg: rgba(59,130,246,0.15);
@@ -23,18 +23,18 @@
 }
 
 [data-theme="light"] {
-  --bg-page:    #f0f2f8;
-  --bg-card:    #ffffff;
-  --bg-card2:   #f5f7ff;
-  --bg-input:   #f0f2f8;
-  --border-card: rgba(0,0,0,0.07);
-  --border-input: rgba(0,0,0,0.1);
-  --border-soft: rgba(0,0,0,0.06);
-  --text-primary: #111827;
-  --text-secondary: #6b7280;
-  --text-muted: #9ca3af;
-  --nav-bg: rgba(240,242,248,0.97);
-  --nav-border: rgba(0,0,0,0.07);
+  --bg-page:    #ffffff;
+  --bg-card:    #f4f4f5;
+  --bg-card2:   #e4e4e7;
+  --bg-input:   #f4f4f5;
+  --border-card: rgba(0,0,0,0.08);
+  --border-input: rgba(0,0,0,0.12);
+  --border-soft: rgba(0,0,0,0.07);
+  --text-primary: #000000;
+  --text-secondary: #52525b;
+  --text-muted: #a1a1aa;
+  --nav-bg: rgba(255,255,255,0.97);
+  --nav-border: rgba(0,0,0,0.08);
   --swipe-delete-bg: rgba(239,68,68,0.1);
   --swipe-delete-color: #dc2626;
   --swipe-edit-bg: rgba(59,130,246,0.1);
@@ -171,9 +171,10 @@ nav button:active { transform: scale(0.90); }
   [data-theme="light"] select.input-field { color-scheme: light; }
 }
 
-[data-theme="light"] .text-white { color: #111827 !important; }
-[data-theme="light"] .text-gray-400 { color: #6b7280 !important; }
-[data-theme="light"] .text-gray-500 { color: #9ca3af !important; }
-[data-theme="light"] .text-gray-600 { color: #6b7280 !important; }
-[data-theme="light"] .placeholder-gray-600::placeholder { color: #9ca3af !important; }
-[data-theme="light"] .bg-dark-900, [data-theme="light"] .bg-dark-800, [data-theme="light"] .bg-dark-700, [data-theme="light"] .bg-dark-600 { background-color: #f0f2f8 !important; }
+[data-theme="light"] .text-white { color: #000000 !important; }
+[data-theme="light"] .text-gray-300 { color: #3f3f46 !important; }
+[data-theme="light"] .text-gray-400 { color: #52525b !important; }
+[data-theme="light"] .text-gray-500 { color: #71717a !important; }
+[data-theme="light"] .text-gray-600 { color: #52525b !important; }
+[data-theme="light"] .placeholder-gray-600::placeholder { color: #a1a1aa !important; }
+[data-theme="light"] .bg-dark-900, [data-theme="light"] .bg-dark-800, [data-theme="light"] .bg-dark-700, [data-theme="light"] .bg-dark-600 { background-color: #ffffff !important; }
