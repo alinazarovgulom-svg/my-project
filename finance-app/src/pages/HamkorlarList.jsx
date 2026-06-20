@@ -62,7 +62,7 @@ export default function HamkorlarList() {
                 className="flex items-center gap-3 rounded-2xl p-4 w-full text-left active:scale-95 transition-transform" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-card)' }}
               >
                 <div className="w-11 h-11 rounded-xl bg-blue-500/20 flex items-center justify-center flex-shrink-0">
-                  <span className="text-white font-bold text-base">{h.name.charAt(0).toUpperCase()}</span>
+                  <span className="font-bold text-base text-blue-500">{h.name.charAt(0).toUpperCase()}</span>
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold truncate" style={{ color: 'var(--text-primary)' }}>{h.name}</p>
@@ -73,16 +73,23 @@ export default function HamkorlarList() {
                   )}
                 </div>
                 <div className="text-right flex-shrink-0">
-                  {allPaid ? (
+                  {debts.filter(d => d.val > 0).map(({ cur, val }) => (
+                    <p key={cur} className="text-sm font-bold text-red-400 leading-tight">
+                      {fmtCur(val, cur)} <span className="text-xs font-normal opacity-70">{cur}</span>
+                    </p>
+                  ))}
+                  {debts.filter(d => d.val < 0).map(({ cur, val }) => (
+                    <p key={cur} className="text-sm font-bold text-blue-400 leading-tight">
+                      {fmtCur(Math.abs(val), cur)} <span className="text-xs font-normal opacity-70">{cur}</span>
+                    </p>
+                  ))}
+                  {debts.length === 0 || debts.every(d => d.val === 0) ? (
                     <p className="text-sm font-bold text-green-400">Qarz yo'q</p>
-                  ) : (
-                    debts.filter(d => d.val > 0).map(({ cur, val }) => (
-                      <p key={cur} className="text-sm font-bold text-red-400 leading-tight">
-                        {fmtCur(val, cur)} <span className="text-xs font-normal opacity-70">{cur}</span>
-                      </p>
-                    ))
-                  )}
+                  ) : null}
                   {hasDebt && <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>qarz</p>}
+                  {debts.some(d => d.val < 0) && !hasDebt && (
+                    <p className="text-xs mt-0.5 text-blue-400">haqdor</p>
+                  )}
                 </div>
                 <ChevronRight size={16} className="ml-1" style={{ color: 'var(--text-muted)' }} />
               </button>
