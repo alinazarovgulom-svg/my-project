@@ -4,7 +4,7 @@ import { ArrowLeft, Plus, ChevronRight, Phone, Users } from 'lucide-react'
 import { useApp } from '../store/AppContext'
 import Modal from '../components/Modal'
 import { generateId } from '../store/storage'
-import { calcDebt, getSections, getPartners, savePartners } from '../store/hamkorlar'
+import { calcDebtByCurrency, getSections, getPartners, savePartners } from '../store/hamkorlar'
 import { fmtCur } from '../utils/format'
 
 export default function HamkorlarList() {
@@ -52,7 +52,9 @@ export default function HamkorlarList() {
             </div>
           )}
           {list.map(h => {
-            const debt = calcDebt(h.entries)
+            const debts = calcDebtByCurrency(h.entries || [])
+            const hasDebt = debts.some(d => d.val > 0)
+            const allPaid = debts.length === 0 || debts.every(d => d.val <= 0)
             return (
               <button
                 key={h.id}
@@ -65,18 +67,24 @@ export default function HamkorlarList() {
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold truncate" style={{ color: 'var(--text-primary)' }}>{h.name}</p>
                   {h.phone && (
-                    <p className="text-gray-500 text-xs flex items-center gap-1 mt-0.5">
+                    <p className="text-xs flex items-center gap-1 mt-0.5" style={{ color: 'var(--text-muted)' }}>
                       <Phone size={10} />{h.phone}
                     </p>
                   )}
                 </div>
                 <div className="text-right flex-shrink-0">
-                  <p className={`text-sm font-bold ${debt > 0 ? 'text-red-400' : 'text-green-400'}`}>
-                    {debt > 0 ? fmtCur(debt, 'UZS') : 'Qarz yo\'q'}
-                  </p>
-                  {debt > 0 && <p className="text-gray-500 text-xs">qarz</p>}
+                  {allPaid ? (
+                    <p className="text-sm font-bold text-green-400">Qarz yo'q</p>
+                  ) : (
+                    debts.filter(d => d.val > 0).map(({ cur, val }) => (
+                      <p key={cur} className="text-sm font-bold text-red-400 leading-tight">
+                        {fmtCur(val, cur)} <span className="text-xs font-normal opacity-70">{cur}</span>
+                      </p>
+                    ))
+                  )}
+                  {hasDebt && <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>qarz</p>}
                 </div>
-                <ChevronRight size={16} className="text-gray-600 ml-1" />
+                <ChevronRight size={16} className="ml-1" style={{ color: 'var(--text-muted)' }} />
               </button>
             )
           })}

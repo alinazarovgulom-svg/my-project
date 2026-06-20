@@ -44,6 +44,33 @@ export const calcDebt = (entries = []) =>
     return sum
   }, 0)
 
+// Valyuta bo'yicha qarz hisoblash: { UZS: 50000, USD: -100, ... }
+export const calcDebtByCurrency = (entries = []) => {
+  const byCur = {}
+  entries.forEach(e => {
+    const cur = e.currency || 'UZS'
+    if (!byCur[cur]) byCur[cur] = 0
+    if (e.entryType === 'tolov') {
+      const pCur = e.paidCurrency || cur
+      if (!byCur[pCur]) byCur[pCur] = 0
+      byCur[pCur] -= e.paidAmount || e.amount
+      // if converted debt currency differs
+      if (e.currency && e.currency !== pCur) {
+        if (!byCur[e.currency]) byCur[e.currency] = 0
+        byCur[e.currency] += e.amount
+      }
+    } else if (e.entryType === 'xomashyo') {
+      byCur[cur] += e.totalPrice || 0
+    } else if (e.entryType === 'xizmat') {
+      byCur[cur] += e.amount || 0
+    }
+  })
+  // Faqat noldan farqli valyutalarni qaytarish
+  return Object.entries(byCur)
+    .filter(([, v]) => Math.abs(v) > 0.001)
+    .map(([cur, val]) => ({ cur, val }))
+}
+
 // Sections
 export const getSections = (uid) => getData('hamkorlar_sections', uid)
 export const saveSections = (uid, sections) => save('hamkorlar_sections', uid, sections)

@@ -4,7 +4,7 @@ import { ArrowLeft, Plus, CreditCard, Trash2, Package, Wrench, Banknote, Pencil,
 import { useApp } from '../store/AppContext'
 import Modal from '../components/Modal'
 import { generateId } from '../store/storage'
-import { calcDebt, archiveEntry, getArchive, restoreEntry, deleteFromArchive, getPartners, savePartners } from '../store/hamkorlar'
+import { calcDebt, calcDebtByCurrency, archiveEntry, getArchive, restoreEntry, deleteFromArchive, getPartners, savePartners } from '../store/hamkorlar'
 import { fmtCur } from '../utils/format'
 import { formatDistanceToNow, format } from 'date-fns'
 import { uz } from 'date-fns/locale'
@@ -138,8 +138,12 @@ export default function HamkorDetail() {
       </tr>`
     }).join('')
 
-    const debtColor = debtVal > 0 ? '#dc2626' : '#16a34a'
-    const debtText = debtVal > 0 ? fmtCur(debtVal, 'UZS') : "To'liq to'langan ✓"
+    const debtByCurAll = calcDebtByCurrency(entries)
+    const activeDebts = debtByCurAll.filter(d => d.val > 0)
+    const debtColor = activeDebts.length > 0 ? '#dc2626' : '#16a34a'
+    const debtText = activeDebts.length > 0
+      ? activeDebts.map(({ cur, val }) => `${fmtCur(val, cur)} ${cur}`).join(' + ')
+      : "To'liq to'langan ✓"
 
     const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
     <title>${hamkor.name} hisobot</title>
@@ -357,6 +361,7 @@ export default function HamkorDetail() {
   const allEntries = [...(hamkor.entries || [])].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
   const sortedEntries = filterEntries(allEntries)
   const debt = calcDebt(sortedEntries)
+  const debtByCur = calcDebtByCurrency(sortedEntries)
 
   const entryLabel = (e) => {
     if (e.entryType === 'xomashyo') return `${e.name} — ${e.qty} ${e.unit} × ${fmtCur(e.price, e.currency)} = ${fmtCur(e.totalPrice, e.currency)}`
@@ -394,10 +399,16 @@ export default function HamkorDetail() {
 
           {/* Debt badge */}
           <div className={`rounded-2xl p-4 ${debt > 0 ? 'bg-red-500/15 border border-red-500/20' : 'bg-green-500/15 border border-green-500/20'}`}>
-            <p className="text-gray-400 text-xs mb-1">Umumiy qarz</p>
-            <p className={`text-2xl font-black ${debt > 0 ? 'text-red-400' : 'text-green-400'}`}>
-              {debt > 0 ? fmtCur(debt, 'UZS') : 'Qarz yo\'q'}
-            </p>
+            <p className="text-xs mb-1" style={{ color: 'var(--text-secondary)' }}>Umumiy qarz</p>
+            {debtByCur.filter(d => d.val > 0).length > 0 ? (
+              debtByCur.filter(d => d.val > 0).map(({ cur, val }) => (
+                <p key={cur} className="text-2xl font-black text-red-400 leading-tight">
+                  {fmtCur(val, cur)} <span className="text-sm font-medium opacity-70">{cur}</span>
+                </p>
+              ))
+            ) : (
+              <p className="text-2xl font-black text-green-400">Qarz yo'q</p>
+            )}
           </div>
         </div>
 
