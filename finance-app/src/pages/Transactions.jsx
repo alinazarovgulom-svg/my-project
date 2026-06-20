@@ -10,6 +10,7 @@ import { format } from 'date-fns'
 import * as XLSX from 'xlsx'
 import { fmtCur } from '../utils/format'
 import { exportTransactionsPDF } from '../utils/pdfExport'
+import { notifyNewTransaction } from '../utils/notifications'
 import EmptyState from '../components/EmptyState'
 
 const EMOJIS = { income: '💰', expense: '💸' }
@@ -76,6 +77,7 @@ export default function Transactions() {
     }
     setModal(false)
     showToast(form.type === 'income' ? 'Kirim saqlandi ✓' : 'Chiqim saqlandi ✓')
+    notifyNewTransaction(newTxs[0])
   }
 
   const openEdit = (tx) => {

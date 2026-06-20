@@ -7,6 +7,7 @@ import { migrateLocalUsers } from './auth'
 import { getUserWorkspaceId, subscribeToWorkspace } from './workspace'
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from './firebase'
+import { requestNotificationPermission, checkDebtDueNotifications } from '../utils/notifications'
 
 const AppContext = createContext(null)
 
@@ -57,6 +58,13 @@ export function AppProvider({ children }) {
 
   const uid = user?.id
 
+  // Notification permission — foydalanuvchi kirganida so'rash
+  useEffect(() => {
+    if (!uid) return
+    const timer = setTimeout(() => requestNotificationPermission(), 3000)
+    return () => clearTimeout(timer)
+  }, [uid])
+
   // Workspace real-time subscription
   useEffect(() => {
     if (!workspaceId) { setWorkspace(null); return }
@@ -103,7 +111,11 @@ export function AppProvider({ children }) {
         loadFromCloud(uid, 'pin'),
       ])
       if (cloudTx) { setTransactions(cloudTx); if (!wid) saveData('transactions', uid, cloudTx) }
-      if (cloudDebts) { setDebts(cloudDebts); if (!wid) saveData('debts', uid, cloudDebts) }
+      if (cloudDebts) {
+        setDebts(cloudDebts)
+        if (!wid) saveData('debts', uid, cloudDebts)
+        checkDebtDueNotifications(cloudDebts)
+      }
       if (cloudSettings?.rates) { setSettingsState(cloudSettings); saveSettings(uid, cloudSettings) }
       if (cloudCats) {
         setCategoriesState(cloudCats)
