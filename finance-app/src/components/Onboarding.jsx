@@ -23,21 +23,34 @@ export default function Onboarding({ onDone }) {
   const [visibleFeatures, setVisibleFeatures] = useState([])
   const [showBtn, setShowBtn] = useState(false)
   const [typedTitle, setTypedTitle] = useState('')
+  const [typedTagline, setTypedTagline] = useState('')
 
   useEffect(() => {
     const T = (fn, ms) => setTimeout(fn, ms)
     const timers = []
 
+    // Tagline typewriter — starts after KAFTIMDA appears
+    let taglineIv = null
+    timers.push(T(() => {
+      const tagline = 'KAFTIMDA bilan biznesingiz kaftingizda'
+      let i = 0
+      taglineIv = setInterval(() => {
+        i++
+        setTypedTagline(tagline.slice(0, i))
+        if (i >= tagline.length) clearInterval(taglineIv)
+      }, 38)
+    }, 700))
+
     timers.push(T(() => setPhase(1), 150))
-    timers.push(T(() => setPhase(2), 700))
+    timers.push(T(() => setPhase(2), 2300))
     timers.push(T(() => {
       setPhase(3)
       setShowShockwave(true)
       setTimeout(() => setShowShockwave(false), 500)
-    }, 1000))
-    timers.push(T(() => setPhase(4), 1300))
+    }, 2600))
+    timers.push(T(() => setPhase(4), 2900))
 
-    // Typewriter
+    // Typewriter for PulBek title
     let typewriterIv = null
     timers.push(T(() => {
       const title = 'PulBek'
@@ -47,21 +60,22 @@ export default function Onboarding({ onDone }) {
         setTypedTitle(title.slice(0, i))
         if (i >= title.length) clearInterval(typewriterIv)
       }, 50)
-    }, 1350))
+    }, 2950))
 
-    timers.push(T(() => setPhase(5), 1900))
+    timers.push(T(() => setPhase(5), 3500))
 
     FEATURES.forEach((_, idx) => {
       timers.push(T(() => {
         setVisibleFeatures(prev => [...prev, idx])
-      }, 2000 + idx * 60))
+      }, 3600 + idx * 60))
     })
 
-    timers.push(T(() => setShowBtn(true), 2000 + FEATURES.length * 60 + 80))
+    timers.push(T(() => setShowBtn(true), 3600 + FEATURES.length * 60 + 80))
 
     return () => {
       timers.forEach(t => { clearTimeout(t); clearInterval(t) })
       if (typewriterIv) clearInterval(typewriterIv)
+      if (taglineIv) clearInterval(taglineIv)
     }
   }, [])
 
@@ -183,15 +197,29 @@ export default function Onboarding({ onDone }) {
         }}>
           KAFTIMDA
         </p>
-        <div className="mt-6 flex gap-1">
-          {[0,1,2,3,4].map(i => (
-            <div key={i} style={{
-              width: 3, height: 3, borderRadius: '50%',
-              background: 'rgba(255,255,255,0.3)',
-              animation: phase === 1 ? `fadeUp 0.4s ${0.8 + i * 0.1}s ease forwards` : 'none',
-              opacity: 0,
+        {/* Tagline typewriter */}
+        <div style={{
+          marginTop: '20px',
+          minHeight: '22px',
+          fontSize: '13px',
+          fontWeight: 500,
+          letterSpacing: '0.04em',
+          color: 'rgba(255,255,255,0.55)',
+          textAlign: 'center',
+          fontStyle: 'italic',
+        }}>
+          {typedTagline}
+          {typedTagline.length > 0 && typedTagline.length < 38 && (
+            <span style={{
+              display: 'inline-block',
+              width: '1.5px',
+              height: '13px',
+              background: '#ffd700',
+              marginLeft: '2px',
+              verticalAlign: 'middle',
+              animation: 'filmFlicker 0.5s infinite',
             }} />
-          ))}
+          )}
         </div>
       </div>
 
