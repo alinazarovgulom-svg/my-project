@@ -379,18 +379,18 @@ export default function HamkorDetail() {
     <div className="flex flex-col min-h-dvh pb-24">
       <div className="page-animate">
         {/* Header */}
-        <div className="sticky top-0 z-10 bg-gray-900 px-4 pt-4 pb-3">
+        <div className="sticky top-0 z-10 px-4 pt-4 pb-3" style={{ background: 'var(--bg-page)' }}>
           <div className="flex items-center gap-3 mb-3">
             <button onClick={() => nav(`/hamkorlar/${sectionId}`)} className="text-gray-400 active:text-white">
               <ArrowLeft size={22} />
             </button>
-            <h1 className="text-lg font-bold text-white flex-1 truncate">{hamkor.name}</h1>
+            <h1 className="text-lg font-bold flex-1 truncate" style={{ color: 'var(--text-primary)' }}>{hamkor.name}</h1>
             {isAdmin && (
               <>
                 <button onClick={() => setShowArchive(v => !v)} className={`p-1 ${showArchive ? 'text-orange-400' : 'text-gray-500'} active:opacity-70`} title="Arxiv">
                   <Archive size={18} />
                 </button>
-                <button onClick={() => setDeleteConfirm(true)} className="text-gray-500 active:text-red-400 p-1">
+                <button onClick={() => setDeleteConfirm(true)} className="active:text-red-400 p-1" style={{ color: 'var(--text-muted)' }}>
                   <Trash2 size={18} />
                 </button>
               </>
@@ -398,25 +398,52 @@ export default function HamkorDetail() {
           </div>
 
           {/* Debt badge */}
-          <div className={`rounded-2xl p-4 ${debt > 0 ? 'bg-red-500/15 border border-red-500/20' : 'bg-green-500/15 border border-green-500/20'}`}>
-            <p className="text-xs mb-1" style={{ color: 'var(--text-secondary)' }}>Umumiy qarz</p>
-            {debtByCur.filter(d => d.val > 0).length > 0 ? (
-              debtByCur.filter(d => d.val > 0).map(({ cur, val }) => (
-                <p key={cur} className="text-2xl font-black text-red-400 leading-tight">
-                  {fmtCur(val, cur)} <span className="text-sm font-medium opacity-70">{cur}</span>
-                </p>
-              ))
-            ) : (
-              <p className="text-2xl font-black text-green-400">Qarz yo'q</p>
-            )}
-          </div>
+          {(() => {
+            const owes = debtByCur.filter(d => d.val > 0)   // hamkor owes us
+            const credit = debtByCur.filter(d => d.val < 0)  // we overpaid / we are creditor
+            const bgClass = owes.length > 0
+              ? 'bg-red-500/15 border border-red-500/20'
+              : credit.length > 0
+                ? 'bg-blue-500/15 border border-blue-500/20'
+                : 'bg-green-500/15 border border-green-500/20'
+            return (
+              <div className={`rounded-2xl p-4 ${bgClass}`}>
+                {owes.length > 0 && (
+                  <>
+                    <p className="text-xs mb-1" style={{ color: 'var(--text-secondary)' }}>Umumiy qarz</p>
+                    {owes.map(({ cur, val }) => (
+                      <p key={cur} className="text-2xl font-black text-red-400 leading-tight">
+                        {fmtCur(val, cur)} <span className="text-sm font-medium opacity-70">{cur}</span>
+                      </p>
+                    ))}
+                  </>
+                )}
+                {credit.length > 0 && (
+                  <>
+                    <p className="text-xs mb-1" style={{ color: 'var(--text-secondary)' }}>Siz haqdorsiz</p>
+                    {credit.map(({ cur, val }) => (
+                      <p key={cur} className="text-2xl font-black text-blue-400 leading-tight">
+                        {fmtCur(Math.abs(val), cur)} <span className="text-sm font-medium opacity-70">{cur}</span>
+                      </p>
+                    ))}
+                  </>
+                )}
+                {owes.length === 0 && credit.length === 0 && (
+                  <>
+                    <p className="text-xs mb-1" style={{ color: 'var(--text-secondary)' }}>Umumiy qarz</p>
+                    <p className="text-2xl font-black text-green-400">Qarz yo'q</p>
+                  </>
+                )}
+              </div>
+            )
+          })()}
         </div>
 
         {/* Davr filtri + Export */}
         <div className="px-4 mt-3 flex flex-col gap-2">
           <div className="flex gap-2">
-            <input type="date" className="flex-1 bg-gray-800 text-white rounded-xl px-3 py-2 outline-none text-sm" value={dateFrom} onChange={e => setDateFrom(e.target.value)} />
-            <input type="date" className="flex-1 bg-gray-800 text-white rounded-xl px-3 py-2 outline-none text-sm" value={dateTo} onChange={e => setDateTo(e.target.value)} />
+            <input type="date" className="input-field flex-1 rounded-xl px-3 py-2 outline-none text-sm" value={dateFrom} onChange={e => setDateFrom(e.target.value)} />
+            <input type="date" className="input-field flex-1 rounded-xl px-3 py-2 outline-none text-sm" value={dateTo} onChange={e => setDateTo(e.target.value)} />
           </div>
           <div className="flex gap-2">
             <button onClick={() => exportPDF(sortedEntries)} className="flex-1 flex items-center justify-center gap-2 bg-red-600/20 border border-red-500/30 text-red-400 rounded-xl py-2.5 text-sm font-medium active:opacity-70">
@@ -426,7 +453,7 @@ export default function HamkorDetail() {
               <Sheet size={15} /> Excel
             </button>
             {(dateFrom || dateTo) && (
-              <button onClick={() => { setDateFrom(''); setDateTo('') }} className="px-3 bg-gray-700 text-gray-400 rounded-xl text-sm active:opacity-70">
+              <button onClick={() => { setDateFrom(''); setDateTo('') }} className="px-3 rounded-xl text-sm active:opacity-70" style={{ background: 'var(--bg-card)', color: 'var(--text-primary)', border: '1px solid var(--border-card)' }}>
                 ✕
               </button>
             )}
@@ -438,12 +465,12 @@ export default function HamkorDetail() {
           {showArchive && (
             <div className="mb-2">
               <p className="text-orange-400 text-sm font-semibold mb-2">🗃 Arxiv ({archive.length} ta)</p>
-              {archive.length === 0 && <p className="text-gray-500 text-sm text-center py-4">Arxiv bo'sh</p>}
+              {archive.length === 0 && <p className="text-sm text-center py-4" style={{ color: 'var(--text-muted)' }}>Arxiv bo'sh</p>}
               {archive.map(a => (
-                <div key={a.id} className="bg-gray-800/60 border border-orange-500/20 rounded-2xl px-4 py-3 flex items-center gap-3 mb-2 opacity-70">
+                <div key={a.id} className="rounded-2xl px-4 py-3 flex items-center gap-3 mb-2 opacity-70" style={{ background: 'var(--bg-card2)', border: '1px solid rgba(249,115,22,0.2)' }}>
                   <div className="flex-1 min-w-0">
-                    <p className="text-gray-300 text-sm">{entryLabel(a)}</p>
-                    <p className="text-gray-500 text-xs mt-0.5">
+                    <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>{entryLabel(a)}</p>
+                    <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
                       O'chirildi: {formatDistanceToNow(new Date(a.deletedAt), { addSuffix: true, locale: uz })}
                     </p>
                   </div>
@@ -460,10 +487,10 @@ export default function HamkorDetail() {
 
           {/* Active entries */}
           {sortedEntries.length === 0 && !showArchive && (
-            <p className="text-center text-gray-500 py-12">Hali ma'lumot kiritilmagan</p>
+            <p className="text-center py-12" style={{ color: 'var(--text-muted)' }}>Hali ma'lumot kiritilmagan</p>
           )}
           {sortedEntries.map(e => (
-            <div key={e.id} className="bg-gray-800 rounded-2xl px-4 py-3 flex items-start gap-3">
+            <div key={e.id} className="rounded-2xl px-4 py-3 flex items-start gap-3" style={{ background: 'var(--bg-card2)', border: '1px solid var(--border-card)' }}>
               <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5 ${
                 e.entryType === 'tolov' ? 'bg-green-500/20' :
                 e.entryType === 'xomashyo' ? 'bg-blue-500/20' : 'bg-purple-500/20'
@@ -473,8 +500,8 @@ export default function HamkorDetail() {
                  <Wrench size={16} className="text-purple-400" />}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-white text-sm leading-snug">{entryLabel(e)}</p>
-                <p className="text-gray-500 text-xs mt-0.5">{e.date}</p>
+                <p className="text-sm leading-snug" style={{ color: 'var(--text-primary)' }}>{entryLabel(e)}</p>
+                <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>{e.date}</p>
               </div>
               <div className="text-right flex-shrink-0">
                 <p className={`text-sm font-bold ${e.entryType === 'tolov' ? 'text-green-400' : 'text-red-400'}`}>
@@ -484,10 +511,10 @@ export default function HamkorDetail() {
                 </p>
                 {isAdmin && (
                   <div className="flex gap-2 justify-end mt-1">
-                    <button onClick={() => openEdit(e)} className="text-gray-500 active:text-blue-400">
+                    <button onClick={() => openEdit(e)} className="active:text-blue-400" style={{ color: 'var(--text-muted)' }}>
                       <Pencil size={13} />
                     </button>
-                    <button onClick={() => handleDeleteEntry(e)} className="text-gray-600 active:text-red-400">
+                    <button onClick={() => handleDeleteEntry(e)} className="active:text-red-400" style={{ color: 'var(--text-muted)' }}>
                       <Trash2 size={13} />
                     </button>
                   </div>
@@ -524,16 +551,16 @@ export default function HamkorDetail() {
         </div>
         {addTab === 'xomashyo' ? (
           <div className="flex flex-col gap-3">
-            <input className="w-full bg-gray-700 text-white rounded-xl px-3 py-3 outline-none" placeholder="Xomashyo nomi *" value={xForm.name} onChange={e => setXForm(f => ({ ...f, name: e.target.value }))} />
+            <input className="input-field w-full rounded-xl px-3 py-3 outline-none" placeholder="Xomashyo nomi *" value={xForm.name} onChange={e => setXForm(f => ({ ...f, name: e.target.value }))} />
             <div className="flex gap-2">
-              <input className="flex-1 bg-gray-700 text-white rounded-xl px-3 py-3 outline-none" placeholder="Miqdor *" type="number" value={xForm.qty} onChange={e => setXForm(f => ({ ...f, qty: e.target.value }))} />
-              <select className="bg-gray-700 text-white rounded-xl px-3 py-3 outline-none" value={xForm.unit} onChange={e => setXForm(f => ({ ...f, unit: e.target.value }))}>
+              <input className="input-field flex-1 rounded-xl px-3 py-3 outline-none" placeholder="Miqdor *" type="number" value={xForm.qty} onChange={e => setXForm(f => ({ ...f, qty: e.target.value }))} />
+              <select className="input-field rounded-xl px-3 py-3 outline-none" value={xForm.unit} onChange={e => setXForm(f => ({ ...f, unit: e.target.value }))}>
                 {UNITS.map(u => <option key={u}>{u}</option>)}
               </select>
             </div>
             <div className="flex gap-2">
-              <input className="flex-1 bg-gray-700 text-white rounded-xl px-3 py-3 outline-none" placeholder="Narx (1 birlik) *" type="number" value={xForm.price} onChange={e => setXForm(f => ({ ...f, price: e.target.value }))} />
-              <select className="bg-gray-700 text-white rounded-xl px-3 py-3 outline-none" value={xForm.currency} onChange={e => setXForm(f => ({ ...f, currency: e.target.value }))}>
+              <input className="input-field flex-1 rounded-xl px-3 py-3 outline-none" placeholder="Narx (1 birlik) *" type="number" value={xForm.price} onChange={e => setXForm(f => ({ ...f, price: e.target.value }))} />
+              <select className="input-field rounded-xl px-3 py-3 outline-none" value={xForm.currency} onChange={e => setXForm(f => ({ ...f, currency: e.target.value }))}>
                 {CURRENCIES.map(c => <option key={c}>{c}</option>)}
               </select>
             </div>
@@ -542,20 +569,20 @@ export default function HamkorDetail() {
                 Jami: {fmtCur(parseFloat(xForm.qty) * parseFloat(xForm.price), xForm.currency)}
               </p>
             )}
-            <input className="w-full bg-gray-700 text-white rounded-xl px-3 py-3 outline-none" placeholder="Izoh (ixtiyoriy)" value={xForm.note} onChange={e => setXForm(f => ({ ...f, note: e.target.value }))} />
-            <input className="w-full bg-gray-700 text-white rounded-xl px-3 py-3 outline-none" type="date" value={xForm.date} onChange={e => setXForm(f => ({ ...f, date: e.target.value }))} />
+            <input className="input-field w-full rounded-xl px-3 py-3 outline-none" placeholder="Izoh (ixtiyoriy)" value={xForm.note} onChange={e => setXForm(f => ({ ...f, note: e.target.value }))} />
+            <input className="input-field w-full rounded-xl px-3 py-3 outline-none" type="date" value={xForm.date} onChange={e => setXForm(f => ({ ...f, date: e.target.value }))} />
             <button onClick={handleAddXomashyo} className="w-full bg-blue-600 text-white rounded-xl py-3 font-semibold">Qo'shish</button>
           </div>
         ) : (
           <div className="flex flex-col gap-3">
             <div className="flex gap-2">
-              <input className="flex-1 bg-gray-700 text-white rounded-xl px-3 py-3 outline-none" placeholder="Xizmat haqi *" type="number" value={zForm.amount} onChange={e => setZForm(f => ({ ...f, amount: e.target.value }))} />
-              <select className="bg-gray-700 text-white rounded-xl px-3 py-3 outline-none" value={zForm.currency} onChange={e => setZForm(f => ({ ...f, currency: e.target.value }))}>
+              <input className="input-field flex-1 rounded-xl px-3 py-3 outline-none" placeholder="Xizmat haqi *" type="number" value={zForm.amount} onChange={e => setZForm(f => ({ ...f, amount: e.target.value }))} />
+              <select className="input-field rounded-xl px-3 py-3 outline-none" value={zForm.currency} onChange={e => setZForm(f => ({ ...f, currency: e.target.value }))}>
                 {CURRENCIES.map(c => <option key={c}>{c}</option>)}
               </select>
             </div>
-            <input className="w-full bg-gray-700 text-white rounded-xl px-3 py-3 outline-none" placeholder="Izoh (ixtiyoriy)" value={zForm.note} onChange={e => setZForm(f => ({ ...f, note: e.target.value }))} />
-            <input className="w-full bg-gray-700 text-white rounded-xl px-3 py-3 outline-none" type="date" value={zForm.date} onChange={e => setZForm(f => ({ ...f, date: e.target.value }))} />
+            <input className="input-field w-full rounded-xl px-3 py-3 outline-none" placeholder="Izoh (ixtiyoriy)" value={zForm.note} onChange={e => setZForm(f => ({ ...f, note: e.target.value }))} />
+            <input className="input-field w-full rounded-xl px-3 py-3 outline-none" type="date" value={zForm.date} onChange={e => setZForm(f => ({ ...f, date: e.target.value }))} />
             <button onClick={handleAddXizmat} className="w-full bg-purple-600 text-white rounded-xl py-3 font-semibold">Qo'shish</button>
           </div>
         )}
@@ -567,16 +594,16 @@ export default function HamkorDetail() {
           <div className="flex flex-col gap-3">
             {editingEntry.entryType === 'xomashyo' && (
               <>
-                <input className="w-full bg-gray-700 text-white rounded-xl px-3 py-3 outline-none" placeholder="Xomashyo nomi *" value={editingEntry.name} onChange={e => setEditingEntry(v => ({ ...v, name: e.target.value }))} />
+                <input className="input-field w-full rounded-xl px-3 py-3 outline-none" placeholder="Xomashyo nomi *" value={editingEntry.name} onChange={e => setEditingEntry(v => ({ ...v, name: e.target.value }))} />
                 <div className="flex gap-2">
-                  <input className="flex-1 bg-gray-700 text-white rounded-xl px-3 py-3 outline-none" placeholder="Miqdor *" type="number" value={editingEntry.qty} onChange={e => setEditingEntry(v => ({ ...v, qty: e.target.value }))} />
-                  <select className="bg-gray-700 text-white rounded-xl px-3 py-3 outline-none" value={editingEntry.unit} onChange={e => setEditingEntry(v => ({ ...v, unit: e.target.value }))}>
+                  <input className="input-field flex-1 rounded-xl px-3 py-3 outline-none" placeholder="Miqdor *" type="number" value={editingEntry.qty} onChange={e => setEditingEntry(v => ({ ...v, qty: e.target.value }))} />
+                  <select className="input-field rounded-xl px-3 py-3 outline-none" value={editingEntry.unit} onChange={e => setEditingEntry(v => ({ ...v, unit: e.target.value }))}>
                     {UNITS.map(u => <option key={u}>{u}</option>)}
                   </select>
                 </div>
                 <div className="flex gap-2">
-                  <input className="flex-1 bg-gray-700 text-white rounded-xl px-3 py-3 outline-none" placeholder="Narx *" type="number" value={editingEntry.price} onChange={e => setEditingEntry(v => ({ ...v, price: e.target.value }))} />
-                  <select className="bg-gray-700 text-white rounded-xl px-3 py-3 outline-none" value={editingEntry.currency} onChange={e => setEditingEntry(v => ({ ...v, currency: e.target.value }))}>
+                  <input className="input-field flex-1 rounded-xl px-3 py-3 outline-none" placeholder="Narx *" type="number" value={editingEntry.price} onChange={e => setEditingEntry(v => ({ ...v, price: e.target.value }))} />
+                  <select className="input-field rounded-xl px-3 py-3 outline-none" value={editingEntry.currency} onChange={e => setEditingEntry(v => ({ ...v, currency: e.target.value }))}>
                     {CURRENCIES.map(c => <option key={c}>{c}</option>)}
                   </select>
                 </div>
@@ -589,14 +616,14 @@ export default function HamkorDetail() {
             )}
             {(editingEntry.entryType === 'xizmat' || editingEntry.entryType === 'tolov') && (
               <div className="flex gap-2">
-                <input className="flex-1 bg-gray-700 text-white rounded-xl px-3 py-3 outline-none" placeholder="Summa *" type="number" value={editingEntry.amount} onChange={e => setEditingEntry(v => ({ ...v, amount: e.target.value }))} />
-                <select className="bg-gray-700 text-white rounded-xl px-3 py-3 outline-none" value={editingEntry.currency} onChange={e => setEditingEntry(v => ({ ...v, currency: e.target.value }))}>
+                <input className="input-field flex-1 rounded-xl px-3 py-3 outline-none" placeholder="Summa *" type="number" value={editingEntry.amount} onChange={e => setEditingEntry(v => ({ ...v, amount: e.target.value }))} />
+                <select className="input-field rounded-xl px-3 py-3 outline-none" value={editingEntry.currency} onChange={e => setEditingEntry(v => ({ ...v, currency: e.target.value }))}>
                   {CURRENCIES.map(c => <option key={c}>{c}</option>)}
                 </select>
               </div>
             )}
-            <input className="w-full bg-gray-700 text-white rounded-xl px-3 py-3 outline-none" placeholder="Izoh" value={editingEntry.note || ''} onChange={e => setEditingEntry(v => ({ ...v, note: e.target.value }))} />
-            <input className="w-full bg-gray-700 text-white rounded-xl px-3 py-3 outline-none" type="date" value={editingEntry.date} onChange={e => setEditingEntry(v => ({ ...v, date: e.target.value }))} />
+            <input className="input-field w-full rounded-xl px-3 py-3 outline-none" placeholder="Izoh" value={editingEntry.note || ''} onChange={e => setEditingEntry(v => ({ ...v, note: e.target.value }))} />
+            <input className="input-field w-full rounded-xl px-3 py-3 outline-none" type="date" value={editingEntry.date} onChange={e => setEditingEntry(v => ({ ...v, date: e.target.value }))} />
             <button onClick={handleEditSave} className="w-full bg-blue-600 text-white rounded-xl py-3 font-semibold">Saqlash</button>
           </div>
         )}
@@ -607,10 +634,10 @@ export default function HamkorDetail() {
         <div className="flex flex-col gap-3">
           {/* Asosiy to'lov */}
           <div>
-            <label className="text-gray-400 text-xs mb-1 block">Men to'layman</label>
+            <label className="text-xs mb-1 block" style={{ color: 'var(--text-muted)' }}>Men to'layman</label>
             <div className="flex gap-2">
-              <input className="flex-1 bg-gray-700 text-white rounded-xl px-3 py-3 outline-none" placeholder="Summa *" type="number" value={tForm.amount} onChange={e => setTForm(f => ({ ...f, amount: e.target.value }))} />
-              <select className="bg-gray-700 text-white rounded-xl px-3 py-3 outline-none" value={tForm.currency} onChange={e => setTForm(f => ({ ...f, currency: e.target.value }))}>
+              <input className="input-field flex-1 rounded-xl px-3 py-3 outline-none" placeholder="Summa *" type="number" value={tForm.amount} onChange={e => setTForm(f => ({ ...f, amount: e.target.value }))} />
+              <select className="input-field rounded-xl px-3 py-3 outline-none" value={tForm.currency} onChange={e => setTForm(f => ({ ...f, currency: e.target.value }))}>
                 {CURRENCIES.map(c => <option key={c}>{c}</option>)}
               </select>
             </div>
@@ -626,13 +653,13 @@ export default function HamkorDetail() {
 
           {/* Konvertatsiya fields */}
           {tConvert && (
-            <div className="bg-gray-700/50 rounded-xl p-3 flex flex-col gap-2">
-              <label className="text-gray-400 text-xs">Hamkor qarzidan ayiriladi</label>
+            <div className="rounded-xl p-3 flex flex-col gap-2" style={{ background: 'var(--bg-card)' }}>
+              <label className="text-xs" style={{ color: 'var(--text-muted)' }}>Hamkor qarzidan ayiriladi</label>
               <div className="flex gap-2">
-                <select className="bg-gray-700 text-white rounded-xl px-3 py-2.5 outline-none" value={tConvCurrency} onChange={e => setTConvCurrency(e.target.value)}>
+                <select className="input-field rounded-xl px-3 py-2.5 outline-none" value={tConvCurrency} onChange={e => setTConvCurrency(e.target.value)}>
                   {CURRENCIES.filter(c => c !== tForm.currency).map(c => <option key={c}>{c}</option>)}
                 </select>
-                <input className="flex-1 bg-gray-700 text-white rounded-xl px-3 py-2.5 outline-none" placeholder={`1 ${tConvCurrency} = ? ${tForm.currency}`} type="number" value={tConvRate} onChange={e => setTConvRate(e.target.value)} />
+                <input className="input-field flex-1 rounded-xl px-3 py-2.5 outline-none" placeholder={`1 ${tConvCurrency} = ? ${tForm.currency}`} type="number" value={tConvRate} onChange={e => setTConvRate(e.target.value)} />
               </div>
               {tForm.amount && tConvRate && parseFloat(tConvRate) > 0 && (
                 <p className="text-blue-400 text-sm font-semibold text-center">
@@ -642,18 +669,18 @@ export default function HamkorDetail() {
             </div>
           )}
 
-          <input className="w-full bg-gray-700 text-white rounded-xl px-3 py-3 outline-none" placeholder="Izoh (ixtiyoriy)" value={tForm.note} onChange={e => setTForm(f => ({ ...f, note: e.target.value }))} />
-          <input className="w-full bg-gray-700 text-white rounded-xl px-3 py-3 outline-none" type="date" value={tForm.date} onChange={e => setTForm(f => ({ ...f, date: e.target.value }))} />
-          <p className="text-gray-400 text-xs text-center">To'lov hisobingizdan chiqim sifatida yoziladi</p>
+          <input className="input-field w-full rounded-xl px-3 py-3 outline-none" placeholder="Izoh (ixtiyoriy)" value={tForm.note} onChange={e => setTForm(f => ({ ...f, note: e.target.value }))} />
+          <input className="input-field w-full rounded-xl px-3 py-3 outline-none" type="date" value={tForm.date} onChange={e => setTForm(f => ({ ...f, date: e.target.value }))} />
+          <p className="text-xs text-center" style={{ color: 'var(--text-muted)' }}>To'lov hisobingizdan chiqim sifatida yoziladi</p>
           <button onClick={handleTolov} className="w-full bg-green-600 text-white rounded-xl py-3 font-semibold">To'lov qilish</button>
         </div>
       </Modal>
 
       {/* Delete hamkor confirm */}
       <Modal open={deleteConfirm} onClose={() => setDeleteConfirm(false)} title="Hamkorni o'chirish">
-        <p className="text-gray-300 mb-4">"{hamkor.name}" ni barcha ma'lumotlari bilan o'chirasizmi?</p>
+        <p className="mb-4" style={{ color: 'var(--text-secondary)' }}>"{hamkor.name}" ni barcha ma'lumotlari bilan o'chirasizmi?</p>
         <div className="flex gap-2">
-          <button onClick={() => setDeleteConfirm(false)} className="flex-1 bg-gray-700 text-white rounded-xl py-3">Bekor</button>
+          <button onClick={() => setDeleteConfirm(false)} className="flex-1 rounded-xl py-3" style={{ background: 'var(--bg-card)', color: 'var(--text-primary)', border: '1px solid var(--border-card)' }}>Bekor</button>
           <button onClick={handleDeleteHamkor} className="flex-1 bg-red-600 text-white rounded-xl py-3 font-semibold">O'chirish</button>
         </div>
       </Modal>
