@@ -1,41 +1,91 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Lock, User, Eye, EyeOff, Mail, Phone, Send, Loader, ArrowLeft, ChevronRight } from 'lucide-react'
+import { Lock, User, Eye, EyeOff, Mail, Phone, Loader, ArrowLeft, ChevronRight } from 'lucide-react'
 import { useApp } from '../store/AppContext'
 import { useLang } from '../i18n/LangContext'
 import { loginUser, registerUser, migrateLocalUsers, resetPasswordByUsername } from '../store/auth'
 
-const PARTICLES = Array.from({ length: 18 }, (_, i) => ({
-  id: i,
-  x: Math.random() * 100,
-  y: Math.random() * 100,
-  size: 2 + Math.random() * 3,
-  dur: 4 + Math.random() * 6,
-  delay: Math.random() * 4,
-  color: i % 3 === 0 ? '#6366f1' : i % 3 === 1 ? '#a855f7' : '#22d3ee',
-}))
+// ── Intro phases ──
+// 0 → qora ekran
+// 1 → grid lines chiqadi
+// 2 → KAFTIMDA glitch bilan portlaydi
+// 3 → tagline typewriter
+// 4 → ekran "split" bo'lib ochiladi → login form
+
+const GRID_COLS = 8
+const GRID_ROWS = 14
 
 export default function Login() {
   const { setUser } = useApp()
   const { t, lang, setLang } = useLang()
   const nav = useNavigate()
+
+  // Intro
+  const [introPhase, setIntroPhase] = useState(0)
+  const [typedTagline, setTypedTagline] = useState('')
+  const [glitchActive, setGlitchActive] = useState(false)
+  const [splitOpen, setSplitOpen] = useState(false)
+  const [showForm, setShowForm] = useState(false)
+  const [formMounted, setFormMounted] = useState(false)
+
+  // Form
   const [mode, setMode] = useState('login')
   const [resetDone, setResetDone] = useState(false)
   const [form, setForm] = useState({ name: '', username: '', password: '' })
   const [showPass, setShowPass] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const [mounted, setMounted] = useState(false)
   const [focused, setFocused] = useState(null)
   const [shake, setShake] = useState(false)
 
-  useEffect(() => { migrateLocalUsers() }, [])
-  useEffect(() => {
-    const t = setTimeout(() => setMounted(true), 80)
-    return () => clearTimeout(t)
-  }, [])
-
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
+
+  useEffect(() => { migrateLocalUsers() }, [])
+
+  useEffect(() => {
+    const T = (fn, ms) => setTimeout(fn, ms)
+    const timers = []
+    let taglineIv = null
+
+    // Grid flash in
+    timers.push(T(() => setIntroPhase(1), 300))
+
+    // KAFTIMDA glitch pop
+    timers.push(T(() => {
+      setIntroPhase(2)
+      setGlitchActive(true)
+      setTimeout(() => setGlitchActive(false), 600)
+    }, 900))
+
+    // Tagline typewriter starts
+    const TAGLINE = 'KAFTIMDA bilan biznesingiz kaftingizda'
+    timers.push(T(() => {
+      setIntroPhase(3)
+      let i = 0
+      taglineIv = setInterval(() => {
+        i++
+        setTypedTagline(TAGLINE.slice(0, i))
+        if (i >= TAGLINE.length) clearInterval(taglineIv)
+      }, 52)
+    }, 1400))
+
+    // Split open after tagline (~2s to type + 0.8s pause)
+    timers.push(T(() => {
+      setIntroPhase(4)
+      setSplitOpen(true)
+    }, 4200))
+
+    // Show form
+    timers.push(T(() => {
+      setShowForm(true)
+      requestAnimationFrame(() => requestAnimationFrame(() => setFormMounted(true)))
+    }, 4600))
+
+    return () => {
+      timers.forEach(clearTimeout)
+      if (taglineIv) clearInterval(taglineIv)
+    }
+  }, [])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -44,13 +94,13 @@ export default function Login() {
     try {
       if (mode === 'login') {
         const res = await loginUser(form.username, form.password)
-        if (res.error) { setError(res.error); setShake(true); setTimeout(() => setShake(false), 500); return }
+        if (res.error) { setError(res.error); trigShake(); return }
         setUser(res.user); nav('/')
       } else if (mode === 'register') {
-        if (!form.name || !form.username || !form.password) { setError(t('fillAll')); setShake(true); setTimeout(() => setShake(false), 500); return }
-        if (form.password.length < 4) { setError(t('passwordShort')); setShake(true); setTimeout(() => setShake(false), 500); return }
+        if (!form.name || !form.username || !form.password) { setError(t('fillAll')); trigShake(); return }
+        if (form.password.length < 4) { setError(t('passwordShort')); trigShake(); return }
         const res = await registerUser(form.name, form.username, form.password)
-        if (res.error) { setError(res.error); setShake(true); setTimeout(() => setShake(false), 500); return }
+        if (res.error) { setError(res.error); trigShake(); return }
         setUser(res.user); nav('/')
       } else if (mode === 'reset') {
         if (!form.username) { setError('Login nomini kiriting'); return }
@@ -66,368 +116,540 @@ export default function Login() {
     }
   }
 
-  const fade = (delay = 0, extra = {}) => ({
-    opacity: mounted ? 1 : 0,
-    transform: mounted ? 'translateY(0) scale(1)' : 'translateY(28px) scale(0.95)',
-    transition: `opacity 0.55s cubic-bezier(0.34,1.2,0.64,1) ${delay}ms, transform 0.55s cubic-bezier(0.34,1.2,0.64,1) ${delay}ms`,
-    ...extra,
+  const trigShake = () => { setShake(true); setTimeout(() => setShake(false), 500) }
+
+  const fade = (delay = 0) => ({
+    opacity: formMounted ? 1 : 0,
+    transform: formMounted ? 'translateY(0)' : 'translateY(20px)',
+    transition: `opacity 0.5s ease ${delay}ms, transform 0.5s cubic-bezier(0.34,1.2,0.64,1) ${delay}ms`,
   })
 
   return (
     <div className="min-h-dvh flex flex-col relative overflow-hidden" style={{ background: '#000' }}>
 
       <style>{`
-        @keyframes floatUp {
-          0% { transform: translateY(0) scale(1); opacity: 0.6; }
-          100% { transform: translateY(-100vh) scale(0.5); opacity: 0; }
+        @keyframes gridFade {
+          from { opacity: 0; }
+          to   { opacity: 1; }
         }
-        @keyframes orb1 {
-          0%,100% { transform: translate(0,0) scale(1); }
-          50% { transform: translate(40px,-30px) scale(1.2); }
+        @keyframes kaftGlitch {
+          0%   { transform: scale(0.6) skewX(0deg); opacity: 0; filter: brightness(8) blur(4px); letter-spacing: 0.8em; }
+          20%  { transform: scale(1.15) skewX(-6deg); filter: brightness(3) blur(1px); letter-spacing: 0.5em; }
+          35%  { transform: scale(0.95) skewX(4deg); filter: brightness(1.5) blur(0); letter-spacing: 0.32em; }
+          50%  { transform: scale(1.05) skewX(-2deg); filter: brightness(1); }
+          65%  { transform: scale(0.98) skewX(1deg); }
+          100% { transform: scale(1) skewX(0deg); opacity: 1; filter: brightness(1); letter-spacing: 0.32em; }
         }
-        @keyframes orb2 {
-          0%,100% { transform: translate(0,0) scale(1); }
-          50% { transform: translate(-30px,40px) scale(1.15); }
+        @keyframes glitchSlice1 {
+          0%,100% { clip-path: inset(0 0 95% 0); transform: translateX(0); }
+          20% { clip-path: inset(10% 0 80% 0); transform: translateX(-8px); }
+          40% { clip-path: inset(40% 0 50% 0); transform: translateX(6px); }
+          60% { clip-path: inset(70% 0 20% 0); transform: translateX(-4px); }
         }
-        @keyframes logoIn {
-          0% { transform: scale(0.4) rotate(-15deg); opacity: 0; filter: brightness(3); }
-          60% { transform: scale(1.1) rotate(4deg); opacity: 1; filter: brightness(1.4); }
-          80% { transform: scale(0.97) rotate(-1deg); filter: brightness(1); }
-          100% { transform: scale(1) rotate(0deg); opacity: 1; filter: brightness(1); }
+        @keyframes glitchSlice2 {
+          0%,100% { clip-path: inset(90% 0 0% 0); transform: translateX(0); }
+          25% { clip-path: inset(60% 0 30% 0); transform: translateX(10px); }
+          50% { clip-path: inset(20% 0 70% 0); transform: translateX(-6px); }
+          75% { clip-path: inset(80% 0 10% 0); transform: translateX(4px); }
         }
-        @keyframes glowPulse {
-          0%,100% { box-shadow: 0 0 30px rgba(99,102,241,0.5), 0 0 60px rgba(139,92,246,0.2); }
-          50% { box-shadow: 0 0 50px rgba(99,102,241,0.8), 0 0 100px rgba(139,92,246,0.4); }
+        @keyframes scanLine {
+          0%   { transform: translateY(-4px); opacity: 0.8; }
+          100% { transform: translateY(100vh); opacity: 0; }
+        }
+        @keyframes splitTop {
+          from { transform: translateY(0); }
+          to   { transform: translateY(-50%); }
+        }
+        @keyframes splitBottom {
+          from { transform: translateY(0); }
+          to   { transform: translateY(50%); }
+        }
+        @keyframes logoFloat {
+          0%,100% { transform: translateY(0px); }
+          50%     { transform: translateY(-6px); }
+        }
+        @keyframes logoPulse {
+          0%,100% { box-shadow: 0 0 30px rgba(99,102,241,0.5), 0 0 60px rgba(99,102,241,0.15); }
+          50%     { box-shadow: 0 0 60px rgba(99,102,241,0.8), 0 0 120px rgba(139,92,246,0.3); }
         }
         @keyframes shine {
-          0% { background-position: -300% center; }
-          100% { background-position: 300% center; }
+          from { background-position: -300% center; }
+          to   { background-position: 300% center; }
+        }
+        @keyframes ringPulse {
+          0%,100% { opacity: 0.5; transform: scale(1); }
+          50%     { opacity: 1; transform: scale(1.04); }
+        }
+        @keyframes particleRise {
+          0%   { transform: translateY(0) scale(1); opacity: 0.7; }
+          100% { transform: translateY(-80px) scale(0.3); opacity: 0; }
         }
         @keyframes shake {
           0%,100% { transform: translateX(0); }
-          15% { transform: translateX(-10px); }
-          30% { transform: translateX(10px); }
-          45% { transform: translateX(-7px); }
-          60% { transform: translateX(7px); }
-          75% { transform: translateX(-4px); }
-          90% { transform: translateX(4px); }
+          15%     { transform: translateX(-9px); }
+          30%     { transform: translateX(9px); }
+          45%     { transform: translateX(-6px); }
+          60%     { transform: translateX(6px); }
+          80%     { transform: translateX(-3px); }
         }
         @keyframes badgePop {
-          0% { transform: scale(0) rotate(20deg); opacity: 0; }
-          70% { transform: scale(1.2) rotate(-5deg); opacity: 1; }
+          0%   { transform: scale(0) rotate(20deg); opacity: 0; }
+          70%  { transform: scale(1.25) rotate(-5deg); opacity: 1; }
           100% { transform: scale(1) rotate(0deg); opacity: 1; }
         }
-        @keyframes scanH {
-          0% { transform: translateY(-100%); opacity: 0; }
-          10% { opacity: 1; }
-          90% { opacity: 1; }
-          100% { transform: translateY(100vh); opacity: 0; }
+        @keyframes orbFloat1 {
+          0%,100% { transform: translate(0,0); }
+          33%     { transform: translate(20px,-15px); }
+          66%     { transform: translate(-10px,20px); }
         }
-        .input-glow:focus-within {
-          box-shadow: 0 0 0 2px rgba(99,102,241,0.4), 0 4px 20px rgba(99,102,241,0.15);
+        @keyframes orbFloat2 {
+          0%,100% { transform: translate(0,0); }
+          33%     { transform: translate(-25px,10px); }
+          66%     { transform: translate(15px,-25px); }
+        }
+        .input-wrap:focus-within {
+          border-color: rgba(99,102,241,0.7) !important;
+          box-shadow: 0 0 0 3px rgba(99,102,241,0.12), 0 4px 20px rgba(99,102,241,0.1);
         }
       `}</style>
 
-      {/* Background: floating particles */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        {PARTICLES.map(p => (
-          <div key={p.id} style={{
-            position: 'absolute',
-            left: `${p.x}%`,
-            bottom: '-10px',
-            width: p.size,
-            height: p.size,
-            borderRadius: '50%',
-            background: p.color,
-            boxShadow: `0 0 ${p.size * 3}px ${p.color}`,
-            animation: `floatUp ${p.dur}s ${p.delay}s linear infinite`,
-            opacity: 0,
-          }} />
-        ))}
+      {/* ── INTRO OVERLAY ── */}
+      {!splitOpen && (
+        <div className="fixed inset-0 z-[300] flex flex-col items-center justify-center" style={{ background: '#000' }}>
 
-        {/* Big orbs */}
-        <div style={{
-          position: 'absolute', top: '-120px', left: '-100px',
-          width: 400, height: 400,
-          background: 'radial-gradient(circle, rgba(99,102,241,0.12) 0%, transparent 70%)',
-          animation: 'orb1 10s ease-in-out infinite',
-        }} />
-        <div style={{
-          position: 'absolute', bottom: '5%', right: '-80px',
-          width: 350, height: 350,
-          background: 'radial-gradient(circle, rgba(168,85,247,0.1) 0%, transparent 70%)',
-          animation: 'orb2 13s ease-in-out infinite',
-        }} />
-
-        {/* Horizontal scan line */}
-        {mounted && (
-          <div style={{
-            position: 'absolute', left: 0, right: 0,
-            height: '1px',
-            background: 'linear-gradient(90deg, transparent, rgba(99,102,241,0.4), transparent)',
-            animation: 'scanH 3s 0.5s ease-in-out forwards',
-          }} />
-        )}
-      </div>
-
-      {/* Top: KAFTIMDA brand */}
-      <div className="pt-10 pb-1 flex flex-col items-center relative z-10" style={fade(0)}>
-        <div className="flex items-center gap-2 mb-1">
-          <div style={{ width: 1, height: 18, background: 'rgba(99,102,241,0.4)' }} />
-          <span style={{
-            fontSize: 11, fontWeight: 900, letterSpacing: '0.35em',
-            textTransform: 'uppercase',
-            background: 'linear-gradient(90deg, #818cf8, #c4b5fd, #67e8f9, #818cf8)',
-            backgroundSize: '300% auto',
-            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text',
-            animation: 'shine 4s linear infinite',
-          }}>KAFTIMDA</span>
-          <div style={{ width: 1, height: 18, background: 'rgba(99,102,241,0.4)' }} />
-        </div>
-        <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.15em' }}>
-          KAFTIMDA bilan biznesingiz kaftingizda
-        </p>
-        {/* Lang */}
-        <div className="flex gap-1.5 mt-3">
-          {[['uz','🇺🇿'],['ru','🇷🇺'],['en','🇬🇧']].map(([l, flag]) => (
-            <button key={l} onClick={() => setLang(l)}
-              className="text-sm px-2 py-0.5 rounded-lg transition-all"
-              style={lang === l
-                ? { background: 'rgba(99,102,241,0.2)', color: '#818cf8', border: '1px solid rgba(99,102,241,0.3)' }
-                : { color: '#374151', border: '1px solid transparent' }}>
-              {flag}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Center: Logo + Form */}
-      <div className="flex-1 flex flex-col items-center justify-center px-5 relative z-10">
-        <div className="w-full max-w-sm">
-
-          {/* Logo */}
-          <div className="flex flex-col items-center mb-6" style={fade(100)}>
-            <div className="relative mb-4">
-              <div className="w-[88px] h-[88px] rounded-[28px] flex items-center justify-center overflow-hidden"
-                style={{
-                  background: 'linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #4338ca 100%)',
-                  animation: mounted
-                    ? 'logoIn 0.7s cubic-bezier(0.16,1,0.3,1) forwards, glowPulse 3s 0.8s ease-in-out infinite'
-                    : 'none',
-                }}>
-                <img src="/icon.svg" alt="PulBek" style={{ width: 70, height: 70 }} />
-              </div>
-              {/* Green badge */}
+          {/* Grid lines */}
+          {introPhase >= 1 && (
+            <div className="absolute inset-0 pointer-events-none" style={{ animation: 'gridFade 0.6s ease forwards' }}>
+              {/* Vertical lines */}
+              {Array.from({ length: GRID_COLS + 1 }, (_, i) => (
+                <div key={`v${i}`} style={{
+                  position: 'absolute', top: 0, bottom: 0,
+                  left: `${(i / GRID_COLS) * 100}%`,
+                  width: 1,
+                  background: 'rgba(99,102,241,0.08)',
+                }} />
+              ))}
+              {/* Horizontal lines */}
+              {Array.from({ length: GRID_ROWS + 1 }, (_, i) => (
+                <div key={`h${i}`} style={{
+                  position: 'absolute', left: 0, right: 0,
+                  top: `${(i / GRID_ROWS) * 100}%`,
+                  height: 1,
+                  background: 'rgba(99,102,241,0.08)',
+                }} />
+              ))}
+              {/* Highlight grid cross */}
               <div style={{
-                position: 'absolute', bottom: -4, right: -4,
-                width: 26, height: 26,
-                background: 'linear-gradient(135deg, #22c55e, #16a34a)',
-                borderRadius: '50%',
-                border: '2.5px solid #000',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                boxShadow: '0 0 14px rgba(34,197,94,0.7)',
-                animation: mounted ? 'badgePop 0.5s 0.6s cubic-bezier(0.34,1.7,0.64,1) both' : 'none',
-                opacity: mounted ? 1 : 0,
+                position: 'absolute',
+                top: '50%', left: '50%',
+                transform: 'translate(-50%,-50%)',
+                width: 2, height: '100%',
+                background: 'linear-gradient(to bottom, transparent, rgba(99,102,241,0.25), transparent)',
+              }} />
+              <div style={{
+                position: 'absolute',
+                top: '50%', left: '50%',
+                transform: 'translate(-50%,-50%)',
+                height: 2, width: '100%',
+                background: 'linear-gradient(to right, transparent, rgba(99,102,241,0.25), transparent)',
+              }} />
+            </div>
+          )}
+
+          {/* Scan line */}
+          {introPhase >= 1 && (
+            <div style={{
+              position: 'absolute', left: 0, right: 0,
+              height: 2,
+              background: 'linear-gradient(90deg, transparent, #6366f1, #a78bfa, #6366f1, transparent)',
+              animation: 'scanLine 1.2s 0.3s ease-in forwards',
+              zIndex: 10,
+            }} />
+          )}
+
+          {/* Orbs */}
+          {introPhase >= 2 && (
+            <>
+              <div style={{
+                position: 'absolute', top: '10%', left: '5%',
+                width: 200, height: 200,
+                background: 'radial-gradient(circle, rgba(99,102,241,0.2) 0%, transparent 70%)',
+                animation: 'orbFloat1 8s ease-in-out infinite',
+                filter: 'blur(20px)',
+              }} />
+              <div style={{
+                position: 'absolute', bottom: '10%', right: '5%',
+                width: 180, height: 180,
+                background: 'radial-gradient(circle, rgba(168,85,247,0.18) 0%, transparent 70%)',
+                animation: 'orbFloat2 10s ease-in-out infinite',
+                filter: 'blur(20px)',
+              }} />
+            </>
+          )}
+
+          {/* KAFTIMDA */}
+          {introPhase >= 2 && (
+            <div style={{ position: 'relative', textAlign: 'center', zIndex: 20 }}>
+              {/* Main text */}
+              <p style={{
+                fontSize: 38, fontWeight: 900,
+                letterSpacing: '0.32em',
+                textTransform: 'uppercase',
+                background: 'linear-gradient(90deg, #b8860b, #ffd700, #ffe066, #ffd700, #b8860b)',
+                backgroundSize: '300% auto',
+                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
+                animation: 'kaftGlitch 0.7s cubic-bezier(0.16,1,0.3,1) forwards, shine 3s 0.8s linear infinite',
+                position: 'relative', zIndex: 2,
               }}>
-                <span style={{ fontSize: 12, fontWeight: 900, color: '#000' }}>✓</span>
+                KAFTIMDA
+              </p>
+
+              {/* Glitch overlays */}
+              {glitchActive && (
+                <>
+                  <p style={{
+                    position: 'absolute', top: 0, left: 0, right: 0,
+                    fontSize: 38, fontWeight: 900, letterSpacing: '0.32em',
+                    textTransform: 'uppercase', color: '#22d3ee',
+                    animation: 'glitchSlice1 0.5s steps(1) forwards',
+                    zIndex: 3,
+                  }}>KAFTIMDA</p>
+                  <p style={{
+                    position: 'absolute', top: 0, left: 0, right: 0,
+                    fontSize: 38, fontWeight: 900, letterSpacing: '0.32em',
+                    textTransform: 'uppercase', color: '#f472b6',
+                    animation: 'glitchSlice2 0.5s steps(1) forwards',
+                    zIndex: 3,
+                  }}>KAFTIMDA</p>
+                </>
+              )}
+
+              {/* Tagline typewriter */}
+              <div style={{
+                marginTop: 18, minHeight: 20,
+                fontSize: 13, fontWeight: 500,
+                color: 'rgba(255,255,255,0.5)',
+                letterSpacing: '0.04em', fontStyle: 'italic',
+                opacity: introPhase >= 3 ? 1 : 0,
+                transition: 'opacity 0.3s',
+              }}>
+                {typedTagline}
+                {typedTagline.length > 0 && typedTagline.length < 38 && (
+                  <span style={{
+                    display: 'inline-block', width: 2, height: 13,
+                    background: '#ffd700', marginLeft: 2,
+                    verticalAlign: 'middle',
+                    animation: 'ringPulse 0.5s infinite',
+                  }} />
+                )}
               </div>
             </div>
-            <h1 style={{
-              fontSize: 28, fontWeight: 900, letterSpacing: '-0.5px',
-              background: 'linear-gradient(135deg, #fff 0%, #c4b5fd 100%)',
-              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-            }}>PulBek</h1>
-            <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', marginTop: 3 }}>{t('tagline')}</p>
+          )}
+        </div>
+      )}
+
+      {/* ── SPLIT CURTAIN ── */}
+      {splitOpen && (
+        <>
+          <div style={{
+            position: 'fixed', inset: 0, zIndex: 200,
+            background: '#000',
+            transformOrigin: 'top',
+            animation: 'splitTop 0.55s cubic-bezier(0.7,0,0.3,1) forwards',
+          }} />
+          <div style={{
+            position: 'fixed', inset: 0, zIndex: 200,
+            background: '#000',
+            transformOrigin: 'bottom',
+            animation: 'splitBottom 0.55s cubic-bezier(0.7,0,0.3,1) forwards',
+          }} />
+        </>
+      )}
+
+      {/* ── FORM SCREEN ── */}
+      {showForm && (
+        <>
+          {/* Background */}
+          <div className="absolute inset-0 pointer-events-none overflow-hidden">
+            <div style={{
+              position: 'absolute', top: '-100px', left: '-80px',
+              width: 350, height: 350,
+              background: 'radial-gradient(circle, rgba(99,102,241,0.12) 0%, transparent 70%)',
+              animation: 'orbFloat1 12s ease-in-out infinite',
+            }} />
+            <div style={{
+              position: 'absolute', bottom: '5%', right: '-60px',
+              width: 280, height: 280,
+              background: 'radial-gradient(circle, rgba(168,85,247,0.1) 0%, transparent 70%)',
+              animation: 'orbFloat2 15s ease-in-out infinite',
+            }} />
+            {/* Grid */}
+            <div className="absolute inset-0" style={{ opacity: 0.025 }}>
+              {Array.from({ length: 7 }, (_, i) => (
+                <div key={i} style={{ position: 'absolute', top: 0, bottom: 0, left: `${(i / 6) * 100}%`, width: 1, background: '#6366f1' }} />
+              ))}
+            </div>
           </div>
 
-          {/* Mode tabs */}
-          {mode !== 'reset' && (
-            <div className="flex p-1 mb-5 rounded-2xl" style={{
-              ...fade(180),
-              background: 'rgba(255,255,255,0.03)',
-              border: '1px solid rgba(255,255,255,0.06)',
-            }}>
-              {['login', 'register'].map(m => (
-                <button key={m} onClick={() => { setMode(m); setError(''); setResetDone(false) }}
-                  className="flex-1 py-2.5 rounded-xl text-sm font-bold transition-all relative overflow-hidden"
-                  style={mode === m ? {
-                    background: 'linear-gradient(135deg, #312e81, #4c1d95)',
-                    color: '#e0e7ff',
-                    boxShadow: '0 2px 16px rgba(99,102,241,0.35)',
-                  } : { color: 'rgba(255,255,255,0.25)' }}>
-                  {mode === m && (
-                    <span className="absolute inset-0 rounded-xl pointer-events-none" style={{
-                      background: 'linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.08) 50%, transparent 70%)',
-                      backgroundSize: '300% 100%',
-                      animation: 'shine 2s linear infinite',
-                    }} />
-                  )}
-                  <span className="relative">{m === 'login' ? t('login') : t('register')}</span>
+          {/* Brand top */}
+          <div className="pt-9 pb-1 flex flex-col items-center relative z-10" style={fade(0)}>
+            <div className="flex items-center gap-2.5">
+              <div style={{ width: 24, height: 1, background: 'linear-gradient(to right, transparent, rgba(99,102,241,0.5))' }} />
+              <span style={{
+                fontSize: 10, fontWeight: 900, letterSpacing: '0.35em',
+                textTransform: 'uppercase',
+                background: 'linear-gradient(90deg, #818cf8, #c4b5fd, #67e8f9, #818cf8)',
+                backgroundSize: '300% auto',
+                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
+                animation: 'shine 4s linear infinite',
+              }}>KAFTIMDA</span>
+              <div style={{ width: 24, height: 1, background: 'linear-gradient(to left, transparent, rgba(99,102,241,0.5))' }} />
+            </div>
+            <p style={{ fontSize: 8.5, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.1em', marginTop: 3 }}>
+              KAFTIMDA bilan biznesingiz kaftingizda
+            </p>
+            <div className="flex gap-1.5 mt-2.5">
+              {[['uz','🇺🇿'],['ru','🇷🇺'],['en','🇬🇧']].map(([l, flag]) => (
+                <button key={l} onClick={() => setLang(l)}
+                  className="text-sm px-2 py-0.5 rounded-lg"
+                  style={lang === l
+                    ? { background: 'rgba(99,102,241,0.2)', color: '#818cf8', border: '1px solid rgba(99,102,241,0.3)' }
+                    : { color: '#374151', border: '1px solid transparent' }}>
+                  {flag}
                 </button>
               ))}
             </div>
-          )}
-
-          {/* Reset mode header */}
-          {mode === 'reset' && (
-            <div className="mb-5" style={fade(0)}>
-              <button onClick={() => { setMode('login'); setError(''); setResetDone(false); setForm({ name: '', username: '', password: '' }) }}
-                className="flex items-center gap-1.5 text-sm mb-4 active:opacity-60"
-                style={{ color: '#818cf8' }}>
-                <ArrowLeft size={14} /> Orqaga
-              </button>
-              <h2 className="font-black text-lg mb-1" style={{ color: '#fff' }}>Parolni tiklash</h2>
-              <p className="text-sm" style={{ color: 'rgba(255,255,255,0.35)' }}>Login nomingizni kiriting va yangi parol o'rnating</p>
-            </div>
-          )}
-
-          {/* Success */}
-          {resetDone ? (
-            <div className="flex flex-col items-center gap-4 py-6" style={fade(0)}>
-              <div style={{
-                width: 72, height: 72, borderRadius: '50%',
-                background: 'rgba(34,197,94,0.1)',
-                border: '2px solid rgba(34,197,94,0.3)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                boxShadow: '0 0 40px rgba(34,197,94,0.25)',
-                fontSize: 32,
-              }}>✓</div>
-              <p className="font-bold text-center" style={{ color: '#4ade80' }}>Parol muvaffaqiyatli yangilandi!</p>
-              <button onClick={() => { setMode('login'); setResetDone(false); setForm({ name: '', username: form.username, password: '' }); setError('') }}
-                className="btn-primary">Kirish</button>
-            </div>
-          ) : (
-            <form onSubmit={handleSubmit} className="flex flex-col gap-3" style={{ animation: shake ? 'shake 0.45s ease' : 'none' }}>
-
-              {/* Name field (register only) */}
-              {mode === 'register' && (
-                <div className="relative rounded-2xl input-glow transition-all" style={{
-                  ...fade(220),
-                  background: 'rgba(255,255,255,0.04)',
-                  border: `1px solid ${focused === 'name' ? 'rgba(99,102,241,0.6)' : 'rgba(255,255,255,0.07)'}`,
-                  transition: 'border-color 0.2s, box-shadow 0.2s, opacity 0.55s cubic-bezier(0.34,1.2,0.64,1) 220ms, transform 0.55s cubic-bezier(0.34,1.2,0.64,1) 220ms',
-                }}>
-                  <User className="absolute left-4 top-1/2 -translate-y-1/2" size={15} style={{ color: focused === 'name' ? '#818cf8' : '#374151' }} />
-                  <input className="w-full bg-transparent pl-11 pr-4 py-3.5 outline-none text-sm"
-                    style={{ color: '#fff' }}
-                    placeholder={t('fullName')}
-                    value={form.name}
-                    onChange={e => set('name', e.target.value)}
-                    onFocus={() => setFocused('name')}
-                    onBlur={() => setFocused(null)}
-                    autoCorrect="off" />
-                </div>
-              )}
-
-              {/* Username */}
-              <div className="relative rounded-2xl input-glow transition-all" style={{
-                ...fade(mode === 'register' ? 260 : 220),
-                background: 'rgba(255,255,255,0.04)',
-                border: `1px solid ${focused === 'username' ? 'rgba(99,102,241,0.6)' : 'rgba(255,255,255,0.07)'}`,
-                transition: 'border-color 0.2s, box-shadow 0.2s, opacity 0.55s cubic-bezier(0.34,1.2,0.64,1) 260ms, transform 0.55s cubic-bezier(0.34,1.2,0.64,1) 260ms',
-              }}>
-                <User className="absolute left-4 top-1/2 -translate-y-1/2" size={15} style={{ color: focused === 'username' ? '#818cf8' : '#374151' }} />
-                <input className="w-full bg-transparent pl-11 pr-4 py-3.5 outline-none text-sm"
-                  style={{ color: '#fff', fontSize: 16 }}
-                  placeholder={t('username')}
-                  value={form.username}
-                  onChange={e => set('username', e.target.value)}
-                  onFocus={() => setFocused('username')}
-                  onBlur={() => setFocused(null)}
-                  autoComplete="username" autoCapitalize="none" autoCorrect="off" spellCheck="false" />
-              </div>
-
-              {/* Password */}
-              <div className="relative rounded-2xl input-glow transition-all" style={{
-                ...fade(mode === 'register' ? 300 : 260),
-                background: 'rgba(255,255,255,0.04)',
-                border: `1px solid ${focused === 'password' ? 'rgba(99,102,241,0.6)' : 'rgba(255,255,255,0.07)'}`,
-                transition: 'border-color 0.2s, box-shadow 0.2s, opacity 0.55s cubic-bezier(0.34,1.2,0.64,1) 300ms, transform 0.55s cubic-bezier(0.34,1.2,0.64,1) 300ms',
-              }}>
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2" size={15} style={{ color: focused === 'password' ? '#818cf8' : '#374151' }} />
-                <input
-                  className="w-full bg-transparent pl-11 pr-12 py-3.5 outline-none text-sm"
-                  style={{ color: '#fff', fontSize: 16 }}
-                  type={showPass ? 'text' : 'password'}
-                  placeholder={mode === 'reset' ? 'Yangi parol (kamida 4 ta belgi)' : t('password')}
-                  value={form.password}
-                  onChange={e => set('password', e.target.value)}
-                  onFocus={() => setFocused('password')}
-                  onBlur={() => setFocused(null)}
-                  autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
-                  autoCapitalize="none" autoCorrect="off" spellCheck="false"
-                />
-                <button type="button" onClick={() => setShowPass(v => !v)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 p-1"
-                  style={{ color: '#374151' }}>
-                  {showPass ? <EyeOff size={15} /> : <Eye size={15} />}
-                </button>
-              </div>
-
-              {/* Error */}
-              {error && (
-                <div className="flex items-center gap-2 text-sm px-4 py-2.5 rounded-xl"
-                  style={{ color: '#fca5a5', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)' }}>
-                  ⚠ {error}
-                </div>
-              )}
-
-              {/* Submit */}
-              <button type="submit" disabled={loading}
-                className="w-full py-4 rounded-2xl font-black text-base relative overflow-hidden active:scale-[0.97] disabled:opacity-60"
-                style={{
-                  ...fade(mode === 'register' ? 340 : 300),
-                  marginTop: 4,
-                  background: 'linear-gradient(135deg, #312e81 0%, #4c1d95 50%, #4338ca 100%)',
-                  backgroundSize: '200% auto',
-                  color: '#e0e7ff',
-                  boxShadow: '0 4px 30px rgba(99,102,241,0.45), inset 0 1px 0 rgba(255,255,255,0.1)',
-                  border: '1px solid rgba(99,102,241,0.3)',
-                }}>
-                <span className="absolute inset-0 rounded-2xl pointer-events-none" style={{
-                  background: 'linear-gradient(105deg, transparent 25%, rgba(255,255,255,0.12) 50%, transparent 75%)',
-                  backgroundSize: '300% 100%',
-                  animation: 'shine 2.5s linear infinite',
-                }} />
-                <span className="relative flex items-center justify-center gap-2">
-                  {loading
-                    ? <><Loader size={17} className="animate-spin" /> Tekshirilmoqda...</>
-                    : <>
-                        {mode === 'login' ? t('enterBtn') : mode === 'reset' ? 'Parolni yangilash' : t('registerBtn')}
-                        <ChevronRight size={16} />
-                      </>
-                  }
-                </span>
-              </button>
-
-              {mode === 'login' && (
-                <button type="button"
-                  onClick={() => { setMode('reset'); setError(''); setForm(f => ({ ...f, password: '' })) }}
-                  className="text-center text-xs py-1 transition-colors"
-                  style={{ color: 'rgba(255,255,255,0.2)' }}>
-                  Parolni unutdim?
-                </button>
-              )}
-            </form>
-          )}
-        </div>
-      </div>
-
-      {/* Footer */}
-      <div className="pb-8 px-5 flex flex-col items-center gap-3 relative z-10" style={fade(440)}>
-        <div style={{ width: 40, height: 1, background: 'rgba(255,255,255,0.06)' }} />
-        <div className="flex flex-col items-center gap-1" style={{ color: 'rgba(255,255,255,0.12)', fontSize: 10 }}>
-          <div className="flex items-center gap-1.5">
-            <Mail size={9} style={{ color: '#6366f1' }} />
-            <span>kaftimda@gmail.com</span>
-            <span style={{ opacity: 0.3 }}>·</span>
-            <Phone size={9} style={{ color: '#6366f1' }} />
-            <span>+998 91 760 66 66</span>
           </div>
-        </div>
-      </div>
+
+          {/* Main */}
+          <div className="flex-1 flex flex-col items-center justify-center px-5 relative z-10">
+            <div className="w-full max-w-sm">
+
+              {/* Logo */}
+              <div className="flex flex-col items-center mb-6" style={fade(80)}>
+                <div className="relative mb-4" style={{ animation: 'logoFloat 4s ease-in-out infinite' }}>
+                  {/* Outer ring */}
+                  <div style={{
+                    position: 'absolute', inset: -10,
+                    borderRadius: '36px',
+                    border: '1px solid rgba(99,102,241,0.2)',
+                    animation: 'ringPulse 2.5s ease-in-out infinite',
+                  }} />
+                  <div style={{
+                    position: 'absolute', inset: -20,
+                    borderRadius: '44px',
+                    border: '1px solid rgba(99,102,241,0.08)',
+                    animation: 'ringPulse 2.5s 0.3s ease-in-out infinite',
+                  }} />
+                  <div className="w-[86px] h-[86px] rounded-[26px] flex items-center justify-center overflow-hidden"
+                    style={{
+                      background: 'linear-gradient(135deg, #0f172a, #1e3a8a 60%, #4338ca)',
+                      animation: 'logoPulse 3s ease-in-out infinite',
+                    }}>
+                    <img src="/icon.svg" alt="PulBek" style={{ width: 68, height: 68 }} />
+                  </div>
+                  {/* Badge */}
+                  <div style={{
+                    position: 'absolute', bottom: -5, right: -5,
+                    width: 26, height: 26,
+                    background: 'linear-gradient(135deg, #22c55e, #16a34a)',
+                    borderRadius: '50%',
+                    border: '2.5px solid #000',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    boxShadow: '0 0 16px rgba(34,197,94,0.7)',
+                    animation: 'badgePop 0.5s cubic-bezier(0.34,1.7,0.64,1) both',
+                  }}>
+                    <span style={{ fontSize: 12, fontWeight: 900, color: '#000' }}>✓</span>
+                  </div>
+                </div>
+                <h1 style={{
+                  fontSize: 26, fontWeight: 900, letterSpacing: '-0.5px',
+                  background: 'linear-gradient(135deg, #ffffff 30%, #c4b5fd 100%)',
+                  WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
+                }}>PulBek</h1>
+                <p style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.3)', marginTop: 3 }}>{t('tagline')}</p>
+              </div>
+
+              {/* Mode tabs */}
+              {mode !== 'reset' && (
+                <div className="flex p-1 mb-4 rounded-2xl" style={{
+                  ...fade(160),
+                  background: 'rgba(255,255,255,0.03)',
+                  border: '1px solid rgba(255,255,255,0.07)',
+                }}>
+                  {['login', 'register'].map(m => (
+                    <button key={m} onClick={() => { setMode(m); setError(''); setResetDone(false) }}
+                      className="flex-1 py-2.5 rounded-xl text-sm font-bold transition-all relative overflow-hidden"
+                      style={mode === m ? {
+                        background: 'linear-gradient(135deg, #312e81, #4c1d95)',
+                        color: '#e0e7ff',
+                        boxShadow: '0 2px 16px rgba(99,102,241,0.4)',
+                      } : { color: 'rgba(255,255,255,0.22)' }}>
+                      {mode === m && (
+                        <span className="absolute inset-0 rounded-xl pointer-events-none" style={{
+                          background: 'linear-gradient(105deg,transparent 25%,rgba(255,255,255,0.1) 50%,transparent 75%)',
+                          backgroundSize: '300% 100%',
+                          animation: 'shine 2.5s linear infinite',
+                        }} />
+                      )}
+                      <span className="relative">{m === 'login' ? t('login') : t('register')}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Reset header */}
+              {mode === 'reset' && (
+                <div className="mb-4" style={fade(0)}>
+                  <button onClick={() => { setMode('login'); setError(''); setResetDone(false); setForm({ name: '', username: '', password: '' }) }}
+                    className="flex items-center gap-1.5 text-sm mb-3 active:opacity-60"
+                    style={{ color: '#818cf8' }}>
+                    <ArrowLeft size={14} /> Orqaga
+                  </button>
+                  <h2 className="font-black text-lg mb-0.5" style={{ color: '#fff' }}>Parolni tiklash</h2>
+                  <p className="text-sm" style={{ color: 'rgba(255,255,255,0.3)' }}>Login va yangi parolni kiriting</p>
+                </div>
+              )}
+
+              {resetDone ? (
+                <div className="flex flex-col items-center gap-4 py-6" style={fade(0)}>
+                  <div style={{
+                    width: 72, height: 72, borderRadius: '50%',
+                    background: 'rgba(34,197,94,0.1)',
+                    border: '2px solid rgba(34,197,94,0.3)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    boxShadow: '0 0 40px rgba(34,197,94,0.25)', fontSize: 32,
+                  }}>✓</div>
+                  <p className="font-bold text-center" style={{ color: '#4ade80' }}>Parol muvaffaqiyatli yangilandi!</p>
+                  <button onClick={() => { setMode('login'); setResetDone(false); setForm({ name: '', username: form.username, password: '' }); setError('') }}
+                    className="btn-primary">Kirish</button>
+                </div>
+              ) : (
+                <form onSubmit={handleSubmit} className="flex flex-col gap-3"
+                  style={{ animation: shake ? 'shake 0.45s ease' : 'none' }}>
+
+                  {mode === 'register' && (
+                    <div className="input-wrap relative rounded-2xl transition-all" style={{
+                      ...fade(220),
+                      background: 'rgba(255,255,255,0.04)',
+                      border: '1px solid rgba(255,255,255,0.08)',
+                    }}>
+                      <User className="absolute left-4 top-1/2 -translate-y-1/2" size={15}
+                        style={{ color: focused === 'name' ? '#818cf8' : '#374151' }} />
+                      <input className="w-full bg-transparent pl-11 pr-4 py-3.5 outline-none text-sm"
+                        style={{ color: '#fff', fontSize: 16 }}
+                        placeholder={t('fullName')}
+                        value={form.name}
+                        onChange={e => set('name', e.target.value)}
+                        onFocus={() => setFocused('name')}
+                        onBlur={() => setFocused(null)}
+                        autoCorrect="off" />
+                    </div>
+                  )}
+
+                  <div className="input-wrap relative rounded-2xl transition-all" style={{
+                    ...fade(mode === 'register' ? 260 : 220),
+                    background: 'rgba(255,255,255,0.04)',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                  }}>
+                    <User className="absolute left-4 top-1/2 -translate-y-1/2" size={15}
+                      style={{ color: focused === 'username' ? '#818cf8' : '#374151' }} />
+                    <input className="w-full bg-transparent pl-11 pr-4 py-3.5 outline-none text-sm"
+                      style={{ color: '#fff', fontSize: 16 }}
+                      placeholder={t('username')}
+                      value={form.username}
+                      onChange={e => set('username', e.target.value)}
+                      onFocus={() => setFocused('username')}
+                      onBlur={() => setFocused(null)}
+                      autoComplete="username" autoCapitalize="none" autoCorrect="off" spellCheck="false" />
+                  </div>
+
+                  <div className="input-wrap relative rounded-2xl transition-all" style={{
+                    ...fade(mode === 'register' ? 300 : 260),
+                    background: 'rgba(255,255,255,0.04)',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                  }}>
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2" size={15}
+                      style={{ color: focused === 'password' ? '#818cf8' : '#374151' }} />
+                    <input
+                      className="w-full bg-transparent pl-11 pr-12 py-3.5 outline-none text-sm"
+                      style={{ color: '#fff', fontSize: 16 }}
+                      type={showPass ? 'text' : 'password'}
+                      placeholder={mode === 'reset' ? 'Yangi parol (kamida 4 ta belgi)' : t('password')}
+                      value={form.password}
+                      onChange={e => set('password', e.target.value)}
+                      onFocus={() => setFocused('password')}
+                      onBlur={() => setFocused(null)}
+                      autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+                      autoCapitalize="none" autoCorrect="off" spellCheck="false"
+                    />
+                    <button type="button" onClick={() => setShowPass(v => !v)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 p-1"
+                      style={{ color: '#374151' }}>
+                      {showPass ? <EyeOff size={15} /> : <Eye size={15} />}
+                    </button>
+                  </div>
+
+                  {error && (
+                    <div className="flex items-center gap-2 text-sm px-4 py-2.5 rounded-xl"
+                      style={{ color: '#fca5a5', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)' }}>
+                      ⚠ {error}
+                    </div>
+                  )}
+
+                  <button type="submit" disabled={loading}
+                    className="w-full py-4 rounded-2xl font-black text-base relative overflow-hidden active:scale-[0.97] disabled:opacity-60"
+                    style={{
+                      ...fade(mode === 'register' ? 340 : 300),
+                      marginTop: 4,
+                      background: 'linear-gradient(135deg, #312e81, #4c1d95 50%, #4338ca)',
+                      color: '#e0e7ff',
+                      boxShadow: '0 4px 30px rgba(99,102,241,0.5), inset 0 1px 0 rgba(255,255,255,0.1)',
+                      border: '1px solid rgba(99,102,241,0.3)',
+                    }}>
+                    <span className="absolute inset-0 rounded-2xl pointer-events-none" style={{
+                      background: 'linear-gradient(105deg, transparent 25%, rgba(255,255,255,0.12) 50%, transparent 75%)',
+                      backgroundSize: '300% 100%',
+                      animation: 'shine 2.5s linear infinite',
+                    }} />
+                    <span className="relative flex items-center justify-center gap-2">
+                      {loading
+                        ? <><Loader size={17} className="animate-spin" /> Tekshirilmoqda...</>
+                        : <>{mode === 'login' ? t('enterBtn') : mode === 'reset' ? 'Yangilash' : t('registerBtn')}<ChevronRight size={16} /></>
+                      }
+                    </span>
+                  </button>
+
+                  {mode === 'login' && (
+                    <button type="button"
+                      onClick={() => { setMode('reset'); setError(''); setForm(f => ({ ...f, password: '' })) }}
+                      className="text-center text-xs py-1"
+                      style={{ color: 'rgba(255,255,255,0.18)' }}>
+                      Parolni unutdim?
+                    </button>
+                  )}
+                </form>
+              )}
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="pb-7 px-5 flex flex-col items-center gap-2 relative z-10" style={fade(440)}>
+            <div style={{ width: 36, height: 1, background: 'rgba(255,255,255,0.06)' }} />
+            <div className="flex items-center gap-3" style={{ color: 'rgba(255,255,255,0.14)', fontSize: 10 }}>
+              <div className="flex items-center gap-1">
+                <Mail size={9} style={{ color: '#6366f1' }} />
+                <span>kaftimda@gmail.com</span>
+              </div>
+              <div style={{ width: 1, height: 10, background: 'rgba(255,255,255,0.1)' }} />
+              <div className="flex items-center gap-1">
+                <Phone size={9} style={{ color: '#6366f1' }} />
+                <span>+998 91 760 66 66</span>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   )
 }
