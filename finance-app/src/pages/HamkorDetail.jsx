@@ -138,26 +138,151 @@ export default function HamkorDetail() {
       </tr>`
     }).join('')
 
+    const debtColor = debtVal > 0 ? '#dc2626' : '#16a34a'
+    const debtText = debtVal > 0 ? fmtCur(debtVal, 'UZS') : "To'liq to'langan ✓"
+
     const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
     <title>${hamkor.name} hisobot</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-      body { font-family: system-ui, -apple-system, sans-serif; padding: 24px; color: #111; }
-      h2 { margin: 0 0 4px; font-size: 20px; }
-      .meta { color: #666; font-size: 13px; margin-bottom: 20px; }
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body { font-family: Roboto, system-ui, sans-serif; background: #f8fafc; color: #0f172a; }
+
+      .header {
+        background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #1d4ed8 100%);
+        padding: 32px 48px 36px;
+        position: relative;
+        overflow: hidden;
+      }
+      .header::before {
+        content: '';
+        position: absolute;
+        top: -60px; right: -60px;
+        width: 200px; height: 200px;
+        background: rgba(255,255,255,0.04);
+        border-radius: 50%;
+      }
+      .topbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+        padding-bottom: 18px;
+        margin-bottom: 22px;
+        position: relative;
+        z-index: 1;
+      }
+      .brand { display: flex; align-items: center; gap: 12px; }
+      .brand-icon {
+        width: 40px; height: 40px;
+        background: linear-gradient(135deg, #ffd700, #b8860b);
+        border-radius: 10px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 20px;
+      }
+      .brand-name { font-size: 20px; font-weight: 900; color: #ffd700; letter-spacing: 2px; line-height: 1; }
+      .brand-sub { font-size: 10px; color: rgba(255,255,255,0.4); letter-spacing: 1px; margin-top: 2px; }
+      .contact { text-align: right; }
+      .contact div { font-size: 12px; color: rgba(255,255,255,0.75); margin-bottom: 4px; }
+
+      .title-row { display: flex; justify-content: space-between; align-items: flex-end; position: relative; z-index: 1; }
+      .title { font-size: 28px; font-weight: 800; color: #fff; letter-spacing: -0.5px; }
+      .subtitle { font-size: 13px; color: rgba(255,255,255,0.5); margin-top: 4px; }
+      .meta-right { text-align: right; }
+      .meta-right div { font-size: 12px; color: rgba(255,255,255,0.4); margin-bottom: 2px; }
+
+      .summary-card {
+        margin: 28px 48px 0;
+        display: flex;
+        gap: 12px;
+      }
+      .card {
+        flex: 1;
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        padding: 16px 20px;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+      }
+      .card-label { font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #94a3b8; margin-bottom: 6px; }
+      .card-value { font-size: 18px; font-weight: 800; }
+
+      .content { padding: 32px 48px 24px; }
+      .section-title {
+        font-size: 11px; font-weight: 700; letter-spacing: 0.5px;
+        text-transform: uppercase; color: #64748b; margin-bottom: 12px;
+      }
       table { width: 100%; border-collapse: collapse; font-size: 13px; }
-      th { background: #1d4ed8; color: white; padding: 8px 10px; text-align: left; }
-      td { padding: 7px 10px; border-bottom: 1px solid #e5e7eb; }
-      tr:last-child td { border-bottom: none; }
-      .summary { margin-top: 16px; font-size: 14px; font-weight: 600; }
-      @media print { body { padding: 0; } }
+      thead tr { background: #f1f5f9; }
+      th { padding: 11px 14px; text-align: left; font-size: 10px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; color: #64748b; border-bottom: 2px solid #e2e8f0; }
+      td { padding: 11px 14px; border-bottom: 1px solid #f1f5f9; }
+      tr:nth-child(even) td { background: #f8fafc; }
+
+      .footer {
+        background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
+        padding: 18px 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-top: 32px;
+      }
+      .footer-brand { font-size: 11px; font-weight: 900; letter-spacing: 4px; color: #ffd700; text-transform: uppercase; margin-bottom: 3px; }
+      .footer-tagline { font-size: 11px; color: rgba(255,255,255,0.5); font-style: italic; }
+      @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
     </style></head><body>
-    <h2>${hamkor.name} — Hisobot</h2>
-    <div class="meta">Davr: ${period} &nbsp;|&nbsp; Sana: ${format(new Date(), 'dd.MM.yyyy')}</div>
-    <table>
-      <thead><tr><th>Sana</th><th>Tur</th><th>Izoh</th><th>Summa</th></tr></thead>
-      <tbody>${rows}</tbody>
-    </table>
-    <div class="summary">Qolgan qarz: ${debtVal > 0 ? fmtCur(debtVal, 'UZS') : "To'liq to'langan ✓"}</div>
+
+    <div class="header">
+      <div class="topbar">
+        <div class="brand">
+          <div class="brand-icon">💰</div>
+          <div>
+            <div class="brand-name">KAFTIMDA</div>
+            <div class="brand-sub">PulBek · Moliya ilovasi</div>
+          </div>
+        </div>
+        <div class="contact">
+          <div>📧 kaftimda@gmail.com</div>
+          <div>📞 +998 91 760 66 66</div>
+        </div>
+      </div>
+      <div class="title-row">
+        <div>
+          <div class="title">${hamkor.name}</div>
+          <div class="subtitle">Hamkor hisoboti · Davr: ${period}</div>
+        </div>
+        <div class="meta-right">
+          <div>${format(new Date(), 'dd.MM.yyyy HH:mm')}</div>
+          <div>${entries.length} ta yozuv</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div class="card">
+        <div class="card-label">Jami qarz holati</div>
+        <div class="card-value" style="color:${debtColor}">${debtText}</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Jami yozuvlar</div>
+        <div class="card-value" style="color:#1e40af">${entries.length} ta</div>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="section-title">Operatsiyalar tarixi</div>
+      <table>
+        <thead><tr><th>Sana</th><th>Tur</th><th>Izoh</th><th style="text-align:right">Summa</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+
+    <div class="footer">
+      <div style="text-align:center">
+        <div class="footer-brand">✦ KAFTIMDA ✦</div>
+        <div class="footer-tagline">KAFTIMDA bilan biznesingiz kaftingizda</div>
+      </div>
+    </div>
+
     <script>window.onload = () => { window.print(); }<\/script>
     </body></html>`
 

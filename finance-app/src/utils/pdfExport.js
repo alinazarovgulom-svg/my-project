@@ -5,31 +5,50 @@ import { fmtCur } from './format'
 
 const fmt = (n, cur) => fmtCur(n, cur || 'UZS')
 
+const FOOTER_HTML = `
+  <div style="background:linear-gradient(135deg,#0f172a 0%,#1e3a8a 100%);padding:20px 56px;display:flex;align-items:center;justify-content:center;margin-top:40px">
+    <div style="text-align:center">
+      <div style="font-size:11px;font-weight:900;letter-spacing:4px;color:#ffd700;text-transform:uppercase;margin-bottom:4px">✦ KAFTIMDA ✦</div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.55);font-style:italic">KAFTIMDA bilan biznesingiz kaftingizda</div>
+    </div>
+  </div>`
+
 const HEADER_HTML = (title, subtitle, meta, summaryCards) => `
-  <div style="background:linear-gradient(135deg,#0f172a 0%,#1e3a8a 50%,#1d4ed8 100%);padding:48px 56px 44px;position:relative;overflow:hidden">
+  <div style="background:linear-gradient(135deg,#0f172a 0%,#1e3a8a 50%,#1d4ed8 100%);padding:36px 56px 40px;position:relative;overflow:hidden">
     <div style="position:absolute;top:-60px;right:-60px;width:220px;height:220px;background:rgba(255,255,255,0.04);border-radius:50%"></div>
     <div style="position:absolute;bottom:-40px;left:160px;width:140px;height:140px;background:rgba(255,255,255,0.03);border-radius:50%"></div>
 
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;position:relative;z-index:1">
-      <div>
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
-          <div style="width:44px;height:44px;background:linear-gradient(135deg,#ffd700,#b8860b);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px">💰</div>
-          <span style="font-size:26px;font-weight:900;color:#fff;letter-spacing:-0.5px">PulBek</span>
+    <!-- Top bar: KAFTIMDA left, contact right -->
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px;position:relative;z-index:1;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:20px">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="width:40px;height:40px;background:linear-gradient(135deg,#ffd700,#b8860b);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px">💰</div>
+        <div>
+          <div style="font-size:20px;font-weight:900;color:#ffd700;letter-spacing:2px;line-height:1">KAFTIMDA</div>
+          <div style="font-size:10px;color:rgba(255,255,255,0.4);letter-spacing:1px;margin-top:2px">PulBek · Moliya ilovasi</div>
         </div>
-        <div style="font-size:34px;font-weight:800;color:#fff;margin-bottom:8px;letter-spacing:-0.5px">${title}</div>
-        ${subtitle ? `<div style="font-size:15px;color:rgba(255,255,255,0.5);margin-bottom:4px">${subtitle}</div>` : ''}
       </div>
       <div style="text-align:right">
-        <div style="font-size:9px;font-weight:900;letter-spacing:3px;color:#ffd700;text-transform:uppercase;margin-bottom:10px">✦ by KAFTIMDA ✦</div>
-        ${meta.map(m => `<div style="font-size:13px;color:rgba(255,255,255,0.45);margin-bottom:3px">${m}</div>`).join('')}
+        <div style="font-size:12px;color:rgba(255,255,255,0.75);margin-bottom:4px">📧 kaftimda@gmail.com</div>
+        <div style="font-size:12px;color:rgba(255,255,255,0.75)">📞 +998 91 760 66 66</div>
+      </div>
+    </div>
+
+    <!-- Title & meta -->
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;position:relative;z-index:1">
+      <div>
+        <div style="font-size:32px;font-weight:800;color:#fff;margin-bottom:6px;letter-spacing:-0.5px">${title}</div>
+        ${subtitle ? `<div style="font-size:14px;color:rgba(255,255,255,0.5)">${subtitle}</div>` : ''}
+      </div>
+      <div style="text-align:right">
+        ${meta.map(m => `<div style="font-size:12px;color:rgba(255,255,255,0.4);margin-bottom:2px">${m}</div>`).join('')}
       </div>
     </div>
 
     ${summaryCards.length ? `
-    <div style="display:flex;gap:12px;margin-top:28px;position:relative;z-index:1">
+    <div style="display:flex;gap:12px;margin-top:24px;position:relative;z-index:1">
       ${summaryCards.map(c => `
-      <div style="flex:1;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:18px 20px">
-        <div style="font-size:11px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px">${c.label}</div>
+      <div style="flex:1;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:16px 20px">
+        <div style="font-size:11px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px">${c.label}</div>
         ${c.lines.map(l => `<div style="font-size:16px;font-weight:700;color:${l.color}">${l.text}</div>`).join('')}
       </div>`).join('')}
     </div>` : ''}
@@ -123,7 +142,8 @@ export const exportTransactionsPDF = async (list, filename = 'pulbek-tranzaksiya
     ], summaryCards)}
     <div style="padding:32px 48px 48px">
       ${TABLE_HTML(columns, rows)}
-    </div>`
+    </div>
+    ${FOOTER_HTML}`
 
   await renderToPDF(html, filename)
 }
@@ -192,7 +212,8 @@ export const exportReportPDF = async ({ filtered, startDate, endDate, userName, 
 
       <div style="font-size:13px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;color:#64748b;margin:36px 0 14px">Barcha operatsiyalar</div>
       ${TABLE_HTML(txColumns, txRows)}
-    </div>`
+    </div>
+    ${FOOTER_HTML}`
 
   await renderToPDF(html, filename || `hisobot_${startDate}_${endDate}.pdf`)
 }
