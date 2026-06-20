@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useApp } from '../store/AppContext'
 import { createWorkspace, joinWorkspace, leaveWorkspace, addMemberByUsername, updateMemberRole, removeMember } from '../store/workspace'
 import { Building2, UserPlus, LogOut, Users, Copy, Check } from 'lucide-react'
+import ElektrHisoblagich from '../components/ElektrHisoblagich'
 
 const ROLE_LABELS = { admin: 'Admin', kassir: 'Kassir', rahbar: 'Rahbar' }
 const SECTION_LABELS = { transactions: 'Kirim/Chiqim', debts: 'Qarzlar', hamkorlar: 'Hamkorlar', reports: 'Hisobot', exchange: 'Valyuta' }
@@ -183,6 +184,8 @@ export default function Korxona() {
           </button>
         </div>
       )}
+
+      <ElektrHisoblagich workspaceId={workspaceId} isAdmin={isAdmin} />
 
       <div className="rounded-xl p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
         <div className="text-sm font-semibold mb-3 flex items-center gap-2">
