@@ -8,12 +8,12 @@ export default function MenuPage() {
   const nav = useNavigate()
 
   const sections = [
-    { to: '/transactions', icon: ArrowLeftRight, label: 'Kirim / Chiqim', sub: 'Barcha to\'lovlar', color: 'from-[#1e1b4b] to-[#312e81]', glow: '#6366f1', badge: null },
-    { to: '/debts', icon: Users, label: 'Qarzlar', sub: 'Bergan va olgan', color: 'from-[#052e16] to-[#14532d]', glow: '#22c55e', badge: null },
-    { to: '/hamkorlar', icon: Handshake, label: 'Hamkorlar', sub: 'Mijozlar', color: 'from-[#431407] to-[#7c2d12]', glow: '#f97316', badge: null },
-    { to: '/reports', icon: BarChart2, label: 'Hisobot', sub: 'Grafik va tahlil', color: 'from-[#2e1065] to-[#4c1d95]', glow: '#a855f7', badge: null },
-    { to: '/exchange', icon: RefreshCw, label: 'Valyuta', sub: 'USD · EUR · RUB', color: 'from-[#083344] to-[#164e63]', glow: '#06b6d4', badge: null },
-    { to: '/korxona', icon: Building2, label: 'Korxona', sub: workspace ? `${workspace.members?.length || 0} a'zo` : 'Jamoa', color: 'from-[#4a044e] to-[#7e1d7e]', glow: '#e879f9', badge: null },
+    { to: '/transactions', icon: ArrowLeftRight, label: 'Kirim / Chiqim', sub: 'Barcha to\'lovlar', accent: '#6366f1' },
+    { to: '/debts', icon: Users, label: 'Qarzlar', sub: 'Bergan va olgan', accent: '#22c55e' },
+    { to: '/hamkorlar', icon: Handshake, label: 'Hamkorlar', sub: 'Mijozlar', accent: '#f97316' },
+    { to: '/reports', icon: BarChart2, label: 'Hisobot', sub: 'Grafik va tahlil', accent: '#a855f7' },
+    { to: '/exchange', icon: RefreshCw, label: 'Valyuta', sub: 'USD · EUR · RUB', accent: '#06b6d4' },
+    { to: '/korxona', icon: Building2, label: 'Korxona', sub: workspace ? `${workspace.members?.length || 0} a'zo` : 'Jamoa', accent: '#e879f9' },
   ]
 
   const now = new Date()
@@ -51,26 +51,23 @@ export default function MenuPage() {
 
       {/* Grid */}
       <div className="grid grid-cols-2 gap-2.5 px-4 stagger">
-        {sections.map(({ to, icon: Icon, label, sub, color, glow, badge }) => (
+        {sections.map(({ to, icon: Icon, label, sub, accent }) => (
           <button
             key={to}
             onClick={() => nav(to)}
-            className={`relative overflow-hidden rounded-[22px] p-4 text-left bg-gradient-to-br ${color} border border-white/[0.035] min-h-[120px] flex flex-col`}
-            style={{ '--glow': glow }}
+            className="relative overflow-hidden rounded-[22px] p-4 text-left min-h-[120px] flex flex-col"
+            style={{ background: 'var(--bg-card2)', border: '1px solid var(--border-card)' }}
           >
-            {/* glow */}
-            <div className="absolute -top-6 -right-6 w-20 h-20 rounded-full blur-xl opacity-60" style={{background: glow}}></div>
+            {/* subtle accent glow */}
+            <div className="absolute -top-6 -right-6 w-20 h-20 rounded-full blur-2xl opacity-20" style={{ background: accent }} />
             {/* icon */}
-            <div className="w-10 h-10 rounded-[13px] bg-white/[0.14] flex items-center justify-center mb-3 relative z-10">
-              <Icon size={18} className="text-white" strokeWidth={2} />
+            <div className="w-10 h-10 rounded-[13px] flex items-center justify-center mb-3 relative z-10" style={{ background: `${accent}22` }}>
+              <Icon size={18} strokeWidth={2} style={{ color: accent }} />
             </div>
-            <div className="text-white text-[12px] font-black relative z-10 leading-tight">{label}</div>
-            <div className="text-white/40 text-[9px] mt-1 relative z-10">{sub}</div>
-            {badge && (
-              <div className="absolute top-3 right-3 bg-white/[0.16] text-white text-[9px] font-black px-2 py-0.5 rounded-full">{badge}</div>
-            )}
-            <div className="absolute bottom-3 right-3 opacity-20">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+            <div className="text-[12px] font-black relative z-10 leading-tight" style={{ color: 'var(--text-primary)' }}>{label}</div>
+            <div className="text-[9px] mt-1 relative z-10" style={{ color: 'var(--text-muted)' }}>{sub}</div>
+            <div className="absolute bottom-3 right-3" style={{ color: 'var(--text-muted)', opacity: 0.4 }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
             </div>
           </button>
         ))}

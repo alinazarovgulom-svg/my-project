@@ -45,22 +45,22 @@ export default function Profile() {
   return (
     <div className="min-h-screen pb-24 page-bg" style={{ color: 'var(--text-primary)' }}>
       {/* Hero */}
-      <div className="bg-gradient-to-b from-[#11102a] to-[#08080f] px-5 pt-4 pb-6 flex flex-col items-center">
+      <div className="px-5 pt-4 pb-6 flex flex-col items-center" style={{ background: 'var(--bg-card2)', borderBottom: '1px solid var(--border-card)' }}>
         <div className="w-full flex items-center justify-between mb-5">
-          <div className="text-white text-[15px] font-black">Profil</div>
+          <div className="text-[15px] font-black" style={{ color: 'var(--text-primary)' }}>Profil</div>
           <div className="flex items-center gap-2">
             <button
               onClick={toggleTheme}
               className="w-8 h-8 rounded-[10px] flex items-center justify-center transition-all"
-              style={{ background: theme === 'light' ? 'rgba(99,102,241,0.15)' : 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)' }}
+              style={{ background: 'var(--bg-card)', border: '1px solid var(--border-input)' }}
             >
               {theme === 'light'
                 ? <Moon size={14} style={{ color: '#818cf8' }} />
                 : <Sun size={14} style={{ color: '#fbbf24' }} />
               }
             </button>
-            <button onClick={() => nav('/settings')} className="w-8 h-8 rounded-[10px] flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)' }}>
-              <Settings size={14} className="text-gray-500" />
+            <button onClick={() => nav('/settings')} className="w-8 h-8 rounded-[10px] flex items-center justify-center" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-input)' }}>
+              <Settings size={14} style={{ color: 'var(--text-secondary)' }} />
             </button>
           </div>
         </div>
@@ -85,8 +85,8 @@ export default function Profile() {
           <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
         </div>
 
-        <div className="text-white text-[18px] font-black mb-0.5">{user?.name}</div>
-        <div className="text-gray-500 text-[11px] mb-2">@{user?.username} · {myRole ? (myRole === 'admin' ? 'Admin' : myRole === 'kassir' ? 'Kassir' : 'Rahbar') : 'Shaxsiy'}</div>
+        <div className="text-[18px] font-black mb-0.5" style={{ color: 'var(--text-primary)' }}>{user?.name}</div>
+        <div className="text-[11px] mb-2" style={{ color: 'var(--text-secondary)' }}>@{user?.username} · {myRole ? (myRole === 'admin' ? 'Admin' : myRole === 'kassir' ? 'Kassir' : 'Rahbar') : 'Shaxsiy'}</div>
         <div className="flex items-center gap-1.5">
           <div className="w-2 h-2 rounded-full" style={{background: statusColors[status], boxShadow: `0 0 8px ${statusColors[status]}`}}></div>
           <span className="text-[11px] font-bold" style={{color: statusColors[status]}}>
@@ -96,62 +96,61 @@ export default function Profile() {
       </div>
 
       {/* Stats */}
-      <div className="mx-4 mb-3 flex rounded-2xl overflow-hidden border border-white/[0.05] bg-white/[0.02]">
-        <div className="flex-1 py-3 flex flex-col items-center border-r border-white/[0.04]">
-          <div className="text-white text-[15px] font-black">{transactions.length}</div>
-          <div className="text-gray-600 text-[8px] font-bold mt-0.5">Tranzaksiya</div>
+      <div className="mx-4 mb-3 flex rounded-2xl overflow-hidden" style={{ background: 'var(--bg-card2)', border: '1px solid var(--border-card)' }}>
+        <div className="flex-1 py-3 flex flex-col items-center" style={{ borderRight: '1px solid var(--border-soft)' }}>
+          <div className="text-[15px] font-black" style={{ color: 'var(--text-primary)' }}>{transactions.length}</div>
+          <div className="text-[8px] font-bold mt-0.5" style={{ color: 'var(--text-muted)' }}>Tranzaksiya</div>
         </div>
-        <div className="flex-1 py-3 flex flex-col items-center border-r border-white/[0.04]">
-          <div className="text-white text-[15px] font-black">{debts.filter(d => d.remaining > 0).length}</div>
-          <div className="text-gray-600 text-[8px] font-bold mt-0.5">Faol qarz</div>
+        <div className="flex-1 py-3 flex flex-col items-center" style={{ borderRight: '1px solid var(--border-soft)' }}>
+          <div className="text-[15px] font-black" style={{ color: 'var(--text-primary)' }}>{debts.filter(d => d.remaining > 0).length}</div>
+          <div className="text-[8px] font-bold mt-0.5" style={{ color: 'var(--text-muted)' }}>Faol qarz</div>
         </div>
         <div className="flex-1 py-3 flex flex-col items-center">
-          <div className="text-green-400 text-[15px] font-black">{workspace?.members?.length || 1}</div>
-          <div className="text-gray-600 text-[8px] font-bold mt-0.5">A'zolar</div>
+          <div className="text-green-500 text-[15px] font-black">{workspace?.members?.length || 1}</div>
+          <div className="text-[8px] font-bold mt-0.5" style={{ color: 'var(--text-muted)' }}>A'zolar</div>
         </div>
       </div>
 
       {/* Status picker */}
-      <div className="mx-4 mb-4 flex gap-1.5 bg-white/[0.03] border border-white/[0.05] rounded-2xl p-1.5">
+      <div className="mx-4 mb-4 flex gap-1.5 rounded-2xl p-1.5" style={{ background: 'var(--bg-card2)', border: '1px solid var(--border-card)' }}>
         {(['online', 'away', 'hidden']).map(s => (
           <button
             key={s}
             onClick={() => handleStatusChange(s)}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-[9px] font-black transition-all ${
-              status === s ? 'bg-indigo-500/15 border border-indigo-500/20' : ''
-            }`}
+            className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-[9px] font-black transition-all"
+            style={{ background: status === s ? 'rgba(99,102,241,0.15)' : 'transparent', border: status === s ? '1px solid rgba(99,102,241,0.2)' : '1px solid transparent' }}
           >
-            <div className="w-1.5 h-1.5 rounded-full" style={{background: statusColors[s], boxShadow: status === s ? `0 0 5px ${statusColors[s]}` : 'none'}}></div>
-            <span style={{color: status === s ? '#818cf8' : '#374151'}}>{statusLabels[s]}</span>
+            <div className="w-1.5 h-1.5 rounded-full" style={{ background: statusColors[s], boxShadow: status === s ? `0 0 5px ${statusColors[s]}` : 'none' }}></div>
+            <span style={{ color: status === s ? '#818cf8' : 'var(--text-secondary)' }}>{statusLabels[s]}</span>
           </button>
         ))}
       </div>
 
       {/* Rows */}
       <div className="px-4 mb-1">
-        <div className="text-[9px] font-bold tracking-widest text-gray-700 uppercase mb-2">Hisob</div>
-        <div className="bg-white/[0.025] border border-white/[0.045] rounded-2xl overflow-hidden">
+        <div className="text-[9px] font-bold tracking-widest uppercase mb-2" style={{ color: 'var(--text-muted)' }}>Hisob</div>
+        <div className="rounded-2xl overflow-hidden" style={{ background: 'var(--bg-card2)', border: '1px solid var(--border-card)' }}>
           {[
-            { icon: Lock, iconColor: '#4ade80', bg: 'rgba(34,197,94,0.08)', label: "Parolni o'zgartirish", action: () => nav('/settings') },
-            { icon: Shield, iconColor: '#fbbf24', bg: 'rgba(251,191,36,0.08)', label: 'PIN kod', val: '●●●● faol', action: () => nav('/settings') },
-            { icon: Download, iconColor: '#22d3ee', bg: 'rgba(6,182,212,0.08)', label: 'Zahira nusxa', action: () => nav('/settings') },
+            { icon: Lock, iconColor: '#4ade80', bg: 'rgba(34,197,94,0.1)', label: "Parolni o'zgartirish", action: () => nav('/settings') },
+            { icon: Shield, iconColor: '#fbbf24', bg: 'rgba(251,191,36,0.1)', label: 'PIN kod', val: '●●●● faol', action: () => nav('/settings') },
+            { icon: Download, iconColor: '#22d3ee', bg: 'rgba(6,182,212,0.1)', label: 'Zahira nusxa', action: () => nav('/settings') },
           ].map(({ icon: Icon, iconColor, bg, label, val, action }) => (
-            <button key={label} onClick={action} className="w-full flex items-center gap-3 px-4 py-3 border-b border-white/[0.035] last:border-0">
-              <div className="w-8 h-8 rounded-[10px] flex items-center justify-center flex-shrink-0" style={{background: bg}}>
-                <Icon size={15} strokeWidth={2} style={{stroke: iconColor}} />
+            <button key={label} onClick={action} className="w-full flex items-center gap-3 px-4 py-3 last:border-0" style={{ borderBottom: '1px solid var(--border-soft)' }}>
+              <div className="w-8 h-8 rounded-[10px] flex items-center justify-center flex-shrink-0" style={{ background: bg }}>
+                <Icon size={15} strokeWidth={2} style={{ stroke: iconColor }} />
               </div>
-              <span className="text-[#d1d5db] text-[12px] font-medium flex-1 text-left">{label}</span>
-              {val && <span className="text-gray-600 text-[10px]">{val}</span>}
-              <ChevronRight size={13} className="text-gray-700" />
+              <span className="text-[12px] font-medium flex-1 text-left" style={{ color: 'var(--text-primary)' }}>{label}</span>
+              {val && <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{val}</span>}
+              <ChevronRight size={13} style={{ color: 'var(--text-muted)' }} />
             </button>
           ))}
         </div>
       </div>
 
       <div className="px-4 mt-3">
-        <div className="bg-white/[0.025] border border-white/[0.045] rounded-2xl overflow-hidden">
+        <div className="rounded-2xl overflow-hidden" style={{ background: 'var(--bg-card2)', border: '1px solid var(--border-card)' }}>
           <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3">
-            <div className="w-8 h-8 rounded-[10px] flex items-center justify-center flex-shrink-0" style={{background: 'rgba(239,68,68,0.08)'}}>
+            <div className="w-8 h-8 rounded-[10px] flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(239,68,68,0.1)' }}>
               <LogOut size={15} strokeWidth={2} className="text-red-400" />
             </div>
             <span className="text-red-400 text-[12px] font-medium">Chiqish</span>
