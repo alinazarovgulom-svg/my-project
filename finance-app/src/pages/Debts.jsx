@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus, ChevronDown, ChevronUp, Trash2, AlertTriangle, Pencil } from 'lucide-react'
+import { Plus, ChevronDown, ChevronUp, Trash2, AlertTriangle, Pencil, Download } from 'lucide-react'
 import { useApp } from '../store/AppContext'
 import Modal from '../components/Modal'
 import AmountInput from '../components/AmountInput'
@@ -8,6 +8,7 @@ import { addFamilyDebt, deleteFamilyDebt, updateFamilyDebt, addFamilyTransaction
 import { format, differenceInDays, isToday, isTomorrow, isPast, parseISO } from 'date-fns'
 import { fmtCur } from '../utils/format'
 import EmptyState from '../components/EmptyState'
+import * as XLSX from 'xlsx'
 
 const fmt = (n, cur) => fmtCur(n, cur || 'UZS')
 const CURRENCIES = ['UZS', 'USD', 'EUR', 'RUB']
@@ -133,6 +134,24 @@ export default function Debts() {
     showToast('Tahrirlash saqlandi ✓')
   }
 
+  const exportExcel = () => {
+    const rows = activeDebts.map(d => ({
+      'Tur': d.direction === 'borrowed' ? 'Qarz oldim' : 'Qarz berdim',
+      'Shaxs': d.person,
+      'Miqdor': d.amount,
+      'Valyuta': d.currency || 'UZS',
+      'Qolgan': d.remaining,
+      'Sana': format(new Date(d.date), 'dd.MM.yyyy'),
+      'Muddat': d.dueDate ? format(new Date(d.dueDate), 'dd.MM.yyyy') : '',
+      'Holat': d.remaining <= 0 ? 'Tugallangan' : 'Faol',
+      'Izoh': d.note || '',
+    }))
+    const ws = XLSX.utils.json_to_sheet(rows)
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, 'Qarzlar')
+    XLSX.writeFile(wb, 'pulbek-qarzlar.xlsx')
+  }
+
   const filtered = activeDebts
     .filter(d => filter === 'all' || d.direction === filter || (filter === 'active' && d.remaining > 0) || (filter === 'done' && d.remaining <= 0))
     .sort((a, b) => new Date(b.date) - new Date(a.date))
@@ -147,7 +166,12 @@ export default function Debts() {
     <div className="flex flex-col min-h-dvh pb-24">
       <div className="page-animate">
       <div className="sticky top-0 z-10 px-4 pt-4 pb-3 page-bg">
-        <h1 className="text-[18px] font-black mb-3" style={{ color: 'var(--text-primary)' }}>Qarzlar</h1>
+        <div className="flex items-center justify-between mb-3">
+          <h1 className="text-[18px] font-black" style={{ color: 'var(--text-primary)' }}>Qarzlar</h1>
+          <button onClick={exportExcel} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-green-400 active:opacity-70" style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.2)' }}>
+            <Download size={13} /> Excel
+          </button>
+        </div>
 
         {/* Warnings */}
         {warnings.length > 0 && (
