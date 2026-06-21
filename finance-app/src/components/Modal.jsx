@@ -1,15 +1,22 @@
-import { X, Loader2 } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { X } from 'lucide-react'
+import { useEffect, useState, useRef } from 'react'
 
 export default function Modal({ open, onClose, title, children, loading }) {
   const [visible, setVisible] = useState(false)
+  const clickable = useRef(false)
 
   useEffect(() => {
     if (open) {
       document.body.style.overflow = 'hidden'
-      requestAnimationFrame(() => requestAnimationFrame(() => setVisible(true)))
+      clickable.current = false
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        setVisible(true)
+        // iOS ghost click: 400ms dan keyin yopish tugmasini faollashtirish
+        setTimeout(() => { clickable.current = true }, 400)
+      }))
     } else {
       setVisible(false)
+      clickable.current = false
       const t = setTimeout(() => { document.body.style.overflow = '' }, 300)
       return () => clearTimeout(t)
     }
@@ -18,10 +25,14 @@ export default function Modal({ open, onClose, title, children, loading }) {
 
   if (!open && !visible) return null
 
+  const handleBackdropClick = () => {
+    if (clickable.current) onClose()
+  }
+
   return (
     <div
       className="fixed inset-0 z-[150] flex items-end justify-center"
-      onClick={onClose}
+      onClick={handleBackdropClick}
       style={{
         transition: 'opacity 0.28s ease',
         opacity: visible ? 1 : 0,
@@ -40,7 +51,6 @@ export default function Modal({ open, onClose, title, children, loading }) {
         }}
         onClick={e => e.stopPropagation()}
       >
-        {/* Handle bar */}
         <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
           <div className="w-10 h-1 rounded-full" style={{ background: 'var(--border-input)' }} />
         </div>
