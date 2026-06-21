@@ -1,7 +1,7 @@
 import { db } from './firebase'
 import {
   doc, getDoc, setDoc, updateDoc, arrayUnion, arrayRemove,
-  onSnapshot
+  onSnapshot, deleteDoc
 } from 'firebase/firestore'
 import { findUserByUsername } from './auth'
 
@@ -72,6 +72,13 @@ export const leaveWorkspace = async (userId, workspaceId) => {
   }
   const member = snap.data().members.find(m => m.userId === userId)
   if (member) await updateDoc(ref, { members: arrayRemove(member) })
+  localStorage.removeItem(`finance_${userId}_workspaceId`)
+  return { success: true }
+}
+
+export const deleteWorkspace = async (userId, workspaceId) => {
+  const ref = doc(db, 'workspaces', workspaceId)
+  await deleteDoc(ref)
   localStorage.removeItem(`finance_${userId}_workspaceId`)
   return { success: true }
 }

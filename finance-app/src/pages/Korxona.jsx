@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useApp } from '../store/AppContext'
-import { createWorkspace, joinWorkspace, leaveWorkspace, addMemberByUsername, updateMemberRole, removeMember } from '../store/workspace'
+import { createWorkspace, joinWorkspace, leaveWorkspace, deleteWorkspace, addMemberByUsername, updateMemberRole, removeMember } from '../store/workspace'
 import { Building2, UserPlus, LogOut, Users, Copy, Check } from 'lucide-react'
 import ElektrHisoblagich from '../components/ElektrHisoblagich'
 
@@ -45,6 +45,14 @@ export default function Korxona() {
     if (!window.confirm('Korxonadan chiqmoqchimisiz?')) return
     setLoading(true)
     await leaveWorkspace(user.id, workspaceId)
+    setWorkspace(null); setWorkspaceId(null)
+    setLoading(false)
+  }
+
+  const handleDeleteWorkspace = async () => {
+    if (!window.confirm(`"${workspace.name}" korxonasini butunlay o'chirasizmi? Barcha a'zolar chiqib ketadi.`)) return
+    setLoading(true)
+    await deleteWorkspace(user.id, workspaceId)
     setWorkspace(null); setWorkspaceId(null)
     setLoading(false)
   }
@@ -138,9 +146,13 @@ export default function Korxona() {
         <h1 className="text-xl font-bold flex items-center gap-2">
           <Building2 size={20} /> {workspace.name}
         </h1>
-        {!isAdmin && (
+        {!isAdmin ? (
           <button onClick={handleLeave} disabled={loading} className="flex items-center gap-1 text-red-400 text-sm hover:text-red-300">
             <LogOut size={14} /> Chiqish
+          </button>
+        ) : (
+          <button onClick={handleDeleteWorkspace} disabled={loading} className="flex items-center gap-1 text-red-400 text-sm hover:text-red-300">
+            <LogOut size={14} /> Korxonani o'chirish
           </button>
         )}
       </div>
