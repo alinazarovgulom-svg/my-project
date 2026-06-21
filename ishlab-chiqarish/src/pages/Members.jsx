@@ -30,12 +30,12 @@ const empty = { name: '', email: '', password: '', role: 'viewer' }
 // Secondary Firebase app for creating users without signing out current user
 function getSecondaryAuth() {
   const config = {
-    apiKey: "AIzaSyASH72RruqIiBlZLAMrO2H6deV1eO2bpqs",
-    authDomain: "pulbek-e324a.firebaseapp.com",
-    projectId: "pulbek-e324a",
-    storageBucket: "pulbek-e324a.firebasestorage.app",
-    messagingSenderId: "882923501531",
-    appId: "1:882923501531:web:ef3855ef512bd3edc0d9fe",
+    apiKey: "AIzaSyDAGKw5FHLh_dyDC6dvQeJUzX7Xi34fYWk",
+    authDomain: "ishlab-chiqarish-ec750.firebaseapp.com",
+    projectId: "ishlab-chiqarish-ec750",
+    storageBucket: "ishlab-chiqarish-ec750.firebasestorage.app",
+    messagingSenderId: "329770242502",
+    appId: "1:329770242502:web:f7bf311986e0478404e2c7",
   }
   const secondaryName = 'factory-secondary'
   const existing = getApps().find(a => a.name === secondaryName)
