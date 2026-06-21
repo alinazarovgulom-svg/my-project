@@ -1,21 +1,29 @@
 import { getData, saveData } from './storage'
 import { syncToCloud, loadFromCloud, subscribeToCloud } from './sync'
+import { getUserWorkspaceId } from './workspace'
 
 const ARCHIVE_KEY = 'hamkorlar_archive'
 const ARCHIVE_DAYS = 30
 
+const getStoreInfo = (uid) => {
+  const wid = getUserWorkspaceId(uid)
+  return wid ? { storeId: wid, col: 'workspaces' } : { storeId: uid, col: 'users' }
+}
+
 // localStorage + Firestore ga birga saqlash
 const save = (key, uid, data) => {
   saveData(key, uid, data)
-  syncToCloud(uid, key, data)
+  const { storeId, col } = getStoreInfo(uid)
+  syncToCloud(storeId, key, data, col)
 }
 
 // Firestore dan yuklash va localStorage ni yangilash
 export const loadHamkorlarFromCloud = async (uid) => {
+  const { storeId, col } = getStoreInfo(uid)
   const [sections, partners, archive] = await Promise.all([
-    loadFromCloud(uid, 'hamkorlar_sections'),
-    loadFromCloud(uid, 'hamkorlar'),
-    loadFromCloud(uid, ARCHIVE_KEY),
+    loadFromCloud(storeId, 'hamkorlar_sections', col),
+    loadFromCloud(storeId, 'hamkorlar', col),
+    loadFromCloud(storeId, ARCHIVE_KEY, col),
   ])
   if (sections) saveData('hamkorlar_sections', uid, sections)
   if (partners) saveData('hamkorlar', uid, partners)
@@ -25,14 +33,15 @@ export const loadHamkorlarFromCloud = async (uid) => {
 
 // Real-vaqt tinglash
 export const subscribeHamkorlar = (uid, onSections, onPartners) => {
-  const unsubSec = subscribeToCloud(uid, 'hamkorlar_sections', (data) => {
+  const { storeId, col } = getStoreInfo(uid)
+  const unsubSec = subscribeToCloud(storeId, 'hamkorlar_sections', (data) => {
     saveData('hamkorlar_sections', uid, data)
     onSections?.(data)
-  })
-  const unsubPar = subscribeToCloud(uid, 'hamkorlar', (data) => {
+  }, col)
+  const unsubPar = subscribeToCloud(storeId, 'hamkorlar', (data) => {
     saveData('hamkorlar', uid, data)
     onPartners?.(data)
-  })
+  }, col)
   return () => { unsubSec(); unsubPar() }
 }
 

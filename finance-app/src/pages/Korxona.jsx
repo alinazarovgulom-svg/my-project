@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useApp } from '../store/AppContext'
 import { createWorkspace, joinWorkspace, leaveWorkspace, deleteWorkspace, addMemberByUsername, updateMemberRole, removeMember } from '../store/workspace'
+import { loadFromCloud, syncToCloud } from '../store/sync'
 import { Building2, UserPlus, LogOut, Users, Copy, Check } from 'lucide-react'
 import ElektrHisoblagich from '../components/ElektrHisoblagich'
 
@@ -25,11 +26,20 @@ export default function Korxona() {
     try {
       const result = await createWorkspace(user.id, user.username, user.name, workspaceName.trim())
       if (result.error) { setError(result.error); setLoading(false); return }
+      const wid = result.workspace.id
       // Shaxsiy ma'lumotlarni workspace ga ko'chirish
       if (transactions.length > 0) saveTransactions(transactions)
       if (debts.length > 0) saveDebts(debts)
+      // Hamkorlar ma'lumotlarini workspace ga ko'chirish
+      const HAMKOR_KEYS = ['hamkorlar_sections', 'hamkorlar', 'hamkorlar_archive']
+      await Promise.all(HAMKOR_KEYS.map(async (key) => {
+        const data = await loadFromCloud(user.id, key, 'users')
+        if (data && (Array.isArray(data) ? data.length > 0 : Object.keys(data).length > 0)) {
+          await syncToCloud(wid, key, data, 'workspaces')
+        }
+      }))
       setWorkspace(result.workspace)
-      setWorkspaceId(result.workspace.id)
+      setWorkspaceId(wid)
     } catch (e) { setError(e.message || 'Xatolik yuz berdi') }
     setLoading(false)
   }
