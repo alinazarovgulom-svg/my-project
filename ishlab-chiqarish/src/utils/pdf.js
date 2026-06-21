@@ -9,7 +9,7 @@ async function addCyrillicFont(doc) {
   let binary = ''
   for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i])
   doc.addFileToVFS('PTSans-Regular.ttf', btoa(binary))
-  doc.addFont('PTSans-Regular.ttf', 'PTSans', 'normal')
+  doc.addFont('PTSans-Regular.ttf', 'PTSans', 'normal', 400, 'Identity-H')
   return 'PTSans'
 }
 
