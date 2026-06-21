@@ -275,12 +275,7 @@ export default function Transactions() {
                 </p>
               </div>
             ) : (
-              <SwipeableRow
-                key={t.id}
-                onDelete={showDelete ? () => handleDelete(t.id, isFamily) : null}
-                onEdit={canEditTx ? () => openEdit(t) : null}
-              >
-                <div className="card flex items-center gap-3">
+              <div key={t.id} className="card flex items-center gap-3">
                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0 ${t.type === 'income' ? 'bg-green-500/15' : 'bg-red-500/15'}`}>
                     {t.emoji}
                   </div>
@@ -295,7 +290,6 @@ export default function Transactions() {
                     {t.type === 'income' ? '+' : '-'}{fmt(t.amount, t.currency || 'UZS')} {t.currency || 'UZS'}
                   </p>
                 </div>
-              </SwipeableRow>
             )
           })
         )}
