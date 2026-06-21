@@ -19,9 +19,23 @@ export function exportPDF(rows, filters, deptName) {
   const effBg    = eff >= 100 ? '#f0fdf4' : eff >= 80 ? '#fefce8' : '#fef2f2'
 
   // ── Pivot ─────────────────────────────────────────────────────────────────
+  // Use date+time as slot key so multi-day reports don't merge same-hour columns
+  const uniqueDates = new Set(rows.map(r => r.date))
+  const multiDay = uniqueDates.size > 1
+
   const slotSet = new Set()
-  rows.forEach(r => slotSet.add(`${r.startTime}–${r.endTime}`))
+  rows.forEach(r => slotSet.add(`${r.date}||${r.startTime}–${r.endTime}`))
   const slots = [...slotSet].sort()
+
+  // Header label: show date only when there are multiple dates
+  function slotLabel(sl) {
+    const [date, time] = sl.split('||')
+    if (multiDay) {
+      const d = date.slice(8) + '.' + date.slice(5, 7)  // DD.MM
+      return `${d} ${time}`
+    }
+    return time
+  }
 
   const groupMap = new Map()
   rows.forEach(r => {
@@ -29,7 +43,7 @@ export function exportPDF(rows, filters, deptName) {
     if (!groupMap.has(key)) {
       groupMap.set(key, { empName: r.empName, deptName: r.deptName, opName: r.opName, norm: r.norm, bySlot: {} })
     }
-    const slot = `${r.startTime}–${r.endTime}`
+    const slot = `${r.date}||${r.startTime}–${r.endTime}`
     groupMap.get(key).bySlot[slot] = { qty: Number(r.quantity), exp: Number(r.expected) }
   })
   const groups = [...groupMap.values()]
@@ -80,7 +94,7 @@ export function exportPDF(rows, filters, deptName) {
     </tr>`
   }).join('')
 
-  const slotHeaders = slots.map(s => `<th style="text-align:center">${esc(s)}</th>`).join('')
+  const slotHeaders = slots.map(s => `<th style="text-align:center">${esc(slotLabel(s))}</th>`).join('')
   const dateStr = new Date().toLocaleDateString('uz-UZ', { day: '2-digit', month: '2-digit', year: 'numeric' })
 
   const html = `<!DOCTYPE html>
