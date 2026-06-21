@@ -9,7 +9,7 @@ const SECTION_LABELS = { transactions: 'Kirim/Chiqim', debts: 'Qarzlar', hamkorl
 const PERM_LABELS = { edit: 'Tahrirlash', view: "Ko'rish", none: "Yo'q" }
 
 export default function Korxona() {
-  const { user, workspace, workspaceId, setWorkspace, setWorkspaceId, myRole } = useApp()
+  const { user, workspace, workspaceId, setWorkspace, setWorkspaceId, myRole, transactions, debts, saveTransactions, saveDebts } = useApp()
   const [mode, setMode] = useState(null)
   const [workspaceName, setWorkspaceName] = useState('')
   const [joinCode, setJoinCode] = useState('')
@@ -24,8 +24,12 @@ export default function Korxona() {
     setLoading(true); setError('')
     try {
       const result = await createWorkspace(user.id, user.username, user.name, workspaceName.trim())
-      if (result.error) setError(result.error)
-      else { setWorkspace(result.workspace); setWorkspaceId(result.workspace.id) }
+      if (result.error) { setError(result.error); setLoading(false); return }
+      // Shaxsiy ma'lumotlarni workspace ga ko'chirish
+      if (transactions.length > 0) saveTransactions(transactions)
+      if (debts.length > 0) saveDebts(debts)
+      setWorkspace(result.workspace)
+      setWorkspaceId(result.workspace.id)
     } catch (e) { setError(e.message || 'Xatolik yuz berdi') }
     setLoading(false)
   }
