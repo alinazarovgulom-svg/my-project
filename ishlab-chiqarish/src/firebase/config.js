@@ -1,20 +1,17 @@
-import { initializeApp, getApps } from 'firebase/app'
+import { initializeApp } from 'firebase/app'
 import { getAuth } from 'firebase/auth'
-import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from 'firebase/firestore'
+import { getFirestore } from 'firebase/firestore'
 
 const firebaseConfig = {
-  apiKey: "AIzaSyASH72RruqIiBlZLAMrO2H6deV1eO2bpqs",
-  authDomain: "pulbek-e324a.firebaseapp.com",
-  projectId: "pulbek-e324a",
-  storageBucket: "pulbek-e324a.firebasestorage.app",
-  messagingSenderId: "882923501531",
-  appId: "1:882923501531:web:ef3855ef512bd3edc0d9fe",
+  apiKey: "AIzaSyDAGKw5FHLh_dyDC6dvQeJUzX7Xi34fYWk",
+  authDomain: "ishlab-chiqarish-ec750.firebaseapp.com",
+  projectId: "ishlab-chiqarish-ec750",
+  storageBucket: "ishlab-chiqarish-ec750.firebasestorage.app",
+  messagingSenderId: "329770242502",
+  appId: "1:329770242502:web:f7bf311986e0478404e2c7"
 }
 
-const appName = 'factory'
-const app = getApps().find(a => a.name === appName) || initializeApp(firebaseConfig, appName)
+const app = initializeApp(firebaseConfig)
 
 export const auth = getAuth(app)
-export const db = initializeFirestore(app, {
-  localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
-})
+export const db = getFirestore(app)
