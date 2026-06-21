@@ -25,7 +25,13 @@ const roleColors = {
   viewer: 'bg-gray-100 text-gray-700',
 }
 
-const empty = { name: '', email: '', password: '', role: 'viewer' }
+const empty = { name: '', email: '', password: '', roles: ['viewer'] }
+
+function getRoles(member) {
+  if (Array.isArray(member.roles)) return member.roles
+  if (member.role) return [member.role]
+  return ['viewer']
+}
 
 // Secondary Firebase app for creating users without signing out current user
 function getSecondaryAuth() {
@@ -60,8 +66,18 @@ export default function Members() {
   const openAdd = () => { setForm(empty); setError(''); setModal('add') }
   const closeModal = () => { setModal(null); setError('') }
 
+  const toggleRole = (roleId) => {
+    setForm(f => ({
+      ...f,
+      roles: f.roles.includes(roleId)
+        ? f.roles.filter(r => r !== roleId)
+        : [...f.roles, roleId],
+    }))
+  }
+
   const handleSave = async () => {
     if (!form.name.trim() || !form.email.trim()) return
+    if (form.roles.length === 0) { setError("Kamida bitta rol tanlang"); return }
     setError('')
     setSaving(true)
     try {
@@ -81,7 +97,7 @@ export default function Members() {
         await setDoc(doc(db, 'factory_users', uid), {
           name: form.name.trim(),
           email: form.email.trim(),
-          role: form.role,
+          roles: form.roles,
           createdAt: serverTimestamp(),
         })
 
@@ -89,13 +105,13 @@ export default function Members() {
         const emailKey = form.email.trim().replace(/[.@]/g, '_')
         await setDoc(doc(db, 'factory_pending', emailKey), {
           name: form.name.trim(),
-          role: form.role,
+          roles: form.roles,
         })
       } else {
-        // Edit role/name only
+        // Edit roles/name only
         await setDoc(doc(db, 'factory_users', modal.id), {
           name: form.name.trim(),
-          role: form.role,
+          roles: form.roles,
         }, { merge: true })
       }
       closeModal()
@@ -106,7 +122,7 @@ export default function Members() {
           const emailKey = form.email.trim().replace(/[.@]/g, '_')
           await setDoc(doc(db, 'factory_pending', emailKey), {
             name: form.name.trim(),
-            role: form.role,
+            roles: form.roles,
           })
           closeModal()
         } catch (e2) {
@@ -128,7 +144,7 @@ export default function Members() {
   }
 
   const openEdit = (m) => {
-    setForm({ name: m.name, email: m.email, password: '', role: m.role })
+    setForm({ name: m.name, email: m.email, password: '', roles: getRoles(m) })
     setError('')
     setModal(m)
   }
@@ -152,8 +168,7 @@ export default function Members() {
         ) : (
           <div className="divide-y divide-gray-50">
             {members.map(member => {
-              const roleInfo = ROLES.find(r => r.id === member.role)
-              const RoleIcon = roleInfo?.icon || Shield
+              const memberRoles = getRoles(member)
               return (
                 <div key={member.id} className="flex items-center gap-4 px-5 py-4 hover:bg-gray-50">
                   <div className="w-10 h-10 bg-blue-700 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0">
@@ -163,9 +178,17 @@ export default function Members() {
                     <div className="font-medium text-gray-800 text-sm">{member.name}</div>
                     <div className="text-xs text-gray-400">{member.email}</div>
                   </div>
-                  <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${roleColors[member.role] || roleColors.viewer}`}>
-                    <RoleIcon className="w-3 h-3" />
-                    {roleInfo?.label || member.role}
+                  <div className="flex gap-1 flex-wrap justify-end">
+                    {memberRoles.map(roleId => {
+                      const roleInfo = ROLES.find(r => r.id === roleId)
+                      const RoleIcon = roleInfo?.icon || Shield
+                      return (
+                        <div key={roleId} className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${roleColors[roleId] || roleColors.viewer}`}>
+                          <RoleIcon className="w-3 h-3" />
+                          {roleInfo?.label || roleId}
+                        </div>
+                      )
+                    })}
                   </div>
                   <div className="flex gap-2">
                     <button onClick={() => openEdit(member)} className="text-gray-400 hover:text-blue-600 transition-colors">
@@ -234,10 +257,15 @@ export default function Members() {
                 <div className="space-y-2">
                   {ROLES.map(role => {
                     const Icon = role.icon
+                    const checked = form.roles.includes(role.id)
                     return (
-                      <label key={role.id} className={`flex items-center gap-3 p-3 border rounded-xl cursor-pointer transition-colors ${form.role === role.id ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:bg-gray-50'}`}>
-                        <input type="radio" name="role" value={role.id} checked={form.role === role.id}
-                          onChange={() => setForm(f => ({ ...f, role: role.id }))} className="accent-blue-700" />
+                      <label key={role.id} className={`flex items-center gap-3 p-3 border rounded-xl cursor-pointer transition-colors ${checked ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:bg-gray-50'}`}>
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() => toggleRole(role.id)}
+                          className="accent-blue-700 w-4 h-4"
+                        />
                         <Icon className="w-4 h-4 text-gray-600" />
                         <div>
                           <div className="text-sm font-medium text-gray-800">{role.label}</div>
@@ -256,7 +284,7 @@ export default function Members() {
               </button>
               <button
                 onClick={handleSave}
-                disabled={saving || !form.name.trim() || !form.email.trim()}
+                disabled={saving || !form.name.trim() || !form.email.trim() || form.roles.length === 0}
                 className="flex-1 bg-blue-700 hover:bg-blue-800 text-white rounded-lg py-2.5 text-sm font-medium transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
               >
                 <Check className="w-4 h-4" />

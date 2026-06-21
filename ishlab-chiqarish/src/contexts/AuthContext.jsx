@@ -40,7 +40,7 @@ export function AuthProvider({ children }) {
             const adminDoc = {
               name: firebaseUser.email.split('@')[0],
               email: firebaseUser.email,
-              role: 'admin',
+              roles: ['admin'],
               createdAt: serverTimestamp(),
             }
             await setDoc(ref, adminDoc)
@@ -52,10 +52,11 @@ export function AuthProvider({ children }) {
             const pendingRef = doc(db, 'factory_pending', emailKey)
             const pendingSnap = await getDoc(pendingRef)
             if (pendingSnap.exists()) {
+              const pd = pendingSnap.data()
               const newDoc = {
-                name: pendingSnap.data().name,
+                name: pd.name,
                 email: firebaseUser.email,
-                role: pendingSnap.data().role,
+                roles: pd.roles || (pd.role ? [pd.role] : ['viewer']),
                 createdAt: serverTimestamp(),
               }
               await setDoc(ref, newDoc)
@@ -92,15 +93,17 @@ export function AuthProvider({ children }) {
 
   const signOut = () => firebaseSignOut(auth)
 
-  const role = userDoc?.role || null
+  // Support both old `role` string and new `roles` array
+  const roles = userDoc?.roles || (userDoc?.role ? [userDoc.role] : [])
+  const role = roles[0] || null
   const can = {
-    viewAll: ['admin', 'viewer', 'reporter', 'entry'].includes(role),
-    editData: ['admin', 'entry'].includes(role),
-    enterHourly: ['admin', 'entry', 'hourly'].includes(role),
-    downloadReports: ['admin', 'reporter'].includes(role),
-    manageMembers: role === 'admin',
-    manageOperations: ['admin', 'entry'].includes(role),
-    manageEmployees: ['admin', 'entry'].includes(role),
+    viewAll: roles.some(r => ['admin', 'viewer', 'reporter', 'entry'].includes(r)),
+    editData: roles.some(r => ['admin', 'entry'].includes(r)),
+    enterHourly: roles.some(r => ['admin', 'entry', 'hourly'].includes(r)),
+    downloadReports: roles.some(r => ['admin', 'reporter'].includes(r)),
+    manageMembers: roles.includes('admin'),
+    manageOperations: roles.some(r => ['admin', 'entry'].includes(r)),
+    manageEmployees: roles.some(r => ['admin', 'entry'].includes(r)),
   }
 
   return (
