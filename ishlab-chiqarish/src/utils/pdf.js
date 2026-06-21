@@ -190,13 +190,14 @@ export function exportPDF(rows, filters, deptName) {
 
   /* Table */
   table { width:100%; border-collapse:collapse; font-size:8.5px; }
+  thead { display:table-header-group; }   /* repeat header on every printed page */
   thead tr { background:#334155; color:#fff; }
   thead th { padding:5px 5px; text-align:left; font-weight:600;
              font-size:7.5px; white-space:nowrap; }
   .th-num  { width:20px; text-align:center; }
   .slot-th { text-align:center; }
   .row-alt { background:#f8fafc; }
-  tbody tr { border-bottom:1px solid #f1f5f9; }
+  tbody tr { border-bottom:1px solid #f1f5f9; page-break-inside:avoid; }
   tbody td { padding:4px 5px; vertical-align:middle; }
   .td-num  { color:#94a3b8; text-align:center; width:20px; }
   .td-name { font-weight:700; white-space:nowrap; font-size:11px; }
@@ -226,7 +227,8 @@ export function exportPDF(rows, filters, deptName) {
 
   @media print {
     body { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-    .date-section { page-break-inside: avoid; }
+    .date-hdr { page-break-after:avoid; }        /* date title stays with its table */
+    tbody tr  { page-break-inside:avoid; }       /* no row cut in half across pages */
   }
 </style>
 </head>
