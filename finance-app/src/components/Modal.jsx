@@ -7,7 +7,7 @@ export default function Modal({ open, onClose, title, children, loading }) {
   useEffect(() => {
     if (open) {
       document.body.style.overflow = 'hidden'
-      requestAnimationFrame(() => setVisible(true))
+      requestAnimationFrame(() => requestAnimationFrame(() => setVisible(true)))
     } else {
       setVisible(false)
       const t = setTimeout(() => { document.body.style.overflow = '' }, 300)
