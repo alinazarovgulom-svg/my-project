@@ -1,0 +1,264 @@
+import { useEffect, useState, useCallback } from 'react'
+import { useParams } from 'react-router-dom'
+import {
+  collection, query, where, onSnapshot, getDocs,
+  doc, setDoc, serverTimestamp,
+} from 'firebase/firestore'
+import { db } from '../firebase/config'
+import { DEPARTMENTS, getDeptName } from '../data/departments'
+import { useAuth } from '../contexts/AuthContext'
+import { format } from 'date-fns'
+import { Calendar, Clock, Save, CheckCircle } from 'lucide-react'
+
+function calcHours(start, end) {
+  const [sh, sm] = start.split(':').map(Number)
+  const [eh, em] = end.split(':').map(Number)
+  return Math.max(0, (eh * 60 + em - sh * 60 - sm) / 60)
+}
+
+function normStatus(quantity, norm, hours) {
+  const expected = norm * hours
+  if (!expected || quantity === '' || quantity === null) return 'none'
+  const qty = Number(quantity)
+  if (qty > expected) return 'above'
+  if (qty === expected) return 'equal'
+  return 'below'
+}
+
+const statusStyle = {
+  above: 'bg-green-100 text-green-800 border-green-200',
+  equal: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+  below: 'bg-red-100 text-red-800 border-red-200',
+  none: 'bg-white text-gray-700 border-gray-200',
+}
+
+export default function DepartmentWork() {
+  const { deptId } = useParams()
+  const { user, can } = useAuth()
+  const dept = DEPARTMENTS.find(d => d.id === deptId)
+
+  const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'))
+  const [startTime, setStartTime] = useState('08:00')
+  const [endTime, setEndTime] = useState('17:00')
+  const [employees, setEmployees] = useState([])
+  const [allOps, setAllOps] = useState([])
+  const [entries, setEntries] = useState({}) // { [empId]: { [opId]: { quantity, note } } }
+  const [saving, setSaving] = useState({})
+  const [saved, setSaved] = useState({})
+
+  // Load employees in this dept
+  useEffect(() => {
+    const q = query(collection(db, 'factory_employees'), where('departmentId', '==', deptId))
+    return onSnapshot(q, snap => {
+      setEmployees(snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b) => a.lastName.localeCompare(b.lastName)))
+    })
+  }, [deptId])
+
+  // Load all operations
+  useEffect(() => {
+    getDocs(collection(db, 'factory_operations')).then(snap => {
+      setAllOps(snap.docs.map(d => ({ id: d.id, ...d.data() })))
+    })
+  }, [])
+
+  // Load existing entries when date/time changes
+  useEffect(() => {
+    if (!date || !startTime || !endTime) return
+    const q = query(
+      collection(db, 'factory_work_entries'),
+      where('departmentId', '==', deptId),
+      where('date', '==', date),
+      where('startTime', '==', startTime),
+      where('endTime', '==', endTime),
+    )
+    return onSnapshot(q, snap => {
+      const data = {}
+      snap.forEach(d => {
+        const { employeeId, operations } = d.data()
+        data[employeeId] = operations || {}
+      })
+      setEntries(data)
+    })
+  }, [deptId, date, startTime, endTime])
+
+  const setEntryVal = (empId, opId, field, value) => {
+    setEntries(prev => ({
+      ...prev,
+      [empId]: {
+        ...prev[empId],
+        [opId]: { ...prev[empId]?.[opId], [field]: value },
+      },
+    }))
+    setSaved(s => ({ ...s, [empId]: false }))
+  }
+
+  const saveEmployee = async (empId) => {
+    setSaving(s => ({ ...s, [empId]: true }))
+    const entryId = `${date}_${deptId}_${startTime.replace(':','')}_${endTime.replace(':','')}_${empId}`
+    await setDoc(doc(db, 'factory_work_entries', entryId), {
+      employeeId: empId,
+      departmentId: deptId,
+      date,
+      startTime,
+      endTime,
+      operations: entries[empId] || {},
+      updatedAt: serverTimestamp(),
+      updatedBy: user.uid,
+    })
+    setSaving(s => ({ ...s, [empId]: false }))
+    setSaved(s => ({ ...s, [empId]: true }))
+    setTimeout(() => setSaved(s => ({ ...s, [empId]: false })), 2000)
+  }
+
+  const hours = calcHours(startTime, endTime)
+
+  if (!dept) return <div className="text-red-500 p-4">Bo'lim topilmadi</div>
+
+  return (
+    <div>
+      {/* Header */}
+      <div className="mb-6">
+        <h1 className="text-xl font-bold text-gray-800">{dept.name}</h1>
+        <p className="text-sm text-gray-500 mt-0.5">Ish ma'lumotlarini kiritish</p>
+      </div>
+
+      {/* Controls */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
+        <div className="flex flex-wrap gap-4 items-end">
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1">
+              <Calendar className="w-3.5 h-3.5 inline mr-1" />Sana
+            </label>
+            <input
+              type="date"
+              value={date}
+              onChange={e => setDate(e.target.value)}
+              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1">
+              <Clock className="w-3.5 h-3.5 inline mr-1" />Boshlanish
+            </label>
+            <input
+              type="time"
+              value={startTime}
+              onChange={e => setStartTime(e.target.value)}
+              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1">
+              <Clock className="w-3.5 h-3.5 inline mr-1" />Tugash
+            </label>
+            <input
+              type="time"
+              value={endTime}
+              onChange={e => setEndTime(e.target.value)}
+              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div className="text-sm text-gray-500 pb-2">
+            <span className="font-semibold text-gray-700">{hours.toFixed(1)}</span> soat
+          </div>
+        </div>
+      </div>
+
+      {/* Employees */}
+      {employees.length === 0 ? (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center text-gray-400 text-sm">
+          Bu bo'limda xodimlar mavjud emas
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {employees.map((emp, idx) => {
+            const empOps = allOps.filter(o => emp.operationIds?.includes(o.id))
+            const empEntries = entries[emp.id] || {}
+
+            return (
+              <div key={emp.id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                {/* Employee header */}
+                <div className="flex items-center justify-between px-4 py-3 bg-gray-50 border-b border-gray-100">
+                  <div className="flex items-center gap-3">
+                    <div className="w-7 h-7 bg-blue-700 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                      {idx + 1}
+                    </div>
+                    <span className="font-medium text-gray-800 text-sm">
+                      {emp.lastName} {emp.firstName}
+                    </span>
+                  </div>
+                  {can.enterHourly && (
+                    <button
+                      onClick={() => saveEmployee(emp.id)}
+                      disabled={saving[emp.id]}
+                      className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition-colors ${
+                        saved[emp.id]
+                          ? 'bg-green-100 text-green-700'
+                          : 'bg-blue-700 hover:bg-blue-800 text-white'
+                      } disabled:opacity-60`}
+                    >
+                      {saved[emp.id] ? (
+                        <><CheckCircle className="w-3.5 h-3.5" /> Saqlandi</>
+                      ) : (
+                        <><Save className="w-3.5 h-3.5" /> {saving[emp.id] ? 'Saqlanmoqda...' : 'Saqlash'}</>
+                      )}
+                    </button>
+                  )}
+                </div>
+
+                {/* Operations */}
+                {empOps.length === 0 ? (
+                  <div className="px-4 py-4 text-sm text-gray-400">
+                    Operatsiyalar tayinlanmagan
+                  </div>
+                ) : (
+                  <div className="divide-y divide-gray-50">
+                    {empOps.map(op => {
+                      const qty = empEntries[op.id]?.quantity ?? ''
+                      const note = empEntries[op.id]?.note ?? ''
+                      const expected = op.norm * hours
+                      const status = normStatus(qty, op.norm, hours)
+
+                      return (
+                        <div key={op.id} className="px-4 py-3">
+                          <div className="flex flex-wrap items-center gap-3">
+                            <div className="flex-1 min-w-0">
+                              <div className="text-sm font-medium text-gray-700">{op.name}</div>
+                              <div className="text-xs text-gray-400 mt-0.5">
+                                Norma: {op.norm} dona/soat · {hours > 0 ? `${hours.toFixed(1)} soat = ` : ''}{hours > 0 ? `${expected.toFixed(0)} dona` : '—'}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="number"
+                                min="0"
+                                value={qty}
+                                onChange={e => setEntryVal(emp.id, op.id, 'quantity', e.target.value === '' ? '' : Number(e.target.value))}
+                                disabled={!can.enterHourly}
+                                className={`w-24 border rounded-lg px-3 py-1.5 text-sm text-center focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium ${statusStyle[status]}`}
+                                placeholder="0"
+                              />
+                              <span className="text-xs text-gray-400">dona</span>
+                            </div>
+                            <input
+                              type="text"
+                              value={note}
+                              onChange={e => setEntryVal(emp.id, op.id, 'note', e.target.value)}
+                              disabled={!can.enterHourly}
+                              className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-40 md:w-52"
+                              placeholder="Izoh..."
+                            />
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
