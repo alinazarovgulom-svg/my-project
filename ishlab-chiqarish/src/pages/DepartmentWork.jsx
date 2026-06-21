@@ -8,7 +8,7 @@ import { db } from '../firebase/config'
 import { DEPARTMENTS, getDeptName } from '../data/departments'
 import { useAuth } from '../contexts/AuthContext'
 import { format } from 'date-fns'
-import { Calendar, Clock, Save, CheckCircle } from 'lucide-react'
+import { Calendar, Clock, Save, CheckCircle, RefreshCw, X } from 'lucide-react'
 
 function calcHours(start, end) {
   const [sh, sm] = start.split(':').map(Number)
@@ -45,6 +45,9 @@ export default function DepartmentWork() {
   const [entries, setEntries] = useState({}) // { [empId]: { [opId]: { quantity, note } } }
   const [saving, setSaving] = useState({})
   const [saved, setSaved] = useState({})
+  const [overrides, setOverrides] = useState({}) // { [empId]: opId[] } — session only
+  const [pickerEmp, setPickerEmp] = useState(null) // empId whose picker is open
+  const [pickerSel, setPickerSel] = useState([]) // temp selection in picker
 
   // Load employees in this dept
   useEffect(() => {
@@ -60,6 +63,12 @@ export default function DepartmentWork() {
       setAllOps(snap.docs.map(d => ({ id: d.id, ...d.data() })))
     })
   }, [])
+
+  // Reset overrides when date/time changes
+  useEffect(() => {
+    setOverrides({})
+    setPickerEmp(null)
+  }, [date, startTime, endTime])
 
   // Load existing entries when date/time changes
   useEffect(() => {
@@ -108,6 +117,21 @@ export default function DepartmentWork() {
     setSaving(s => ({ ...s, [empId]: false }))
     setSaved(s => ({ ...s, [empId]: true }))
     setTimeout(() => setSaved(s => ({ ...s, [empId]: false })), 2000)
+  }
+
+  const openPicker = (emp) => {
+    const current = overrides[emp.id] ?? emp.operationIds ?? []
+    setPickerSel(current)
+    setPickerEmp(emp.id)
+  }
+
+  const applyPicker = (empId) => {
+    setOverrides(o => ({ ...o, [empId]: pickerSel }))
+    setPickerEmp(null)
+  }
+
+  const togglePickerOp = (opId) => {
+    setPickerSel(s => s.includes(opId) ? s.filter(id => id !== opId) : [...s, opId])
   }
 
   const hours = calcHours(startTime, endTime)
@@ -172,7 +196,9 @@ export default function DepartmentWork() {
       ) : (
         <div className="space-y-4">
           {employees.map((emp, idx) => {
-            const empOps = allOps.filter(o => emp.operationIds?.includes(o.id))
+            const activeOpIds = overrides[emp.id] ?? emp.operationIds ?? []
+            const empOps = allOps.filter(o => activeOpIds.includes(o.id))
+            const isOverridden = overrides[emp.id] != null
             const empEntries = entries[emp.id] || {}
 
             return (
@@ -186,25 +212,77 @@ export default function DepartmentWork() {
                     <span className="font-medium text-gray-800 text-sm">
                       {emp.lastName} {emp.firstName}
                     </span>
+                    {isOverridden && (
+                      <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">
+                        Almashtrilgan
+                      </span>
+                    )}
                   </div>
-                  {can.enterHourly && (
-                    <button
-                      onClick={() => saveEmployee(emp.id)}
-                      disabled={saving[emp.id]}
-                      className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition-colors ${
-                        saved[emp.id]
-                          ? 'bg-green-100 text-green-700'
-                          : 'bg-blue-700 hover:bg-blue-800 text-white'
-                      } disabled:opacity-60`}
-                    >
-                      {saved[emp.id] ? (
-                        <><CheckCircle className="w-3.5 h-3.5" /> Saqlandi</>
-                      ) : (
-                        <><Save className="w-3.5 h-3.5" /> {saving[emp.id] ? 'Saqlanmoqda...' : 'Saqlash'}</>
-                      )}
-                    </button>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {can.enterHourly && (
+                      <button
+                        onClick={() => openPicker(emp)}
+                        className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600 transition-colors"
+                        title="Operatsiyani almashtirish"
+                      >
+                        <RefreshCw className="w-3.5 h-3.5" />
+                        Almashtirish
+                      </button>
+                    )}
+                    {can.enterHourly && (
+                      <button
+                        onClick={() => saveEmployee(emp.id)}
+                        disabled={saving[emp.id]}
+                        className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition-colors ${
+                          saved[emp.id]
+                            ? 'bg-green-100 text-green-700'
+                            : 'bg-blue-700 hover:bg-blue-800 text-white'
+                        } disabled:opacity-60`}
+                      >
+                        {saved[emp.id] ? (
+                          <><CheckCircle className="w-3.5 h-3.5" /> Saqlandi</>
+                        ) : (
+                          <><Save className="w-3.5 h-3.5" /> {saving[emp.id] ? 'Saqlanmoqda...' : 'Saqlash'}</>
+                        )}
+                      </button>
+                    )}
+                  </div>
                 </div>
+
+                {/* Operation picker modal */}
+                {pickerEmp === emp.id && (
+                  <div className="border-b border-orange-100 bg-orange-50 px-4 py-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-medium text-orange-800">Operatsiyalarni tanlang (faqat shu sessiya uchun)</span>
+                      <button onClick={() => setPickerEmp(null)} className="text-gray-400 hover:text-gray-600">
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <div className="flex flex-wrap gap-2 mb-3">
+                      {allOps.map(op => (
+                        <label key={op.id} className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border cursor-pointer transition-colors ${
+                          pickerSel.includes(op.id)
+                            ? 'bg-blue-700 text-white border-blue-700'
+                            : 'bg-white text-gray-600 border-gray-200 hover:border-blue-300'
+                        }`}>
+                          <input
+                            type="checkbox"
+                            className="hidden"
+                            checked={pickerSel.includes(op.id)}
+                            onChange={() => togglePickerOp(op.id)}
+                          />
+                          {op.name}
+                        </label>
+                      ))}
+                    </div>
+                    <button
+                      onClick={() => applyPicker(emp.id)}
+                      className="text-xs bg-blue-700 hover:bg-blue-800 text-white px-4 py-1.5 rounded-lg transition-colors"
+                    >
+                      Tasdiqlash
+                    </button>
+                  </div>
+                )}
 
                 {/* Operations */}
                 {empOps.length === 0 ? (
