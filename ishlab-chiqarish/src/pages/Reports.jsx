@@ -102,7 +102,12 @@ export default function Reports() {
         })
       })
 
-      result.sort((a, b) => a.empName.localeCompare(b.empName) || a.opName.localeCompare(b.opName))
+      result.sort((a, b) =>
+        a.empName.localeCompare(b.empName) ||
+        a.date.localeCompare(b.date) ||
+        a.startTime.localeCompare(b.startTime) ||
+        a.opName.localeCompare(b.opName)
+      )
       setRows(result)
     } catch (e) {
       console.error(e)
@@ -261,37 +266,50 @@ export default function Reports() {
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
-                  <thead className="bg-gray-50 border-b border-gray-100">
+                  <thead className="bg-gray-50 border-b border-gray-200">
                     <tr>
-                      <th className="text-left px-4 py-3 font-medium text-gray-600">#</th>
-                      <th className="text-left px-4 py-3 font-medium text-gray-600">Xodim</th>
-                      <th className="text-left px-4 py-3 font-medium text-gray-600">Bo'lim</th>
-                      <th className="text-left px-4 py-3 font-medium text-gray-600">Operatsiya</th>
-                      <th className="text-left px-4 py-3 font-medium text-gray-600">Norma</th>
-                      <th className="text-left px-4 py-3 font-medium text-gray-600">Bajargan</th>
-                      <th className="text-left px-4 py-3 font-medium text-gray-600">Kutilgan</th>
-                      <th className="text-left px-4 py-3 font-medium text-gray-600">Izoh</th>
+                      <th className="text-left px-4 py-3 font-medium text-gray-600 whitespace-nowrap">#</th>
+                      <th className="text-left px-4 py-3 font-medium text-gray-600 whitespace-nowrap">Xodim</th>
+                      <th className="text-left px-4 py-3 font-medium text-gray-600 whitespace-nowrap">Bo'lim</th>
+                      <th className="text-left px-4 py-3 font-medium text-gray-600 whitespace-nowrap">Sana</th>
+                      <th className="text-left px-4 py-3 font-medium text-gray-600 whitespace-nowrap">Vaqt</th>
+                      <th className="text-left px-4 py-3 font-medium text-gray-600 whitespace-nowrap">Operatsiya</th>
+                      <th className="text-left px-4 py-3 font-medium text-gray-600 whitespace-nowrap">Norma</th>
+                      <th className="text-left px-4 py-3 font-medium text-gray-600 whitespace-nowrap">Bajargan</th>
+                      <th className="text-left px-4 py-3 font-medium text-gray-600 whitespace-nowrap">Kutilgan</th>
+                      <th className="text-left px-4 py-3 font-medium text-gray-600 whitespace-nowrap">Izoh</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-50">
+                  <tbody>
                     {rows.map((r, i) => {
                       const cls = statusClass(r.quantity, r.expected)
+                      const isFirstOfEmp = i === 0 || rows[i - 1].empName !== r.empName
+                      const isLastOfEmp = i === rows.length - 1 || rows[i + 1].empName !== r.empName
                       return (
-                        <tr key={i} className="hover:bg-gray-50">
-                          <td className="px-4 py-3 text-gray-400">{i + 1}</td>
-                          <td className="px-4 py-3 font-medium text-gray-800">{r.empName}</td>
-                          <td className="px-4 py-3">
-                            <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full">{r.deptName}</span>
+                        <tr
+                          key={i}
+                          className={`hover:bg-gray-50 ${isFirstOfEmp && i > 0 ? 'border-t-2 border-gray-300' : 'border-t border-gray-50'}`}
+                        >
+                          <td className="px-4 py-2.5 text-gray-400 text-xs">{i + 1}</td>
+                          <td className="px-4 py-2.5 font-semibold text-gray-800 whitespace-nowrap">
+                            {isFirstOfEmp ? r.empName : ''}
                           </td>
-                          <td className="px-4 py-3 text-gray-700">{r.opName}</td>
-                          <td className="px-4 py-3 text-gray-500 text-xs">{r.norm} dona/soat</td>
-                          <td className="px-4 py-3">
+                          <td className="px-4 py-2.5">
+                            {isFirstOfEmp && (
+                              <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full whitespace-nowrap">{r.deptName}</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-2.5 text-gray-500 text-xs whitespace-nowrap">{r.date}</td>
+                          <td className="px-4 py-2.5 text-gray-500 text-xs whitespace-nowrap font-mono">{r.startTime}–{r.endTime}</td>
+                          <td className="px-4 py-2.5 text-gray-700 whitespace-nowrap">{r.opName}</td>
+                          <td className="px-4 py-2.5 text-gray-400 text-xs whitespace-nowrap">{r.norm} dona/soat</td>
+                          <td className="px-4 py-2.5">
                             <span className={`font-bold px-2 py-0.5 rounded text-xs ${cls}`}>
                               {r.quantity}
                             </span>
                           </td>
-                          <td className="px-4 py-3 text-gray-500">{r.expected.toFixed(0)}</td>
-                          <td className="px-4 py-3 text-gray-500 text-xs">{r.note}</td>
+                          <td className="px-4 py-2.5 text-gray-500 text-xs">{r.expected.toFixed(0)}</td>
+                          <td className="px-4 py-2.5 text-gray-400 text-xs">{r.note}</td>
                         </tr>
                       )
                     })}
