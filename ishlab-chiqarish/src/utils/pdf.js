@@ -116,7 +116,7 @@ export async function exportPDF(rows, filters, deptName) {
 
   const slotHeaders = slots.map(s => {
     const [date, time] = s.split('|')
-    return multiDate ? `${date}\n${time}` : time
+    return multiDate ? `${date} ${time}` : time
   })
 
   const head = [['#', 'Xodim', "Bo'lim", 'Operatsiya', 'Norma', ...slotHeaders, 'Jami']]
@@ -132,9 +132,9 @@ export async function exportPDF(rows, filters, deptName) {
       `${r.norm}/soat`,
       ...slots.map(k => {
         const d = r.slots[k]
-        return d ? `${d.quantity} / ${d.expected.toFixed(0)}` : '—'
+        return d ? `${d.quantity}/${d.expected.toFixed(0)}` : '-'
       }),
-      `${td} / ${te.toFixed(0)}`,
+      `${td}/${te.toFixed(0)}`,
     ]
   })
 
@@ -142,26 +142,21 @@ export async function exportPDF(rows, filters, deptName) {
     startY: 58,
     head,
     body,
-    tableWidth: 'auto',
     styles: {
       fontSize: 7.5,
       cellPadding: 3,
       font: 'PTSans',
-      lineColor: [226, 232, 240],
-      lineWidth: 0.15,
       textColor: [30, 41, 59],
-      overflow: 'linebreak',
     },
     headStyles: {
       fillColor: [30, 64, 175],
-      textColor: 255,
+      textColor: [255, 255, 255],
       font: 'PTSans',
       fontSize: 7,
       halign: 'center',
-      valign: 'middle',
     },
     alternateRowStyles: { fillColor: [248, 250, 252] },
-    didParseCell: (data) => {
+    willDrawCell: (data) => {
       if (data.section !== 'body') return
       const slotStart = 5
       const totalCol  = 5 + slots.length
@@ -176,22 +171,19 @@ export async function exportPDF(rows, filters, deptName) {
         exp  = slots.reduce((s, k) => s + (r.slots[k]?.expected || 0), 0)
       } else {
         const sd = r.slots[slots[data.column.index - slotStart]]
-        if (!sd) { data.cell.styles.halign = 'center'; return }
+        if (!sd) return
         done = sd.quantity
         exp  = sd.expected
       }
 
-      data.cell.styles.halign = 'center'
       if (done > exp) {
-        data.cell.styles.fillColor = [220, 252, 231]
-        data.cell.styles.textColor = [22, 101, 52]
+        doc.setFillColor(220, 252, 231)
       } else if (done === exp) {
-        data.cell.styles.fillColor = [254, 249, 195]
-        data.cell.styles.textColor = [113, 63, 18]
+        doc.setFillColor(254, 249, 195)
       } else {
-        data.cell.styles.fillColor = [254, 226, 226]
-        data.cell.styles.textColor = [153, 27, 27]
+        doc.setFillColor(254, 226, 226)
       }
+      doc.rect(data.cell.x, data.cell.y, data.cell.width, data.cell.height, 'F')
     },
   })
 
