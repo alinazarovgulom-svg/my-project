@@ -29,6 +29,29 @@ export function exportPDF(rows, filters, deptName) {
   const effColor  = eff >= 100 ? '#15803d' : eff >= 80 ? '#854d0e' : '#991b1b'
   const effBg     = eff >= 100 ? '#f0fdf4' : eff >= 80 ? '#fefce8' : '#fef2f2'
 
+  // ── Employee efficiency ranking (across all dates) ───────────────────────
+  const empStats = new Map()
+  rows.forEach(r => {
+    const s = empStats.get(r.empName) ?? { done: 0, exp: 0, deptName: r.deptName }
+    s.done += Number(r.quantity || 0)
+    s.exp  += Number(r.expected  || 0)
+    empStats.set(r.empName, s)
+  })
+  // Sort: highest efficiency first; equal → alphabetical
+  const empRank = new Map(
+    [...empStats.entries()]
+      .sort(([nameA, a], [nameB, b]) => {
+        const ea = a.exp > 0 ? a.done / a.exp : 0
+        const eb = b.exp > 0 ? b.done / b.exp : 0
+        return eb - ea || nameA.localeCompare(nameB)
+      })
+      .map(([name], i) => [name, i])
+  )
+  function empEff(name) {
+    const s = empStats.get(name)
+    return s && s.exp > 0 ? Math.round((s.done / s.exp) * 100) : 0
+  }
+
   // ── Group rows by date ────────────────────────────────────────────────────
   const dates = [...new Set(rows.map(r => r.date))].sort()
 
@@ -48,7 +71,13 @@ export function exportPDF(rows, filters, deptName) {
       }
     })
 
-    return { date, slots, groups: [...groupMap.values()] }
+    // Sort groups by employee rank (best first), then operation name
+    const groups = [...groupMap.values()].sort((a, b) =>
+      (empRank.get(a.empName) ?? 999) - (empRank.get(b.empName) ?? 999) ||
+      a.opName.localeCompare(b.opName)
+    )
+
+    return { date, slots, groups }
   })
 
   // ── Build each date section ───────────────────────────────────────────────
@@ -80,7 +109,18 @@ export function exportPDF(rows, filters, deptName) {
 
       return `<tr class="${i % 2 === 1 ? 'row-alt' : ''}">
         <td class="td-num">${i + 1}</td>
-        <td class="td-name">${isFirst ? `<strong>${esc(g.empName)}</strong>` : ''}</td>
+        <td class="td-name">${isFirst ? (() => {
+          const rank = (empRank.get(g.empName) ?? 0) + 1
+          const e = empEff(g.empName)
+          const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`
+          const ec = e >= 100 ? '#15803d' : e >= 80 ? '#854d0e' : '#991b1b'
+          const eb = e >= 100 ? '#f0fdf4' : e >= 80 ? '#fefce8' : '#fef2f2'
+          return `<span style="display:flex;align-items:center;gap:5px;flex-wrap:nowrap">
+            <span style="font-size:9px">${medal}</span>
+            <strong>${esc(g.empName)}</strong>
+            <span style="background:${eb};color:${ec};border-radius:8px;padding:1px 5px;font-size:7px;font-weight:700;white-space:nowrap">${e}%</span>
+          </span>`
+        })() : ''}</td>
         <td class="td-dept">${isFirst ? `<span class="dept-badge">${esc(g.deptName)}</span>` : ''}</td>
         <td class="td-op">${esc(g.opName)}</td>
         <td class="td-norm">${esc(g.norm)} dona/soat</td>

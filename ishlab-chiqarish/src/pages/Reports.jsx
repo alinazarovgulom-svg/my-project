@@ -301,7 +301,21 @@ export default function Reports() {
                   quantity: r.quantity, expected: r.expected, note: r.note,
                 }
               })
-              const gRows = Object.values(grouped)
+              // Efficiency per employee for ranking
+              const empEff = {}
+              rows.forEach(r => {
+                if (!empEff[r.empName]) empEff[r.empName] = { done: 0, exp: 0 }
+                empEff[r.empName].done += Number(r.quantity || 0)
+                empEff[r.empName].exp  += Number(r.expected  || 0)
+              })
+              const getEff = name => empEff[name]?.exp > 0
+                ? Math.round((empEff[name].done / empEff[name].exp) * 100) : 0
+
+              const gRows = Object.values(grouped).sort((a, b) =>
+                getEff(b.empName) - getEff(a.empName) ||
+                a.empName.localeCompare(b.empName) ||
+                a.opName.localeCompare(b.opName)
+              )
 
               return (
                 <div className="overflow-x-auto">
@@ -334,7 +348,16 @@ export default function Reports() {
                           <tr key={i} className={`hover:bg-gray-50 ${isNewEmp && i > 0 ? 'border-t-2 border-gray-300' : 'border-t border-gray-100'}`}>
                             <td className="px-4 py-2.5 text-gray-400 text-xs">{i + 1}</td>
                             <td className="px-4 py-2.5 font-semibold text-gray-800 whitespace-nowrap">
-                              {isNewEmp ? r.empName : ''}
+                              {isNewEmp ? (
+                                <span className="flex items-center gap-2">
+                                  {r.empName}
+                                  {(() => {
+                                    const e = getEff(r.empName)
+                                    const cls = e >= 100 ? 'bg-green-100 text-green-700' : e >= 80 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'
+                                    return <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${cls}`}>{e}%</span>
+                                  })()}
+                                </span>
+                              ) : ''}
                             </td>
                             <td className="px-4 py-2.5">
                               {isNewEmp && (
