@@ -79,7 +79,7 @@ export function AppProvider({ children }) {
     // Akkauntni Firestore ga sinxronlash (agar faqat telefonda qolgan bo'lsa)
     migrateLocalUsers()
 
-    const wid = getUserWorkspaceId(uid)
+    const wid = workspaceId
     const storeId = wid || uid
     const col = wid ? 'workspaces' : 'users'
 
@@ -158,10 +158,10 @@ export function AppProvider({ children }) {
 
     return () => {
       unsubTx(); unsubDebts(); unsubSettings(); unsubCats(); unsubPin()
-      updatePresence('offline')
+      if (!workspaceId) updatePresence('offline')
       clearInterval(presenceInterval)
     }
-  }, [uid])
+  }, [uid, workspaceId])
 
   // Oila real-vaqt sinxronizatsiyasi
   useEffect(() => {
