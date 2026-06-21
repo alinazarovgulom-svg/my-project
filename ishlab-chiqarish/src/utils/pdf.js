@@ -142,13 +142,15 @@ export async function exportPDF(rows, filters, deptName) {
     startY: 58,
     head,
     body,
+    tableWidth: 'auto',
     styles: {
       fontSize: 7.5,
-      cellPadding: { top: 3, right: 4, bottom: 3, left: 4 },
+      cellPadding: 3,
       font: 'PTSans',
       lineColor: [226, 232, 240],
       lineWidth: 0.15,
       textColor: [30, 41, 59],
+      overflow: 'linebreak',
     },
     headStyles: {
       fillColor: [30, 64, 175],
@@ -157,14 +159,6 @@ export async function exportPDF(rows, filters, deptName) {
       fontSize: 7,
       halign: 'center',
       valign: 'middle',
-      cellPadding: { top: 4, right: 4, bottom: 4, left: 4 },
-    },
-    columnStyles: {
-      0: { halign: 'center', cellWidth: 8 },
-      1: { cellWidth: 38, fontStyle: 'bold' },
-      2: { cellWidth: 26 },
-      3: { cellWidth: 30 },
-      4: { halign: 'center', cellWidth: 22 },
     },
     alternateRowStyles: { fillColor: [248, 250, 252] },
     didParseCell: (data) => {
@@ -181,31 +175,22 @@ export async function exportPDF(rows, filters, deptName) {
         done = slots.reduce((s, k) => s + (r.slots[k]?.quantity || 0), 0)
         exp  = slots.reduce((s, k) => s + (r.slots[k]?.expected || 0), 0)
       } else {
-        const slotKey = slots[data.column.index - slotStart]
-        const sd = r.slots[slotKey]
-        if (!sd) return
+        const sd = r.slots[slots[data.column.index - slotStart]]
+        if (!sd) { data.cell.styles.halign = 'center'; return }
         done = sd.quantity
         exp  = sd.expected
       }
 
+      data.cell.styles.halign = 'center'
       if (done > exp) {
-        data.cell.styles.fillColor  = [220, 252, 231]
-        data.cell.styles.textColor  = [22, 101, 52]
+        data.cell.styles.fillColor = [220, 252, 231]
+        data.cell.styles.textColor = [22, 101, 52]
       } else if (done === exp) {
-        data.cell.styles.fillColor  = [254, 249, 195]
-        data.cell.styles.textColor  = [113, 63, 18]
+        data.cell.styles.fillColor = [254, 249, 195]
+        data.cell.styles.textColor = [113, 63, 18]
       } else {
-        data.cell.styles.fillColor  = [254, 226, 226]
-        data.cell.styles.textColor  = [153, 27, 27]
-      }
-      data.cell.styles.halign     = 'center'
-      data.cell.styles.fontStyle  = 'bold'
-    },
-    // Subtle row separator
-    didDrawRow: (data) => {
-      if (data.section === 'body') {
-        doc.setDrawColor(226, 232, 240)
-        doc.setLineWidth(0.1)
+        data.cell.styles.fillColor = [254, 226, 226]
+        data.cell.styles.textColor = [153, 27, 27]
       }
     },
   })
