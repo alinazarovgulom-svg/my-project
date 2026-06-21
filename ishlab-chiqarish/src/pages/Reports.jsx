@@ -27,7 +27,7 @@ export default function Reports() {
   const [dateFrom, setDateFrom] = useState(today)
   const [dateTo, setDateTo] = useState(today)
   const [startTime, setStartTime] = useState('08:00')
-  const [endTime, setEndTime] = useState('23:59')
+  const [endTime, setEndTime] = useState('17:00')
   const [filterType, setFilterType] = useState('dept') // 'dept' | 'employee'
   const [selectedDept, setSelectedDept] = useState(DEPARTMENTS[0].id)
   const [empSearch, setEmpSearch] = useState('')
@@ -77,9 +77,9 @@ export default function Reports() {
       const result = []
       entriesSnap.forEach(d => {
         const entry = d.data()
-        // Filter by time range in JS
-        if (startTime && entry.startTime !== startTime) return
-        if (endTime && entry.endTime !== endTime) return
+        // Filter by time range in JS (inclusive range)
+        if (startTime && entry.startTime < startTime) return
+        if (endTime && entry.endTime > endTime) return
         const emp = empMap[entry.employeeId]
         if (!emp) return
         const hours = calcHours(entry.startTime, entry.endTime)
