@@ -4,22 +4,37 @@ import { useAuth } from '../contexts/AuthContext'
 import { Factory, Eye, EyeOff } from 'lucide-react'
 
 export default function Login() {
-  const { signIn, error, setError } = useAuth()
+  const { signIn, signUp, error, setError } = useAuth()
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPass, setShowPass] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [isRegister, setIsRegister] = useState(false)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
     setLoading(true)
     try {
-      await signIn(email, password)
+      if (isRegister) {
+        await signUp(email, password)
+      } else {
+        await signIn(email, password)
+      }
       navigate('/')
     } catch (err) {
-      setError('Email yoki parol noto\'g\'ri')
+      if (isRegister) {
+        if (err.code === 'auth/email-already-in-use') {
+          setError('Bu email allaqachon ro\'yxatdan o\'tgan')
+        } else if (err.code === 'auth/weak-password') {
+          setError('Parol kamida 6 belgidan iborat bo\'lishi kerak')
+        } else {
+          setError('Xatolik yuz berdi. Qayta urinib ko\'ring')
+        }
+      } else {
+        setError('Email yoki parol noto\'g\'ri')
+      }
     }
     setLoading(false)
   }
@@ -78,9 +93,18 @@ export default function Login() {
             disabled={loading}
             className="w-full bg-blue-700 hover:bg-blue-800 text-white rounded-lg py-2.5 text-sm font-medium transition-colors disabled:opacity-60 mt-2"
           >
-            {loading ? 'Kirish...' : 'Kirish'}
+            {loading ? '...' : isRegister ? 'Ro\'yxatdan o\'tish' : 'Kirish'}
           </button>
         </form>
+
+        <div className="mt-4 text-center">
+          <button
+            onClick={() => { setIsRegister(r => !r); setError('') }}
+            className="text-sm text-blue-600 hover:underline"
+          >
+            {isRegister ? 'Hisobim bor — Kirish' : 'Yangi hisob — Ro\'yxatdan o\'tish'}
+          </button>
+        </div>
 
         <p className="text-center text-xs text-gray-400 mt-6">
           kaftimda@gmail.com · +998 91 760 66 66

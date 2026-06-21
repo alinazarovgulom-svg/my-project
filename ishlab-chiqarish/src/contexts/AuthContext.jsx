@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect } from 'react'
 import {
   signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
   signOut as firebaseSignOut,
   onAuthStateChanged,
 } from 'firebase/auth'
@@ -84,6 +85,11 @@ export function AuthProvider({ children }) {
     await signInWithEmailAndPassword(auth, email, password)
   }
 
+  const signUp = async (email, password) => {
+    setError('')
+    await createUserWithEmailAndPassword(auth, email, password)
+  }
+
   const signOut = () => firebaseSignOut(auth)
 
   const role = userDoc?.role || null
@@ -98,7 +104,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, userDoc, loading, error, setError, signIn, signOut, role, can }}>
+    <AuthContext.Provider value={{ user, userDoc, loading, error, setError, signIn, signUp, signOut, role, can }}>
       {children}
     </AuthContext.Provider>
   )
