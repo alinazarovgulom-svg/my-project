@@ -3,51 +3,39 @@ import autoTable from 'jspdf-autotable'
 
 async function addCyrillicFont(doc) {
   const res = await fetch('/fonts/PTSans-Regular.ttf')
-  if (!res.ok) throw new Error(`Font yuklanmadi: ${res.status}`)
+  if (!res.ok) throw new Error(`Font 404`)
   const buf = await res.arrayBuffer()
   const bytes = new Uint8Array(buf)
   let binary = ''
   for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i])
-  const base64 = btoa(binary)
-  doc.addFileToVFS('PTSans-Regular.ttf', base64)
+  doc.addFileToVFS('PTSans-Regular.ttf', btoa(binary))
   doc.addFont('PTSans-Regular.ttf', 'PTSans', 'normal')
   return 'PTSans'
 }
 
 export async function exportPDF(rows, filters, deptName) {
   const doc = new jsPDF({ orientation: 'landscape' })
-  let fontName = 'helvetica'
-  try {
-    fontName = await addCyrillicFont(doc)
-  } catch (e) {
-    console.warn('PTSans yuklanmadi, helvetica ishlatiladi:', e)
-  }
-  doc.setFont(fontName, 'normal')
+
+  let font = 'helvetica'
+  try { font = await addCyrillicFont(doc) } catch (e) { console.warn(e) }
 
   const pw = doc.internal.pageSize.getWidth()
   const ph = doc.internal.pageSize.getHeight()
 
-  // ── HEADER BANNER ──────────────────────────────────────────────
+  // ── HEADER ─────────────────────────────────────────────────────
   doc.setFillColor(30, 64, 175)
   doc.rect(0, 0, pw, 30, 'F')
-
-  // Accent stripe
   doc.setFillColor(59, 130, 246)
   doc.rect(0, 28, pw, 2, 'F')
 
-  // Logo area background circle
-  doc.setFillColor(255, 255, 255, 0.15)
-
-  // KAFTIMDA
+  doc.setFont(font, 'normal')
   doc.setFontSize(20)
   doc.setTextColor(255, 255, 255)
   doc.text('KAFTIMDA', 14, 16)
-
   doc.setFontSize(8)
   doc.setTextColor(147, 197, 253)
   doc.text('Ishlab chiqarish tizimi', 14, 23)
 
-  // Right side info
   doc.setFontSize(10)
   doc.setTextColor(255, 255, 255)
   doc.text(deptName, pw - 14, 13, { align: 'right' })
@@ -59,144 +47,84 @@ export async function exportPDF(rows, filters, deptName) {
     pw - 14, 26.5, { align: 'right' }
   )
 
-  // ── SUMMARY STATS ──────────────────────────────────────────────
+  // ── STATS ──────────────────────────────────────────────────────
   const totalDone = rows.reduce((s, r) => s + Number(r.quantity || 0), 0)
   const totalExp  = rows.reduce((s, r) => s + Number(r.expected  || 0), 0)
   const eff       = totalExp > 0 ? Math.round((totalDone / totalExp) * 100) : 0
   const empCount  = new Set(rows.map(r => r.empName)).size
-  const opCount   = new Set(rows.map(r => r.opName)).size
 
   const stats = [
-    { label: 'Xodimlar',      value: String(empCount),            bg: [239, 246, 255], val: [30, 64, 175],  lbl: [71, 85, 105] },
-    { label: 'Operatsiyalar', value: String(opCount),             bg: [240, 253, 244], val: [21, 128, 61],  lbl: [71, 85, 105] },
-    { label: 'Bajargan',      value: String(totalDone),           bg: [254, 252, 232], val: [133, 77, 14],  lbl: [71, 85, 105] },
-    { label: 'Kutilgan',      value: totalExp.toFixed(0),         bg: [248, 250, 252], val: [51, 65, 85],   lbl: [71, 85, 105] },
+    { label: 'Xodimlar',     value: String(empCount),       bg: [239, 246, 255], vc: [30, 64, 175] },
+    { label: 'Bajargan',     value: String(totalDone),      bg: [240, 253, 244], vc: [21, 128, 61] },
+    { label: 'Kutilgan',     value: totalExp.toFixed(0),    bg: [254, 252, 232], vc: [133, 77, 14] },
     {
-      label: 'Samaradorlik',
-      value: `${eff}%`,
+      label: 'Samaradorlik', value: `${eff}%`,
       bg: eff >= 100 ? [240, 253, 244] : eff >= 80 ? [254, 252, 232] : [254, 242, 242],
-      val: eff >= 100 ? [21, 128, 61]  : eff >= 80 ? [133, 77, 14]  : [153, 27, 27],
-      lbl: [71, 85, 105],
+      vc: eff >= 100 ? [21, 128, 61]   : eff >= 80 ? [133, 77, 14]   : [153, 27, 27],
     },
   ]
 
-  const boxW = (pw - 28 - 16) / 5
+  const boxW = (pw - 28 - 12) / 4
   stats.forEach((s, i) => {
     const x = 14 + i * (boxW + 4)
     const y = 34
-
-    // Card background
     doc.setFillColor(...s.bg)
-    doc.roundedRect(x, y, boxW, 20, 2, 2, 'F')
-
-    // Card border
-    doc.setDrawColor(226, 232, 240)
+    doc.rect(x, y, boxW, 18, 'F')
+    doc.setDrawColor(220, 220, 220)
     doc.setLineWidth(0.2)
-    doc.roundedRect(x, y, boxW, 20, 2, 2, 'S')
-
-    // Value
+    doc.rect(x, y, boxW, 18, 'S')
+    doc.setFont(font, 'normal')
     doc.setFontSize(13)
-    doc.setTextColor(...s.val)
-    doc.text(s.value, x + boxW / 2, y + 11, { align: 'center' })
-
-    // Label
+    doc.setTextColor(...s.vc)
+    doc.text(s.value, x + boxW / 2, y + 10, { align: 'center' })
     doc.setFontSize(6.5)
-    doc.setTextColor(...s.lbl)
-    doc.text(s.label, x + boxW / 2, y + 17, { align: 'center' })
+    doc.setTextColor(100, 116, 139)
+    doc.text(s.label, x + boxW / 2, y + 15.5, { align: 'center' })
   })
 
-  // ── PIVOT TABLE ────────────────────────────────────────────────
-  const slots = [...new Set(rows.map(r => `${r.date}|${r.startTime}–${r.endTime}`))].sort()
-  const multiDate = new Set(rows.map(r => r.date)).size > 1
-
-  const grouped = {}
-  rows.forEach(r => {
-    const key = `${r.empName}|||${r.deptName}|||${r.opName}`
-    if (!grouped[key]) {
-      grouped[key] = { empName: r.empName, deptName: r.deptName, opName: r.opName, norm: r.norm, slots: {} }
-    }
-    grouped[key].slots[`${r.date}|${r.startTime}–${r.endTime}`] = {
-      quantity: r.quantity, expected: r.expected,
-    }
-  })
-  const gRows = Object.values(grouped)
-
-  const slotHeaders = slots.map(s => {
-    const [date, time] = s.split('|')
-    return multiDate ? `${date} ${time}` : time
-  })
-
-  const head = [['#', 'Xodim', "Bo'lim", 'Operatsiya', 'Norma', ...slotHeaders, 'Jami']]
-
-  const body = gRows.map((r, i) => {
-    const td = slots.reduce((s, k) => s + (r.slots[k]?.quantity || 0), 0)
-    const te = slots.reduce((s, k) => s + (r.slots[k]?.expected || 0), 0)
-    return [
-      i + 1,
-      r.empName,
-      r.deptName,
-      r.opName,
-      `${r.norm}/soat`,
-      ...slots.map(k => {
-        const d = r.slots[k]
-        return d ? `${d.quantity}/${d.expected.toFixed(0)}` : '-'
-      }),
-      `${td}/${te.toFixed(0)}`,
-    ]
-  })
+  // ── TABLE (flat) ───────────────────────────────────────────────
+  const head = [['#', 'Xodim', "Bo'lim", 'Sana', 'Vaqt', 'Operatsiya', 'Norma', 'Bajargan', 'Kutilgan']]
+  const body = rows.map((r, i) => [
+    i + 1,
+    r.empName,
+    r.deptName,
+    r.date,
+    `${r.startTime}-${r.endTime}`,
+    r.opName,
+    `${r.norm}/soat`,
+    String(r.quantity),
+    r.expected.toFixed(0),
+  ])
 
   autoTable(doc, {
-    startY: 58,
+    startY: 56,
     head,
     body,
-    styles: {
-      fontSize: 7.5,
-      cellPadding: 3,
-      font: fontName,
-      textColor: [30, 41, 59],
-    },
-    headStyles: {
-      fillColor: [30, 64, 175],
-      textColor: [255, 255, 255],
-      font: fontName,
-      fontSize: 7,
-      halign: 'center',
-    },
+    styles: { fontSize: 7.5, cellPadding: 3, font, textColor: [30, 41, 59] },
+    headStyles: { fillColor: [30, 64, 175], textColor: [255, 255, 255], font, fontSize: 7 },
     alternateRowStyles: { fillColor: [248, 250, 252] },
-    willDrawCell: (data) => {
-      if (data.section !== 'body') return
-      const slotStart = 5
-      const totalCol  = 5 + slots.length
-      if (data.column.index < slotStart) return
-
-      const r = gRows[data.row.index]
+    didDrawCell: (data) => {
+      if (data.section !== 'body' || data.column.index !== 7) return
+      const r = rows[data.row.index]
       if (!r) return
-
-      let done, exp
-      if (data.column.index === totalCol) {
-        done = slots.reduce((s, k) => s + (r.slots[k]?.quantity || 0), 0)
-        exp  = slots.reduce((s, k) => s + (r.slots[k]?.expected || 0), 0)
-      } else {
-        const sd = r.slots[slots[data.column.index - slotStart]]
-        if (!sd) return
-        done = sd.quantity
-        exp  = sd.expected
-      }
-
-      if (done > exp) {
-        doc.setFillColor(220, 252, 231)
-      } else if (done === exp) {
-        doc.setFillColor(254, 249, 195)
-      } else {
-        doc.setFillColor(254, 226, 226)
-      }
-      doc.rect(data.cell.x, data.cell.y, data.cell.width, data.cell.height, 'F')
+      const done = Number(r.quantity)
+      const exp  = Number(r.expected)
+      if (done > exp)       { doc.setFillColor(220, 252, 231) }
+      else if (done === exp) { doc.setFillColor(254, 249, 195) }
+      else                  { doc.setFillColor(254, 226, 226) }
+      doc.rect(data.cell.x + 0.5, data.cell.y + 0.5, data.cell.width - 1, data.cell.height - 1, 'F')
+      doc.setFont(font, 'normal')
+      doc.setFontSize(7.5)
+      if (done > exp)       doc.setTextColor(22, 101, 52)
+      else if (done === exp) doc.setTextColor(113, 63, 18)
+      else                  doc.setTextColor(153, 27, 27)
+      doc.text(String(done), data.cell.x + data.cell.width / 2, data.cell.y + data.cell.height / 2 + 1, { align: 'center' })
     },
   })
 
   // ── LEGEND ─────────────────────────────────────────────────────
-  const legendY = doc.lastAutoTable.finalY + 6
-  if (legendY < ph - 14) {
+  const finalY = (doc.lastAutoTable?.finalY ?? 56) + 6
+  if (finalY < ph - 16) {
     const items = [
       { color: [220, 252, 231], text: 'Normadan yuqori' },
       { color: [254, 249, 195], text: 'Normaga teng' },
@@ -207,10 +135,11 @@ export async function exportPDF(rows, filters, deptName) {
       doc.setFillColor(...item.color)
       doc.setDrawColor(200, 200, 200)
       doc.setLineWidth(0.2)
-      doc.roundedRect(lx, legendY, 4, 4, 1, 1, 'FD')
+      doc.rect(lx, finalY, 4, 4, 'FD')
+      doc.setFont(font, 'normal')
       doc.setFontSize(7)
       doc.setTextColor(80, 80, 80)
-      doc.text(item.text, lx + 6, legendY + 3)
+      doc.text(item.text, lx + 6, finalY + 3)
       lx += 42
     })
   }
@@ -224,12 +153,13 @@ export async function exportPDF(rows, filters, deptName) {
     doc.setDrawColor(226, 232, 240)
     doc.setLineWidth(0.2)
     doc.line(0, ph - 10, pw, ph - 10)
+    doc.setFont(font, 'normal')
     doc.setFontSize(6.5)
+    doc.setTextColor(30, 64, 175)
+    doc.text('KAFTIMDA', 14, ph - 4)
     doc.setTextColor(148, 163, 184)
     doc.text(`${p} / ${pageCount}`, pw / 2, ph - 4, { align: 'center' })
     doc.text('kaftimda@gmail.com  ·  +998 91 760 66 66', pw - 14, ph - 4, { align: 'right' })
-    doc.setTextColor(30, 64, 175)
-    doc.text('KAFTIMDA', 14, ph - 4)
   }
 
   doc.save(`hisobot_${Date.now()}.pdf`)
