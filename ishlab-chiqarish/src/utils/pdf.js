@@ -3,19 +3,26 @@ import autoTable from 'jspdf-autotable'
 
 async function addCyrillicFont(doc) {
   const res = await fetch('/fonts/PTSans-Regular.ttf')
+  if (!res.ok) throw new Error(`Font yuklanmadi: ${res.status}`)
   const buf = await res.arrayBuffer()
   const bytes = new Uint8Array(buf)
   let binary = ''
-  bytes.forEach(b => { binary += String.fromCharCode(b) })
+  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i])
   const base64 = btoa(binary)
   doc.addFileToVFS('PTSans-Regular.ttf', base64)
   doc.addFont('PTSans-Regular.ttf', 'PTSans', 'normal')
+  return 'PTSans'
 }
 
 export async function exportPDF(rows, filters, deptName) {
   const doc = new jsPDF({ orientation: 'landscape' })
-  await addCyrillicFont(doc)
-  doc.setFont('PTSans', 'normal')
+  let fontName = 'helvetica'
+  try {
+    fontName = await addCyrillicFont(doc)
+  } catch (e) {
+    console.warn('PTSans yuklanmadi, helvetica ishlatiladi:', e)
+  }
+  doc.setFont(fontName, 'normal')
 
   const pw = doc.internal.pageSize.getWidth()
   const ph = doc.internal.pageSize.getHeight()
@@ -145,13 +152,13 @@ export async function exportPDF(rows, filters, deptName) {
     styles: {
       fontSize: 7.5,
       cellPadding: 3,
-      font: 'PTSans',
+      font: fontName,
       textColor: [30, 41, 59],
     },
     headStyles: {
       fillColor: [30, 64, 175],
       textColor: [255, 255, 255],
-      font: 'PTSans',
+      font: fontName,
       fontSize: 7,
       halign: 'center',
     },
