@@ -1,5 +1,6 @@
 import os
 import logging
+from dotenv import load_dotenv
 from telegram import Update, ReplyKeyboardMarkup, ReplyKeyboardRemove
 from telegram.ext import (
     Application, CommandHandler, MessageHandler,
@@ -7,11 +8,13 @@ from telegram.ext import (
 )
 from pdf_generator import generate_pdf
 
+load_dotenv()
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-BOT_TOKEN = os.getenv("BOT_TOKEN", "YOUR_BOT_TOKEN_HERE")
-ADMIN_CHAT_ID = int(os.getenv("ADMIN_CHAT_ID", "YOUR_CHAT_ID_HERE"))
+BOT_TOKEN = os.getenv("BOT_TOKEN")
+ADMIN_CHAT_ID = int(os.getenv("ADMIN_CHAT_ID"))
 
 # Conversation steps
 (
