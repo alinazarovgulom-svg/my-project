@@ -37,6 +37,7 @@ export default function Reports() {
   const [loading, setLoading] = useState(false)
   const [searched, setSearched] = useState(false)
   const [reportError, setReportError] = useState('')
+  const [pdfLoading, setPdfLoading] = useState(false)
 
   const searchEmployees = async (val) => {
     setEmpSearch(val)
@@ -237,10 +238,21 @@ export default function Reports() {
           {can.downloadReports && rows.length > 0 && (
             <div className="flex gap-3 mb-4">
               <button
-                onClick={() => exportPDF(rows, filtersStr, filterLabel)}
-                className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white text-sm px-4 py-2 rounded-lg transition-colors"
+                onClick={async () => {
+                  setPdfLoading(true)
+                  try {
+                    await exportPDF(rows, filtersStr, filterLabel)
+                  } catch (e) {
+                    console.error(e)
+                    setReportError('PDF xatolik: ' + (e.message || 'Qayta urinib ko\'ring'))
+                  } finally {
+                    setPdfLoading(false)
+                  }
+                }}
+                disabled={pdfLoading}
+                className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white text-sm px-4 py-2 rounded-lg transition-colors disabled:opacity-60"
               >
-                <FileText className="w-4 h-4" /> PDF
+                <FileText className="w-4 h-4" /> {pdfLoading ? 'Yuklanmoqda...' : 'PDF'}
               </button>
               <button
                 onClick={() => exportExcel(rows, filtersStr, filterLabel)}

@@ -232,7 +232,7 @@ export async function exportPDF(rows, filters, deptName) {
   }
 
   // ── FOOTER ─────────────────────────────────────────────────────
-  const pageCount = doc.internal.getNumberOfPages()
+  const pageCount = doc.getNumberOfPages()
   for (let p = 1; p <= pageCount; p++) {
     doc.setPage(p)
     doc.setFillColor(248, 250, 252)
