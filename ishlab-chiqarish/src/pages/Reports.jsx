@@ -27,7 +27,7 @@ export default function Reports() {
   const [dateFrom, setDateFrom] = useState(today)
   const [dateTo, setDateTo] = useState(today)
   const [startTime, setStartTime] = useState('08:00')
-  const [endTime, setEndTime] = useState('17:00')
+  const [endTime, setEndTime] = useState('23:59')
   const [filterType, setFilterType] = useState('dept') // 'dept' | 'employee'
   const [selectedDept, setSelectedDept] = useState(DEPARTMENTS[0].id)
   const [empSearch, setEmpSearch] = useState('')
@@ -51,63 +51,65 @@ export default function Reports() {
   const loadReport = async () => {
     setLoading(true)
     setSearched(true)
+    try {
+      // Only filter by date (avoids composite index requirement)
+      const constraints = [
+        where('date', '>=', dateFrom),
+        where('date', '<=', dateTo),
+      ]
+      if (filterType === 'dept') {
+        constraints.push(where('departmentId', '==', selectedDept))
+      } else if (filterType === 'employee' && selectedEmp) {
+        constraints.push(where('employeeId', '==', selectedEmp.id))
+      }
 
-    // Build query constraints
-    const constraints = [
-      where('date', '>=', dateFrom),
-      where('date', '<=', dateTo),
-    ]
-    if (startTime && endTime) {
-      constraints.push(where('startTime', '==', startTime))
-      constraints.push(where('endTime', '==', endTime))
-    }
-    if (filterType === 'dept') {
-      constraints.push(where('departmentId', '==', selectedDept))
-    } else if (filterType === 'employee' && selectedEmp) {
-      constraints.push(where('employeeId', '==', selectedEmp.id))
-    }
+      const entriesSnap = await getDocs(query(collection(db, 'factory_work_entries'), ...constraints))
 
-    const entriesSnap = await getDocs(query(collection(db, 'factory_work_entries'), ...constraints))
+      const [empSnap, opSnap] = await Promise.all([
+        getDocs(collection(db, 'factory_employees')),
+        getDocs(collection(db, 'factory_operations')),
+      ])
+      const empMap = {}
+      empSnap.forEach(d => { empMap[d.id] = d.data() })
+      const opMap = {}
+      opSnap.forEach(d => { opMap[d.id] = d.data() })
 
-    // Load all employees and operations
-    const [empSnap, opSnap] = await Promise.all([
-      getDocs(collection(db, 'factory_employees')),
-      getDocs(collection(db, 'factory_operations')),
-    ])
-    const empMap = {}
-    empSnap.forEach(d => { empMap[d.id] = d.data() })
-    const opMap = {}
-    opSnap.forEach(d => { opMap[d.id] = d.data() })
-
-    const result = []
-    entriesSnap.forEach(d => {
-      const entry = d.data()
-      const emp = empMap[entry.employeeId]
-      if (!emp) return
-      const hours = calcHours(entry.startTime, entry.endTime)
-      const ops = entry.operations || {}
-      Object.entries(ops).forEach(([opId, data]) => {
-        const op = opMap[opId]
-        if (!op) return
-        const expected = op.norm * hours
-        result.push({
-          empName: `${emp.lastName} ${emp.firstName}`,
-          deptName: getDeptName(emp.departmentId),
-          opName: op.name,
-          norm: op.norm,
-          quantity: Number(data.quantity ?? 0),
-          expected,
-          note: data.note || '',
-          date: entry.date,
-          startTime: entry.startTime,
-          endTime: entry.endTime,
+      const result = []
+      entriesSnap.forEach(d => {
+        const entry = d.data()
+        // Filter by time range in JS
+        if (startTime && entry.startTime !== startTime) return
+        if (endTime && entry.endTime !== endTime) return
+        const emp = empMap[entry.employeeId]
+        if (!emp) return
+        const hours = calcHours(entry.startTime, entry.endTime)
+        const ops = entry.operations || {}
+        Object.entries(ops).forEach(([opId, data]) => {
+          const op = opMap[opId]
+          if (!op) return
+          const expected = op.norm * hours
+          result.push({
+            empName: `${emp.lastName} ${emp.firstName}`,
+            deptName: getDeptName(emp.departmentId),
+            opName: op.name,
+            norm: op.norm,
+            quantity: Number(data.quantity ?? 0),
+            expected,
+            note: data.note || '',
+            date: entry.date,
+            startTime: entry.startTime,
+            endTime: entry.endTime,
+          })
         })
       })
-    })
 
-    result.sort((a, b) => a.empName.localeCompare(b.empName) || a.opName.localeCompare(b.opName))
-    setRows(result)
-    setLoading(false)
+      result.sort((a, b) => a.empName.localeCompare(b.empName) || a.opName.localeCompare(b.opName))
+      setRows(result)
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setLoading(false)
+    }
   }
 
   const filterLabel = filterType === 'dept'
