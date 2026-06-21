@@ -36,24 +36,24 @@ export default function Reports() {
   const [rows, setRows] = useState([])
   const [loading, setLoading] = useState(false)
   const [searched, setSearched] = useState(false)
+  const [reportError, setReportError] = useState('')
 
   const searchEmployees = async (val) => {
     setEmpSearch(val)
-    if (val.length < 2) { setEmployees([]); return }
     const snap = await getDocs(collection(db, 'factory_employees'))
+    const all = snap.docs.map(d => ({ id: d.id, ...d.data() }))
     setEmployees(
-      snap.docs
-        .map(d => ({ id: d.id, ...d.data() }))
-        .filter(e => `${e.lastName} ${e.firstName}`.toLowerCase().includes(val.toLowerCase()))
+      val.length === 0
+        ? all
+        : all.filter(e => `${e.lastName} ${e.firstName}`.toLowerCase().includes(val.toLowerCase()))
     )
   }
 
   const loadReport = async () => {
     setLoading(true)
     setSearched(true)
+    setReportError('')
     try {
-      // Only filter by date (avoids composite index requirement)
-      // Only filter by date to avoid composite index requirements
       const constraints = [
         where('date', '>=', dateFrom),
         where('date', '<=', dateTo),
@@ -111,6 +111,7 @@ export default function Reports() {
       setRows(result)
     } catch (e) {
       console.error(e)
+      setReportError('Xatolik yuz berdi: ' + (e.message || e.code || 'Qayta urinib ko\'ring'))
     } finally {
       setLoading(false)
     }
@@ -188,8 +189,10 @@ export default function Reports() {
               type="text"
               value={selectedEmp ? `${selectedEmp.lastName} ${selectedEmp.firstName}` : empSearch}
               onChange={e => { setSelectedEmp(null); searchEmployees(e.target.value) }}
+              onFocus={() => { if (!selectedEmp) searchEmployees(empSearch) }}
+              onBlur={() => setTimeout(() => setEmployees([]), 200)}
               className="w-full border border-gray-300 rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Xodim qidirish..."
+              placeholder="Xodim qidirish yoki bosing..."
             />
             {employees.length > 0 && !selectedEmp && (
               <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 max-h-48 overflow-y-auto">
@@ -219,6 +222,13 @@ export default function Reports() {
           </button>
         </div>
       </div>
+
+      {/* Error */}
+      {reportError && (
+        <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 mb-4 text-sm">
+          {reportError}
+        </div>
+      )}
 
       {/* Results */}
       {searched && (
