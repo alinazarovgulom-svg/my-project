@@ -267,66 +267,95 @@ export default function Reports() {
             </span>
           </div>
 
-          {/* Table */}
+          {/* Pivot Table */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
             {rows.length === 0 ? (
               <div className="text-center py-16 text-gray-400 text-sm">
                 Tanlangan davr uchun ma'lumot topilmadi
               </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead className="bg-gray-50 border-b border-gray-200">
-                    <tr>
-                      <th className="text-left px-4 py-3 font-medium text-gray-600 whitespace-nowrap">#</th>
-                      <th className="text-left px-4 py-3 font-medium text-gray-600 whitespace-nowrap">Xodim</th>
-                      <th className="text-left px-4 py-3 font-medium text-gray-600 whitespace-nowrap">Bo'lim</th>
-                      <th className="text-left px-4 py-3 font-medium text-gray-600 whitespace-nowrap">Sana</th>
-                      <th className="text-left px-4 py-3 font-medium text-gray-600 whitespace-nowrap">Vaqt</th>
-                      <th className="text-left px-4 py-3 font-medium text-gray-600 whitespace-nowrap">Operatsiya</th>
-                      <th className="text-left px-4 py-3 font-medium text-gray-600 whitespace-nowrap">Norma</th>
-                      <th className="text-left px-4 py-3 font-medium text-gray-600 whitespace-nowrap">Bajargan</th>
-                      <th className="text-left px-4 py-3 font-medium text-gray-600 whitespace-nowrap">Kutilgan</th>
-                      <th className="text-left px-4 py-3 font-medium text-gray-600 whitespace-nowrap">Izoh</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {rows.map((r, i) => {
-                      const cls = statusClass(r.quantity, r.expected)
-                      const isFirstOfEmp = i === 0 || rows[i - 1].empName !== r.empName
-                      const isLastOfEmp = i === rows.length - 1 || rows[i + 1].empName !== r.empName
-                      return (
-                        <tr
-                          key={i}
-                          className={`hover:bg-gray-50 ${isFirstOfEmp && i > 0 ? 'border-t-2 border-gray-300' : 'border-t border-gray-50'}`}
-                        >
-                          <td className="px-4 py-2.5 text-gray-400 text-xs">{i + 1}</td>
-                          <td className="px-4 py-2.5 font-semibold text-gray-800 whitespace-nowrap">
-                            {isFirstOfEmp ? r.empName : ''}
-                          </td>
-                          <td className="px-4 py-2.5">
-                            {isFirstOfEmp && (
-                              <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full whitespace-nowrap">{r.deptName}</span>
-                            )}
-                          </td>
-                          <td className="px-4 py-2.5 text-gray-500 text-xs whitespace-nowrap">{r.date}</td>
-                          <td className="px-4 py-2.5 text-gray-500 text-xs whitespace-nowrap font-mono">{r.startTime}–{r.endTime}</td>
-                          <td className="px-4 py-2.5 text-gray-700 whitespace-nowrap">{r.opName}</td>
-                          <td className="px-4 py-2.5 text-gray-400 text-xs whitespace-nowrap">{r.norm} dona/soat</td>
-                          <td className="px-4 py-2.5">
-                            <span className={`font-bold px-2 py-0.5 rounded text-xs ${cls}`}>
-                              {r.quantity}
-                            </span>
-                          </td>
-                          <td className="px-4 py-2.5 text-gray-500 text-xs">{r.expected.toFixed(0)}</td>
-                          <td className="px-4 py-2.5 text-gray-400 text-xs">{r.note}</td>
-                        </tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )}
+            ) : (() => {
+              // Unique time slots sorted
+              const slots = [...new Set(rows.map(r => `${r.date}|${r.startTime}–${r.endTime}`))].sort()
+              const multiDate = new Set(rows.map(r => r.date)).size > 1
+
+              // Group by employee + dept + operation
+              const grouped = {}
+              rows.forEach(r => {
+                const key = `${r.empName}|||${r.deptName}|||${r.opName}`
+                if (!grouped[key]) {
+                  grouped[key] = { empName: r.empName, deptName: r.deptName, opName: r.opName, norm: r.norm, slots: {} }
+                }
+                grouped[key].slots[`${r.date}|${r.startTime}–${r.endTime}`] = {
+                  quantity: r.quantity, expected: r.expected, note: r.note,
+                }
+              })
+              const gRows = Object.values(grouped)
+
+              return (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="bg-gray-50 border-b border-gray-200">
+                      <tr>
+                        <th className="text-left px-4 py-3 font-medium text-gray-600 whitespace-nowrap">#</th>
+                        <th className="text-left px-4 py-3 font-medium text-gray-600 whitespace-nowrap">Xodim</th>
+                        <th className="text-left px-4 py-3 font-medium text-gray-600 whitespace-nowrap">Bo'lim</th>
+                        <th className="text-left px-4 py-3 font-medium text-gray-600 whitespace-nowrap">Operatsiya</th>
+                        <th className="text-left px-4 py-3 font-medium text-gray-600 whitespace-nowrap">Norma</th>
+                        {slots.map(s => {
+                          const [date, time] = s.split('|')
+                          return (
+                            <th key={s} className="text-center px-3 py-3 font-medium text-gray-600 whitespace-nowrap min-w-[90px]">
+                              {multiDate && <div className="text-xs text-gray-400 font-normal">{date}</div>}
+                              <div className="font-mono text-xs">{time}</div>
+                            </th>
+                          )
+                        })}
+                        <th className="text-center px-4 py-3 font-medium text-gray-600 whitespace-nowrap">Jami</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {gRows.map((r, i) => {
+                        const isNewEmp = i === 0 || gRows[i - 1].empName !== r.empName
+                        const totalDone = slots.reduce((s, k) => s + (r.slots[k]?.quantity || 0), 0)
+                        const totalExp = slots.reduce((s, k) => s + (r.slots[k]?.expected || 0), 0)
+                        return (
+                          <tr key={i} className={`hover:bg-gray-50 ${isNewEmp && i > 0 ? 'border-t-2 border-gray-300' : 'border-t border-gray-100'}`}>
+                            <td className="px-4 py-2.5 text-gray-400 text-xs">{i + 1}</td>
+                            <td className="px-4 py-2.5 font-semibold text-gray-800 whitespace-nowrap">
+                              {isNewEmp ? r.empName : ''}
+                            </td>
+                            <td className="px-4 py-2.5">
+                              {isNewEmp && (
+                                <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full whitespace-nowrap">{r.deptName}</span>
+                              )}
+                            </td>
+                            <td className="px-4 py-2.5 text-gray-700 whitespace-nowrap">{r.opName}</td>
+                            <td className="px-4 py-2.5 text-gray-400 text-xs whitespace-nowrap">{r.norm} dona/soat</td>
+                            {slots.map(k => {
+                              const d = r.slots[k]
+                              if (!d) return (
+                                <td key={k} className="px-3 py-2.5 text-center text-gray-200 text-xs">—</td>
+                              )
+                              const cls = statusClass(d.quantity, d.expected)
+                              return (
+                                <td key={k} className="px-3 py-2.5 text-center">
+                                  <span className={`font-bold px-2 py-0.5 rounded text-xs ${cls}`}>{d.quantity}</span>
+                                  <div className="text-xs text-gray-400 mt-0.5">{d.expected.toFixed(0)}</div>
+                                </td>
+                              )
+                            })}
+                            <td className="px-4 py-2.5 text-center">
+                              <span className={`font-bold px-2 py-0.5 rounded text-xs ${statusClass(totalDone, totalExp)}`}>{totalDone}</span>
+                              <div className="text-xs text-gray-400 mt-0.5">{totalExp.toFixed(0)}</div>
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )
+            })()}
           </div>
         </>
       )}
