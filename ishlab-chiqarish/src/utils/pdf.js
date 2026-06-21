@@ -6,96 +6,115 @@ function esc(str) {
     .replace(/"/g, '&quot;')
 }
 
+function fmtDate(iso) {
+  // '2026-06-21' → '21.06.2026'
+  const [y, m, d] = iso.split('-')
+  return `${d}.${m}.${y}`
+}
+
+function qtyStyle(qty, exp) {
+  if (qty > exp)   return { bg: '#dcfce7', color: '#15803d' }
+  if (qty === exp) return { bg: '#fef9c3', color: '#854d0e' }
+  return               { bg: '#fee2e2', color: '#991b1b' }
+}
+
 export function exportPDF(rows, filters, deptName) {
   if (!rows.length) return
 
-  // ── Stats ────────────────────────────────────────────────────────────────
+  // ── Global stats ─────────────────────────────────────────────────────────
   const totalDone = rows.reduce((s, r) => s + Number(r.quantity || 0), 0)
   const totalExp  = rows.reduce((s, r) => s + Number(r.expected  || 0), 0)
   const eff       = totalExp > 0 ? Math.round((totalDone / totalExp) * 100) : 0
   const empCount  = new Set(rows.map(r => r.empName)).size
+  const effColor  = eff >= 100 ? '#15803d' : eff >= 80 ? '#854d0e' : '#991b1b'
+  const effBg     = eff >= 100 ? '#f0fdf4' : eff >= 80 ? '#fefce8' : '#fef2f2'
 
-  const effColor = eff >= 100 ? '#15803d' : eff >= 80 ? '#854d0e' : '#991b1b'
-  const effBg    = eff >= 100 ? '#f0fdf4' : eff >= 80 ? '#fefce8' : '#fef2f2'
+  // ── Group rows by date ────────────────────────────────────────────────────
+  const dates = [...new Set(rows.map(r => r.date))].sort()
 
-  // ── Pivot ─────────────────────────────────────────────────────────────────
-  // Use date+time as slot key so multi-day reports don't merge same-hour columns
-  const uniqueDates = new Set(rows.map(r => r.date))
-  const multiDay = uniqueDates.size > 1
+  const sections = dates.map(date => {
+    const dr = rows.filter(r => r.date === date)
 
-  const slotSet = new Set()
-  rows.forEach(r => slotSet.add(`${r.date}||${r.startTime}–${r.endTime}`))
-  const slots = [...slotSet].sort()
+    const slots = [...new Set(dr.map(r => `${r.startTime}–${r.endTime}`))].sort()
 
-  // Header label: show date only when there are multiple dates
-  function slotLabel(sl) {
-    const [date, time] = sl.split('||')
-    if (multiDay) {
-      const d = date.slice(8) + '.' + date.slice(5, 7)  // DD.MM
-      return `${d} ${time}`
-    }
-    return time
-  }
-
-  const groupMap = new Map()
-  rows.forEach(r => {
-    const key = `${r.empName}||${r.deptName}||${r.opName}||${r.norm}`
-    if (!groupMap.has(key)) {
-      groupMap.set(key, { empName: r.empName, deptName: r.deptName, opName: r.opName, norm: r.norm, bySlot: {} })
-    }
-    const slot = `${r.date}||${r.startTime}–${r.endTime}`
-    groupMap.get(key).bySlot[slot] = { qty: Number(r.quantity), exp: Number(r.expected) }
-  })
-  const groups = [...groupMap.values()]
-
-  function qtyStyle(qty, exp) {
-    if (qty > exp)   return { bg: '#dcfce7', color: '#15803d' }
-    if (qty === exp) return { bg: '#fef9c3', color: '#854d0e' }
-    return               { bg: '#fee2e2', color: '#991b1b' }
-  }
-
-  // ── Table rows ────────────────────────────────────────────────────────────
-  let prevEmp = null
-  const tableRows = groups.map((g, i) => {
-    const isFirst = g.empName !== prevEmp
-    prevEmp = g.empName
-
-    const totDone = slots.reduce((s, sl) => s + (g.bySlot[sl]?.qty ?? 0), 0)
-    const totExp  = slots.reduce((s, sl) => s + (g.bySlot[sl]?.exp ?? 0), 0)
-    const { bg: tBg, color: tCol } = qtyStyle(totDone, totExp)
-
-    const slotCells = slots.map(sl => {
-      const e = g.bySlot[sl]
-      if (!e) {
-        return `<td style="text-align:center;color:#cbd5e1;font-size:11px">—</td>`
+    const groupMap = new Map()
+    dr.forEach(r => {
+      const key = `${r.empName}||${r.deptName}||${r.opName}||${r.norm}`
+      if (!groupMap.has(key)) {
+        groupMap.set(key, { empName: r.empName, deptName: r.deptName, opName: r.opName, norm: r.norm, bySlot: {} })
       }
-      const { bg, color } = qtyStyle(e.qty, e.exp)
-      return `<td style="text-align:center;padding:5px 4px">
-        <div style="background:${bg};border-radius:5px;padding:3px 4px;display:inline-block;min-width:30px">
-          <div style="font-weight:700;font-size:11px;color:${color};line-height:1.2">${e.qty}</div>
-          <div style="font-size:7px;color:#94a3b8;line-height:1.2">${e.exp}</div>
-        </div>
-      </td>`
+      groupMap.get(key).bySlot[`${r.startTime}–${r.endTime}`] = {
+        qty: Number(r.quantity), exp: Number(r.expected),
+      }
+    })
+
+    return { date, slots, groups: [...groupMap.values()] }
+  })
+
+  // ── Build each date section ───────────────────────────────────────────────
+  const sectionsHtml = sections.map(({ date, slots, groups }) => {
+    const slotHeaders = slots
+      .map(s => `<th class="slot-th">${esc(s)}</th>`)
+      .join('')
+
+    let prevEmp = null
+    const tableRows = groups.map((g, i) => {
+      const isFirst = g.empName !== prevEmp
+      prevEmp = g.empName
+
+      const totDone = slots.reduce((s, sl) => s + (g.bySlot[sl]?.qty ?? 0), 0)
+      const totExp  = slots.reduce((s, sl) => s + (g.bySlot[sl]?.exp ?? 0), 0)
+      const { bg: tBg, color: tCol } = qtyStyle(totDone, totExp)
+
+      const slotCells = slots.map(sl => {
+        const e = g.bySlot[sl]
+        if (!e) return `<td class="slot-td empty">—</td>`
+        const { bg, color } = qtyStyle(e.qty, e.exp)
+        return `<td class="slot-td">
+          <div class="qty-badge" style="background:${bg}">
+            <div class="qty-num" style="color:${color}">${e.qty}</div>
+            <div class="qty-exp">${e.exp}</div>
+          </div>
+        </td>`
+      }).join('')
+
+      return `<tr class="${i % 2 === 1 ? 'row-alt' : ''}">
+        <td class="td-num">${i + 1}</td>
+        <td class="td-name">${isFirst ? `<strong>${esc(g.empName)}</strong>` : ''}</td>
+        <td class="td-dept">${isFirst ? `<span class="dept-badge">${esc(g.deptName)}</span>` : ''}</td>
+        <td class="td-op">${esc(g.opName)}</td>
+        <td class="td-norm">${esc(g.norm)} dona/soat</td>
+        ${slotCells}
+        <td class="slot-td">
+          <div class="qty-badge" style="background:${tBg}">
+            <div class="qty-num" style="color:${tCol}">${totDone}</div>
+            <div class="qty-exp">${totExp.toFixed(0)}</div>
+          </div>
+        </td>
+      </tr>`
     }).join('')
 
-    return `<tr style="${i % 2 === 1 ? 'background:#f8fafc' : ''}">
-      <td style="color:#94a3b8;text-align:center">${i + 1}</td>
-      <td style="font-weight:700;white-space:nowrap">${isFirst ? esc(g.empName) : ''}</td>
-      <td>${isFirst ? `<span style="background:#eff6ff;color:#1d4ed8;padding:2px 7px;border-radius:10px;font-size:7.5px;white-space:nowrap">${esc(g.deptName)}</span>` : ''}</td>
-      <td>${esc(g.opName)}</td>
-      <td style="color:#94a3b8;white-space:nowrap">${esc(g.norm)} dona/soat</td>
-      ${slotCells}
-      <td style="text-align:center;padding:5px 4px">
-        <div style="background:${tBg};border-radius:5px;padding:3px 4px;display:inline-block;min-width:34px">
-          <div style="font-weight:700;font-size:11px;color:${tCol};line-height:1.2">${totDone}</div>
-          <div style="font-size:7px;color:#94a3b8;line-height:1.2">${totExp.toFixed(0)}</div>
-        </div>
-      </td>
-    </tr>`
+    return `
+      <div class="date-section">
+        <div class="date-hdr">${fmtDate(date)}</div>
+        <table>
+          <thead>
+            <tr>
+              <th class="th-num">#</th>
+              <th>Xodim</th>
+              <th>Bo'lim</th>
+              <th>Operatsiya</th>
+              <th>Norma</th>
+              ${slotHeaders}
+              <th class="slot-th">Jami</th>
+            </tr>
+          </thead>
+          <tbody>${tableRows}</tbody>
+        </table>
+      </div>`
   }).join('')
 
-  const slotHeaders = slots.map(s => `<th style="text-align:center">${esc(slotLabel(s))}</th>`).join('')
-  const dateStr = new Date().toLocaleDateString('uz-UZ', { day: '2-digit', month: '2-digit', year: 'numeric' })
+  const printed = new Date().toLocaleDateString('uz-UZ', { day: '2-digit', month: '2-digit', year: 'numeric' })
 
   const html = `<!DOCTYPE html>
 <html lang="uz">
@@ -107,38 +126,65 @@ export function exportPDF(rows, filters, deptName) {
   * { margin:0; padding:0; box-sizing:border-box; }
   body { font-family: Arial, Helvetica, sans-serif; font-size:9px; color:#1e293b; }
 
+  /* Header */
   .hdr { background:#1e40af; color:#fff; padding:9px 14px;
          display:flex; justify-content:space-between; align-items:center;
-         border-bottom:2.5px solid #3b82f6; margin-bottom:6px; }
+         border-bottom:2.5px solid #3b82f6; margin-bottom:7px; }
   .hdr-l .brand { font-size:18px; font-weight:700; }
   .hdr-l .sub   { font-size:8px; color:#93c5fd; margin-top:2px; }
   .hdr-r { text-align:right; }
   .hdr-r .dept  { font-size:10px; font-weight:600; }
-  .hdr-r .meta  { font-size:7.5px; color:#93c5fd; margin-top:2px; line-height:1.5; }
+  .hdr-r .meta  { font-size:7.5px; color:#93c5fd; margin-top:2px; line-height:1.6; }
 
-  .stats { display:flex; gap:6px; margin-bottom:7px; }
-  .card  { flex:1; border-radius:6px; padding:6px 10px; border:1px solid #e2e8f0; text-align:center; }
+  /* Stat cards */
+  .stats { display:flex; gap:6px; margin-bottom:8px; }
+  .card  { flex:1; border-radius:6px; padding:6px 10px;
+           border:1px solid #e2e8f0; text-align:center; }
   .card-val { font-size:14px; font-weight:700; }
   .card-lbl { font-size:7px; color:#64748b; margin-top:1px; }
 
-  table { width:100%; border-collapse:collapse; font-size:9px; }
-  thead tr { background:#1e40af; color:#fff; }
-  thead th { padding:6px 6px; text-align:left; font-weight:600; font-size:8px; white-space:nowrap; }
-  tbody tr { border-bottom:1px solid #f1f5f9; }
-  tbody td { padding:5px 6px; vertical-align:middle; }
+  /* Date section */
+  .date-section { margin-bottom:10px; }
+  .date-hdr { background:#1e40af; color:#fff; font-size:9px; font-weight:700;
+              padding:4px 8px; border-radius:4px 4px 0 0; letter-spacing:.3px; }
 
-  .legend { display:flex; align-items:center; gap:12px; margin-top:7px;
-            padding-top:6px; border-top:1px solid #e2e8f0; }
+  /* Table */
+  table { width:100%; border-collapse:collapse; font-size:8.5px; }
+  thead tr { background:#334155; color:#fff; }
+  thead th { padding:5px 5px; text-align:left; font-weight:600;
+             font-size:7.5px; white-space:nowrap; }
+  .th-num  { width:20px; text-align:center; }
+  .slot-th { text-align:center; }
+  .row-alt { background:#f8fafc; }
+  tbody tr { border-bottom:1px solid #f1f5f9; }
+  tbody td { padding:4px 5px; vertical-align:middle; }
+  .td-num  { color:#94a3b8; text-align:center; width:20px; }
+  .td-name { font-weight:700; white-space:nowrap; }
+  .td-norm { color:#94a3b8; white-space:nowrap; }
+  .dept-badge { background:#eff6ff; color:#1d4ed8; padding:1px 6px;
+                border-radius:10px; font-size:7px; white-space:nowrap; }
+  .slot-td { text-align:center; padding:3px 4px; }
+  .slot-td.empty { color:#cbd5e1; font-size:10px; }
+  .qty-badge { border-radius:5px; padding:3px 5px; display:inline-block; min-width:30px; }
+  .qty-num { font-weight:700; font-size:11px; line-height:1.2; }
+  .qty-exp { font-size:6.5px; color:#94a3b8; line-height:1.2; }
+
+  /* Legend */
+  .legend { display:flex; align-items:center; gap:12px; margin-top:8px;
+            padding-top:6px; border-top:1px solid #e2e8f0; flex-wrap:wrap; }
   .legend-item { display:flex; align-items:center; gap:4px; font-size:8px; color:#64748b; }
   .dot { width:10px; height:10px; border-radius:3px; flex-shrink:0; }
   .legend-note { margin-left:auto; font-size:7px; color:#94a3b8; }
 
-  .footer { display:flex; justify-content:space-between; margin-top:6px;
-            padding-top:5px; border-top:1px solid #e2e8f0; font-size:7.5px; color:#94a3b8; }
+  /* Footer */
+  .footer { display:flex; justify-content:space-between; margin-top:7px;
+            padding-top:5px; border-top:1px solid #e2e8f0;
+            font-size:7.5px; color:#94a3b8; }
   .footer .brand { color:#1e40af; font-weight:700; }
 
   @media print {
     body { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    .date-section { page-break-inside: avoid; }
   }
 </style>
 </head>
@@ -151,7 +197,7 @@ export function exportPDF(rows, filters, deptName) {
   </div>
   <div class="hdr-r">
     <div class="dept">${esc(deptName)}</div>
-    <div class="meta">${esc(filters)}<br>Chiqarilgan: ${dateStr}</div>
+    <div class="meta">${esc(filters)}<br>Chiqarilgan: ${printed}</div>
   </div>
 </div>
 
@@ -174,20 +220,7 @@ export function exportPDF(rows, filters, deptName) {
   </div>
 </div>
 
-<table>
-  <thead>
-    <tr>
-      <th style="text-align:center;width:24px">#</th>
-      <th>Xodim</th>
-      <th>Bo'lim</th>
-      <th>Operatsiya</th>
-      <th>Norma</th>
-      ${slotHeaders}
-      <th style="text-align:center">Jami</th>
-    </tr>
-  </thead>
-  <tbody>${tableRows}</tbody>
-</table>
+${sectionsHtml}
 
 <div class="legend">
   <div class="legend-item">
