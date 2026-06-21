@@ -50,7 +50,7 @@ function getSecondaryAuth() {
 }
 
 export default function Members() {
-  const { userDoc } = useAuth()
+  const { userDoc, can } = useAuth()
   const [members, setMembers] = useState([])
   const [modal, setModal] = useState(null)
   const [form, setForm] = useState(empty)
@@ -176,7 +176,6 @@ export default function Members() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="font-medium text-gray-800 text-sm">{member.name}</div>
-                    <div className="text-xs text-gray-400">{member.email}</div>
                   </div>
                   <div className="flex gap-1 flex-wrap justify-end">
                     {memberRoles.map(roleId => {
@@ -190,18 +189,20 @@ export default function Members() {
                       )
                     })}
                   </div>
-                  <div className="flex gap-2">
-                    <button onClick={() => openEdit(member)} className="text-gray-400 hover:text-blue-600 transition-colors">
-                      <Pencil className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(member)}
-                      disabled={deleting === member.id}
-                      className="text-gray-400 hover:text-red-600 transition-colors disabled:opacity-40"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
+                  {can.manageMembers && (
+                    <div className="flex gap-2">
+                      <button onClick={() => openEdit(member)} className="text-gray-400 hover:text-blue-600 transition-colors">
+                        <Pencil className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(member)}
+                        disabled={deleting === member.id}
+                        className="text-gray-400 hover:text-red-600 transition-colors disabled:opacity-40"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
                 </div>
               )
             })}
