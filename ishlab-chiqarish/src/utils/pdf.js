@@ -20,16 +20,16 @@ export async function exportPDF(rows, filters, deptName) {
   const pw = doc.internal.pageSize.getWidth()
 
   // Header
-  doc.setFontSize(10)
-  doc.setTextColor(80, 80, 80)
-  doc.text('kaftimda@gmail.com', 14, 14)
-  doc.text('+998 91 760 66 66', 14, 20)
   doc.setFontSize(14)
   doc.setTextColor(30, 64, 175)
-  doc.text('KAFTIMDA', pw - 14, 14, { align: 'right' })
+  doc.text('KAFTIMDA', 14, 14)
   doc.setFontSize(9)
   doc.setTextColor(100, 100, 100)
-  doc.text(`${deptName} · ${filters}`, pw - 14, 20, { align: 'right' })
+  doc.text(`${deptName} · ${filters}`, 14, 20)
+  doc.setFontSize(10)
+  doc.setTextColor(80, 80, 80)
+  doc.text('kaftimda@gmail.com', pw - 14, 14, { align: 'right' })
+  doc.text('+998 91 760 66 66', pw - 14, 20, { align: 'right' })
 
   // Build pivot: unique time slots
   const slots = [...new Set(rows.map(r => `${r.date}|${r.startTime}–${r.endTime}`))].sort()
