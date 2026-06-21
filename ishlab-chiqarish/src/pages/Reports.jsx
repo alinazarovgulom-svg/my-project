@@ -53,15 +53,11 @@ export default function Reports() {
     setSearched(true)
     try {
       // Only filter by date (avoids composite index requirement)
+      // Only filter by date to avoid composite index requirements
       const constraints = [
         where('date', '>=', dateFrom),
         where('date', '<=', dateTo),
       ]
-      if (filterType === 'dept') {
-        constraints.push(where('departmentId', '==', selectedDept))
-      } else if (filterType === 'employee' && selectedEmp) {
-        constraints.push(where('employeeId', '==', selectedEmp.id))
-      }
 
       const entriesSnap = await getDocs(query(collection(db, 'factory_work_entries'), ...constraints))
 
@@ -77,6 +73,9 @@ export default function Reports() {
       const result = []
       entriesSnap.forEach(d => {
         const entry = d.data()
+        // Filter by dept/employee in JS
+        if (filterType === 'dept' && entry.departmentId !== selectedDept) return
+        if (filterType === 'employee' && selectedEmp && entry.employeeId !== selectedEmp.id) return
         // Filter by time range in JS (inclusive range)
         if (startTime && entry.startTime < startTime) return
         if (endTime && entry.endTime > endTime) return
