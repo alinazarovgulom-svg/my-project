@@ -18,9 +18,8 @@ export function getUserWorkspaceId(userId) {
 }
 
 export const DEFAULT_PERMISSIONS = {
-  admin:  { transactions: 'edit', debts: 'edit', hamkorlar: 'edit', reports: 'view', exchange: 'edit' },
-  kassir: { transactions: 'edit', debts: 'edit', hamkorlar: 'edit', reports: 'none', exchange: 'edit' },
-  rahbar: { transactions: 'view', debts: 'view', hamkorlar: 'none', reports: 'view', exchange: 'none' },
+  admin:   { transactions: 'edit', debts: 'edit', hamkorlar: 'edit', reports: 'view', exchange: 'edit' },
+  default: { transactions: 'view', debts: 'view', hamkorlar: 'view', reports: 'view', exchange: 'view' },
 }
 
 export const createWorkspace = async (userId, username, fullName, workspaceName) => {
@@ -83,7 +82,7 @@ export const deleteWorkspace = async (userId, workspaceId) => {
   return { success: true }
 }
 
-export const addMemberByUsername = async (workspaceId, targetUsername, role = 'kassir') => {
+export const addMemberByUsername = async (workspaceId, targetUsername, roleName = 'Xodim') => {
   const targetUser = await findUserByUsername(targetUsername)
   if (!targetUser) return { error: `"${targetUsername}" foydalanuvchisi topilmadi` }
   const ref = doc(db, 'workspaces', workspaceId)
@@ -95,20 +94,20 @@ export const addMemberByUsername = async (workspaceId, targetUsername, role = 'k
     userId: targetUser.id,
     username: targetUser.username,
     fullName: targetUser.name,
-    role,
-    permissions: DEFAULT_PERMISSIONS[role] || DEFAULT_PERMISSIONS.kassir,
+    role: roleName,
+    permissions: DEFAULT_PERMISSIONS.default,
     joinedAt: new Date().toISOString()
   }
   await updateDoc(ref, { members: arrayUnion(newMember) })
   return { success: true, member: newMember }
 }
 
-export const updateMemberRole = async (workspaceId, targetUserId, newRole, currentMembers) => {
+export const updateMemberPermissions = async (workspaceId, targetUserId, newRole, newPermissions, currentMembers) => {
   const ref = doc(db, 'workspaces', workspaceId)
   const oldMember = currentMembers.find(m => m.userId === targetUserId)
   if (!oldMember) return { error: "A'zo topilmadi" }
   await updateDoc(ref, { members: arrayRemove(oldMember) })
-  const updated = { ...oldMember, role: newRole, permissions: DEFAULT_PERMISSIONS[newRole] || oldMember.permissions }
+  const updated = { ...oldMember, role: newRole, permissions: newPermissions }
   await updateDoc(ref, { members: arrayUnion(updated) })
   return { success: true }
 }
