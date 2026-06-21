@@ -100,9 +100,21 @@ export default function Members() {
       }
       closeModal()
     } catch (e) {
-      setError(e.code === 'auth/email-already-in-use'
-        ? 'Bu email allaqachon ro\'yxatdan o\'tgan'
-        : e.message)
+      if (e.code === 'auth/email-already-in-use') {
+        // User already self-registered — just write factory_pending so they can log in
+        try {
+          const emailKey = form.email.trim().replace(/[.@]/g, '_')
+          await setDoc(doc(db, 'factory_pending', emailKey), {
+            name: form.name.trim(),
+            role: form.role,
+          })
+          closeModal()
+        } catch (e2) {
+          setError(e2.message)
+        }
+      } else {
+        setError(e.message)
+      }
     }
     setSaving(false)
   }
