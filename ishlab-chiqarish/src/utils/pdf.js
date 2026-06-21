@@ -1,166 +1,153 @@
-import jsPDF from 'jspdf'
-import autoTable from 'jspdf-autotable'
-
-async function addCyrillicFont(doc) {
-  const res = await fetch('/fonts/PTSans-Regular.ttf')
-  if (!res.ok) throw new Error(`Font 404`)
-  const buf = await res.arrayBuffer()
-  const bytes = new Uint8Array(buf)
-  let binary = ''
-  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i])
-  doc.addFileToVFS('PTSans-Regular.ttf', btoa(binary))
-  doc.addFont('PTSans-Regular.ttf', 'PTSans', 'normal', 400, 'Identity-H')
-  return 'PTSans'
+function esc(str) {
+  return String(str ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
 }
 
-export async function exportPDF(rows, filters, deptName) {
-  const doc = new jsPDF({ orientation: 'landscape' })
-
-  let font = 'helvetica'
-  try { font = await addCyrillicFont(doc) } catch (e) { console.warn(e) }
-
-  const pw = doc.internal.pageSize.getWidth()
-  const ph = doc.internal.pageSize.getHeight()
-
-  // ── HEADER ─────────────────────────────────────────────────────
-  doc.setFillColor(30, 64, 175)
-  doc.rect(0, 0, pw, 30, 'F')
-  doc.setFillColor(59, 130, 246)
-  doc.rect(0, 28, pw, 2, 'F')
-
-  doc.setFont(font, 'normal')
-  doc.setFontSize(20)
-  doc.setTextColor(255, 255, 255)
-  doc.text('KAFTIMDA', 14, 16)
-  doc.setFontSize(8)
-  doc.setTextColor(147, 197, 253)
-  doc.text('Ishlab chiqarish tizimi', 14, 23)
-
-  doc.setFontSize(10)
-  doc.setTextColor(255, 255, 255)
-  doc.text(deptName, pw - 14, 13, { align: 'right' })
-  doc.setFontSize(7.5)
-  doc.setTextColor(147, 197, 253)
-  doc.text(filters, pw - 14, 20, { align: 'right' })
-  doc.text(
-    `Chiqarilgan: ${new Date().toLocaleDateString('uz-UZ', { day: '2-digit', month: '2-digit', year: 'numeric' })}`,
-    pw - 14, 26.5, { align: 'right' }
-  )
-
-  // ── STATS ──────────────────────────────────────────────────────
+export function exportPDF(rows, filters, deptName) {
   const totalDone = rows.reduce((s, r) => s + Number(r.quantity || 0), 0)
   const totalExp  = rows.reduce((s, r) => s + Number(r.expected  || 0), 0)
   const eff       = totalExp > 0 ? Math.round((totalDone / totalExp) * 100) : 0
   const empCount  = new Set(rows.map(r => r.empName)).size
 
-  const stats = [
-    { label: 'Xodimlar',     value: String(empCount),       bg: [239, 246, 255], vc: [30, 64, 175] },
-    { label: 'Bajargan',     value: String(totalDone),      bg: [240, 253, 244], vc: [21, 128, 61] },
-    { label: 'Kutilgan',     value: totalExp.toFixed(0),    bg: [254, 252, 232], vc: [133, 77, 14] },
-    {
-      label: 'Samaradorlik', value: `${eff}%`,
-      bg: eff >= 100 ? [240, 253, 244] : eff >= 80 ? [254, 252, 232] : [254, 242, 242],
-      vc: eff >= 100 ? [21, 128, 61]   : eff >= 80 ? [133, 77, 14]   : [153, 27, 27],
-    },
-  ]
+  const effColor = eff >= 100 ? '#15803d' : eff >= 80 ? '#854d0e' : '#991b1b'
+  const effBg    = eff >= 100 ? '#f0fdf4' : eff >= 80 ? '#fefce8' : '#fef2f2'
 
-  const boxW = (pw - 28 - 12) / 4
-  stats.forEach((s, i) => {
-    const x = 14 + i * (boxW + 4)
-    const y = 34
-    doc.setFillColor(...s.bg)
-    doc.rect(x, y, boxW, 18, 'F')
-    doc.setDrawColor(220, 220, 220)
-    doc.setLineWidth(0.2)
-    doc.rect(x, y, boxW, 18, 'S')
-    doc.setFont(font, 'normal')
-    doc.setFontSize(13)
-    doc.setTextColor(...s.vc)
-    doc.text(s.value, x + boxW / 2, y + 10, { align: 'center' })
-    doc.setFontSize(6.5)
-    doc.setTextColor(100, 116, 139)
-    doc.text(s.label, x + boxW / 2, y + 15.5, { align: 'center' })
-  })
+  const tableRows = rows.map((r, i) => {
+    const qty = Number(r.quantity)
+    const exp = Number(r.expected)
+    const bg    = qty > exp ? '#dcfce7' : qty === exp ? '#fef9c3' : '#fee2e2'
+    const color = qty > exp ? '#166534' : qty === exp ? '#713f12' : '#991b1b'
+    return `<tr>
+      <td>${i + 1}</td>
+      <td>${esc(r.empName)}</td>
+      <td>${esc(r.deptName)}</td>
+      <td>${esc(r.date)}</td>
+      <td>${esc(r.startTime)}–${esc(r.endTime)}</td>
+      <td>${esc(r.opName)}</td>
+      <td>${esc(r.norm)}/soat</td>
+      <td style="background:${bg};color:${color};font-weight:700;text-align:center">${esc(r.quantity)}</td>
+      <td style="text-align:center">${Number(r.expected).toFixed(0)}</td>
+    </tr>`
+  }).join('')
 
-  // ── TABLE (flat) ───────────────────────────────────────────────
-  const head = [['#', 'Xodim', "Bo'lim", 'Sana', 'Vaqt', 'Operatsiya', 'Norma', 'Bajargan', 'Kutilgan']]
-  const body = rows.map((r, i) => [
-    i + 1,
-    r.empName,
-    r.deptName,
-    r.date,
-    `${r.startTime}-${r.endTime}`,
-    r.opName,
-    `${r.norm}/soat`,
-    String(r.quantity),
-    r.expected.toFixed(0),
-  ])
+  const dateStr = new Date().toLocaleDateString('uz-UZ', { day: '2-digit', month: '2-digit', year: 'numeric' })
 
-  autoTable(doc, {
-    startY: 56,
-    head,
-    body,
-    styles: { fontSize: 7.5, cellPadding: 3, font, textColor: [30, 41, 59] },
-    headStyles: { fillColor: [30, 64, 175], textColor: [255, 255, 255], font, fontSize: 7 },
-    alternateRowStyles: { fillColor: [248, 250, 252] },
-    didDrawCell: (data) => {
-      if (data.section !== 'body' || data.column.index !== 7) return
-      const r = rows[data.row.index]
-      if (!r) return
-      const done = Number(r.quantity)
-      const exp  = Number(r.expected)
-      if (done > exp)       { doc.setFillColor(220, 252, 231) }
-      else if (done === exp) { doc.setFillColor(254, 249, 195) }
-      else                  { doc.setFillColor(254, 226, 226) }
-      doc.rect(data.cell.x + 0.5, data.cell.y + 0.5, data.cell.width - 1, data.cell.height - 1, 'F')
-      doc.setFont(font, 'normal')
-      doc.setFontSize(7.5)
-      if (done > exp)       doc.setTextColor(22, 101, 52)
-      else if (done === exp) doc.setTextColor(113, 63, 18)
-      else                  doc.setTextColor(153, 27, 27)
-      doc.text(String(done), data.cell.x + data.cell.width / 2, data.cell.y + data.cell.height / 2 + 1, { align: 'center' })
-    },
-  })
+  const html = `<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<title>Hisobot – KAFTIMDA</title>
+<style>
+  @page { size: A4 landscape; margin: 8mm 10mm; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: Arial, Helvetica, sans-serif; font-size:10px; color:#1e293b; }
 
-  // ── LEGEND ─────────────────────────────────────────────────────
-  const finalY = (doc.lastAutoTable?.finalY ?? 56) + 6
-  if (finalY < ph - 16) {
-    const items = [
-      { color: [220, 252, 231], text: 'Normadan yuqori' },
-      { color: [254, 249, 195], text: 'Normaga teng' },
-      { color: [254, 226, 226], text: 'Normadan past' },
-    ]
-    let lx = 14
-    items.forEach(item => {
-      doc.setFillColor(...item.color)
-      doc.setDrawColor(200, 200, 200)
-      doc.setLineWidth(0.2)
-      doc.rect(lx, finalY, 4, 4, 'FD')
-      doc.setFont(font, 'normal')
-      doc.setFontSize(7)
-      doc.setTextColor(80, 80, 80)
-      doc.text(item.text, lx + 6, finalY + 3)
-      lx += 42
-    })
+  .hdr { background:#1e40af; color:#fff; padding:9px 14px;
+         display:flex; justify-content:space-between; align-items:center;
+         border-bottom:2.5px solid #3b82f6; border-radius:4px 4px 0 0; }
+  .hdr-l .brand { font-size:19px; font-weight:700; letter-spacing:.5px; }
+  .hdr-l .sub   { font-size:8.5px; color:#93c5fd; margin-top:2px; }
+  .hdr-r { text-align:right; }
+  .hdr-r .dept  { font-size:11px; font-weight:600; }
+  .hdr-r .meta  { font-size:8px; color:#93c5fd; margin-top:2px; line-height:1.5; }
+
+  .stats { display:flex; gap:6px; margin:7px 0; }
+  .card  { flex:1; border-radius:5px; padding:7px 10px;
+           border:1px solid #e2e8f0; text-align:center; }
+  .card-val { font-size:15px; font-weight:700; }
+  .card-lbl { font-size:7.5px; color:#64748b; margin-top:1px; }
+
+  table { width:100%; border-collapse:collapse; font-size:8.5px; }
+  thead tr { background:#1e40af; color:#fff; }
+  thead th { padding:5px 6px; text-align:left; font-weight:600; font-size:8px; white-space:nowrap; }
+  tbody tr:nth-child(even) { background:#f8fafc; }
+  tbody td { padding:4px 6px; border-bottom:1px solid #f1f5f9; vertical-align:middle; }
+
+  .legend { display:flex; gap:14px; margin-top:7px; padding-top:6px; border-top:1px solid #e2e8f0; }
+  .legend-item { display:flex; align-items:center; gap:5px; font-size:8px; color:#64748b; }
+  .dot { width:10px; height:10px; border-radius:2px; flex-shrink:0; }
+
+  .footer { display:flex; justify-content:space-between; margin-top:7px;
+            padding-top:6px; border-top:1px solid #e2e8f0;
+            font-size:7.5px; color:#94a3b8; }
+  .footer .brand { color:#1e40af; font-weight:700; }
+
+  @media print {
+    body { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
   }
+</style>
+</head>
+<body>
 
-  // ── FOOTER ─────────────────────────────────────────────────────
-  const pageCount = doc.getNumberOfPages()
-  for (let p = 1; p <= pageCount; p++) {
-    doc.setPage(p)
-    doc.setFillColor(248, 250, 252)
-    doc.rect(0, ph - 10, pw, 10, 'F')
-    doc.setDrawColor(226, 232, 240)
-    doc.setLineWidth(0.2)
-    doc.line(0, ph - 10, pw, ph - 10)
-    doc.setFont(font, 'normal')
-    doc.setFontSize(6.5)
-    doc.setTextColor(30, 64, 175)
-    doc.text('KAFTIMDA', 14, ph - 4)
-    doc.setTextColor(148, 163, 184)
-    doc.text(`${p} / ${pageCount}`, pw / 2, ph - 4, { align: 'center' })
-    doc.text('kaftimda@gmail.com  ·  +998 91 760 66 66', pw - 14, ph - 4, { align: 'right' })
+<div class="hdr">
+  <div class="hdr-l">
+    <div class="brand">KAFTIMDA</div>
+    <div class="sub">Ishlab chiqarish tizimi</div>
+  </div>
+  <div class="hdr-r">
+    <div class="dept">${esc(deptName)}</div>
+    <div class="meta">${esc(filters)}<br>Chiqarilgan: ${dateStr}</div>
+  </div>
+</div>
+
+<div class="stats">
+  <div class="card" style="background:#eff6ff">
+    <div class="card-val" style="color:#1e40af">${empCount}</div>
+    <div class="card-lbl">Xodimlar</div>
+  </div>
+  <div class="card" style="background:#f0fdf4">
+    <div class="card-val" style="color:#15803d">${totalDone}</div>
+    <div class="card-lbl">Bajargan</div>
+  </div>
+  <div class="card" style="background:#fefce8">
+    <div class="card-val" style="color:#854d0e">${totalExp.toFixed(0)}</div>
+    <div class="card-lbl">Kutilgan</div>
+  </div>
+  <div class="card" style="background:${effBg}">
+    <div class="card-val" style="color:${effColor}">${eff}%</div>
+    <div class="card-lbl">Samaradorlik</div>
+  </div>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th><th>Xodim</th><th>Bo'lim</th><th>Sana</th><th>Vaqt</th>
+      <th>Operatsiya</th><th>Norma</th><th>Bajargan</th><th>Kutilgan</th>
+    </tr>
+  </thead>
+  <tbody>${tableRows}</tbody>
+</table>
+
+<div class="legend">
+  <div class="legend-item">
+    <div class="dot" style="background:#dcfce7;border:1px solid #bbf7d0"></div>Normadan yuqori
+  </div>
+  <div class="legend-item">
+    <div class="dot" style="background:#fef9c3;border:1px solid #fef08a"></div>Normaga teng
+  </div>
+  <div class="legend-item">
+    <div class="dot" style="background:#fee2e2;border:1px solid #fecaca"></div>Normadan past
+  </div>
+</div>
+
+<div class="footer">
+  <div class="brand">KAFTIMDA</div>
+  <div>kaftimda@gmail.com &nbsp;·&nbsp; +998 91 760 66 66</div>
+</div>
+
+<script>window.onload = function() { window.print(); }</script>
+</body>
+</html>`
+
+  const win = window.open('', '_blank', 'width=1200,height=850')
+  if (!win) {
+    alert("Brauzer popup'ni blokladi. Iltimos, ruxsat bering va qaytadan bosing.")
+    return
   }
-
-  doc.save(`hisobot_${Date.now()}.pdf`)
+  win.document.write(html)
+  win.document.close()
 }
