@@ -116,9 +116,9 @@ export function exportPDF(rows, filters, deptName) {
           const ec = e >= 100 ? '#15803d' : e >= 80 ? '#854d0e' : '#991b1b'
           const eb = e >= 100 ? '#f0fdf4' : e >= 80 ? '#fefce8' : '#fef2f2'
           return `<span style="display:flex;align-items:center;gap:5px;flex-wrap:nowrap">
-            <span style="font-size:9px">${medal}</span>
+            <span style="font-size:11px">${medal}</span>
             <strong>${esc(g.empName)}</strong>
-            <span style="background:${eb};color:${ec};border-radius:8px;padding:1px 5px;font-size:7px;font-weight:700;white-space:nowrap">${e}%</span>
+            <span style="background:${eb};color:${ec};border-radius:8px;padding:2px 6px;font-size:9px;font-weight:700;white-space:nowrap">${e}%</span>
           </span>`
         })() : ''}</td>
         <td class="td-dept">${isFirst ? `<span class="dept-badge">${esc(g.deptName)}</span>` : ''}</td>
@@ -199,10 +199,12 @@ export function exportPDF(rows, filters, deptName) {
   tbody tr { border-bottom:1px solid #f1f5f9; }
   tbody td { padding:4px 5px; vertical-align:middle; }
   .td-num  { color:#94a3b8; text-align:center; width:20px; }
-  .td-name { font-weight:700; white-space:nowrap; }
-  .td-norm { color:#94a3b8; white-space:nowrap; }
-  .dept-badge { background:#eff6ff; color:#1d4ed8; padding:1px 6px;
-                border-radius:10px; font-size:7px; white-space:nowrap; }
+  .td-name { font-weight:700; white-space:nowrap; font-size:11px; }
+  .td-dept { white-space:nowrap; }
+  .td-op   { font-size:11px; }
+  .td-norm { color:#94a3b8; white-space:nowrap; font-size:9px; }
+  .dept-badge { background:#eff6ff; color:#1d4ed8; padding:2px 7px;
+                border-radius:10px; font-size:9px; white-space:nowrap; }
   .slot-td { text-align:center; padding:3px 4px; }
   .slot-td.empty { color:#cbd5e1; font-size:10px; }
   .qty-badge { border-radius:5px; padding:3px 5px; display:inline-block; min-width:30px; }
