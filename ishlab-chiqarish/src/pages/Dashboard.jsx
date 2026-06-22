@@ -3,8 +3,14 @@ import { Link } from 'react-router-dom'
 import { collection, query, where, getDocs } from 'firebase/firestore'
 import { db } from '../firebase/config'
 import { useDepartments } from '../contexts/DepartmentsContext'
-import { format } from 'date-fns'
+import { format, subDays } from 'date-fns'
 import { Users, Settings, TrendingUp, ChevronRight } from 'lucide-react'
+import {
+  ResponsiveContainer,
+  LineChart, Line,
+  BarChart, Bar, Cell,
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend,
+} from 'recharts'
 
 const today = format(new Date(), 'yyyy-MM-dd')
 
@@ -15,12 +21,40 @@ function calcHours(start, end) {
   return Math.max(0, (eh * 60 + em - sh * 60 - sm) / 60)
 }
 
+function effColor(eff) {
+  if (eff === null) return { text: 'text-gray-400', bg: 'bg-gray-100', bar: 'bg-gray-300', hex: '#94a3b8' }
+  if (eff >= 100)  return { text: 'text-green-700', bg: 'bg-green-50',  bar: 'bg-green-500',  hex: '#16a34a' }
+  if (eff >= 80)   return { text: 'text-yellow-700', bg: 'bg-yellow-50', bar: 'bg-yellow-400', hex: '#ca8a04' }
+  return                  { text: 'text-red-700',   bg: 'bg-red-50',    bar: 'bg-red-500',    hex: '#dc2626' }
+}
+
+// Shorten dept names for chart axis (remove "bo'limi")
+function shortName(name) {
+  return name.replace(/\s*bo['']limi/i, '').trim()
+}
+
+const CustomTooltip = ({ active, payload, label }) => {
+  if (!active || !payload?.length) return null
+  return (
+    <div className="bg-white border border-gray-200 rounded-lg shadow-lg px-3 py-2 text-xs">
+      <div className="font-semibold text-gray-700 mb-1">{label}</div>
+      {payload.map(p => (
+        <div key={p.name} style={{ color: p.color }}>
+          {p.name}: <strong>{p.value}%</strong>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 export default function Dashboard() {
   const { departments } = useDepartments()
-  const [stats, setStats] = useState({ employees: 0, operations: 0 })
+  const [stats, setStats]       = useState({ employees: 0, operations: 0 })
   const [deptStats, setDeptStats] = useState({})
-  const [loading, setLoading] = useState(true)
+  const [weekData, setWeekData]   = useState([])
+  const [loading, setLoading]     = useState(true)
 
+  // Today's stats
   useEffect(() => {
     if (!departments.length) return
     async function load() {
@@ -29,11 +63,9 @@ export default function Dashboard() {
         getDocs(collection(db, 'factory_operations')),
       ])
 
-      // Operation norm map: opId -> norm
       const normMap = {}
       opSnap.forEach(d => { normMap[d.id] = d.data().norm || 0 })
 
-      // Today's entries
       const entriesSnap = await getDocs(
         query(collection(db, 'factory_work_entries'), where('date', '==', today))
       )
@@ -43,25 +75,18 @@ export default function Dashboard() {
         deptData[d.id] = { employees: 0, attended: 0, done: 0, expected: 0 }
       })
 
-      // Count employees per dept
       empSnap.forEach(doc => {
         const deptId = doc.data().departmentId
         if (deptData[deptId]) deptData[deptId].employees++
       })
 
-      // Count attendance and efficiency per dept
       const seenEmp = new Set()
       entriesSnap.forEach(doc => {
         const d = doc.data()
         const dd = deptData[d.departmentId]
         if (!dd) return
-
         const key = `${d.departmentId}_${d.employeeId}`
-        if (!seenEmp.has(key)) {
-          seenEmp.add(key)
-          dd.attended++
-        }
-
+        if (!seenEmp.has(key)) { seenEmp.add(key); dd.attended++ }
         const hours = calcHours(d.startTime, d.endTime)
         Object.entries(d.operations || {}).forEach(([opId, val]) => {
           dd.done     += Number(val.quantity || 0)
@@ -76,17 +101,64 @@ export default function Dashboard() {
     load()
   }, [departments])
 
+  // Last 7 days trend
+  useEffect(() => {
+    async function loadWeek() {
+      const last7 = Array.from({ length: 7 }, (_, i) =>
+        format(subDays(new Date(), 6 - i), 'yyyy-MM-dd')
+      )
+
+      const [opSnap, entriesSnap] = await Promise.all([
+        getDocs(collection(db, 'factory_operations')),
+        getDocs(query(
+          collection(db, 'factory_work_entries'),
+          where('date', '>=', last7[0]),
+          where('date', '<=', last7[6])
+        )),
+      ])
+
+      const normMap = {}
+      opSnap.forEach(d => { normMap[d.id] = d.data().norm || 0 })
+
+      const dayMap = {}
+      last7.forEach(d => { dayMap[d] = { done: 0, expected: 0 } })
+
+      entriesSnap.forEach(doc => {
+        const d = doc.data()
+        const day = dayMap[d.date]
+        if (!day) return
+        const hours = calcHours(d.startTime, d.endTime)
+        Object.entries(d.operations || {}).forEach(([opId, val]) => {
+          day.done     += Number(val.quantity || 0)
+          day.expected += (normMap[opId] || 0) * hours
+        })
+      })
+
+      setWeekData(last7.map(date => ({
+        date: date.slice(5).replace('-', '.'), // "06.22"
+        samaradorlik: dayMap[date].expected > 0
+          ? Math.round((dayMap[date].done / dayMap[date].expected) * 100)
+          : null,
+      })))
+    }
+    loadWeek()
+  }, [])
+
   const totalAttended = Object.values(deptStats).reduce((s, d) => s + d.attended, 0)
   const totalDone     = Object.values(deptStats).reduce((s, d) => s + d.done, 0)
   const totalExp      = Object.values(deptStats).reduce((s, d) => s + d.expected, 0)
   const totalEff      = totalExp > 0 ? Math.round((totalDone / totalExp) * 100) : null
 
-  function effColor(eff) {
-    if (eff === null) return { text: 'text-gray-400', bg: 'bg-gray-100', bar: 'bg-gray-300' }
-    if (eff >= 100) return { text: 'text-green-700', bg: 'bg-green-50', bar: 'bg-green-500' }
-    if (eff >= 80)  return { text: 'text-yellow-700', bg: 'bg-yellow-50', bar: 'bg-yellow-400' }
-    return              { text: 'text-red-700',   bg: 'bg-red-50',   bar: 'bg-red-500' }
-  }
+  // Bar chart data: departments with today's efficiency
+  const deptChartData = departments
+    .map(d => {
+      const ds = deptStats[d.id]
+      const eff = ds?.expected > 0 ? Math.round((ds.done / ds.expected) * 100) : 0
+      return { name: shortName(d.name), eff }
+    })
+    .filter(d => d.eff > 0)
+
+  const hasWeekData = weekData.some(d => d.samaradorlik !== null)
 
   return (
     <div>
@@ -142,6 +214,71 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {/* Charts row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
+
+        {/* Line chart: last 7 days */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+          <div className="text-sm font-semibold text-gray-700 mb-4">Oxirgi 7 kun samaradorligi</div>
+          {!hasWeekData ? (
+            <div className="h-48 flex items-center justify-center text-gray-400 text-sm">
+              Ma'lumot yo'q
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height={200}>
+              <LineChart data={weekData} margin={{ top: 4, right: 10, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#64748b' }} />
+                <YAxis domain={[0, 120]} tick={{ fontSize: 11, fill: '#64748b' }}
+                  tickFormatter={v => `${v}%`} />
+                <Tooltip content={<CustomTooltip />} />
+                <Line
+                  type="monotone"
+                  dataKey="samaradorlik"
+                  name="Samaradorlik"
+                  stroke="#1d4ed8"
+                  strokeWidth={2.5}
+                  dot={{ r: 4, fill: '#1d4ed8' }}
+                  activeDot={{ r: 6 }}
+                  connectNulls={false}
+                />
+                {/* 100% reference line */}
+                <CartesianGrid stroke="none" />
+              </LineChart>
+            </ResponsiveContainer>
+          )}
+        </div>
+
+        {/* Bar chart: department comparison today */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+          <div className="text-sm font-semibold text-gray-700 mb-4">Bo'limlar samaradorligi — bugun</div>
+          {deptChartData.length === 0 ? (
+            <div className="h-48 flex items-center justify-center text-gray-400 text-sm">
+              Bugun ma'lumot kiritilmagan
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={deptChartData} margin={{ top: 4, right: 10, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                <XAxis dataKey="name" tick={{ fontSize: 10, fill: '#64748b' }} />
+                <YAxis domain={[0, 120]} tick={{ fontSize: 11, fill: '#64748b' }}
+                  tickFormatter={v => `${v}%`} />
+                <Tooltip
+                  formatter={(v) => [`${v}%`, 'Samaradorlik']}
+                  labelStyle={{ fontWeight: 600, fontSize: 12 }}
+                  contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e2e8f0' }}
+                />
+                <Bar dataKey="eff" name="Samaradorlik" radius={[4, 4, 0, 0]}>
+                  {deptChartData.map((entry, i) => (
+                    <Cell key={i} fill={effColor(entry.eff).hex} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          )}
+        </div>
+      </div>
+
       {/* Departments grid */}
       <h2 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-3">Bo'limlar — bugun</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -165,7 +302,6 @@ export default function Dashboard() {
 
               <div className="text-sm font-semibold text-gray-800 mb-3">{dept.name}</div>
 
-              {/* Attendance counts */}
               <div className="flex gap-2 mb-2">
                 <div className="flex-1 bg-green-50 rounded-lg px-2 py-1.5 text-center">
                   <div className="text-sm font-bold text-green-700">{ds.attended}</div>
@@ -177,14 +313,12 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              {/* Attendance bar */}
               <div className="mb-2">
                 <div className="w-full bg-gray-100 rounded-full h-1.5">
                   <div className="bg-blue-500 h-1.5 rounded-full transition-all" style={{ width: `${Math.min(attendPct, 100)}%` }} />
                 </div>
               </div>
 
-              {/* Efficiency */}
               <div>
                 <div className="flex justify-between text-xs text-gray-500 mb-1">
                   <span>Samaradorlik</span>
