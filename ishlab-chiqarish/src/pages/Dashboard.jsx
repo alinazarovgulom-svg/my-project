@@ -163,12 +163,20 @@ export default function Dashboard() {
 
               <div className="text-sm font-semibold text-gray-800 mb-3">{dept.name}</div>
 
-              {/* Attendance */}
-              <div className="mb-2">
-                <div className="flex justify-between text-xs text-gray-500 mb-1">
-                  <span>Kelgan</span>
-                  <span className="font-medium text-gray-700">{ds.attended}/{ds.employees}</span>
+              {/* Attendance counts */}
+              <div className="flex gap-2 mb-2">
+                <div className="flex-1 bg-green-50 rounded-lg px-2 py-1.5 text-center">
+                  <div className="text-sm font-bold text-green-700">{ds.attended}</div>
+                  <div className="text-xs text-green-600">Kelgan</div>
                 </div>
+                <div className="flex-1 bg-red-50 rounded-lg px-2 py-1.5 text-center">
+                  <div className="text-sm font-bold text-red-600">{Math.max(0, ds.employees - ds.attended)}</div>
+                  <div className="text-xs text-red-500">Kelmagan</div>
+                </div>
+              </div>
+
+              {/* Attendance bar */}
+              <div className="mb-2">
                 <div className="w-full bg-gray-100 rounded-full h-1.5">
                   <div className="bg-blue-500 h-1.5 rounded-full transition-all" style={{ width: `${Math.min(attendPct, 100)}%` }} />
                 </div>
