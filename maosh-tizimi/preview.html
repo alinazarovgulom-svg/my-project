@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Maosh Tizimi - Preview</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, sans-serif; }
+body { background: #0f172a; color: white; padding: 20px; }
+h2 { color: #34d399; margin: 30px 0 15px; font-size: 18px; }
+.screen { background: #f1f5f9; border-radius: 12px; overflow: hidden; margin-bottom: 40px; box-shadow: 0 20px 60px rgba(0,0,0,0.5); display: flex; height: 520px; }
+.sidebar { width: 224px; background: #0f172a; display: flex; flex-direction: column; flex-shrink: 0; }
+.sidebar-header { padding: 20px 16px; border-bottom: 1px solid #1e293b; }
+.sidebar-header .logo { color: #34d399; font-weight: 700; font-size: 17px; }
+.sidebar-header .year { color: #64748b; font-size: 12px; margin-top: 2px; }
+.nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 16px; font-size: 13px; color: #94a3b8; }
+.nav-item.active { background: #059669; color: white; }
+.nav-item svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; }
+.user-area { margin-top: auto; border-top: 1px solid #1e293b; padding: 12px; }
+.user-name { font-size: 12px; font-weight: 500; color: #cbd5e1; }
+.user-role { font-size: 11px; color: #475569; }
+.logout { color: #f87171; font-size: 12px; margin-top: 6px; }
+.content { flex: 1; overflow: auto; background: #f1f5f9; padding: 24px; }
+.page-title { font-size: 22px; font-weight: 700; color: #1e293b; }
+.page-sub { font-size: 13px; color: #64748b; margin-top: 2px; }
+.cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 20px; }
+.card { background: white; border-radius: 12px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+.card-icon { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; font-size: 18px; }
+.card-val { font-size: 18px; font-weight: 700; color: #1e293b; }
+.card-label { font-size: 12px; color: #64748b; margin-top: 2px; }
+.blue { background: #eff6ff; }
+.green { background: #ecfdf5; }
+.orange { background: #fff7ed; }
+.red { background: #fef2f2; }
+.table-wrap { background: white; border-radius: 12px; margin-top: 16px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { background: #f8fafc; color: #64748b; font-weight: 500; text-align: left; padding: 10px 14px; }
+td { padding: 10px 14px; border-top: 1px solid #f1f5f9; color: #334155; }
+.badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 500; }
+.badge-green { background: #dcfce7; color: #15803d; }
+.badge-blue { background: #dbeafe; color: #1d4ed8; }
+.badge-red { background: #fee2e2; color: #dc2626; }
+.badge-gray { background: #f1f5f9; color: #475569; }
+.btn { padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 500; border: none; cursor: pointer; }
+.btn-green { background: #059669; color: white; }
+.btn-row { display: flex; align-items: center; gap: 10px; margin-top: 16px; justify-content: flex-end; }
+.header-row { display: flex; align-items: flex-start; justify-content: space-between; }
+.select { padding: 6px 10px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 13px; background: white; color: #334155; }
+.stat-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-top: 16px; }
+.mono { font-family: monospace; }
+.green-text { color: #059669; }
+.red-text { color: #dc2626; }
+input[type=number] { width: 56px; text-align: center; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px; font-size: 13px; }
+.profile-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+.avatar { width: 56px; height: 56px; border-radius: 50%; background: #dcfce7; color: #059669; font-size: 22px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+</style>
+</head>
+<body>
+
+<h2>1. LOGIN SAHIFASI</h2>
+<div style="background:#0f172a;border-radius:12px;display:flex;align-items:center;justify-content:center;height:340px;margin-bottom:40px;box-shadow:0 20px 60px rgba(0,0,0,0.5)">
+  <div style="background:white;border-radius:16px;padding:32px;width:320px">
+    <div style="text-align:center;margin-bottom:24px">
+      <div style="font-size:20px;font-weight:700;color:#1e293b">Maosh Tizimi</div>
+      <div style="font-size:13px;color:#64748b;margin-top:4px">Tizimga kirish</div>
+    </div>
+    <div style="margin-bottom:14px">
+      <div style="font-size:12px;font-weight:500;color:#374151;margin-bottom:4px">Email</div>
+      <div style="border:1px solid #e2e8f0;border-radius:8px;padding:10px 12px;font-size:13px;color:#9ca3af">email@company.uz</div>
+    </div>
+    <div style="margin-bottom:20px">
+      <div style="font-size:12px;font-weight:500;color:#374151;margin-bottom:4px">Parol</div>
+      <div style="border:1px solid #e2e8f0;border-radius:8px;padding:10px 12px;font-size:13px;color:#9ca3af">••••••••</div>
+    </div>
+    <div style="background:#059669;color:white;border-radius:8px;padding:10px;text-align:center;font-size:13px;font-weight:500">Kirish</div>
+  </div>
+</div>
+
+<h2>2. DASHBOARD</h2>
+<div class="screen">
+  <div class="sidebar">
+    <div class="sidebar-header"><div class="logo">Maosh Tizimi</div><div class="year">2026</div></div>
+    <div class="nav-item active">📊 Dashboard</div>
+    <div class="nav-item">👥 Xodimlar</div>
+    <div class="nav-item">🧮 Oylik hisob</div>
+    <div class="nav-item">💳 To'lovlar</div>
+    <div class="nav-item">📉 Chiqimlar</div>
+    <div class="nav-item">🧾 Chek</div>
+    <div class="nav-item">📈 Hisobot</div>
+    <div class="nav-item">⚙️ Sozlamalar</div>
+    <div class="user-area"><div class="user-name">Aliazarov Gulom</div><div class="user-role">admin</div><div class="logout">→ Chiqish</div></div>
+  </div>
+  <div class="content">
+    <div class="header-row"><div><div class="page-title">Dashboard</div><div class="page-sub">2026 - Iyun</div></div></div>
+    <div class="cards">
+      <div class="card"><div class="card-icon blue">👥</div><div class="card-val">12</div><div class="card-label">Faol xodimlar</div></div>
+      <div class="card"><div class="card-icon green">💰</div><div class="card-val" style="font-size:14px">45,600,000</div><div class="card-label">Iyun oylik jami</div></div>
+      <div class="card"><div class="card-icon orange">📉</div><div class="card-val" style="font-size:14px">3,200,000</div><div class="card-label">Iyun chiqimlar</div></div>
+      <div class="card"><div class="card-icon red">⚠️</div><div class="card-val" style="font-size:14px">8,400,000</div><div class="card-label">Qarz (to'lanmagan)</div></div>
+    </div>
+  </div>
+</div>
+
+<h2>3. XODIMLAR</h2>
+<div class="screen">
+  <div class="sidebar">
+    <div class="sidebar-header"><div class="logo">Maosh Tizimi</div><div class="year">2026</div></div>
+    <div class="nav-item">📊 Dashboard</div>
+    <div class="nav-item active">👥 Xodimlar</div>
+    <div class="nav-item">🧮 Oylik hisob</div>
+    <div class="nav-item">💳 To'lovlar</div>
+    <div class="nav-item">📉 Chiqimlar</div>
+    <div class="nav-item">🧾 Chek</div>
+    <div class="nav-item">📈 Hisobot</div>
+    <div class="nav-item">⚙️ Sozlamalar</div>
+    <div class="user-area"><div class="user-name">Aliazarov Gulom</div><div class="user-role">admin</div></div>
+  </div>
+  <div class="content">
+    <div class="header-row">
+      <div><div class="page-title">Xodimlar</div><div class="page-sub">12 ta faol xodim</div></div>
+      <button class="btn btn-green">+ Xodim qo'shish</button>
+    </div>
+    <div style="margin-top:14px;position:relative">
+      <input style="width:100%;border:1px solid #e2e8f0;border-radius:8px;padding:9px 12px 9px 32px;font-size:13px" placeholder="🔍 Ism, ID yoki lavozim bo'yicha qidirish..." />
+    </div>
+    <div class="table-wrap" style="margin-top:12px">
+      <table>
+        <thead><tr><th>ID</th><th>Ism Familiya</th><th>Lavozim</th><th>Bo'lim</th><th style="text-align:right">Oylik</th><th style="text-align:center">Bonus</th><th style="text-align:center">Holat</th></tr></thead>
+        <tbody>
+          <tr><td class="mono" style="color:#64748b">AA0001</td><td style="font-weight:500">Aliazarov Gulom</td><td style="color:#64748b">Direktor</td><td style="color:#94a3b8">Boshqaruv</td><td style="text-align:right" class="mono">5,000,000</td><td style="text-align:center"><span class="badge badge-green">Ha (500,000)</span></td><td style="text-align:center">✅</td></tr>
+          <tr><td class="mono" style="color:#64748b">BB0001</td><td style="font-weight:500">Karimov Jasur</td><td style="color:#64748b">Hisobchi</td><td style="color:#94a3b8">Hisobchilik</td><td style="text-align:right" class="mono">3,500,000</td><td style="text-align:center"><span class="badge badge-green">Ha (300,000)</span></td><td style="text-align:center">✅</td></tr>
+          <tr><td class="mono" style="color:#64748b">CC0001</td><td style="font-weight:500">Toshmatov Dilshod</td><td style="color:#64748b">Ishchi</td><td style="color:#94a3b8">Ishlab chiqarish</td><td style="text-align:right" class="mono">2,800,000</td><td style="text-align:center"><span class="badge badge-gray">Yo'q</span></td><td style="text-align:center">✅</td></tr>
+          <tr><td class="mono" style="color:#64748b">DD0001</td><td style="font-weight:500">Rahimova Maftuna</td><td style="color:#64748b">Menejer</td><td style="color:#94a3b8">Savdo</td><td style="text-align:right" class="mono">3,200,000</td><td style="text-align:center"><span class="badge badge-green">Ha (400,000)</span></td><td style="text-align:center">✅</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<h2>4. OYLIK HISOB (bonus avtomatik)</h2>
+<div class="screen">
+  <div class="sidebar">
+    <div class="sidebar-header"><div class="logo">Maosh Tizimi</div><div class="year">2026</div></div>
+    <div class="nav-item">📊 Dashboard</div>
+    <div class="nav-item">👥 Xodimlar</div>
+    <div class="nav-item active">🧮 Oylik hisob</div>
+    <div class="nav-item">💳 To'lovlar</div>
+    <div class="nav-item">📉 Chiqimlar</div>
+    <div class="nav-item">🧾 Chek</div>
+    <div class="nav-item">📈 Hisobot</div>
+    <div class="nav-item">⚙️ Sozlamalar</div>
+    <div class="user-area"><div class="user-name">Aliazarov Gulom</div><div class="user-role">admin</div></div>
+  </div>
+  <div class="content">
+    <div class="header-row">
+      <div><div class="page-title">Oylik hisob</div><div class="page-sub">Davomat kiritiladi, bonus avtomatik hisoblanadi</div></div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <select class="select"><option>2026</option></select>
+        <select class="select"><option>Iyun</option></select>
+        <button class="btn btn-green">💾 Saqlash</button>
+      </div>
+    </div>
+    <div class="stat-row">
+      <div class="card"><div class="card-val mono">45,600,000 so'm</div><div class="card-label">Jami oylik</div></div>
+      <div class="card"><div class="card-val mono green-text">1,200,000 so'm</div><div class="card-label">Jami bonus</div></div>
+      <div class="card"><div class="card-val">4 ta</div><div class="card-label">Xodimlar soni</div></div>
+    </div>
+    <div class="table-wrap" style="margin-top:12px">
+      <table>
+        <thead><tr><th>Xodim</th><th style="text-align:right">Oylik</th><th style="text-align:center">Kelgan kun</th><th style="text-align:center">Kech qolish</th><th style="text-align:center">Erta ketish</th><th style="text-align:center">Javob soat</th><th style="text-align:center">Bonus</th><th style="text-align:right">Jami</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><div style="font-weight:500">Aliazarov Gulom</div><div style="font-size:11px;color:#94a3b8;font-family:monospace">AA0001</div></td>
+            <td class="mono" style="text-align:right">5,000,000</td>
+            <td style="text-align:center"><input type="number" value="22"></td>
+            <td style="text-align:center"><input type="number" value="0"></td>
+            <td style="text-align:center"><input type="number" value="0"></td>
+            <td style="text-align:center"><input type="number" value="0"></td>
+            <td style="text-align:center"><span class="badge badge-green">Ha</span></td>
+            <td class="mono green-text" style="text-align:right">5,500,000</td>
+          </tr>
+          <tr>
+            <td><div style="font-weight:500">Karimov Jasur</div><div style="font-size:11px;color:#94a3b8;font-family:monospace">BB0001</div></td>
+            <td class="mono" style="text-align:right">3,500,000</td>
+            <td style="text-align:center"><input type="number" value="20"></td>
+            <td style="text-align:center"><input type="number" value="2"></td>
+            <td style="text-align:center"><input type="number" value="0"></td>
+            <td style="text-align:center"><input type="number" value="0"></td>
+            <td style="text-align:center"><span class="badge badge-red">Yo'q</span></td>
+            <td class="mono" style="text-align:right">3,500,000</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<h2>5. TO'LOVLAR</h2>
+<div class="screen">
+  <div class="sidebar">
+    <div class="sidebar-header"><div class="logo">Maosh Tizimi</div><div class="year">2026</div></div>
+    <div class="nav-item">📊 Dashboard</div>
+    <div class="nav-item">👥 Xodimlar</div>
+    <div class="nav-item">🧮 Oylik hisob</div>
+    <div class="nav-item active">💳 To'lovlar</div>
+    <div class="nav-item">📉 Chiqimlar</div>
+    <div class="nav-item">🧾 Chek</div>
+    <div class="nav-item">📈 Hisobot</div>
+    <div class="nav-item">⚙️ Sozlamalar</div>
+    <div class="user-area"><div class="user-name">Aliazarov Gulom</div><div class="user-role">admin</div></div>
+  </div>
+  <div class="content">
+    <div class="header-row">
+      <div><div class="page-title">To'lovlar</div><div class="page-sub">Naqd va karta to'lovlari</div></div>
+      <button class="btn btn-green">+ To'lov qo'shish</button>
+    </div>
+    <div class="cards" style="margin-top:16px;grid-template-columns:repeat(3,1fr)">
+      <div class="card" style="display:flex;align-items:center;gap:12px"><div class="card-icon green" style="font-size:22px">💵</div><div><div class="card-val mono" style="font-size:15px">12,000,000</div><div class="card-label">Naqd</div></div></div>
+      <div class="card" style="display:flex;align-items:center;gap:12px"><div class="card-icon blue" style="font-size:22px">💳</div><div><div class="card-val mono" style="font-size:15px">8,500,000</div><div class="card-label">Karta</div></div></div>
+      <div class="card"><div class="card-val mono" style="font-size:15px">20,500,000</div><div class="card-label">Jami to'langan</div></div>
+    </div>
+    <div class="table-wrap" style="margin-top:12px">
+      <table>
+        <thead><tr><th>Xodim</th><th style="text-align:center">Tur</th><th style="text-align:right">Summa</th><th>Izoh</th><th>Sana</th></tr></thead>
+        <tbody>
+          <tr><td><div style="font-weight:500">Aliazarov Gulom</div><div style="font-size:11px;color:#94a3b8">AA0001</div></td><td style="text-align:center"><span class="badge badge-green">Naqd</span></td><td class="mono" style="text-align:right;font-weight:500">5,000,000</td><td style="color:#94a3b8">Iyun avans</td><td style="color:#94a3b8">15.06.2026</td></tr>
+          <tr><td><div style="font-weight:500">Karimov Jasur</div><div style="font-size:11px;color:#94a3b8">BB0001</div></td><td style="text-align:center"><span class="badge badge-blue">Karta</span></td><td class="mono" style="text-align:right;font-weight:500">3,500,000</td><td style="color:#94a3b8">-</td><td style="color:#94a3b8">20.06.2026</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<h2>6. MAOSH CHEKI</h2>
+<div style="background:#f1f5f9;border-radius:12px;padding:24px;margin-bottom:40px;display:flex;gap:24px;box-shadow:0 20px 60px rgba(0,0,0,0.4)">
+  <div style="flex:1">
+    <div style="background:white;border-radius:12px;padding:16px;margin-bottom:16px;display:flex;gap:12px;align-items:flex-end">
+      <div style="flex:1"><div style="font-size:12px;font-weight:500;color:#374151;margin-bottom:4px">Xodim</div><select class="select" style="width:100%"><option>Aliazarov Gulom (AA0001)</option></select></div>
+      <div><div style="font-size:12px;font-weight:500;color:#374151;margin-bottom:4px">Yil</div><select class="select"><option>2026</option></select></div>
+      <div><div style="font-size:12px;font-weight:500;color:#374151;margin-bottom:4px">Oy</div><select class="select"><option>Iyun</option></select></div>
+      <button class="btn" style="background:#1e293b;color:white">Ko'rish</button>
+    </div>
+  </div>
+  <div style="width:300px">
+    <div style="background:white;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.1)">
+      <div style="background:#059669;color:white;padding:20px;text-align:center">
+        <div style="font-weight:700;font-size:16px">MAOSH CHEKI</div>
+        <div style="color:#a7f3d0;font-size:13px;margin-top:2px">Iyun 2026</div>
+      </div>
+      <div style="padding:20px">
+        <div style="text-align:center;margin-bottom:16px">
+          <div style="width:48px;height:48px;border-radius:50%;background:#dcfce7;color:#059669;font-size:20px;font-weight:700;display:flex;align-items:center;justify-content:center;margin:0 auto 8px">A</div>
+          <div style="font-weight:700;color:#1e293b">Aliazarov Gulom</div>
+          <div style="font-size:12px;color:#64748b">Direktor · AA0001</div>
+        </div>
+        <div style="font-size:13px;border-top:1px solid #f1f5f9;padding-top:12px">
+          <div style="display:flex;justify-content:space-between;padding:4px 0"><span style="color:#64748b">Asosiy oylik</span><span class="mono">5,000,000 so'm</span></div>
+          <div style="display:flex;justify-content:space-between;padding:4px 0"><span style="color:#64748b">Bonus</span><span class="mono green-text">500,000 so'm</span></div>
+          <div style="display:flex;justify-content:space-between;padding:6px 0;border-top:1px solid #f1f5f9;font-weight:700"><span>JAMI</span><span class="mono">5,500,000 so'm</span></div>
+          <div style="display:flex;justify-content:space-between;padding:4px 0"><span style="color:#64748b">To'langan</span><span class="mono green-text">5,500,000 so'm</span></div>
+          <div style="display:flex;justify-content:space-between;padding:4px 0;font-weight:700"><span>Qarz</span><span class="mono" style="color:#64748b">0 so'm</span></div>
+        </div>
+        <button class="btn btn-green" style="width:100%;margin-top:12px;text-align:center">📥 PDF yuklab olish</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<h2>7. HISOBOT (Excel/PDF eksport)</h2>
+<div class="screen">
+  <div class="sidebar">
+    <div class="sidebar-header"><div class="logo">Maosh Tizimi</div><div class="year">2026</div></div>
+    <div class="nav-item">📊 Dashboard</div>
+    <div class="nav-item">👥 Xodimlar</div>
+    <div class="nav-item">🧮 Oylik hisob</div>
+    <div class="nav-item">💳 To'lovlar</div>
+    <div class="nav-item">📉 Chiqimlar</div>
+    <div class="nav-item">🧾 Chek</div>
+    <div class="nav-item active">📈 Hisobot</div>
+    <div class="nav-item">⚙️ Sozlamalar</div>
+    <div class="user-area"><div class="user-name">Aliazarov Gulom</div><div class="user-role">admin</div></div>
+  </div>
+  <div class="content">
+    <div class="header-row">
+      <div><div class="page-title">Hisobot</div><div class="page-sub">Yillik oylik hisoboti</div></div>
+      <div style="display:flex;gap:8px">
+        <select class="select"><option>2026</option></select>
+        <button class="btn" style="background:#16a34a;color:white">📊 Excel</button>
+        <button class="btn" style="background:#dc2626;color:white">📥 PDF</button>
+      </div>
+    </div>
+    <div class="table-wrap" style="margin-top:16px">
+      <table>
+        <thead><tr><th>Oy</th><th style="text-align:center">Xodimlar</th><th style="text-align:right">Oylik</th><th style="text-align:right">Bonus</th><th style="text-align:right">Jami</th><th style="text-align:right">To'langan</th><th style="text-align:right">Qarz</th></tr></thead>
+        <tbody>
+          <tr><td>Yanvar</td><td style="text-align:center">12</td><td class="mono" style="text-align:right">42,000,000</td><td class="mono green-text" style="text-align:right">1,100,000</td><td class="mono" style="text-align:right;font-weight:600">43,100,000</td><td class="mono green-text" style="text-align:right">43,100,000</td><td class="mono" style="text-align:right;color:#94a3b8">0</td></tr>
+          <tr><td>Fevral</td><td style="text-align:center">12</td><td class="mono" style="text-align:right">42,000,000</td><td class="mono green-text" style="text-align:right">900,000</td><td class="mono" style="text-align:right;font-weight:600">42,900,000</td><td class="mono green-text" style="text-align:right">38,000,000</td><td class="mono red-text" style="text-align:right">4,900,000</td></tr>
+          <tr><td>Mart</td><td style="text-align:center">12</td><td class="mono" style="text-align:right">44,000,000</td><td class="mono green-text" style="text-align:right">1,200,000</td><td class="mono" style="text-align:right;font-weight:600">45,200,000</td><td class="mono green-text" style="text-align:right">45,200,000</td><td class="mono" style="text-align:right;color:#94a3b8">0</td></tr>
+        </tbody>
+        <tfoot>
+          <tr style="background:#f8fafc;font-weight:700"><td colspan="4">JAMI</td><td class="mono" style="text-align:right">131,200,000</td><td class="mono green-text" style="text-align:right">126,300,000</td><td class="mono red-text" style="text-align:right">4,900,000</td></tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+</div>
+
+<h2>8. SOZLAMALAR (Foydalanuvchilar)</h2>
+<div class="screen">
+  <div class="sidebar">
+    <div class="sidebar-header"><div class="logo">Maosh Tizimi</div><div class="year">2026</div></div>
+    <div class="nav-item">📊 Dashboard</div>
+    <div class="nav-item">👥 Xodimlar</div>
+    <div class="nav-item">🧮 Oylik hisob</div>
+    <div class="nav-item">💳 To'lovlar</div>
+    <div class="nav-item">📉 Chiqimlar</div>
+    <div class="nav-item">🧾 Chek</div>
+    <div class="nav-item">📈 Hisobot</div>
+    <div class="nav-item active">⚙️ Sozlamalar</div>
+    <div class="user-area"><div class="user-name">Aliazarov Gulom</div><div class="user-role">admin</div></div>
+  </div>
+  <div class="content">
+    <div class="header-row">
+      <div><div class="page-title">Sozlamalar</div><div class="page-sub">Foydalanuvchilar va rollarni boshqarish</div></div>
+      <button class="btn btn-green">+ Foydalanuvchi qo'shish</button>
+    </div>
+    <div class="table-wrap" style="margin-top:16px">
+      <table>
+        <thead><tr><th>Ism</th><th>Email</th><th style="text-align:center">Rol</th><th></th></tr></thead>
+        <tbody>
+          <tr><td style="font-weight:500">Aliazarov Gulom</td><td style="color:#64748b">alinazarovgulom@gmail.com</td><td style="text-align:center"><span class="badge badge-red">admin</span></td><td>🗑️</td></tr>
+          <tr><td style="font-weight:500">Karimova Dilnoza</td><td style="color:#64748b">dilnoza@company.uz</td><td style="text-align:center"><span class="badge badge-blue">buxgalter</span></td><td>🗑️</td></tr>
+          <tr><td style="font-weight:500">Toshmatov Dilshod</td><td style="color:#64748b">dilshod@company.uz</td><td style="text-align:center"><span class="badge badge-gray">xodim</span></td><td>🗑️</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px">
+      <div class="card"><span class="badge badge-red">admin</span><p style="font-size:12px;color:#64748b;margin-top:8px">Barcha sahifalarga to'liq kirish, foydalanuvchi boshqaruvi</p></div>
+      <div class="card"><span class="badge badge-blue">buxgalter</span><p style="font-size:12px;color:#64748b;margin-top:8px">Xodimlar, oylik, to'lovlar, chiqimlar, chek, hisobot</p></div>
+      <div class="card"><span class="badge badge-gray">xodim</span><p style="font-size:12px;color:#64748b;margin-top:8px">Faqat o'z profili va oylik ma'lumotlarini ko'radi</p></div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
