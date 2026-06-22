@@ -4,12 +4,12 @@ import { getAuth } from 'firebase/auth'
 
 // TODO: Replace with your maosh-tizimi Firebase config
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyCMYFAt0eZsGGLzpWxFqTgk7bTPL2arGS8",
+  authDomain: "maosh-tizimi.firebaseapp.com",
+  projectId: "maosh-tizimi",
+  storageBucket: "maosh-tizimi.firebasestorage.app",
+  messagingSenderId: "138300315394",
+  appId: "1:138300315394:web:3fe59a22cecfe70153d41b"
 }
 
 const app = initializeApp(firebaseConfig)
