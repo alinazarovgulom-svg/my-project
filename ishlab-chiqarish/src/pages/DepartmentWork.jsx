@@ -40,6 +40,7 @@ export default function DepartmentWork() {
   const [date, setDate] = useState('')
   const [startTime, setStartTime] = useState('')
   const [endTime, setEndTime] = useState('')
+  const [breakMinutes, setBreakMinutes] = useState(0)
   const [employees, setEmployees] = useState([])
   const [allOps, setAllOps] = useState([])
   const [entries, setEntries] = useState({}) // { [empId]: { [opId]: { quantity, note } } }
@@ -73,6 +74,7 @@ export default function DepartmentWork() {
   useEffect(() => {
     setOverrides({})
     setPickerEmp(null)
+    setBreakMinutes(0)
   }, [date, startTime, endTime])
 
   // Load existing entries when date/time changes
@@ -87,11 +89,14 @@ export default function DepartmentWork() {
     )
     return onSnapshot(q, snap => {
       const data = {}
+      let loadedBreak = 0
       snap.forEach(d => {
-        const { employeeId, operations } = d.data()
+        const { employeeId, operations, breakMinutes: bm } = d.data()
         data[employeeId] = operations || {}
+        if (bm !== undefined) loadedBreak = bm
       })
       setEntries(data)
+      setBreakMinutes(loadedBreak)
     })
   }, [deptId, date, startTime, endTime])
 
@@ -115,6 +120,7 @@ export default function DepartmentWork() {
       date,
       startTime,
       endTime,
+      breakMinutes,
       operations: entries[empId] || {},
       updatedAt: serverTimestamp(),
       updatedBy: user.uid,
@@ -139,7 +145,7 @@ export default function DepartmentWork() {
     setPickerSel(s => s.includes(opId) ? s.filter(id => id !== opId) : [...s, opId])
   }
 
-  const hours = calcHours(startTime, endTime)
+  const hours = Math.max(0, calcHours(startTime, endTime) - breakMinutes / 60)
 
   if (!dept) return <div className="text-red-500 p-4">Bo'lim topilmadi</div>
 
@@ -187,8 +193,23 @@ export default function DepartmentWork() {
               className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1">Tanaffus</label>
+            <select
+              value={breakMinutes}
+              onChange={e => setBreakMinutes(Number(e.target.value))}
+              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              {[0, 15, 30, 45, 60, 90].map(m => (
+                <option key={m} value={m}>{m === 0 ? "Yo'q" : `${m} daqiqa`}</option>
+              ))}
+            </select>
+          </div>
           <div className="text-sm text-gray-500 pb-2">
             <span className="font-semibold text-gray-700">{hours.toFixed(1)}</span> soat
+            {breakMinutes > 0 && (
+              <span className="text-xs text-orange-500 ml-1">(−{breakMinutes} daq.)</span>
+            )}
           </div>
         </div>
       </div>

@@ -83,7 +83,8 @@ export default function Reports() {
         if (endTime && entry.endTime > endTime) return
         const emp = empMap[entry.employeeId]
         if (!emp) return
-        const hours = calcHours(entry.startTime, entry.endTime)
+        const bm = entry.breakMinutes || 0
+        const hours = Math.max(0, calcHours(entry.startTime, entry.endTime) - bm / 60)
         const ops = entry.operations || {}
         Object.entries(ops).forEach(([opId, data]) => {
           const op = opMap[opId]
@@ -100,6 +101,7 @@ export default function Reports() {
             date: entry.date,
             startTime: entry.startTime,
             endTime: entry.endTime,
+            breakMinutes: bm,
           })
         })
       })
@@ -290,6 +292,12 @@ export default function Reports() {
               // Unique time slots sorted
               const slots = [...new Set(rows.map(r => `${r.date}|${r.startTime}–${r.endTime}`))].sort()
               const multiDate = new Set(rows.map(r => r.date)).size > 1
+              // Break minutes per slot
+              const slotBreaks = {}
+              rows.forEach(r => {
+                const k = `${r.date}|${r.startTime}–${r.endTime}`
+                slotBreaks[k] = r.breakMinutes || 0
+              })
 
               // Group by employee + dept + operation
               const grouped = {}
@@ -332,10 +340,12 @@ export default function Reports() {
                         <th className="text-left px-4 py-3 font-medium text-gray-600 whitespace-nowrap">Norma</th>
                         {slots.map(s => {
                           const [date, time] = s.split('|')
+                          const bm = slotBreaks[s] || 0
                           return (
                             <th key={s} className="text-center px-3 py-3 font-medium text-gray-600 whitespace-nowrap min-w-[90px]">
                               {multiDate && <div className="text-xs text-gray-400 font-normal">{date}</div>}
                               <div className="font-mono text-xs">{time}</div>
+                              {bm > 0 && <div className="text-xs text-orange-500 font-normal">−{bm} daq.</div>}
                             </th>
                           )
                         })}
