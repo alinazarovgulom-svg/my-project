@@ -7,7 +7,7 @@ import {
 import { db } from '../firebase/config'
 import { DEPARTMENTS, getDeptName } from '../data/departments'
 import { useAuth } from '../contexts/AuthContext'
-import { Calendar, Clock, Save, CheckCircle, RefreshCw, X } from 'lucide-react'
+import { Calendar, Clock, Save, CheckCircle, RefreshCw, X, Search } from 'lucide-react'
 
 function calcHours(start, end) {
   const [sh, sm] = start.split(':').map(Number)
@@ -47,12 +47,17 @@ export default function DepartmentWork() {
   const [overrides, setOverrides] = useState({}) // { [empId]: opId[] } — session only
   const [pickerEmp, setPickerEmp] = useState(null) // empId whose picker is open
   const [pickerSel, setPickerSel] = useState([]) // temp selection in picker
+  const [search, setSearch] = useState('')
 
   // Load employees in this dept
   useEffect(() => {
     const q = query(collection(db, 'factory_employees'), where('departmentId', '==', deptId))
     return onSnapshot(q, snap => {
-      setEmployees(snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b) => a.lastName.localeCompare(b.lastName)))
+      setEmployees(snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => {
+        const nameA = `${a.lastName} ${a.firstName}`.toLowerCase()
+        const nameB = `${b.lastName} ${b.firstName}`.toLowerCase()
+        return nameA.localeCompare(nameB, 'uz')
+      }))
     })
   }, [deptId])
 
@@ -197,8 +202,24 @@ export default function DepartmentWork() {
           Bu bo'limda xodimlar mavjud emas
         </div>
       ) : (
+        <>
+          {/* Search */}
+          <div className="relative mb-4">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="text"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Xodimni qidirish..."
+              className="w-full border border-gray-300 rounded-lg pl-9 pr-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
         <div className="space-y-4">
-          {employees.map((emp, idx) => {
+          {employees.filter(emp => {
+            if (!search.trim()) return true
+            const q = search.trim().toLowerCase()
+            return `${emp.lastName} ${emp.firstName}`.toLowerCase().includes(q)
+          }).map((emp, idx) => {
             const activeOpIds = overrides[emp.id] ?? emp.operationIds ?? []
             const empOps = allOps.filter(o => activeOpIds.includes(o.id))
             const isOverridden = overrides[emp.id] != null
@@ -339,6 +360,7 @@ export default function DepartmentWork() {
             )
           })}
         </div>
+        </>
       )}
     </div>
   )
