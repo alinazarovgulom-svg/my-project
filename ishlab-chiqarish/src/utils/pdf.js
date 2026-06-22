@@ -313,25 +313,41 @@ const REASON_STYLE = {
 }
 
 export function exportAttendancePDF(absentEmps, allEmps, absences, departments, date) {
-  const getDeptName  = id => departments.find(d => d.id === id)?.name || id
   const totalAbsent  = absentEmps.length
   const totalPresent = allEmps.length - totalAbsent
   const printed      = new Date().toLocaleDateString('uz-UZ', { day: '2-digit', month: '2-digit', year: 'numeric' })
 
-  const tableRows = absentEmps.map((emp, i) => {
-    const abs         = absences[emp.id]
-    const reasonKey   = abs?.reason || ''
-    const reasonLabel = REASON_LABELS[reasonKey] || '—'
-    const { bg = '#f1f5f9', color = '#475569' } = REASON_STYLE[reasonKey] || {}
-    return `<tr class="${i % 2 === 1 ? 'row-alt' : ''}">
-      <td class="td-num">${i + 1}</td>
-      <td class="td-name">${esc(emp.lastName)} ${esc(emp.firstName)}</td>
-      <td class="td-dept"><span class="dept-badge">${esc(getDeptName(emp.departmentId))}</span></td>
-      <td class="td-reason">${reasonKey
-        ? `<span class="reason-badge" style="background:${bg};color:${color}">${esc(reasonLabel)}</span>`
-        : '<span style="color:#94a3b8">—</span>'}</td>
-      <td class="td-note">${esc(abs?.note || '') || '<span style="color:#94a3b8">—</span>'}</td>
+  // Group absent employees by department (preserving departments order)
+  const deptGroups = departments
+    .map(dept => ({ dept, emps: absentEmps.filter(e => e.departmentId === dept.id) }))
+    .filter(g => g.emps.length > 0)
+
+  let rowNum = 0
+  const tableRows = deptGroups.map(({ dept, emps }) => {
+    const deptRow = `<tr class="dept-group-row">
+      <td colspan="4" class="td-dept-group">
+        ${esc(dept.name)}
+        <span class="dept-count">${emps.length} nafar</span>
+      </td>
     </tr>`
+
+    const empRows = emps.map((emp, i) => {
+      rowNum++
+      const abs         = absences[emp.id]
+      const reasonKey   = abs?.reason || ''
+      const reasonLabel = REASON_LABELS[reasonKey] || '—'
+      const { bg = '#f1f5f9', color = '#475569' } = REASON_STYLE[reasonKey] || {}
+      return `<tr class="${i % 2 === 1 ? 'row-alt' : ''}">
+        <td class="td-num">${rowNum}</td>
+        <td class="td-name">${esc(emp.lastName)} ${esc(emp.firstName)}</td>
+        <td class="td-reason">${reasonKey
+          ? `<span class="reason-badge" style="background:${bg};color:${color}">${esc(reasonLabel)}</span>`
+          : '<span style="color:#94a3b8">—</span>'}</td>
+        <td class="td-note">${esc(abs?.note || '') || '<span style="color:#94a3b8">—</span>'}</td>
+      </tr>`
+    }).join('')
+
+    return deptRow + empRows
   }).join('')
 
   const html = `<!DOCTYPE html>
@@ -362,19 +378,24 @@ export function exportAttendancePDF(absentEmps, allEmps, absences, departments, 
                  padding:4px 8px; border-radius:4px 4px 0 0; margin-top:8px; letter-spacing:.3px; }
 
   table { width:100%; border-collapse:collapse; font-size:10px; }
+  thead { display:table-header-group; }
   thead tr { background:#334155; color:#fff; }
   thead th { padding:6px 8px; text-align:left; font-weight:600; font-size:9px; white-space:nowrap; }
   .th-num  { width:24px; text-align:center; }
   .row-alt { background:#f8fafc; }
   tbody tr { border-bottom:1px solid #f1f5f9; page-break-inside:avoid; }
   tbody td { padding:6px 8px; vertical-align:middle; }
-  .td-num    { color:#94a3b8; text-align:center; }
+  .td-num    { color:#94a3b8; text-align:center; width:24px; }
   .td-name   { font-weight:600; font-size:11px; white-space:nowrap; }
-  .td-dept   { white-space:nowrap; }
   .td-reason { white-space:nowrap; }
   .td-note   { color:#64748b; font-size:9.5px; }
-  .dept-badge   { background:#eff6ff; color:#1d4ed8; padding:2px 7px; border-radius:10px; font-size:9.5px; }
   .reason-badge { padding:2px 8px; border-radius:10px; font-size:9.5px; font-weight:700; }
+
+  /* Department group header row */
+  .dept-group-row td { background:#dbeafe; color:#1e3a8a; font-weight:700;
+                       font-size:10px; padding:5px 8px; page-break-after:avoid; }
+  .dept-count { margin-left:8px; font-size:9px; color:#2563eb;
+                background:#bfdbfe; padding:1px 7px; border-radius:8px; font-weight:600; }
 
   .all-present { text-align:center; padding:28px; color:#15803d; font-weight:700;
                  font-size:13px; background:#f0fdf4; border-radius:8px;
@@ -431,7 +452,6 @@ ${totalAbsent === 0
          <tr>
            <th class="th-num">#</th>
            <th>Ism Familyasi</th>
-           <th>Bo'lim</th>
            <th>Sabab</th>
            <th>Izoh</th>
          </tr>
