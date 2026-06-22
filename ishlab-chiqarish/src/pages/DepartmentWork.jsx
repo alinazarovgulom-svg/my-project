@@ -5,7 +5,7 @@ import {
   doc, setDoc, serverTimestamp,
 } from 'firebase/firestore'
 import { db } from '../firebase/config'
-import { DEPARTMENTS, getDeptName } from '../data/departments'
+import { useDepartments } from '../contexts/DepartmentsContext'
 import { useAuth } from '../contexts/AuthContext'
 import { Calendar, Clock, Save, CheckCircle, RefreshCw, X, Search } from 'lucide-react'
 
@@ -34,7 +34,8 @@ const statusStyle = {
 export default function DepartmentWork() {
   const { deptId } = useParams()
   const { user, can } = useAuth()
-  const dept = DEPARTMENTS.find(d => d.id === deptId)
+  const { departments } = useDepartments()
+  const dept = departments.find(d => d.id === deptId)
 
   const [date, setDate] = useState('')
   const [startTime, setStartTime] = useState('')

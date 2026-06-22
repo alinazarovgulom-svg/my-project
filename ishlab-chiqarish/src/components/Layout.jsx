@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
-import { DEPARTMENTS } from '../data/departments'
+import { useDepartments } from '../contexts/DepartmentsContext'
 import {
   LayoutDashboard, Settings, Users, ClipboardList, FileText,
-  LogOut, Menu, X, ChevronDown, ChevronRight, Factory,
+  LogOut, Menu, X, ChevronDown, ChevronRight, Factory, Building2,
 } from 'lucide-react'
 
 const navItems = [
@@ -17,6 +17,7 @@ const navItems = [
 
 export default function Layout({ children }) {
   const { userDoc, signOut, can } = useAuth()
+  const { departments } = useDepartments()
   const location = useLocation()
   const navigate = useNavigate()
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -69,11 +70,24 @@ export default function Layout({ children }) {
           onClick={() => setDeptOpen(o => !o)}
           className="w-full flex items-center gap-3 px-5 py-3 text-sm text-blue-100 hover:bg-blue-700/50 transition-colors"
         >
-          <LayoutDashboard className="w-4 h-4" />
+          <Building2 className="w-4 h-4" />
           <span className="flex-1 text-left">Bo'limlar</span>
           {deptOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
         </button>
-        {deptOpen && DEPARTMENTS.map(dept => {
+        {deptOpen && can.manageMembers && (
+          <Link
+            to="/departments"
+            onClick={() => setSidebarOpen(false)}
+            className={`flex items-center gap-3 pl-11 pr-5 py-2.5 text-xs transition-colors ${
+              location.pathname === '/departments'
+                ? 'bg-blue-700 text-white font-medium'
+                : 'text-blue-300 hover:bg-blue-700/40 italic'
+            }`}
+          >
+            + Boshqarish
+          </Link>
+        )}
+        {deptOpen && departments.map(dept => {
           const active = location.pathname === `/department/${dept.id}`
           return (
             <Link

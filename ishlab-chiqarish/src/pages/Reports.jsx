@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { collection, query, where, getDocs } from 'firebase/firestore'
 import { db } from '../firebase/config'
-import { DEPARTMENTS, getDeptName } from '../data/departments'
+import { useDepartments } from '../contexts/DepartmentsContext'
 import { useAuth } from '../contexts/AuthContext'
 import { exportPDF } from '../utils/pdf'
 import { exportExcel } from '../utils/excel'
@@ -24,12 +24,13 @@ const today = format(new Date(), 'yyyy-MM-dd')
 
 export default function Reports() {
   const { can } = useAuth()
+  const { departments, getDeptName } = useDepartments()
   const [dateFrom, setDateFrom] = useState(today)
   const [dateTo, setDateTo] = useState(today)
   const [startTime, setStartTime] = useState('08:00')
   const [endTime, setEndTime] = useState('17:00')
   const [filterType, setFilterType] = useState('dept') // 'dept' | 'employee'
-  const [selectedDept, setSelectedDept] = useState(DEPARTMENTS[0].id)
+  const [selectedDept, setSelectedDept] = useState('')
   const [empSearch, setEmpSearch] = useState('')
   const [employees, setEmployees] = useState([])
   const [selectedEmp, setSelectedEmp] = useState(null)
@@ -181,7 +182,7 @@ export default function Reports() {
             onChange={e => setSelectedDept(e.target.value)}
             className="w-full md:w-64 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            {DEPARTMENTS.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+            {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
           </select>
         ) : (
           <div className="relative md:w-64">

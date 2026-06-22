@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { collection, query, where, getDocs } from 'firebase/firestore'
 import { db } from '../firebase/config'
-import { DEPARTMENTS } from '../data/departments'
+import { useDepartments } from '../contexts/DepartmentsContext'
 import { format } from 'date-fns'
 import { Users, Settings, TrendingUp, ChevronRight } from 'lucide-react'
 
@@ -16,11 +16,13 @@ function calcHours(start, end) {
 }
 
 export default function Dashboard() {
+  const { departments } = useDepartments()
   const [stats, setStats] = useState({ employees: 0, operations: 0 })
   const [deptStats, setDeptStats] = useState({})
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    if (!departments.length) return
     async function load() {
       const [empSnap, opSnap] = await Promise.all([
         getDocs(collection(db, 'factory_employees')),
@@ -37,7 +39,7 @@ export default function Dashboard() {
       )
 
       const deptData = {}
-      DEPARTMENTS.forEach(d => {
+      departments.forEach(d => {
         deptData[d.id] = { employees: 0, attended: 0, done: 0, expected: 0 }
       })
 
@@ -72,7 +74,7 @@ export default function Dashboard() {
       setLoading(false)
     }
     load()
-  }, [])
+  }, [departments])
 
   const totalAttended = Object.values(deptStats).reduce((s, d) => s + d.attended, 0)
   const totalDone     = Object.values(deptStats).reduce((s, d) => s + d.done, 0)
@@ -143,7 +145,7 @@ export default function Dashboard() {
       {/* Departments grid */}
       <h2 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-3">Bo'limlar — bugun</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-        {DEPARTMENTS.map(dept => {
+        {departments.map(dept => {
           const ds = deptStats[dept.id] || { employees: 0, attended: 0, done: 0, expected: 0 }
           const attendPct = ds.employees ? Math.round((ds.attended / ds.employees) * 100) : 0
           const eff = ds.expected > 0 ? Math.round((ds.done / ds.expected) * 100) : null

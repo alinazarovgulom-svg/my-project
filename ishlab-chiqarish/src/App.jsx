@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
+import { DepartmentsProvider } from './contexts/DepartmentsContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import Layout from './components/Layout'
 import Login from './pages/Login'
@@ -9,6 +10,7 @@ import Employees from './pages/Employees'
 import DepartmentWork from './pages/DepartmentWork'
 import Reports from './pages/Reports'
 import Members from './pages/Members'
+import Departments from './pages/Departments'
 import { useAuth } from './contexts/AuthContext'
 
 function AppRoutes() {
@@ -25,6 +27,7 @@ function AppRoutes() {
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/operations" element={<Operations />} />
                 <Route path="/employees" element={<Employees />} />
+                <Route path="/departments" element={<Departments />} />
                 <Route path="/department/:deptId" element={<DepartmentWork />} />
                 <Route path="/reports" element={<Reports />} />
                 <Route path="/members" element={<Members />} />
@@ -42,7 +45,9 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <AppRoutes />
+        <DepartmentsProvider>
+          <AppRoutes />
+        </DepartmentsProvider>
       </AuthProvider>
     </BrowserRouter>
   )

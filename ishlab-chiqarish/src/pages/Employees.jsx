@@ -4,19 +4,18 @@ import {
   onSnapshot, serverTimestamp, query, orderBy, where, getDocs,
 } from 'firebase/firestore'
 import { db } from '../firebase/config'
-import { DEPARTMENTS, getDeptName } from '../data/departments'
+import { useDepartments } from '../contexts/DepartmentsContext'
 import { useAuth } from '../contexts/AuthContext'
 import { Plus, Pencil, Trash2, X, Check } from 'lucide-react'
 
-const empty = { firstName: '', lastName: '', departmentId: DEPARTMENTS[0].id, operationIds: [] }
-
 export default function Employees() {
   const { can } = useAuth()
+  const { departments, getDeptName } = useDepartments()
   const [employees, setEmployees] = useState([])
   const [allOps, setAllOps] = useState([])
   const [filterDept, setFilterDept] = useState('all')
   const [modal, setModal] = useState(null)
-  const [form, setForm] = useState(empty)
+  const [form, setForm] = useState({ firstName: '', lastName: '', departmentId: '', operationIds: [] })
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(null)
 
@@ -32,7 +31,7 @@ export default function Employees() {
 
   const deptOps = allOps.filter(o => o.departmentId === form.departmentId)
 
-  const openAdd = () => { setForm(empty); setModal('add') }
+  const openAdd = () => { setForm({ firstName: '', lastName: '', departmentId: departments[0]?.id || '', operationIds: [] }); setModal('add') }
   const openEdit = (emp) => {
     setForm({
       firstName: emp.firstName,
@@ -105,7 +104,7 @@ export default function Employees() {
         >
           Barchasi ({employees.length})
         </button>
-        {DEPARTMENTS.map(d => {
+        {departments.map(d => {
           const count = employees.filter(e => e.departmentId === d.id).length
           return (
             <button
@@ -229,7 +228,7 @@ export default function Employees() {
                   onChange={e => handleDeptChange(e.target.value)}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  {DEPARTMENTS.map(d => (
+                  {departments.map(d => (
                     <option key={d.id} value={d.id}>{d.name}</option>
                   ))}
                 </select>

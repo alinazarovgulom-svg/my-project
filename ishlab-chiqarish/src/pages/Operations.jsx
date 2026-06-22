@@ -4,18 +4,17 @@ import {
   onSnapshot, serverTimestamp, query, orderBy,
 } from 'firebase/firestore'
 import { db } from '../firebase/config'
-import { DEPARTMENTS, getDeptName } from '../data/departments'
+import { useDepartments } from '../contexts/DepartmentsContext'
 import { useAuth } from '../contexts/AuthContext'
 import { Plus, Pencil, Trash2, X, Check } from 'lucide-react'
 
-const empty = { name: '', norm: '', departmentId: DEPARTMENTS[0].id }
-
 export default function Operations() {
   const { can } = useAuth()
+  const { departments, getDeptName } = useDepartments()
   const [operations, setOperations] = useState([])
   const [filterDept, setFilterDept] = useState('all')
   const [modal, setModal] = useState(null) // null | 'add' | {id, ...}
-  const [form, setForm] = useState(empty)
+  const [form, setForm] = useState({ name: '', norm: '', departmentId: '' })
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(null)
 
@@ -26,7 +25,8 @@ export default function Operations() {
     })
   }, [])
 
-  const openAdd = () => { setForm(empty); setModal('add') }
+  const empty = { name: '', norm: '', departmentId: departments[0]?.id || '' }
+  const openAdd = () => { setForm({ name: '', norm: '', departmentId: departments[0]?.id || '' }); setModal('add') }
   const openEdit = (op) => { setForm({ name: op.name, norm: op.norm, departmentId: op.departmentId }); setModal(op) }
   const closeModal = () => setModal(null)
 
@@ -82,7 +82,7 @@ export default function Operations() {
         >
           Barchasi
         </button>
-        {DEPARTMENTS.map(d => (
+        {departments.map(d => (
           <button
             key={d.id}
             onClick={() => setFilterDept(d.id)}
@@ -175,7 +175,7 @@ export default function Operations() {
                   onChange={e => setForm(f => ({ ...f, departmentId: e.target.value }))}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  {DEPARTMENTS.map(d => (
+                  {departments.map(d => (
                     <option key={d.id} value={d.id}>{d.name}</option>
                   ))}
                 </select>
