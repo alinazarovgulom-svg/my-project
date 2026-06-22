@@ -39,13 +39,18 @@ export default function Attendance() {
     })
   }, [])
 
-  // Detect who worked: any work entry for this date = present
+  // Present = at least one operation with quantity > 0 on this date
   useEffect(() => {
     if (!date) return
     return onSnapshot(
       query(collection(db, 'factory_work_entries'), where('date', '==', date)),
       snap => {
-        const ids = new Set(snap.docs.map(d => d.data().employeeId))
+        const ids = new Set()
+        snap.docs.forEach(d => {
+          const ops = d.data().operations || {}
+          const hasQty = Object.values(ops).some(op => Number(op.quantity) > 0)
+          if (hasQty) ids.add(d.data().employeeId)
+        })
         setPresentIds(ids)
       }
     )
