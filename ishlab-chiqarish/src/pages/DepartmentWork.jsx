@@ -259,7 +259,7 @@ export default function DepartmentWork() {
                       </button>
                     </div>
                     <div className="flex flex-wrap gap-2 mb-3">
-                      {allOps.map(op => (
+                      {allOps.filter(o => o.departmentId === deptId).map(op => (
                         <label key={op.id} className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border cursor-pointer transition-colors ${
                           pickerSel.includes(op.id)
                             ? 'bg-blue-700 text-white border-blue-700'
