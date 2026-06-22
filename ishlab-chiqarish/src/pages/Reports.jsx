@@ -325,7 +325,9 @@ export default function Reports() {
                       <tr>
                         <th className="text-left px-4 py-3 font-medium text-gray-600 whitespace-nowrap">#</th>
                         <th className="text-left px-4 py-3 font-medium text-gray-600 whitespace-nowrap">Xodim</th>
-                        <th className="text-left px-4 py-3 font-medium text-gray-600 whitespace-nowrap">Bo'lim</th>
+                        {filterType === 'employee' && (
+                          <th className="text-left px-4 py-3 font-medium text-gray-600 whitespace-nowrap">Bo'lim</th>
+                        )}
                         <th className="text-left px-4 py-3 font-medium text-gray-600 whitespace-nowrap">Operatsiya</th>
                         <th className="text-left px-4 py-3 font-medium text-gray-600 whitespace-nowrap">Norma</th>
                         {slots.map(s => {
@@ -360,11 +362,13 @@ export default function Reports() {
                                 </span>
                               ) : ''}
                             </td>
-                            <td className="px-4 py-2.5">
-                              {isNewEmp && (
-                                <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full whitespace-nowrap">{r.deptName}</span>
-                              )}
-                            </td>
+                            {filterType === 'employee' && (
+                              <td className="px-4 py-2.5">
+                                {isNewEmp && (
+                                  <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full whitespace-nowrap">{r.deptName}</span>
+                                )}
+                              </td>
+                            )}
                             <td className="px-4 py-2.5 text-gray-700 whitespace-nowrap">{r.opName}</td>
                             <td className="px-4 py-2.5 text-gray-400 text-xs whitespace-nowrap">{r.norm} dona/soat</td>
                             {slots.map(k => {
