@@ -11,6 +11,7 @@ import DepartmentWork from './pages/DepartmentWork'
 import Reports from './pages/Reports'
 import Members from './pages/Members'
 import Departments from './pages/Departments'
+import Attendance from './pages/Attendance'
 import { useAuth } from './contexts/AuthContext'
 
 function AppRoutes() {
@@ -30,6 +31,7 @@ function AppRoutes() {
                 <Route path="/departments" element={<Departments />} />
                 <Route path="/department/:deptId" element={<DepartmentWork />} />
                 <Route path="/reports" element={<Reports />} />
+                <Route path="/attendance" element={<Attendance />} />
                 <Route path="/members" element={<Members />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
