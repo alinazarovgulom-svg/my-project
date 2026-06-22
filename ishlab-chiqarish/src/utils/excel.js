@@ -35,3 +35,54 @@ export function exportExcel(rows, filters, deptName, showDept = true) {
   XLSX.utils.book_append_sheet(wb, ws, 'Hisobot')
   XLSX.writeFile(wb, `hisobot_${Date.now()}.xlsx`)
 }
+
+const REASON_LABELS_XL = {
+  kasallik: 'Kasallik',
+  tatil:    "Ta'til",
+  sababsiz: 'Sababsiz',
+  boshqa:   'Boshqa',
+}
+
+function fmtDateXl(iso) {
+  const [y, m, d] = iso.split('-')
+  return `${d}.${m}.${y}`
+}
+
+export function exportAttendanceExcel(absentEmps, allEmps, absences, departments, date) {
+  const getDeptName  = id => departments.find(d => d.id === id)?.name || id
+  const totalPresent = allEmps.length - absentEmps.length
+
+  const header = [
+    ['KAFTIMDA', '', '', '', ''],
+    ['kaftimda@gmail.com', '', '', '', ''],
+    ['+998 91 760 66 66', '', '', '', ''],
+    [`Davomat hisoboti · ${fmtDateXl(date)}`, '', '', '', ''],
+    [`Jami: ${allEmps.length}  |  Kelgan: ${totalPresent}  |  Kelmagan: ${absentEmps.length}`, '', '', '', ''],
+    [],
+    ['#', 'Ism Familyasi', "Bo'lim", 'Sabab', 'Izoh'],
+  ]
+
+  const data = absentEmps.map((emp, i) => {
+    const abs = absences[emp.id]
+    return [
+      i + 1,
+      `${emp.lastName} ${emp.firstName}`,
+      getDeptName(emp.departmentId),
+      REASON_LABELS_XL[abs?.reason] || '',
+      abs?.note || '',
+    ]
+  })
+
+  const wb = XLSX.utils.book_new()
+  const ws = XLSX.utils.aoa_to_sheet([...header, ...data])
+
+  ws['!cols'] = [{ wch: 5 }, { wch: 25 }, { wch: 22 }, { wch: 12 }, { wch: 30 }]
+  ws['!merges'] = [
+    { s: { r: 0, c: 0 }, e: { r: 0, c: 4 } },
+    { s: { r: 3, c: 0 }, e: { r: 3, c: 4 } },
+    { s: { r: 4, c: 0 }, e: { r: 4, c: 4 } },
+  ]
+
+  XLSX.utils.book_append_sheet(wb, ws, 'Davomat')
+  XLSX.writeFile(wb, `davomat_${date}.xlsx`)
+}

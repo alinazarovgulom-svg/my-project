@@ -296,3 +296,171 @@ ${sectionsHtml}
   win.document.write(html)
   win.document.close()
 }
+
+// ── Attendance PDF ────────────────────────────────────────────────────────────
+
+const REASON_LABELS = {
+  kasallik: 'Kasallik',
+  tatil:    "Ta'til",
+  sababsiz: 'Sababsiz',
+  boshqa:   'Boshqa',
+}
+const REASON_STYLE = {
+  kasallik: { bg: '#dbeafe', color: '#1d4ed8' },
+  tatil:    { bg: '#f3e8ff', color: '#7e22ce' },
+  sababsiz: { bg: '#fee2e2', color: '#991b1b' },
+  boshqa:   { bg: '#f1f5f9', color: '#475569' },
+}
+
+export function exportAttendancePDF(absentEmps, allEmps, absences, departments, date) {
+  const getDeptName  = id => departments.find(d => d.id === id)?.name || id
+  const totalAbsent  = absentEmps.length
+  const totalPresent = allEmps.length - totalAbsent
+  const printed      = new Date().toLocaleDateString('uz-UZ', { day: '2-digit', month: '2-digit', year: 'numeric' })
+
+  const tableRows = absentEmps.map((emp, i) => {
+    const abs         = absences[emp.id]
+    const reasonKey   = abs?.reason || ''
+    const reasonLabel = REASON_LABELS[reasonKey] || '—'
+    const { bg = '#f1f5f9', color = '#475569' } = REASON_STYLE[reasonKey] || {}
+    return `<tr class="${i % 2 === 1 ? 'row-alt' : ''}">
+      <td class="td-num">${i + 1}</td>
+      <td class="td-name">${esc(emp.lastName)} ${esc(emp.firstName)}</td>
+      <td class="td-dept"><span class="dept-badge">${esc(getDeptName(emp.departmentId))}</span></td>
+      <td class="td-reason">${reasonKey
+        ? `<span class="reason-badge" style="background:${bg};color:${color}">${esc(reasonLabel)}</span>`
+        : '<span style="color:#94a3b8">—</span>'}</td>
+      <td class="td-note">${esc(abs?.note || '') || '<span style="color:#94a3b8">—</span>'}</td>
+    </tr>`
+  }).join('')
+
+  const html = `<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<title>Davomat – KAFTIMDA</title>
+<style>
+  @page { size: A4 portrait; margin: 10mm 12mm; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: Arial, Helvetica, sans-serif; font-size:10px; color:#1e293b; }
+
+  .hdr { background:#1e40af; color:#fff; padding:9px 14px;
+         display:flex; justify-content:space-between; align-items:center;
+         border-bottom:2.5px solid #3b82f6; margin-bottom:7px; }
+  .hdr-l .brand { font-size:18px; font-weight:700; }
+  .hdr-l .sub   { font-size:9px; color:#93c5fd; margin-top:2px; }
+  .hdr-r { text-align:right; }
+  .hdr-r .title { font-size:13px; font-weight:700; }
+  .hdr-r .meta  { font-size:9px; color:#93c5fd; margin-top:3px; }
+
+  .stats { display:flex; gap:6px; margin-bottom:8px; }
+  .card  { flex:1; border-radius:6px; padding:7px 10px; border:1px solid #e2e8f0; text-align:center; }
+  .card-val { font-size:16px; font-weight:700; }
+  .card-lbl { font-size:8px; color:#64748b; margin-top:1px; }
+
+  .section-hdr { background:#1e40af; color:#fff; font-size:10px; font-weight:700;
+                 padding:4px 8px; border-radius:4px 4px 0 0; margin-top:8px; letter-spacing:.3px; }
+
+  table { width:100%; border-collapse:collapse; font-size:10px; }
+  thead tr { background:#334155; color:#fff; }
+  thead th { padding:6px 8px; text-align:left; font-weight:600; font-size:9px; white-space:nowrap; }
+  .th-num  { width:24px; text-align:center; }
+  .row-alt { background:#f8fafc; }
+  tbody tr { border-bottom:1px solid #f1f5f9; page-break-inside:avoid; }
+  tbody td { padding:6px 8px; vertical-align:middle; }
+  .td-num    { color:#94a3b8; text-align:center; }
+  .td-name   { font-weight:600; font-size:11px; white-space:nowrap; }
+  .td-dept   { white-space:nowrap; }
+  .td-reason { white-space:nowrap; }
+  .td-note   { color:#64748b; font-size:9.5px; }
+  .dept-badge   { background:#eff6ff; color:#1d4ed8; padding:2px 7px; border-radius:10px; font-size:9.5px; }
+  .reason-badge { padding:2px 8px; border-radius:10px; font-size:9.5px; font-weight:700; }
+
+  .all-present { text-align:center; padding:28px; color:#15803d; font-weight:700;
+                 font-size:13px; background:#f0fdf4; border-radius:8px;
+                 border:1px solid #bbf7d0; margin-top:8px; }
+
+  .legend { display:flex; align-items:center; gap:10px; margin-top:8px;
+            padding-top:6px; border-top:1px solid #e2e8f0; flex-wrap:wrap; }
+  .legend-item { display:flex; align-items:center; gap:4px; font-size:9px; color:#64748b; }
+  .dot { width:10px; height:10px; border-radius:3px; flex-shrink:0; }
+
+  .footer { display:flex; justify-content:space-between; margin-top:7px;
+            padding-top:5px; border-top:1px solid #e2e8f0; font-size:8.5px; color:#94a3b8; }
+  .footer .brand { color:#1e40af; font-weight:700; }
+
+  @media print {
+    body { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    tbody tr { page-break-inside:avoid; }
+  }
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-l">
+    <div class="brand">KAFTIMDA</div>
+    <div class="sub">Ishlab chiqarish tizimi</div>
+  </div>
+  <div class="hdr-r">
+    <div class="title">Davomat hisoboti</div>
+    <div class="meta">${fmtDate(date)}<br>Chiqarilgan: ${printed}</div>
+  </div>
+</div>
+
+<div class="stats">
+  <div class="card" style="background:#eff6ff">
+    <div class="card-val" style="color:#1e40af">${allEmps.length}</div>
+    <div class="card-lbl">Jami xodimlar</div>
+  </div>
+  <div class="card" style="background:#f0fdf4">
+    <div class="card-val" style="color:#15803d">${totalPresent}</div>
+    <div class="card-lbl">Kelgan</div>
+  </div>
+  <div class="card" style="background:#fef2f2">
+    <div class="card-val" style="color:#991b1b">${totalAbsent}</div>
+    <div class="card-lbl">Kelmagan</div>
+  </div>
+</div>
+
+${totalAbsent === 0
+  ? `<div class="all-present">✓ Barcha xodimlar kelgan</div>`
+  : `<div class="section-hdr">Kelmaganlar ro'yxati — ${totalAbsent} nafar</div>
+     <table>
+       <thead>
+         <tr>
+           <th class="th-num">#</th>
+           <th>Ism Familyasi</th>
+           <th>Bo'lim</th>
+           <th>Sabab</th>
+           <th>Izoh</th>
+         </tr>
+       </thead>
+       <tbody>${tableRows}</tbody>
+     </table>`
+}
+
+<div class="legend">
+  <div class="legend-item"><div class="dot" style="background:#dbeafe;border:1px solid #bfdbfe"></div>Kasallik</div>
+  <div class="legend-item"><div class="dot" style="background:#f3e8ff;border:1px solid #e9d5ff"></div>Ta'til</div>
+  <div class="legend-item"><div class="dot" style="background:#fee2e2;border:1px solid #fecaca"></div>Sababsiz</div>
+  <div class="legend-item"><div class="dot" style="background:#f1f5f9;border:1px solid #e2e8f0"></div>Boshqa</div>
+</div>
+
+<div class="footer">
+  <div class="brand">KAFTIMDA</div>
+  <div>kaftimda@gmail.com &nbsp;·&nbsp; +998 91 760 66 66</div>
+</div>
+
+<script>window.onload = function() { window.print(); }</script>
+</body>
+</html>`
+
+  const win = window.open('', '_blank', 'width=900,height=850')
+  if (!win) {
+    alert("Brauzer popup'ni blokladi. Iltimos, ruxsat bering va qaytadan bosing.")
+    return
+  }
+  win.document.write(html)
+  win.document.close()
+}

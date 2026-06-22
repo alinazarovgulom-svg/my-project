@@ -6,7 +6,9 @@ import {
 import { db } from '../firebase/config'
 import { useDepartments } from '../contexts/DepartmentsContext'
 import { useAuth } from '../contexts/AuthContext'
-import { Calendar, UserX, UserCheck } from 'lucide-react'
+import { Calendar, UserX, UserCheck, FileText, Download } from 'lucide-react'
+import { exportAttendancePDF } from '../utils/pdf'
+import { exportAttendanceExcel } from '../utils/excel'
 
 const REASONS = [
   { value: 'kasallik', label: 'Kasallik',  badge: 'bg-blue-100 text-blue-700'   },
@@ -125,14 +127,28 @@ export default function Attendance() {
             Norma kiritilmagan xodimlar — kelmagan hisoblanadi
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <Calendar className="w-4 h-4 text-gray-400" />
-          <input
-            type="date"
-            value={date}
-            onChange={e => setDate(e.target.value)}
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-2">
+            <Calendar className="w-4 h-4 text-gray-400" />
+            <input
+              type="date"
+              value={date}
+              onChange={e => setDate(e.target.value)}
+              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <button
+            onClick={() => exportAttendancePDF(absentEmps, employees, absences, departments, date)}
+            className="flex items-center gap-1.5 bg-red-600 hover:bg-red-700 text-white text-xs px-3 py-2 rounded-lg transition-colors"
+          >
+            <FileText className="w-3.5 h-3.5" /> PDF
+          </button>
+          <button
+            onClick={() => exportAttendanceExcel(absentEmps, employees, absences, departments, date)}
+            className="flex items-center gap-1.5 bg-green-700 hover:bg-green-800 text-white text-xs px-3 py-2 rounded-lg transition-colors"
+          >
+            <Download className="w-3.5 h-3.5" /> Excel
+          </button>
         </div>
       </div>
 
