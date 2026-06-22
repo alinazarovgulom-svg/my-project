@@ -6,7 +6,7 @@ import {
 import { db } from '../firebase/config'
 import { useDepartments } from '../contexts/DepartmentsContext'
 import { useAuth } from '../contexts/AuthContext'
-import { Plus, Pencil, Trash2, X, Check } from 'lucide-react'
+import { Plus, Pencil, Trash2, X, Check, Search } from 'lucide-react'
 
 export default function Employees() {
   const { can } = useAuth()
@@ -80,7 +80,15 @@ export default function Employees() {
     setDeleting(null)
   }
 
-  const filtered = filterDept === 'all' ? employees : employees.filter(e => e.departmentId === filterDept)
+  const [search, setSearch] = useState('')
+
+  const filtered = employees
+    .filter(e => filterDept === 'all' || e.departmentId === filterDept)
+    .filter(e => {
+      if (!search.trim()) return true
+      const q = search.trim().toLowerCase()
+      return `${e.lastName} ${e.firstName}`.toLowerCase().includes(q)
+    })
 
   return (
     <div>
@@ -94,6 +102,18 @@ export default function Employees() {
             <Plus className="w-4 h-4" /> Qo'shish
           </button>
         )}
+      </div>
+
+      {/* Search */}
+      <div className="relative mb-4">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+        <input
+          type="text"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder="Xodimni qidirish (ism yoki familya)..."
+          className="w-full border border-gray-300 rounded-lg pl-9 pr-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
       </div>
 
       {/* Filter */}
