@@ -242,7 +242,7 @@ export default function Reports() {
                 onClick={async () => {
                   setPdfLoading(true)
                   try {
-                    await exportPDF(rows, filtersStr, filterLabel)
+                    await exportPDF(rows, filtersStr, filterLabel, filterType === 'employee')
                   } catch (e) {
                     console.error(e)
                     setReportError('PDF xatolik: ' + (e.message || 'Qayta urinib ko\'ring'))
@@ -256,7 +256,7 @@ export default function Reports() {
                 <FileText className="w-4 h-4" /> {pdfLoading ? 'Yuklanmoqda...' : 'PDF'}
               </button>
               <button
-                onClick={() => exportExcel(rows, filtersStr, filterLabel)}
+                onClick={() => exportExcel(rows, filtersStr, filterLabel, filterType === 'employee')}
                 className="flex items-center gap-2 bg-green-700 hover:bg-green-800 text-white text-sm px-4 py-2 rounded-lg transition-colors"
               >
                 <Download className="w-4 h-4" /> Excel

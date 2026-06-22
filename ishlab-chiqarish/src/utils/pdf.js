@@ -18,7 +18,7 @@ function qtyStyle(qty, exp) {
   return               { bg: '#fee2e2', color: '#991b1b' }
 }
 
-export function exportPDF(rows, filters, deptName) {
+export function exportPDF(rows, filters, deptName, showDept = true) {
   if (!rows.length) return
 
   // ── Global stats ─────────────────────────────────────────────────────────
@@ -121,7 +121,7 @@ export function exportPDF(rows, filters, deptName) {
             <span style="background:${eb};color:${ec};border-radius:8px;padding:2px 6px;font-size:9px;font-weight:700;white-space:nowrap">${e}%</span>
           </span>`
         })() : ''}</td>
-        <td class="td-dept">${isFirst ? `<span class="dept-badge">${esc(g.deptName)}</span>` : ''}</td>
+        ${showDept ? `<td class="td-dept">${isFirst ? `<span class="dept-badge">${esc(g.deptName)}</span>` : ''}</td>` : ''}
         <td class="td-op">${esc(g.opName)}</td>
         <td class="td-norm">${esc(g.norm)} dona/soat</td>
         ${slotCells}
@@ -142,7 +142,7 @@ export function exportPDF(rows, filters, deptName) {
             <tr>
               <th class="th-num">#</th>
               <th>Xodim</th>
-              <th>Bo'lim</th>
+              ${showDept ? `<th>Bo'lim</th>` : ''}
               <th>Operatsiya</th>
               <th>Norma</th>
               ${slotHeaders}
