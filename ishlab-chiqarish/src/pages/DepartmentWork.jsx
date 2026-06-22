@@ -194,16 +194,16 @@ export default function DepartmentWork() {
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1">Tanaffus</label>
-            <select
-              value={breakMinutes}
-              onChange={e => setBreakMinutes(Number(e.target.value))}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              {[0, 15, 30, 45, 60, 90].map(m => (
-                <option key={m} value={m}>{m === 0 ? "Yo'q" : `${m} daqiqa`}</option>
-              ))}
-            </select>
+            <label className="block text-xs font-medium text-gray-500 mb-1">Tanaffus (daq.)</label>
+            <input
+              type="number"
+              min="0"
+              max="240"
+              value={breakMinutes || ''}
+              onChange={e => setBreakMinutes(e.target.value === '' ? 0 : Math.max(0, Number(e.target.value)))}
+              placeholder="0"
+              className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-24 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
           </div>
           <div className="text-sm text-gray-500 pb-2">
             <span className="font-semibold text-gray-700">{hours.toFixed(1)}</span> soat
