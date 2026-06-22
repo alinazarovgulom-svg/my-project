@@ -7,7 +7,6 @@ import {
 import { db } from '../firebase/config'
 import { DEPARTMENTS, getDeptName } from '../data/departments'
 import { useAuth } from '../contexts/AuthContext'
-import { format } from 'date-fns'
 import { Calendar, Clock, Save, CheckCircle, RefreshCw, X } from 'lucide-react'
 
 function calcHours(start, end) {
@@ -37,9 +36,9 @@ export default function DepartmentWork() {
   const { user, can } = useAuth()
   const dept = DEPARTMENTS.find(d => d.id === deptId)
 
-  const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'))
-  const [startTime, setStartTime] = useState('08:00')
-  const [endTime, setEndTime] = useState('17:00')
+  const [date, setDate] = useState('')
+  const [startTime, setStartTime] = useState('')
+  const [endTime, setEndTime] = useState('')
   const [employees, setEmployees] = useState([])
   const [allOps, setAllOps] = useState([])
   const [entries, setEntries] = useState({}) // { [empId]: { [opId]: { quantity, note } } }
@@ -189,7 +188,11 @@ export default function DepartmentWork() {
       </div>
 
       {/* Employees */}
-      {employees.length === 0 ? (
+      {(!date || !startTime || !endTime) ? (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center text-gray-400 text-sm">
+          Sana, boshlanish va tugash vaqtini tanlang
+        </div>
+      ) : employees.length === 0 ? (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center text-gray-400 text-sm">
           Bu bo'limda xodimlar mavjud emas
         </div>
