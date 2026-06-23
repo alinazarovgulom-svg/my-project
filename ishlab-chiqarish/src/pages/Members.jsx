@@ -7,7 +7,7 @@ import { getAuth, createUserWithEmailAndPassword, signOut as fbSignOut } from 'f
 import { initializeApp, getApps } from 'firebase/app'
 import { db } from '../firebase/config'
 import { useAuth } from '../contexts/AuthContext'
-import { Plus, Trash2, X, Check, Shield, Eye, Download, Pencil, Clock } from 'lucide-react'
+import { Plus, Trash2, X, Check, Shield, Eye, Download, Pencil, Clock, UserX, UserCheck } from 'lucide-react'
 
 const ROLES = [
   { id: 'admin', label: 'Admin', icon: Shield, desc: 'Barcha imkoniyatlar' },
@@ -135,6 +135,12 @@ export default function Members() {
     setSaving(false)
   }
 
+  const handleToggleDisabled = async (member) => {
+    if (member.email === userDoc?.email) { alert("O'z akkauntingizni bloklaya olmaysiz"); return }
+    const newDisabled = !member.disabled
+    await setDoc(doc(db, 'factory_users', member.id), { disabled: newDisabled }, { merge: true })
+  }
+
   const handleDelete = async (member) => {
     if (!confirm(`${member.name} ni o'chirishni tasdiqlaysizmi?`)) return
     if (member.email === userDoc?.email) { alert("O'z akkauntingizni o'chira olmaysiz"); return }
@@ -170,12 +176,17 @@ export default function Members() {
             {members.map(member => {
               const memberRoles = getRoles(member)
               return (
-                <div key={member.id} className="flex items-center gap-4 px-5 py-4 hover:bg-gray-50">
-                  <div className="w-10 h-10 bg-blue-700 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0">
+                <div key={member.id} className={`flex items-center gap-4 px-5 py-4 hover:bg-gray-50 ${member.disabled ? 'opacity-50' : ''}`}>
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0 ${member.disabled ? 'bg-gray-400' : 'bg-blue-700'}`}>
                     {member.name?.[0]?.toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="font-medium text-gray-800 text-sm">{member.name}</div>
+                    <div className="font-medium text-gray-800 text-sm flex items-center gap-2">
+                      {member.name}
+                      {member.disabled && (
+                        <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-medium">Bloklangan</span>
+                      )}
+                    </div>
                   </div>
                   <div className="flex gap-1 flex-wrap justify-end">
                     {memberRoles.map(roleId => {
@@ -193,6 +204,13 @@ export default function Members() {
                     <div className="flex gap-2">
                       <button onClick={() => openEdit(member)} className="text-gray-400 hover:text-blue-600 transition-colors">
                         <Pencil className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleToggleDisabled(member)}
+                        title={member.disabled ? 'Faollashtirish' : 'Bloklash'}
+                        className={`transition-colors ${member.disabled ? 'text-green-500 hover:text-green-700' : 'text-gray-400 hover:text-orange-500'}`}
+                      >
+                        {member.disabled ? <UserCheck className="w-4 h-4" /> : <UserX className="w-4 h-4" />}
                       </button>
                       <button
                         onClick={() => handleDelete(member)}

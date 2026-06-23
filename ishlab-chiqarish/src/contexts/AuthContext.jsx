@@ -30,8 +30,15 @@ export function AuthProvider({ children }) {
         const snap = await getDoc(ref)
 
         if (snap.exists()) {
-          setUser(firebaseUser)
-          setUserDoc(snap.data())
+          if (snap.data().disabled) {
+            await firebaseSignOut(auth)
+            setError('Kirish taqiqlangan. Admin bilan bog\'laning.')
+            setUser(null)
+            setUserDoc(null)
+          } else {
+            setUser(firebaseUser)
+            setUserDoc(snap.data())
+          }
         } else {
           // First ever user becomes admin
           const usersQ = query(collection(db, 'factory_users'), limit(1))
@@ -75,8 +82,9 @@ export function AuthProvider({ children }) {
         await firebaseSignOut(auth)
         setUser(null)
         setUserDoc(null)
+      } finally {
+        setLoading(false)
       }
-      setLoading(false)
     })
     return unsub
   }, [])
