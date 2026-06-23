@@ -7,7 +7,7 @@ import {
 import { db } from '../firebase/config'
 import { useDepartments } from '../contexts/DepartmentsContext'
 import { useAuth } from '../contexts/AuthContext'
-import { Calendar, Clock, Save, CheckCircle, RefreshCw, X, Search } from 'lucide-react'
+import { Calendar, Clock, Save, CheckCircle, RefreshCw, X, Search, MoreVertical } from 'lucide-react'
 
 function calcHours(start, end) {
   const [sh, sm] = start.split(':').map(Number)
@@ -51,6 +51,7 @@ export default function DepartmentWork() {
   const [savingAll, setSavingAll] = useState(false)
   const [savedAll, setSavedAll] = useState(false)
   const [overrides, setOverrides] = useState({}) // { [empId]: opId[] } — session only
+  const [menuEmp, setMenuEmp] = useState(null) // 3-dot menu open for which empId
   const [pickerEmp, setPickerEmp] = useState(null) // empId whose picker is open
   const [pickerSel, setPickerSel] = useState([]) // temp selection in picker
   const [search, setSearch] = useState('')
@@ -302,35 +303,31 @@ export default function DepartmentWork() {
                       </span>
                     )}
                   </div>
-                  <div className="flex items-center gap-2">
-                    {can.enterHourly && (
+                  {can.enterHourly && (
+                    <div className="relative">
                       <button
-                        onClick={() => openPicker(emp)}
-                        className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600 transition-colors"
-                        title="Operatsiyani almashtirish"
+                        onClick={() => setMenuEmp(menuEmp === emp.id ? null : emp.id)}
+                        className="p-2 rounded-lg text-gray-400 hover:bg-gray-200 hover:text-gray-600 transition-colors"
+                        title="Boshqa amallar"
                       >
-                        <RefreshCw className="w-3.5 h-3.5" />
-                        Almashtirish
+                        <MoreVertical className="w-4 h-4" />
                       </button>
-                    )}
-                    {can.enterHourly && (
-                      <button
-                        onClick={() => saveEmployee(emp.id)}
-                        disabled={saving[emp.id]}
-                        className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition-colors ${
-                          saved[emp.id]
-                            ? 'bg-green-100 text-green-700'
-                            : 'bg-blue-700 hover:bg-blue-800 text-white'
-                        } disabled:opacity-60`}
-                      >
-                        {saved[emp.id] ? (
-                          <><CheckCircle className="w-3.5 h-3.5" /> Saqlandi</>
-                        ) : (
-                          <><Save className="w-3.5 h-3.5" /> {saving[emp.id] ? 'Saqlanmoqda...' : 'Saqlash'}</>
-                        )}
-                      </button>
-                    )}
-                  </div>
+                      {menuEmp === emp.id && (
+                        <>
+                          <div className="fixed inset-0 z-10" onClick={() => setMenuEmp(null)} />
+                          <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-20 min-w-[160px]">
+                            <button
+                              onClick={() => { openPicker(emp); setMenuEmp(null) }}
+                              className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-lg"
+                            >
+                              <RefreshCw className="w-3.5 h-3.5 text-gray-400" />
+                              Operatsiya almashtirish
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Operation picker modal */}

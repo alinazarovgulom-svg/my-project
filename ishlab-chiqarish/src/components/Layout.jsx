@@ -135,14 +135,14 @@ export default function Layout({ children }) {
 
   return (
     <div className="flex h-screen bg-gray-50">
-      {/* Desktop sidebar */}
-      <aside className="hidden md:flex w-56 bg-blue-800 flex-col flex-shrink-0">
+      {/* Desktop sidebar — only on lg+ (1024px), hidden on tablets */}
+      <aside className="hidden lg:flex w-56 bg-blue-800 flex-col flex-shrink-0">
         <SidebarContent />
       </aside>
 
-      {/* Mobile sidebar overlay */}
+      {/* Mobile/tablet sidebar overlay */}
       {sidebarOpen && (
-        <div className="md:hidden fixed inset-0 z-40 flex">
+        <div className="lg:hidden fixed inset-0 z-40 flex">
           <div className="fixed inset-0 bg-black/50" onClick={() => setSidebarOpen(false)} />
           <aside className="relative w-64 bg-blue-800 flex flex-col z-50">
             <button
@@ -158,8 +158,8 @@ export default function Layout({ children }) {
 
       {/* Main */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Mobile top bar */}
-        <div className="md:hidden bg-blue-800 text-white px-4 py-3 flex items-center gap-3 flex-shrink-0">
+        {/* Mobile/tablet top bar */}
+        <div className="lg:hidden bg-blue-800 text-white px-4 py-3 flex items-center gap-3 flex-shrink-0">
           <button onClick={() => setSidebarOpen(true)}>
             <Menu className="w-5 h-5" />
           </button>
