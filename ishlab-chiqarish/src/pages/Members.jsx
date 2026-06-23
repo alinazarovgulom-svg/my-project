@@ -253,8 +253,9 @@ export default function Members() {
       {/* Modal */}
       {modal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
-            <div className="flex items-center justify-between mb-5">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md flex flex-col max-h-[90vh]">
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 pt-6 pb-4 flex-shrink-0">
               <h2 className="font-bold text-gray-800">
                 {modal === 'add' ? "Yangi a'zo" : "A'zoni tahrirlash"}
               </h2>
@@ -263,13 +264,14 @@ export default function Members() {
               </button>
             </div>
 
-            {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 mb-4 text-sm">
-                {error}
-              </div>
-            )}
+            {/* Scrollable content */}
+            <div className="flex-1 overflow-y-auto px-6 space-y-4 pb-2">
+              {error && (
+                <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 text-sm">
+                  {error}
+                </div>
+              )}
 
-            <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Ismi</label>
                 <input type="text" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
@@ -317,7 +319,6 @@ export default function Members() {
                   })}
                 </div>
               </div>
-            </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -340,8 +341,10 @@ export default function Members() {
                   })}
                 </div>
               </div>
+            </div>
 
-            <div className="flex gap-3 mt-6">
+            {/* Footer buttons - always visible */}
+            <div className="flex gap-3 px-6 py-4 border-t border-gray-100 flex-shrink-0">
               <button onClick={closeModal} className="flex-1 border border-gray-300 rounded-lg py-2.5 text-sm text-gray-600 hover:bg-gray-50 transition-colors">
                 Bekor
               </button>
