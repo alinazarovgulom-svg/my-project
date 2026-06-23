@@ -48,6 +48,8 @@ export default function DepartmentWork() {
   const [entries, setEntries] = useState({}) // { [empId]: { [opId]: { quantity, note } } }
   const [saving, setSaving] = useState({})
   const [saved, setSaved] = useState({})
+  const [savingAll, setSavingAll] = useState(false)
+  const [savedAll, setSavedAll] = useState(false)
   const [overrides, setOverrides] = useState({}) // { [empId]: opId[] } — session only
   const [pickerEmp, setPickerEmp] = useState(null) // empId whose picker is open
   const [pickerSel, setPickerSel] = useState([]) // temp selection in picker
@@ -130,6 +132,14 @@ export default function DepartmentWork() {
     setSaving(s => ({ ...s, [empId]: false }))
     setSaved(s => ({ ...s, [empId]: true }))
     setTimeout(() => setSaved(s => ({ ...s, [empId]: false })), 2000)
+  }
+
+  const saveAll = async () => {
+    setSavingAll(true)
+    await Promise.all(employees.map(emp => saveEmployee(emp.id)))
+    setSavingAll(false)
+    setSavedAll(true)
+    setTimeout(() => setSavedAll(false), 2500)
   }
 
   const openPicker = (emp) => {
@@ -234,16 +244,35 @@ export default function DepartmentWork() {
         </div>
       ) : (
         <>
-          {/* Search */}
-          <div className="relative mb-4">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input
-              type="text"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              placeholder="Xodimni qidirish..."
-              className="w-full border border-gray-300 rounded-lg pl-9 pr-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+          {/* Search + Save All */}
+          <div className="flex gap-3 mb-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                type="text"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Xodimni qidirish..."
+                className="w-full border border-gray-300 rounded-lg pl-9 pr-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            {can.enterHourly && (
+              <button
+                onClick={saveAll}
+                disabled={savingAll}
+                className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-colors flex-shrink-0 ${
+                  savedAll
+                    ? 'bg-green-100 text-green-700'
+                    : 'bg-blue-700 hover:bg-blue-800 text-white'
+                } disabled:opacity-60`}
+              >
+                {savedAll ? (
+                  <><CheckCircle className="w-4 h-4" /> Hammasi saqlandi</>
+                ) : (
+                  <><Save className="w-4 h-4" /> {savingAll ? 'Saqlanmoqda...' : 'Barchasini saqlash'}</>
+                )}
+              </button>
+            )}
           </div>
         <div className="space-y-4">
           {employees.filter(emp => {
@@ -364,11 +393,12 @@ export default function DepartmentWork() {
                             <div className="flex items-center gap-2">
                               <input
                                 type="number"
+                                inputMode="numeric"
                                 min="0"
                                 value={qty}
                                 onChange={e => setEntryVal(emp.id, op.id, 'quantity', e.target.value === '' ? '' : Number(e.target.value))}
                                 disabled={!can.enterHourly}
-                                className={`w-24 border rounded-lg px-3 py-1.5 text-sm text-center focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium ${statusStyle[status]}`}
+                                className={`w-24 border rounded-lg px-3 py-3 text-xl text-center focus:outline-none focus:ring-2 focus:ring-blue-500 font-bold ${statusStyle[status]}`}
                                 placeholder="0"
                               />
                               <span className="text-xs text-gray-400">dona</span>
