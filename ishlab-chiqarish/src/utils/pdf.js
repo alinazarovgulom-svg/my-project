@@ -22,12 +22,13 @@ export function exportPDF(rows, filters, deptName, showDept = true) {
   if (!rows.length) return
 
   // ── Global stats ─────────────────────────────────────────────────────────
-  const totalDone = rows.reduce((s, r) => s + Number(r.quantity || 0), 0)
-  const totalExp  = rows.reduce((s, r) => s + Number(r.expected  || 0), 0)
-  const eff       = totalExp > 0 ? Math.round((totalDone / totalExp) * 100) : 0
-  const empCount  = new Set(rows.map(r => r.empName)).size
-  const effColor  = eff >= 100 ? '#15803d' : eff >= 80 ? '#854d0e' : '#991b1b'
-  const effBg     = eff >= 100 ? '#f0fdf4' : eff >= 80 ? '#fefce8' : '#fef2f2'
+  const totalDone   = rows.reduce((s, r) => s + Number(r.quantity || 0), 0)
+  const totalExp    = rows.reduce((s, r) => s + Number(r.expected  || 0), 0)
+  const totalTayyor = rows.filter(r => r.isFinal).reduce((s, r) => s + Number(r.quantity || 0), 0)
+  const eff         = totalExp > 0 ? Math.round((totalDone / totalExp) * 100) : 0
+  const empCount    = new Set(rows.map(r => r.empName)).size
+  const effColor    = eff >= 100 ? '#15803d' : eff >= 80 ? '#854d0e' : '#991b1b'
+  const effBg       = eff >= 100 ? '#f0fdf4' : eff >= 80 ? '#fefce8' : '#fef2f2'
 
   // ── Employee efficiency ranking (across all dates) ───────────────────────
   const empStats = new Map()
@@ -246,6 +247,10 @@ export function exportPDF(rows, filters, deptName, showDept = true) {
 </div>
 
 <div class="stats">
+  <div class="card" style="background:#fffbeb">
+    <div class="card-val" style="color:#b45309">${totalTayyor}</div>
+    <div class="card-lbl">Tayyor mahsulot</div>
+  </div>
   <div class="card" style="background:#eff6ff">
     <div class="card-val" style="color:#1e40af">${empCount}</div>
     <div class="card-lbl">Xodimlar</div>
