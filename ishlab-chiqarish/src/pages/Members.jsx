@@ -7,6 +7,7 @@ import { getAuth, createUserWithEmailAndPassword, signOut as fbSignOut } from 'f
 import { initializeApp, getApps } from 'firebase/app'
 import { db } from '../firebase/config'
 import { useAuth } from '../contexts/AuthContext'
+import { useDepartments } from '../contexts/DepartmentsContext'
 import { Plus, Trash2, X, Check, Shield, Eye, Download, Pencil, Clock, UserX, UserCheck } from 'lucide-react'
 
 const ROLES = [
@@ -25,7 +26,7 @@ const roleColors = {
   viewer: 'bg-gray-100 text-gray-700',
 }
 
-const empty = { name: '', email: '', password: '', roles: ['viewer'] }
+const empty = { name: '', email: '', password: '', roles: ['viewer'], departmentIds: [] }
 
 function getRoles(member) {
   if (Array.isArray(member.roles)) return member.roles
@@ -51,6 +52,7 @@ function getSecondaryAuth() {
 
 export default function Members() {
   const { userDoc, can } = useAuth()
+  const { departments } = useDepartments()
   const [members, setMembers] = useState([])
   const [modal, setModal] = useState(null)
   const [form, setForm] = useState(empty)
@@ -72,6 +74,15 @@ export default function Members() {
       roles: f.roles.includes(roleId)
         ? f.roles.filter(r => r !== roleId)
         : [...f.roles, roleId],
+    }))
+  }
+
+  const toggleDept = (deptId) => {
+    setForm(f => ({
+      ...f,
+      departmentIds: f.departmentIds.includes(deptId)
+        ? f.departmentIds.filter(d => d !== deptId)
+        : [...f.departmentIds, deptId],
     }))
   }
 
@@ -98,6 +109,7 @@ export default function Members() {
           name: form.name.trim(),
           email: form.email.trim(),
           roles: form.roles,
+          departmentIds: form.departmentIds,
           createdAt: serverTimestamp(),
         })
 
@@ -108,10 +120,10 @@ export default function Members() {
           roles: form.roles,
         })
       } else {
-        // Edit roles/name only
         await setDoc(doc(db, 'factory_users', modal.id), {
           name: form.name.trim(),
           roles: form.roles,
+          departmentIds: form.departmentIds,
         }, { merge: true })
       }
       closeModal()
@@ -150,7 +162,7 @@ export default function Members() {
   }
 
   const openEdit = (m) => {
-    setForm({ name: m.name, email: m.email, password: '', roles: getRoles(m) })
+    setForm({ name: m.name, email: m.email, password: '', roles: getRoles(m), departmentIds: m.departmentIds || [] })
     setError('')
     setModal(m)
   }
@@ -181,12 +193,22 @@ export default function Members() {
                     {member.name?.[0]?.toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="font-medium text-gray-800 text-sm flex items-center gap-2">
+                    <div className="font-medium text-gray-800 text-sm flex items-center gap-2 flex-wrap">
                       {member.name}
                       {member.disabled && (
                         <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-medium">Bloklangan</span>
                       )}
                     </div>
+                    {member.departmentIds?.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-0.5">
+                        {member.departmentIds.map(dId => {
+                          const d = departments.find(x => x.id === dId)
+                          return d ? (
+                            <span key={dId} className="text-xs bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">{d.name}</span>
+                          ) : null
+                        })}
+                      </div>
+                    )}
                   </div>
                   <div className="flex gap-1 flex-wrap justify-end">
                     {memberRoles.map(roleId => {
@@ -296,6 +318,28 @@ export default function Members() {
                 </div>
               </div>
             </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Bo'limlar <span className="text-gray-400 font-normal text-xs">(bo'sh = barchasi)</span>
+                </label>
+                <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
+                  {departments.map(dept => {
+                    const checked = form.departmentIds.includes(dept.id)
+                    return (
+                      <label key={dept.id} className={`flex items-center gap-2.5 p-2.5 border rounded-lg cursor-pointer transition-colors ${checked ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:bg-gray-50'}`}>
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() => toggleDept(dept.id)}
+                          className="accent-blue-700 w-4 h-4"
+                        />
+                        <span className="text-sm text-gray-800">{dept.name}</span>
+                      </label>
+                    )
+                  })}
+                </div>
+              </div>
 
             <div className="flex gap-3 mt-6">
               <button onClick={closeModal} className="flex-1 border border-gray-300 rounded-lg py-2.5 text-sm text-gray-600 hover:bg-gray-50 transition-colors">

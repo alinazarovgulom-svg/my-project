@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { collection, query, where, getDocs } from 'firebase/firestore'
 import { db } from '../firebase/config'
 import { useDepartments } from '../contexts/DepartmentsContext'
+import { useAuth } from '../contexts/AuthContext'
 import { format, subDays } from 'date-fns'
 import { Users, Settings, TrendingUp, ChevronRight, Package } from 'lucide-react'
 import {
@@ -48,7 +49,11 @@ const CustomTooltip = ({ active, payload, label }) => {
 }
 
 export default function Dashboard() {
-  const { departments } = useDepartments()
+  const { departments: allDepartments } = useDepartments()
+  const { userDoc, can } = useAuth()
+  const departments = can.manageMembers || !userDoc?.departmentIds?.length
+    ? allDepartments
+    : allDepartments.filter(d => userDoc.departmentIds.includes(d.id))
   const [stats, setStats]       = useState({ employees: 0, operations: 0 })
   const [deptStats, setDeptStats] = useState({})
   const [weekData, setWeekData]   = useState([])

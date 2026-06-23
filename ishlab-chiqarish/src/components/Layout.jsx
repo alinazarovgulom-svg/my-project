@@ -20,6 +20,9 @@ const navItems = [
 export default function Layout({ children }) {
   const { userDoc, signOut, can } = useAuth()
   const { departments } = useDepartments()
+  const visibleDepts = can.manageMembers || !userDoc?.departmentIds?.length
+    ? departments
+    : departments.filter(d => userDoc.departmentIds.includes(d.id))
   const location = useLocation()
   const navigate = useNavigate()
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -89,7 +92,7 @@ export default function Layout({ children }) {
             + Boshqarish
           </Link>
         )}
-        {deptOpen && departments.map(dept => {
+        {deptOpen && visibleDepts.map(dept => {
           const active = location.pathname === `/department/${dept.id}`
           return (
             <Link

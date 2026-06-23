@@ -33,9 +33,11 @@ const statusStyle = {
 
 export default function DepartmentWork() {
   const { deptId } = useParams()
-  const { user, can } = useAuth()
+  const { user, userDoc, can } = useAuth()
   const { departments } = useDepartments()
   const dept = departments.find(d => d.id === deptId)
+
+  const hasAccess = can.manageMembers || !userDoc?.departmentIds?.length || userDoc.departmentIds.includes(deptId)
 
   const [date, setDate] = useState('')
   const [startTime, setStartTime] = useState('')
@@ -148,6 +150,13 @@ export default function DepartmentWork() {
   const hours = Math.max(0, calcHours(startTime, endTime) - breakMinutes / 60)
 
   if (!dept) return <div className="text-red-500 p-4">Bo'lim topilmadi</div>
+  if (!hasAccess) return (
+    <div className="flex flex-col items-center justify-center h-64 text-center">
+      <div className="text-4xl mb-3">🔒</div>
+      <div className="text-gray-700 font-semibold">Ruxsat yo'q</div>
+      <div className="text-gray-400 text-sm mt-1">Bu bo'limga kirishingiz cheklanган</div>
+    </div>
+  )
 
   return (
     <div>
