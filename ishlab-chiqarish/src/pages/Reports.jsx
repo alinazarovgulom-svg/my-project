@@ -6,7 +6,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { exportPDF } from '../utils/pdf'
 import { exportExcel } from '../utils/excel'
 import { format } from 'date-fns'
-import { Search, FileText, Download } from 'lucide-react'
+import { Search, FileText, Download, Package, Star } from 'lucide-react'
 
 function calcHours(start, end) {
   const [sh, sm] = start.split(':').map(Number)
@@ -102,6 +102,7 @@ export default function Reports() {
             startTime: entry.startTime,
             endTime: entry.endTime,
             breakMinutes: bm,
+            isFinal: !!(op.isFinal),
           })
         })
       })
@@ -266,6 +267,29 @@ export default function Reports() {
             </div>
           )}
 
+          {/* Tayyor mahsulot summary */}
+          {(() => {
+            const tayyorByDept = {}
+            rows.forEach(r => {
+              if (r.isFinal) tayyorByDept[r.deptName] = (tayyorByDept[r.deptName] || 0) + r.quantity
+            })
+            const entries = Object.entries(tayyorByDept)
+            if (!entries.length) return null
+            return (
+              <div className="flex flex-wrap gap-3 mb-4">
+                {entries.map(([dept, count]) => (
+                  <div key={dept} className="flex items-center gap-2 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
+                    <Package className="w-4 h-4 text-amber-600 shrink-0" />
+                    <div className="text-sm">
+                      <span className="text-gray-500 text-xs">{dept}:</span>
+                      <strong className="text-amber-700 ml-1">{count} tayyor mahsulot</strong>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )
+          })()}
+
           {/* Legend */}
           <div className="flex gap-3 mb-3 flex-wrap">
             <span className="flex items-center gap-1.5 text-xs">
@@ -304,7 +328,7 @@ export default function Reports() {
               rows.forEach(r => {
                 const key = `${r.empName}|||${r.deptName}|||${r.opName}`
                 if (!grouped[key]) {
-                  grouped[key] = { empName: r.empName, deptName: r.deptName, opName: r.opName, norm: r.norm, slots: {} }
+                  grouped[key] = { empName: r.empName, deptName: r.deptName, opName: r.opName, norm: r.norm, isFinal: r.isFinal, slots: {} }
                 }
                 grouped[key].slots[`${r.date}|${r.startTime}–${r.endTime}`] = {
                   quantity: r.quantity, expected: r.expected, note: r.note,
@@ -379,7 +403,10 @@ export default function Reports() {
                                 )}
                               </td>
                             )}
-                            <td className="px-4 py-2.5 text-gray-700 whitespace-nowrap">{r.opName}</td>
+                            <td className="px-4 py-2.5 text-gray-700 whitespace-nowrap">
+                              {r.opName}
+                              {r.isFinal && <Star className="inline-block w-3 h-3 text-amber-500 fill-amber-500 ml-1 -mt-0.5" />}
+                            </td>
                             <td className="px-4 py-2.5 text-gray-400 text-xs whitespace-nowrap">{r.norm} dona/soat</td>
                             {slots.map(k => {
                               const d = r.slots[k]

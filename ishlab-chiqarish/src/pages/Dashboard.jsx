@@ -4,7 +4,7 @@ import { collection, query, where, getDocs } from 'firebase/firestore'
 import { db } from '../firebase/config'
 import { useDepartments } from '../contexts/DepartmentsContext'
 import { format, subDays } from 'date-fns'
-import { Users, Settings, TrendingUp, ChevronRight } from 'lucide-react'
+import { Users, Settings, TrendingUp, ChevronRight, Package } from 'lucide-react'
 import {
   ResponsiveContainer,
   LineChart, Line,
@@ -64,7 +64,12 @@ export default function Dashboard() {
       ])
 
       const normMap = {}
-      opSnap.forEach(d => { normMap[d.id] = d.data().norm || 0 })
+      const finalOpMap = {}
+      opSnap.forEach(d => {
+        const data = d.data()
+        normMap[d.id] = data.norm || 0
+        if (data.isFinal) finalOpMap[data.departmentId] = d.id
+      })
 
       const entriesSnap = await getDocs(
         query(collection(db, 'factory_work_entries'), where('date', '==', today))
@@ -72,7 +77,7 @@ export default function Dashboard() {
 
       const deptData = {}
       departments.forEach(d => {
-        deptData[d.id] = { employees: 0, attended: 0, done: 0, expected: 0 }
+        deptData[d.id] = { employees: 0, attended: 0, done: 0, expected: 0, tayyor: 0 }
       })
 
       empSnap.forEach(doc => {
@@ -89,8 +94,10 @@ export default function Dashboard() {
         if (!seenEmp.has(key)) { seenEmp.add(key); dd.attended++ }
         const hours = calcHours(d.startTime, d.endTime)
         Object.entries(d.operations || {}).forEach(([opId, val]) => {
-          dd.done     += Number(val.quantity || 0)
+          const qty = Number(val.quantity || 0)
+          dd.done     += qty
           dd.expected += (normMap[opId] || 0) * hours
+          if (finalOpMap[d.departmentId] === opId) dd.tayyor += qty
         })
       })
 
@@ -148,6 +155,7 @@ export default function Dashboard() {
   const totalDone     = Object.values(deptStats).reduce((s, d) => s + d.done, 0)
   const totalExp      = Object.values(deptStats).reduce((s, d) => s + d.expected, 0)
   const totalEff      = totalExp > 0 ? Math.round((totalDone / totalExp) * 100) : null
+  const totalTayyor   = Object.values(deptStats).reduce((s, d) => s + (d.tayyor || 0), 0)
 
   // Bar chart data: departments with today's efficiency
   const deptChartData = departments
@@ -165,7 +173,7 @@ export default function Dashboard() {
       <h1 className="text-xl font-bold text-gray-800 mb-6">Dashboard</h1>
 
       {/* Summary cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-5 gap-4 mb-8">
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -209,6 +217,17 @@ export default function Dashboard() {
                 {loading ? '—' : totalEff === null ? '—' : `${totalEff}%`}
               </div>
               <div className="text-xs text-gray-500">Bugungi samaradorlik</div>
+            </div>
+          </div>
+        </div>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
+              <Package className="w-5 h-5 text-amber-700" />
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-gray-800">{loading ? '—' : totalTayyor}</div>
+              <div className="text-xs text-gray-500">Tayyor mahsulot</div>
             </div>
           </div>
         </div>
@@ -283,7 +302,7 @@ export default function Dashboard() {
       <h2 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-3">Bo'limlar — bugun</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         {departments.map(dept => {
-          const ds = deptStats[dept.id] || { employees: 0, attended: 0, done: 0, expected: 0 }
+          const ds = deptStats[dept.id] || { employees: 0, attended: 0, done: 0, expected: 0, tayyor: 0 }
           const attendPct = ds.employees ? Math.round((ds.attended / ds.employees) * 100) : 0
           const eff = ds.expected > 0 ? Math.round((ds.done / ds.expected) * 100) : null
           const ec = effColor(eff)
@@ -328,6 +347,15 @@ export default function Dashboard() {
                   <div className={`${ec.bar} h-1.5 rounded-full transition-all`} style={{ width: `${Math.min(eff ?? 0, 100)}%` }} />
                 </div>
               </div>
+
+              {ds.tayyor > 0 && (
+                <div className="mt-2 flex items-center gap-1.5 bg-amber-50 border border-amber-100 rounded-lg px-2 py-1.5">
+                  <Package className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                  <div className="text-xs text-amber-700">
+                    <strong>{ds.tayyor}</strong> tayyor mahsulot
+                  </div>
+                </div>
+              )}
             </Link>
           )
         })}

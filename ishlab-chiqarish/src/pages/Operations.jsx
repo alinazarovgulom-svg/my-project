@@ -6,7 +6,7 @@ import {
 import { db } from '../firebase/config'
 import { useDepartments } from '../contexts/DepartmentsContext'
 import { useAuth } from '../contexts/AuthContext'
-import { Plus, Pencil, Trash2, X, Check } from 'lucide-react'
+import { Plus, Pencil, Trash2, X, Check, Star } from 'lucide-react'
 
 export default function Operations() {
   const { can } = useAuth()
@@ -49,6 +49,18 @@ export default function Operations() {
     }
     setSaving(false)
     closeModal()
+  }
+
+  const handleToggleFinal = async (op) => {
+    if (op.isFinal) {
+      await updateDoc(doc(db, 'factory_operations', op.id), { isFinal: false })
+    } else {
+      const currentFinal = operations.find(o => o.departmentId === op.departmentId && o.isFinal && o.id !== op.id)
+      if (currentFinal) {
+        await updateDoc(doc(db, 'factory_operations', currentFinal.id), { isFinal: false })
+      }
+      await updateDoc(doc(db, 'factory_operations', op.id), { isFinal: true })
+    }
   }
 
   const handleDelete = async (id) => {
@@ -107,6 +119,7 @@ export default function Operations() {
                   <th className="text-left px-4 py-3 font-medium text-gray-600">Operatsiya nomi</th>
                   <th className="text-left px-4 py-3 font-medium text-gray-600">Bo'lim</th>
                   <th className="text-left px-4 py-3 font-medium text-gray-600">Norma (1 soat)</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-600">Yakuniy</th>
                   {can.manageOperations && <th className="px-4 py-3 w-20" />}
                 </tr>
               </thead>
@@ -120,6 +133,23 @@ export default function Operations() {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-gray-600">{op.norm} dona</td>
+                    <td className="px-4 py-3">
+                      <button
+                        onClick={() => can.manageOperations && handleToggleFinal(op)}
+                        disabled={!can.manageOperations}
+                        title={op.isFinal ? 'Yakuniy operatsiya — bosib olib tashlash' : 'Yakuniy operatsiya qilib belgilash'}
+                        className={`flex items-center gap-1.5 text-xs transition-colors ${
+                          op.isFinal
+                            ? 'text-amber-600'
+                            : can.manageOperations
+                              ? 'text-gray-300 hover:text-amber-400'
+                              : 'text-gray-200 cursor-default'
+                        }`}
+                      >
+                        <Star className={`w-4 h-4 ${op.isFinal ? 'fill-amber-500 text-amber-500' : ''}`} />
+                        {op.isFinal && <span className="font-medium">Yakuniy</span>}
+                      </button>
+                    </td>
                     {can.manageOperations && (
                       <td className="px-4 py-3">
                         <div className="flex gap-2 justify-end">
