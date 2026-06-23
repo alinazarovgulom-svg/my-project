@@ -68,7 +68,7 @@ export function exportPDF(rows, filters, deptName, showDept = true) {
         groupMap.set(key, { empName: r.empName, deptName: r.deptName, opName: r.opName, norm: r.norm, bySlot: {} })
       }
       groupMap.get(key).bySlot[`${r.startTime}–${r.endTime}`] = {
-        qty: Number(r.quantity), exp: Number(r.expected),
+        qty: Number(r.quantity), exp: Number(r.expected), note: r.note || '',
       }
     })
 
@@ -105,6 +105,7 @@ export function exportPDF(rows, filters, deptName, showDept = true) {
             <div class="qty-num" style="color:${color}">${e.qty}</div>
             <div class="qty-exp">${e.exp}</div>
           </div>
+          ${e.note ? `<div class="slot-note">${esc(e.note)}</div>` : ''}
         </td>`
       }).join('')
 
@@ -212,6 +213,7 @@ export function exportPDF(rows, filters, deptName, showDept = true) {
   .qty-badge { border-radius:5px; padding:3px 6px; display:inline-block; min-width:36px; }
   .qty-num { font-weight:700; font-size:12px; line-height:1.3; }
   .qty-exp { font-size:8.5px; color:#64748b; line-height:1.3; }
+  .slot-note { font-size:8px; color:#475569; font-style:italic; margin-top:2px; max-width:80px; word-wrap:break-word; }
 
   /* Legend */
   .legend { display:flex; align-items:center; gap:12px; margin-top:8px;

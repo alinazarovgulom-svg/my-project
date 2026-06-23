@@ -418,6 +418,11 @@ export default function Reports() {
                                 <td key={k} className="px-3 py-2.5 text-center">
                                   <span className={`font-bold px-2 py-0.5 rounded text-xs ${cls}`}>{d.quantity}</span>
                                   <div className="text-xs text-gray-400 mt-0.5">{d.expected.toFixed(0)}</div>
+                                  {d.note && (
+                                    <div className="text-xs text-gray-500 italic mt-1 leading-tight max-w-[100px] mx-auto break-words">
+                                      {d.note}
+                                    </div>
+                                  )}
                                 </td>
                               )
                             })}
