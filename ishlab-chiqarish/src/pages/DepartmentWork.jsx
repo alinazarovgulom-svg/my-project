@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useBlocker } from 'react-router-dom'
 import {
   collection, query, where, onSnapshot, getDocs,
   doc, setDoc, serverTimestamp,
@@ -7,7 +7,7 @@ import {
 import { db } from '../firebase/config'
 import { useDepartments } from '../contexts/DepartmentsContext'
 import { useAuth } from '../contexts/AuthContext'
-import { Calendar, Clock, Save, CheckCircle, RefreshCw, X, Search, MoreVertical } from 'lucide-react'
+import { Calendar, Clock, Save, CheckCircle, RefreshCw, X, Search, MoreVertical, AlertTriangle } from 'lucide-react'
 
 function calcHours(start, end) {
   const [sh, sm] = start.split(':').map(Number)
@@ -50,6 +50,7 @@ export default function DepartmentWork() {
   const [saved, setSaved] = useState({})
   const [savingAll, setSavingAll] = useState(false)
   const [savedAll, setSavedAll] = useState(false)
+  const [isDirty, setIsDirty] = useState(false)
   const [overrides, setOverrides] = useState({}) // { [empId]: opId[] } — session only
   const [menuEmp, setMenuEmp] = useState(null) // 3-dot menu open for which empId
   const [pickerEmp, setPickerEmp] = useState(null) // empId whose picker is open
@@ -75,12 +76,22 @@ export default function DepartmentWork() {
     })
   }, [])
 
-  // Reset overrides when date/time changes
+  // Reset overrides and dirty flag when date/time changes
   useEffect(() => {
     setOverrides({})
     setPickerEmp(null)
     setBreakMinutes(0)
+    setIsDirty(false)
   }, [date, startTime, endTime])
+
+  // Warn on browser tab close / refresh
+  useEffect(() => {
+    const handler = (e) => {
+      if (isDirty) { e.preventDefault(); e.returnValue = '' }
+    }
+    window.addEventListener('beforeunload', handler)
+    return () => window.removeEventListener('beforeunload', handler)
+  }, [isDirty])
 
   // Load existing entries when date/time changes
   useEffect(() => {
@@ -114,6 +125,7 @@ export default function DepartmentWork() {
       },
     }))
     setSaved(s => ({ ...s, [empId]: false }))
+    setIsDirty(true)
   }
 
   const saveEmployee = async (empId) => {
@@ -140,6 +152,7 @@ export default function DepartmentWork() {
     await Promise.all(employees.map(emp => saveEmployee(emp.id)))
     setSavingAll(false)
     setSavedAll(true)
+    setIsDirty(false)
     setTimeout(() => setSavedAll(false), 2500)
   }
 
@@ -159,6 +172,9 @@ export default function DepartmentWork() {
   }
 
   const hours = Math.max(0, calcHours(startTime, endTime) - breakMinutes / 60)
+
+  // Block in-app navigation when unsaved changes exist
+  const blocker = useBlocker(isDirty)
 
   if (!dept) return <div className="text-red-500 p-4">Bo'lim topilmadi</div>
   if (!hasAccess) return (
@@ -419,6 +435,35 @@ export default function DepartmentWork() {
           })}
         </div>
         </>
+      )}
+
+      {/* Unsaved changes blocker modal */}
+      {blocker.state === 'blocked' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center">
+            <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <AlertTriangle className="w-6 h-6 text-amber-600" />
+            </div>
+            <h2 className="font-bold text-gray-800 mb-2">Saqlanmagan ma'lumotlar bor</h2>
+            <p className="text-sm text-gray-500 mb-6">
+              Kiritilgan ma'lumotlar saqlanmagan. Chiqsangiz yo'qoladi.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => blocker.reset()}
+                className="flex-1 border border-gray-300 rounded-lg py-2.5 text-sm text-gray-600 hover:bg-gray-50 transition-colors"
+              >
+                Qolaman
+              </button>
+              <button
+                onClick={() => blocker.proceed()}
+                className="flex-1 bg-red-600 hover:bg-red-700 text-white rounded-lg py-2.5 text-sm font-medium transition-colors"
+              >
+                Chiqaman
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )
