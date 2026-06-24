@@ -18,8 +18,12 @@ const REASONS = [
 ]
 
 export default function Attendance() {
-  const { user, can } = useAuth()
+  const { user, can, userDoc } = useAuth()
   const { departments } = useDepartments()
+  const visibleDepts = can.manageMembers || !userDoc?.departmentIds?.length
+    ? departments
+    : departments.filter(d => userDoc.departmentIds.includes(d.id))
+  const visibleDeptIds = new Set(visibleDepts.map(d => d.id))
 
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10))
   const [employees, setEmployees] = useState([])
@@ -105,12 +109,13 @@ export default function Attendance() {
     saveReason(emp, absences[emp.id].reason, notes[emp.id] ?? '')
   }
 
-  // Absent = no work entries today
-  const absentEmps = employees.filter(e => !presentIds.has(e.id))
-  const presentCount = employees.length - absentEmps.length
+  // Absent = no work entries today (only within visible departments)
+  const visibleEmps = employees.filter(e => visibleDeptIds.has(e.departmentId))
+  const absentEmps = visibleEmps.filter(e => !presentIds.has(e.id))
+  const presentCount = visibleEmps.length - absentEmps.length
 
   // Group absent employees by department
-  const byDept = departments
+  const byDept = visibleDepts
     .map(dept => ({
       dept,
       emps: absentEmps.filter(e => e.departmentId === dept.id),
@@ -138,13 +143,13 @@ export default function Attendance() {
             />
           </div>
           <button
-            onClick={() => exportAttendancePDF(absentEmps, employees, absences, departments, date)}
+            onClick={() => exportAttendancePDF(absentEmps, visibleEmps, absences, visibleDepts, date)}
             className="flex items-center gap-1.5 bg-red-600 hover:bg-red-700 text-white text-xs px-3 py-2 rounded-lg transition-colors"
           >
             <FileText className="w-3.5 h-3.5" /> PDF
           </button>
           <button
-            onClick={() => exportAttendanceExcel(absentEmps, employees, absences, departments, date)}
+            onClick={() => exportAttendanceExcel(absentEmps, visibleEmps, absences, visibleDepts, date)}
             className="flex items-center gap-1.5 bg-green-700 hover:bg-green-800 text-white text-xs px-3 py-2 rounded-lg transition-colors"
           >
             <Download className="w-3.5 h-3.5" /> Excel
@@ -155,7 +160,7 @@ export default function Attendance() {
       {/* Summary cards */}
       <div className="grid grid-cols-3 gap-4 mb-6">
         <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 text-center">
-          <div className="text-2xl font-bold text-blue-700">{employees.length}</div>
+          <div className="text-2xl font-bold text-blue-700">{visibleEmps.length}</div>
           <div className="text-xs text-blue-500 mt-1">Jami xodimlar</div>
         </div>
         <div className="bg-green-50 border border-green-100 rounded-xl p-4 text-center">
