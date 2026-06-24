@@ -56,6 +56,14 @@ export default function DepartmentWork() {
   const [pickerEmp, setPickerEmp] = useState(null) // empId whose picker is open
   const [pickerSel, setPickerSel] = useState([]) // temp selection in picker
   const [search, setSearch] = useState('')
+  const [activeShift, setActiveShift] = useState(null)
+
+  useEffect(() => {
+    getDocs(query(collection(db, 'factory_shifts'), where('isActive', '==', true)))
+      .then(snap => {
+        if (!snap.empty) setActiveShift({ id: snap.docs[0].id, ...snap.docs[0].data() })
+      })
+  }, [])
 
   // Load employees in this dept
   useEffect(() => {
@@ -192,6 +200,30 @@ export default function DepartmentWork() {
 
       {/* Controls */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
+        {activeShift && (
+          <div className="mb-4">
+            <div className="text-xs font-medium text-gray-500 mb-2">Tez tanlash ({activeShift.name})</div>
+            <div className="flex flex-wrap gap-2">
+              {(activeShift.slots || []).map((slot, i) => {
+                const isSelected = startTime === slot.startTime && endTime === slot.endTime
+                return (
+                  <button
+                    key={i}
+                    onClick={() => { setStartTime(slot.startTime); setEndTime(slot.endTime); setBreakMinutes(slot.breakMinutes || 0) }}
+                    className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
+                      isSelected
+                        ? 'bg-blue-700 text-white border-blue-700'
+                        : 'bg-white text-gray-600 border-gray-200 hover:border-blue-400 hover:text-blue-600'
+                    }`}
+                  >
+                    {slot.startTime}–{slot.endTime}
+                    {slot.breakMinutes > 0 && <span className={`ml-1 ${isSelected ? 'text-blue-200' : 'text-orange-400'}`}>⏸{slot.breakMinutes}'</span>}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )}
         <div className="flex flex-wrap gap-4 items-end">
           <div>
             <label className="block text-xs font-medium text-gray-500 mb-1">

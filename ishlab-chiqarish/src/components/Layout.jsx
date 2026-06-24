@@ -5,7 +5,7 @@ import { useDepartments } from '../contexts/DepartmentsContext'
 import {
   LayoutDashboard, Settings, Users, ClipboardList, FileText,
   LogOut, Menu, X, ChevronDown, ChevronRight, Factory, Building2,
-  CalendarCheck,
+  CalendarCheck, AlarmClock,
 } from 'lucide-react'
 
 const navItems = [
@@ -14,6 +14,7 @@ const navItems = [
   { to: '/operations', label: 'Operatsiyalar', icon: Settings },
   { to: '/employees', label: 'Xodimlar', icon: Users },
   { to: '/reports', label: 'Hisobotlar', icon: FileText },
+  { to: '/shifts', label: 'Smena jadvali', icon: AlarmClock, adminOnly: true },
   { to: '/members', label: "A'zolar", icon: ClipboardList, adminOnly: true },
 ]
 

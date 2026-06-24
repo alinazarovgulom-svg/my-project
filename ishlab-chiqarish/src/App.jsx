@@ -12,6 +12,7 @@ import Reports from './pages/Reports'
 import Members from './pages/Members'
 import Departments from './pages/Departments'
 import Attendance from './pages/Attendance'
+import Shifts from './pages/Shifts'
 import { useAuth } from './contexts/AuthContext'
 
 function AppRoutes() {
@@ -33,6 +34,7 @@ function AppRoutes() {
                 <Route path="/reports" element={<Reports />} />
                 <Route path="/attendance" element={<Attendance />} />
                 <Route path="/members" element={<Members />} />
+                <Route path="/shifts" element={<Shifts />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </Layout>
