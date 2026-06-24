@@ -9,8 +9,11 @@ import { useAuth } from '../contexts/AuthContext'
 import { Plus, Pencil, Trash2, X, Check, Star } from 'lucide-react'
 
 export default function Operations() {
-  const { can } = useAuth()
+  const { can, userDoc } = useAuth()
   const { departments, getDeptName } = useDepartments()
+  const visibleDepts = can.manageMembers || !userDoc?.departmentIds?.length
+    ? departments
+    : departments.filter(d => userDoc.departmentIds.includes(d.id))
   const [operations, setOperations] = useState([])
   const [filterDept, setFilterDept] = useState('all')
   const [modal, setModal] = useState(null) // null | 'add' | {id, ...}
@@ -25,8 +28,7 @@ export default function Operations() {
     })
   }, [])
 
-  const empty = { name: '', norm: '', departmentId: departments[0]?.id || '' }
-  const openAdd = () => { setForm({ name: '', norm: '', departmentId: departments[0]?.id || '' }); setModal('add') }
+  const openAdd = () => { setForm({ name: '', norm: '', departmentId: visibleDepts[0]?.id || '' }); setModal('add') }
   const openEdit = (op) => { setForm({ name: op.name, norm: op.norm, departmentId: op.departmentId }); setModal(op) }
   const closeModal = () => setModal(null)
 
@@ -70,7 +72,9 @@ export default function Operations() {
     setDeleting(null)
   }
 
-  const filtered = filterDept === 'all' ? operations : operations.filter(o => o.departmentId === filterDept)
+  const visibleOpIds = new Set(visibleDepts.map(d => d.id))
+  const visibleOps = operations.filter(o => visibleOpIds.has(o.departmentId))
+  const filtered = filterDept === 'all' ? visibleOps : visibleOps.filter(o => o.departmentId === filterDept)
 
   return (
     <div>
@@ -94,7 +98,7 @@ export default function Operations() {
         >
           Barchasi
         </button>
-        {departments.map(d => (
+        {visibleDepts.map(d => (
           <button
             key={d.id}
             onClick={() => setFilterDept(d.id)}
@@ -205,7 +209,7 @@ export default function Operations() {
                   onChange={e => setForm(f => ({ ...f, departmentId: e.target.value }))}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  {departments.map(d => (
+                  {visibleDepts.map(d => (
                     <option key={d.id} value={d.id}>{d.name}</option>
                   ))}
                 </select>

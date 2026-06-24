@@ -9,8 +9,11 @@ import { useAuth } from '../contexts/AuthContext'
 import { Plus, Pencil, Trash2, X, Check, Search } from 'lucide-react'
 
 export default function Employees() {
-  const { can } = useAuth()
+  const { can, userDoc } = useAuth()
   const { departments, getDeptName } = useDepartments()
+  const visibleDepts = can.manageMembers || !userDoc?.departmentIds?.length
+    ? departments
+    : departments.filter(d => userDoc.departmentIds.includes(d.id))
   const [employees, setEmployees] = useState([])
   const [allOps, setAllOps] = useState([])
   const [filterDept, setFilterDept] = useState('all')
@@ -31,7 +34,7 @@ export default function Employees() {
 
   const deptOps = allOps.filter(o => o.departmentId === form.departmentId)
 
-  const openAdd = () => { setForm({ firstName: '', lastName: '', departmentId: departments[0]?.id || '', operationIds: [] }); setModal('add') }
+  const openAdd = () => { setForm({ firstName: '', lastName: '', departmentId: visibleDepts[0]?.id || '', operationIds: [] }); setModal('add') }
   const openEdit = (emp) => {
     setForm({
       firstName: emp.firstName,
@@ -82,7 +85,9 @@ export default function Employees() {
 
   const [search, setSearch] = useState('')
 
+  const visibleDeptIds = new Set(visibleDepts.map(d => d.id))
   const filtered = employees
+    .filter(e => visibleDeptIds.has(e.departmentId))
     .filter(e => filterDept === 'all' || e.departmentId === filterDept)
     .filter(e => {
       if (!search.trim()) return true
@@ -122,9 +127,9 @@ export default function Employees() {
           onClick={() => setFilterDept('all')}
           className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${filterDept === 'all' ? 'bg-blue-700 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
         >
-          Barchasi ({employees.length})
+          Barchasi ({[...visibleDeptIds].reduce((s, id) => s + employees.filter(e => e.departmentId === id).length, 0)})
         </button>
-        {departments.map(d => {
+        {visibleDepts.map(d => {
           const count = employees.filter(e => e.departmentId === d.id).length
           return (
             <button
@@ -248,7 +253,7 @@ export default function Employees() {
                   onChange={e => handleDeptChange(e.target.value)}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  {departments.map(d => (
+                  {visibleDepts.map(d => (
                     <option key={d.id} value={d.id}>{d.name}</option>
                   ))}
                 </select>

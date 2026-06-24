@@ -23,8 +23,11 @@ function statusClass(qty, expected) {
 const today = format(new Date(), 'yyyy-MM-dd')
 
 export default function Reports() {
-  const { can } = useAuth()
+  const { can, userDoc } = useAuth()
   const { departments, getDeptName } = useDepartments()
+  const visibleDepts = can.manageMembers || !userDoc?.departmentIds?.length
+    ? departments
+    : departments.filter(d => userDoc.departmentIds.includes(d.id))
   const [dateFrom, setDateFrom] = useState(today)
   const [dateTo, setDateTo] = useState(today)
   const [startTime, setStartTime] = useState('08:00')
@@ -185,7 +188,7 @@ export default function Reports() {
             onChange={e => setSelectedDept(e.target.value)}
             className="w-full md:w-64 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+            {visibleDepts.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
           </select>
         ) : (
           <div className="relative md:w-64">
