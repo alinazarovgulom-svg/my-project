@@ -88,7 +88,6 @@ export default function DepartmentWork() {
   useEffect(() => {
     setOverrides({})
     setPickerEmp(null)
-    setBreakMinutes(0)
     setIsDirty(false)
   }, [date, startTime, endTime])
 
@@ -113,14 +112,14 @@ export default function DepartmentWork() {
     )
     return onSnapshot(q, snap => {
       const data = {}
-      let loadedBreak = 0
+      let loadedBreak = null
       snap.forEach(d => {
         const { employeeId, operations, breakMinutes: bm } = d.data()
         data[employeeId] = operations || {}
         if (bm !== undefined) loadedBreak = bm
       })
       setEntries(data)
-      setBreakMinutes(loadedBreak)
+      if (loadedBreak !== null) setBreakMinutes(loadedBreak)
     })
   }, [deptId, date, startTime, endTime])
 
