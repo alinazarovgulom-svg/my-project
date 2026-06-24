@@ -46,7 +46,10 @@ export default function Reports() {
   const searchEmployees = async (val) => {
     setEmpSearch(val)
     const snap = await getDocs(collection(db, 'factory_employees'))
-    const all = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+    const visibleDeptIds = new Set(visibleDepts.map(d => d.id))
+    const all = snap.docs
+      .map(d => ({ id: d.id, ...d.data() }))
+      .filter(e => visibleDeptIds.has(e.departmentId))
     setEmployees(
       val.length === 0
         ? all
