@@ -31,7 +31,7 @@ export default function Reports() {
   const [dateFrom, setDateFrom] = useState(today)
   const [dateTo, setDateTo] = useState(today)
   const [startTime, setStartTime] = useState('08:00')
-  const [endTime, setEndTime] = useState('17:00')
+  const [endTime, setEndTime] = useState('18:00')
   const [filterType, setFilterType] = useState('dept') // 'dept' | 'employee'
   const [selectedDept, setSelectedDept] = useState('')
   const [empSearch, setEmpSearch] = useState('')
