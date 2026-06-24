@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { collection, query, where, getDocs } from 'firebase/firestore'
 import { db } from '../firebase/config'
 import { useDepartments } from '../contexts/DepartmentsContext'
@@ -42,6 +42,13 @@ export default function Reports() {
   const [searched, setSearched] = useState(false)
   const [reportError, setReportError] = useState('')
   const [pdfLoading, setPdfLoading] = useState(false)
+
+  // Auto-select first visible dept when departments load
+  useEffect(() => {
+    if (visibleDepts.length > 0 && !selectedDept) {
+      setSelectedDept(visibleDepts[0].id)
+    }
+  }, [visibleDepts.length])
 
   const searchEmployees = async (val) => {
     setEmpSearch(val)
