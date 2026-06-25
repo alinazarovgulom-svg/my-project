@@ -3,9 +3,9 @@ import { collection, query, where, getDocs } from 'firebase/firestore'
 import { db } from '../firebase/config'
 import { useDepartments } from '../contexts/DepartmentsContext'
 import { useAuth } from '../contexts/AuthContext'
-import { exportPDF, exportPDFBlob } from '../utils/pdf'
+import { exportPDF, buildWorkPDFHtml } from '../utils/pdf'
 import { exportExcel } from '../utils/excel'
-import { sendPDFToTelegram } from '../utils/telegram'
+import { sendHTMLToTelegram } from '../utils/telegram'
 import { format } from 'date-fns'
 import { Search, FileText, Download, Package, Star } from 'lucide-react'
 
@@ -263,10 +263,10 @@ export default function Reports() {
                     setTgSending(true)
                     setTgMsg('')
                     try {
-                      const blob = await exportPDFBlob(rows, filtersStr, filterLabel, filterType === 'employee')
+                      const html = buildWorkPDFHtml(rows, filtersStr, filterLabel, filterType === 'employee', false)
                       const filename = `hisobot-${filterLabel}-${Date.now()}.pdf`
                       const caption = `📊 ${filterLabel} | ${filtersStr}`
-                      await sendPDFToTelegram(blob, filename, caption)
+                      await sendHTMLToTelegram(html, filename, caption)
                       setTgMsg('✓ Yuborildi!')
                     } catch (e) {
                       setTgMsg('Xatolik: ' + (e.message || 'Qayta urinib ko\'ring'))

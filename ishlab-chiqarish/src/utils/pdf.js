@@ -17,7 +17,7 @@ function qtyStyle(qty, exp) {
   return               { bg: '#fee2e2', color: '#991b1b' }
 }
 
-function buildWorkPDFHtml(rows, filters, deptName, showDept = true, autoPrint = true) {
+export function buildWorkPDFHtml(rows, filters, deptName, showDept = true, autoPrint = true) {
   const totalDone   = rows.reduce((s, r) => s + Number(r.quantity || 0), 0)
   const totalExp    = rows.reduce((s, r) => s + Number(r.expected  || 0), 0)
   const totalTayyor = rows.filter(r => r.isFinal).reduce((s, r) => s + Number(r.quantity || 0), 0)

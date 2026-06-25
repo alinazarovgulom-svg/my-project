@@ -8,8 +8,8 @@ import { db } from '../firebase/config'
 import { useDepartments } from '../contexts/DepartmentsContext'
 import { useAuth } from '../contexts/AuthContext'
 import { Calendar, Clock, Save, CheckCircle, RefreshCw, X, Search, MoreVertical, Send } from 'lucide-react'
-import { exportPDFBlob } from '../utils/pdf'
-import { sendPDFToTelegram } from '../utils/telegram'
+import { buildWorkPDFHtml } from '../utils/pdf'
+import { sendHTMLToTelegram } from '../utils/telegram'
 
 function calcHours(start, end) {
   const [sh, sm] = start.split(':').map(Number)
@@ -224,10 +224,10 @@ export default function DepartmentWork() {
     setTgMsg('')
     try {
       const filters = `${date} · ${startTime}–${endTime}`
-      const blob = await exportPDFBlob(rows, filters, dept.name, false)
+      const html = buildWorkPDFHtml(rows, filters, dept.name, false, false)
       const filename = `${dept.name}-${date}-${startTime.replace(':', '')}.pdf`
       const caption = `📊 ${dept.name} | ${date} | ${startTime}–${endTime}`
-      await sendPDFToTelegram(blob, filename, caption)
+      await sendHTMLToTelegram(html, filename, caption)
       setTgMsg('✓ Yuborildi!')
     } catch (err) {
       setTgMsg('Xatolik: ' + err.message)
