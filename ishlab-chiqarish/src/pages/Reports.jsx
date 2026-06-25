@@ -3,8 +3,9 @@ import { collection, query, where, getDocs } from 'firebase/firestore'
 import { db } from '../firebase/config'
 import { useDepartments } from '../contexts/DepartmentsContext'
 import { useAuth } from '../contexts/AuthContext'
-import { exportPDF } from '../utils/pdf'
+import { exportPDF, exportPDFBlob } from '../utils/pdf'
 import { exportExcel } from '../utils/excel'
+import { sendPDFToTelegram } from '../utils/telegram'
 import { format } from 'date-fns'
 import { Search, FileText, Download, Package, Star } from 'lucide-react'
 
@@ -42,6 +43,8 @@ export default function Reports() {
   const [searched, setSearched] = useState(false)
   const [reportError, setReportError] = useState('')
   const [pdfLoading, setPdfLoading] = useState(false)
+  const [tgSending, setTgSending] = useState(false)
+  const [tgMsg, setTgMsg] = useState('')
 
   // Auto-select first visible dept when departments load
   useEffect(() => {
@@ -253,7 +256,41 @@ export default function Reports() {
         <>
           {/* Download buttons */}
           {can.downloadReports && rows.length > 0 && (
-            <div className="flex gap-3 mb-4">
+            <div className="flex gap-3 mb-4 flex-wrap items-center">
+              <div className="relative">
+                <button
+                  onClick={async () => {
+                    setTgSending(true)
+                    setTgMsg('')
+                    try {
+                      const blob = await exportPDFBlob(rows, filtersStr, filterLabel, filterType === 'employee')
+                      const filename = `hisobot-${filterLabel}-${Date.now()}.pdf`
+                      const caption = `📊 ${filterLabel} | ${filtersStr}`
+                      await sendPDFToTelegram(blob, filename, caption)
+                      setTgMsg('✓ Yuborildi!')
+                    } catch (e) {
+                      setTgMsg('Xatolik: ' + (e.message || 'Qayta urinib ko\'ring'))
+                    } finally {
+                      setTgSending(false)
+                      setTimeout(() => setTgMsg(''), 4000)
+                    }
+                  }}
+                  disabled={tgSending}
+                  className="flex items-center gap-2 bg-sky-500 hover:bg-sky-600 text-white text-sm px-4 py-2 rounded-lg transition-colors disabled:opacity-60"
+                >
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                    <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.248-1.97 9.275c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12l-6.871 4.326-2.962-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.833.946z"/>
+                  </svg>
+                  {tgSending ? 'Yuborilmoqda...' : 'Telegram'}
+                </button>
+                {tgMsg && (
+                  <div className={`absolute bottom-full mb-1.5 left-0 whitespace-nowrap text-xs rounded-lg px-3 py-1.5 shadow-md ${
+                    tgMsg.startsWith('✓') ? 'bg-green-600 text-white' : 'bg-gray-800 text-white'
+                  }`}>
+                    {tgMsg}
+                  </div>
+                )}
+              </div>
               <button
                 onClick={async () => {
                   setPdfLoading(true)
