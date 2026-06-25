@@ -324,7 +324,8 @@ export async function exportPDFBlob(rows, filters, deptName, showDept = true) {
   const cleanStyle = styleContent.replace(/@page\s*\{[^}]*\}/g, '')
 
   const wrapper = document.createElement('div')
-  wrapper.style.cssText = 'position:absolute;left:-9999px;top:0;width:1150px;background:#ffffff;'
+  // Must be in viewport for html2canvas to render correctly
+  wrapper.style.cssText = 'position:fixed;top:0;left:0;width:1150px;background:#ffffff;z-index:99999;pointer-events:none;'
 
   const styleEl = document.createElement('style')
   styleEl.textContent = cleanStyle
