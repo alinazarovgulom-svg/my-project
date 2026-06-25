@@ -249,22 +249,21 @@ export function exportPDF(rows, filters, deptName, showDept = true) {
   </div>
   <div class="hdr-r">
     <div class="contacts">
+      <div class="detail">kaftimda@gmail.com</div>
       <div class="detail">
         <svg viewBox="0 0 16 16" width="11" height="11" xmlns="http://www.w3.org/2000/svg">
           <path d="M3.3 6.9c1 2 2.8 3.7 4.8 4.8l1.6-1.6c.2-.2.5-.3.7-.1.8.3 1.7.5 2.6.5.4 0 .7.3.7.7V14c0 .4-.3.7-.7.7C6 14.7 1.3 10 1.3 4.3c0-.4.3-.7.7-.7H5c.4 0 .7.3.7.7 0 1 .2 1.9.5 2.7.1.3 0 .6-.2.7L3.3 6.9z" fill="#94a3b8"/>
         </svg>
         +998 91 760 66 66
       </div>
-      <div class="detail">kaftimda@gmail.com</div>
-      <div class="detail">kaftimda.uz</div>
-    </div>
-    <div class="insta">
-      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect x="2" y="2" width="20" height="20" rx="5.5" stroke="#94a3b8" stroke-width="1.8"/>
-        <circle cx="12" cy="12" r="4.5" stroke="#94a3b8" stroke-width="1.8"/>
-        <circle cx="17.5" cy="6.5" r="1.2" fill="#94a3b8"/>
-      </svg>
-      <span class="insta-handle">@KAFTIMDA</span>
+      <div class="detail">
+        <svg viewBox="0 0 24 24" width="11" height="11" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="2" y="2" width="20" height="20" rx="5.5" stroke="#94a3b8" stroke-width="2"/>
+          <circle cx="12" cy="12" r="4.5" stroke="#94a3b8" stroke-width="2"/>
+          <circle cx="17.5" cy="6.5" r="1.2" fill="#94a3b8"/>
+        </svg>
+        @KAFTIMDA
+      </div>
     </div>
   </div>
 </div>
@@ -458,21 +457,23 @@ export function exportAttendancePDF(absentEmps, allEmps, absences, departments, 
   </div>
   <div class="hdr-r">
     <div class="contacts">
+      <div class="detail">kaftimda@gmail.com</div>
       <div class="detail">
         <svg viewBox="0 0 16 16" width="11" height="11" xmlns="http://www.w3.org/2000/svg">
           <path d="M3.3 6.9c1 2 2.8 3.7 4.8 4.8l1.6-1.6c.2-.2.5-.3.7-.1.8.3 1.7.5 2.6.5.4 0 .7.3.7.7V14c0 .4-.3.7-.7.7C6 14.7 1.3 10 1.3 4.3c0-.4.3-.7.7-.7H5c.4 0 .7.3.7.7 0 1 .2 1.9.5 2.7.1.3 0 .6-.2.7L3.3 6.9z" fill="#94a3b8"/>
         </svg>
         +998 91 760 66 66
       </div>
-      <div class="detail">kaftimda@gmail.com</div>
-      <div class="detail">kaftimda.uz</div>
+      <div class="detail">
+        <svg viewBox="0 0 24 24" width="11" height="11" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="2" y="2" width="20" height="20" rx="5.5" stroke="#94a3b8" stroke-width="2"/>
+          <circle cx="12" cy="12" r="4.5" stroke="#94a3b8" stroke-width="2"/>
+          <circle cx="17.5" cy="6.5" r="1.2" fill="#94a3b8"/>
+        </svg>
+        @KAFTIMDA
+      </div>
     </div>
-    <div class="insta">
-      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect x="2" y="2" width="20" height="20" rx="5.5" stroke="#94a3b8" stroke-width="1.8"/>
-        <circle cx="12" cy="12" r="4.5" stroke="#94a3b8" stroke-width="1.8"/>
-        <circle cx="17.5" cy="6.5" r="1.2" fill="#94a3b8"/>
-      </svg>
+    <div class="insta" style="display:none">
       <span class="insta-handle">@KAFTIMDA</span>
     </div>
   </div>
