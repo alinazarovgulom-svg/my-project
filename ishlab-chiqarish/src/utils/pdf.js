@@ -323,16 +323,19 @@ export async function exportPDFBlob(rows, filters, deptName, showDept = true) {
   // Remove @page rule — jsPDF handles page size via options
   const cleanStyle = styleContent.replace(/@page\s*\{[^}]*\}/g, '')
 
-  const wrapper = document.createElement('div')
-  // Must be in viewport for html2canvas to render correctly
-  wrapper.style.cssText = 'position:fixed;top:0;left:0;width:1150px;background:#ffffff;z-index:99999;pointer-events:none;'
-
+  // Styles must be in document.head — html2canvas ignores <style> inside cloned subtree
   const styleEl = document.createElement('style')
+  styleEl.setAttribute('data-pdf-temp', '1')
   styleEl.textContent = cleanStyle
-  wrapper.appendChild(styleEl)
-  wrapper.insertAdjacentHTML('beforeend', bodyContent)
+  document.head.appendChild(styleEl)
 
+  const wrapper = document.createElement('div')
+  wrapper.style.cssText = 'position:fixed;top:0;left:0;width:1150px;background:#ffffff;z-index:99999;pointer-events:none;'
+  wrapper.insertAdjacentHTML('beforeend', bodyContent)
   document.body.appendChild(wrapper)
+
+  // Wait for browser to apply styles and render
+  await new Promise(resolve => setTimeout(resolve, 150))
 
   try {
     const { default: html2pdf } = await import('html2pdf.js')
@@ -354,6 +357,7 @@ export async function exportPDFBlob(rows, filters, deptName, showDept = true) {
       .outputPdf('blob')
   } finally {
     document.body.removeChild(wrapper)
+    document.head.removeChild(styleEl)
   }
 }
 
