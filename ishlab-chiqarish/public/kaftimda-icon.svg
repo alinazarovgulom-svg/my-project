@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+
+  <!-- Background -->
+  <rect width="100" height="100" rx="22" fill="#0B1437"/>
+
+  <!-- ── HAND ── -->
+  <!-- Pinky -->
+  <rect x="18" y="26" width="9" height="28" rx="4.5" fill="white"/>
+  <!-- Ring -->
+  <rect x="29" y="20" width="9" height="34" rx="4.5" fill="white"/>
+  <!-- Middle -->
+  <rect x="40" y="16" width="9" height="38" rx="4.5" fill="white"/>
+  <!-- Index -->
+  <rect x="51" y="20" width="9" height="34" rx="4.5" fill="white"/>
+  <!-- Thumb -->
+  <rect x="62" y="32" width="9" height="22" rx="4.5" fill="white"/>
+
+  <!-- Palm base -->
+  <rect x="16" y="50" width="57" height="28" rx="8" fill="white"/>
+
+  <!-- ── FACTORY inside palm (amber) ── -->
+  <!-- Chimneys -->
+  <rect x="28" y="49" width="6" height="8" rx="1.5" fill="#D97706"/>
+  <rect x="43" y="49" width="6" height="8" rx="1.5" fill="#D97706"/>
+  <!-- Building -->
+  <rect x="22" y="55" width="35" height="17" rx="2" fill="#D97706"/>
+  <!-- Door -->
+  <rect x="36" y="61" width="7" height="11" rx="1" fill="#0B1437"/>
+  <!-- Windows -->
+  <rect x="25" y="58" width="7" height="7" rx="1" fill="rgba(255,255,255,0.28)"/>
+  <rect x="46" y="58" width="7" height="7" rx="1" fill="rgba(255,255,255,0.28)"/>
+
+</svg>
