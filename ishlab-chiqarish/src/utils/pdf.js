@@ -239,28 +239,26 @@ export function exportPDF(rows, filters, deptName, showDept = true) {
 
 <div class="hdr">
   <div class="hdr-l">
-    <div class="brand">KAFTIMDA</div>
-    <div class="sub">Ishlab chiqarish tizimi</div>
-  </div>
-  <div class="hdr-r" style="display:flex;align-items:center;gap:12px">
-    <div style="text-align:right">
-      <div class="dept">${esc(deptName)}</div>
-      <div class="meta">${esc(filters)}<br>Chiqarilgan: ${printed}</div>
-    </div>
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="46" height="46" style="flex-shrink:0">
-      <rect x="18" y="26" width="9" height="28" rx="4.5" fill="white"/>
-      <rect x="29" y="20" width="9" height="34" rx="4.5" fill="white"/>
-      <rect x="40" y="16" width="9" height="38" rx="4.5" fill="white"/>
-      <rect x="51" y="20" width="9" height="34" rx="4.5" fill="white"/>
-      <rect x="62" y="32" width="9" height="22" rx="4.5" fill="white"/>
-      <rect x="16" y="50" width="57" height="28" rx="8" fill="white"/>
-      <rect x="28" y="49" width="6" height="8" rx="1.5" fill="#f59e0b"/>
-      <rect x="43" y="49" width="6" height="8" rx="1.5" fill="#f59e0b"/>
-      <rect x="22" y="55" width="35" height="17" rx="2" fill="#f59e0b"/>
-      <rect x="36" y="61" width="7" height="11" rx="1" fill="#1e40af"/>
-      <rect x="25" y="58" width="7" height="7" rx="1" fill="rgba(255,255,255,0.35)"/>
-      <rect x="46" y="58" width="7" height="7" rx="1" fill="rgba(255,255,255,0.35)"/>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 158 40" height="40">
+      <rect x="2" y="7" width="4.5" height="15" rx="2.25" fill="white"/>
+      <rect x="7.5" y="4" width="4.5" height="18" rx="2.25" fill="white"/>
+      <rect x="13" y="2" width="4.5" height="20" rx="2.25" fill="white"/>
+      <rect x="18.5" y="4" width="4.5" height="18" rx="2.25" fill="white"/>
+      <rect x="24" y="10" width="4.5" height="12" rx="2.25" fill="white"/>
+      <rect x="1" y="21" width="29" height="14" rx="4" fill="white"/>
+      <rect x="7" y="20" width="3" height="4" rx="1" fill="#f59e0b"/>
+      <rect x="15" y="20" width="3" height="4" rx="1" fill="#f59e0b"/>
+      <rect x="5" y="23" width="20" height="9" rx="1.5" fill="#f59e0b"/>
+      <rect x="13" y="27" width="4" height="5" rx="0.5" fill="#1e40af"/>
+      <rect x="7" y="25" width="4" height="4" rx="0.5" fill="rgba(255,255,255,0.3)"/>
+      <rect x="19" y="25" width="4" height="4" rx="0.5" fill="rgba(255,255,255,0.3)"/>
+      <text x="36" y="22" font-family="'Segoe UI','Arial Black',Arial,sans-serif" font-size="19" font-weight="900" fill="white" letter-spacing="-0.5">KAFTIMDA</text>
+      <text x="37" y="33" font-family="'Segoe UI',Arial,sans-serif" font-size="8.5" fill="#93c5fd">Ishlab chiqarish tizimi</text>
     </svg>
+  </div>
+  <div class="hdr-r">
+    <div class="dept">${esc(deptName)}</div>
+    <div class="meta">${esc(filters)}<br>Chiqarilgan: ${printed}</div>
   </div>
 </div>
 
@@ -443,28 +441,26 @@ export function exportAttendancePDF(absentEmps, allEmps, absences, departments, 
 
 <div class="hdr">
   <div class="hdr-l">
-    <div class="brand">KAFTIMDA</div>
-    <div class="sub">Ishlab chiqarish tizimi</div>
-  </div>
-  <div class="hdr-r" style="display:flex;align-items:center;gap:12px">
-    <div style="text-align:right">
-      <div class="title">Davomat hisoboti</div>
-      <div class="meta">${fmtDate(date)}<br>Chiqarilgan: ${printed}</div>
-    </div>
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="46" height="46" style="flex-shrink:0">
-      <rect x="18" y="26" width="9" height="28" rx="4.5" fill="white"/>
-      <rect x="29" y="20" width="9" height="34" rx="4.5" fill="white"/>
-      <rect x="40" y="16" width="9" height="38" rx="4.5" fill="white"/>
-      <rect x="51" y="20" width="9" height="34" rx="4.5" fill="white"/>
-      <rect x="62" y="32" width="9" height="22" rx="4.5" fill="white"/>
-      <rect x="16" y="50" width="57" height="28" rx="8" fill="white"/>
-      <rect x="28" y="49" width="6" height="8" rx="1.5" fill="#f59e0b"/>
-      <rect x="43" y="49" width="6" height="8" rx="1.5" fill="#f59e0b"/>
-      <rect x="22" y="55" width="35" height="17" rx="2" fill="#f59e0b"/>
-      <rect x="36" y="61" width="7" height="11" rx="1" fill="#1e40af"/>
-      <rect x="25" y="58" width="7" height="7" rx="1" fill="rgba(255,255,255,0.35)"/>
-      <rect x="46" y="58" width="7" height="7" rx="1" fill="rgba(255,255,255,0.35)"/>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 158 40" height="40">
+      <rect x="2" y="7" width="4.5" height="15" rx="2.25" fill="white"/>
+      <rect x="7.5" y="4" width="4.5" height="18" rx="2.25" fill="white"/>
+      <rect x="13" y="2" width="4.5" height="20" rx="2.25" fill="white"/>
+      <rect x="18.5" y="4" width="4.5" height="18" rx="2.25" fill="white"/>
+      <rect x="24" y="10" width="4.5" height="12" rx="2.25" fill="white"/>
+      <rect x="1" y="21" width="29" height="14" rx="4" fill="white"/>
+      <rect x="7" y="20" width="3" height="4" rx="1" fill="#f59e0b"/>
+      <rect x="15" y="20" width="3" height="4" rx="1" fill="#f59e0b"/>
+      <rect x="5" y="23" width="20" height="9" rx="1.5" fill="#f59e0b"/>
+      <rect x="13" y="27" width="4" height="5" rx="0.5" fill="#1e40af"/>
+      <rect x="7" y="25" width="4" height="4" rx="0.5" fill="rgba(255,255,255,0.3)"/>
+      <rect x="19" y="25" width="4" height="4" rx="0.5" fill="rgba(255,255,255,0.3)"/>
+      <text x="36" y="22" font-family="'Segoe UI','Arial Black',Arial,sans-serif" font-size="19" font-weight="900" fill="white" letter-spacing="-0.5">KAFTIMDA</text>
+      <text x="37" y="33" font-family="'Segoe UI',Arial,sans-serif" font-size="8.5" fill="#93c5fd">Ishlab chiqarish tizimi</text>
     </svg>
+  </div>
+  <div class="hdr-r">
+    <div class="title">Davomat hisoboti</div>
+    <div class="meta">${fmtDate(date)}<br>Chiqarilgan: ${printed}</div>
   </div>
 </div>
 
