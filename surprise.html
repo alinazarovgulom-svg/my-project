@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KAFTIMDA — Gulom uchun</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #000;
+    overflow: hidden;
+    font-family: 'Courier New', monospace;
+  }
+
+  canvas { display: block; }
+
+  #message {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    z-index: 10;
+    opacity: 0;
+    animation: fadeIn 1s ease 3s forwards;
+  }
+
+  #message h1 {
+    font-size: clamp(2rem, 6vw, 5rem);
+    font-weight: 900;
+    background: linear-gradient(135deg, #00ff88, #00ccff, #ff00aa, #ffcc00);
+    background-size: 300% 300%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: gradient 3s ease infinite, glow 2s ease-in-out infinite alternate;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+  }
+
+  #message p {
+    color: #00ff88;
+    font-size: clamp(0.9rem, 2vw, 1.3rem);
+    margin-top: 16px;
+    letter-spacing: 2px;
+    text-shadow: 0 0 10px #00ff88;
+    animation: blink 1.5s ease-in-out infinite;
+  }
+
+  #message .sub {
+    color: rgba(255,255,255,0.5);
+    font-size: 0.85rem;
+    margin-top: 8px;
+    letter-spacing: 1px;
+    animation: none;
+  }
+
+  #counter {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: rgba(0,255,136,0.6);
+    font-size: 0.75rem;
+    letter-spacing: 3px;
+    z-index: 10;
+    opacity: 0;
+    animation: fadeIn 1s ease 3.5s forwards;
+  }
+
+  #particles {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 5;
+  }
+
+  .particle {
+    position: absolute;
+    border-radius: 50%;
+    animation: float linear infinite;
+    opacity: 0;
+  }
+
+  @keyframes fadeIn {
+    to { opacity: 1; }
+  }
+
+  @keyframes gradient {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  @keyframes glow {
+    from { filter: drop-shadow(0 0 10px #00ff88); }
+    to { filter: drop-shadow(0 0 30px #00ccff) drop-shadow(0 0 60px #ff00aa); }
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  @keyframes float {
+    0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { transform: translateY(-100px) rotate(720deg); opacity: 0; }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="matrix"></canvas>
+
+<div id="particles"></div>
+
+<div id="message">
+  <h1>KAFTIMDA ERP</h1>
+  <p>▶ Kelajak shu yerda boshlanadi ◀</p>
+  <div class="sub">Gulom Alinazarov tomonidan yaratilgan · 2026</div>
+</div>
+
+<div id="counter">
+  SYSTEM ONLINE · MODULES: 22+ · STATUS: ACTIVE
+</div>
+
+<script>
+// ===== MATRIX RAIN =====
+const canvas = document.getElementById('matrix');
+const ctx = canvas.getContext('2d');
+
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+const chars = 'KAFTIMDA01アイウエオカキクケコGULOM★◆▲●■⚡∞√∑∏'.split('');
+const fontSize = 14;
+const columns = Math.floor(canvas.width / fontSize);
+const drops = Array(columns).fill(1);
+
+const colors = ['#00ff88', '#00ccff', '#ff00aa', '#ffcc00', '#ffffff'];
+
+function drawMatrix() {
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  drops.forEach((y, i) => {
+    const char = chars[Math.floor(Math.random() * chars.length)];
+    const color = colors[Math.floor(Math.random() * colors.length)];
+
+    ctx.fillStyle = color;
+    ctx.font = `${fontSize}px Courier New`;
+    ctx.shadowBlur = 8;
+    ctx.shadowColor = color;
+    ctx.fillText(char, i * fontSize, y * fontSize);
+    ctx.shadowBlur = 0;
+
+    if (y * fontSize > canvas.height && Math.random() > 0.975) {
+      drops[i] = 0;
+    }
+    drops[i]++;
+  });
+}
+
+setInterval(drawMatrix, 33);
+
+// ===== FLOATING PARTICLES =====
+const particlesContainer = document.getElementById('particles');
+const emojis = ['⚡', '✨', '🚀', '💎', '🌟', '⭐', '💫', '🔥'];
+
+function createParticle() {
+  const el = document.createElement('div');
+  el.className = 'particle';
+  el.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+  el.style.cssText = `
+    position: absolute;
+    font-size: ${Math.random() * 20 + 10}px;
+    left: ${Math.random() * 100}%;
+    animation: float ${Math.random() * 8 + 6}s linear infinite;
+    animation-delay: ${Math.random() * 5}s;
+  `;
+  particlesContainer.appendChild(el);
+}
+
+for (let i = 0; i < 20; i++) createParticle();
+
+// ===== COUNTER ANIMATION =====
+let count = 0;
+const target = 1247;
+const counterEl = document.getElementById('counter');
+
+setTimeout(() => {
+  const interval = setInterval(() => {
+    count += Math.floor(Math.random() * 50) + 10;
+    if (count >= target) {
+      count = target;
+      clearInterval(interval);
+    }
+    counterEl.textContent = `SYSTEM ONLINE · MODULES: 22+ · BUYURTMALAR: ${count.toLocaleString()} TA`;
+  }, 50);
+}, 4000);
+
+// ===== RESIZE =====
+window.addEventListener('resize', () => {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+});
+</script>
+</body>
+</html>
