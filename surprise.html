@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KAFTIMDA</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#000; overflow:hidden; cursor:none; }
+canvas { display:block; }
+#hint {
+  position:fixed; bottom:20px; left:50%; transform:translateX(-50%);
+  color:rgba(255,255,255,0.25); font:12px monospace; letter-spacing:3px;
+  pointer-events:none;
+  animation: pulse 2s ease-in-out infinite;
+}
+@keyframes pulse { 0%,100%{opacity:.3} 50%{opacity:.8} }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="hint">EKRANGA BOSING · SICHQONCHA HARAKATLANTIRING</div>
+<script>
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+let W = canvas.width = innerWidth;
+let H = canvas.height = innerHeight;
+
+// ---- PARTICLE ----
+class Particle {
+  constructor() {
+    this.reset();
+    this.y = Math.random() * H;
+    this.x = Math.random() * W;
+  }
+  reset() {
+    this.x = Math.random() * W;
+    this.y = Math.random() * H;
+    this.tx = 0; this.ty = 0;
+    this.vx = 0; this.vy = 0;
+    this.size = Math.random() * 2 + 0.5;
+    this.hue = Math.random() * 60 + 160; // cyan-green range
+    this.alpha = 1;
+    this.forming = false;
+  }
+}
+
+// ---- SAMPLE TEXT TO POINTS ----
+function textToPoints(text, fontSize, W, H) {
+  const offscreen = document.createElement('canvas');
+  offscreen.width = W; offscreen.height = H;
+  const oc = offscreen.getContext('2d');
+  oc.fillStyle = '#fff';
+  oc.font = `900 ${fontSize}px Arial Black, sans-serif`;
+  oc.textAlign = 'center';
+  oc.textBaseline = 'middle';
+  oc.fillText(text, W/2, H/2);
+  const data = oc.getImageData(0, 0, W, H).data;
+  const points = [];
+  const gap = 5;
+  for (let y = 0; y < H; y += gap) {
+    for (let x = 0; x < W; x += gap) {
+      const i = (y * W + x) * 4;
+      if (data[i+3] > 128) points.push({x, y});
+    }
+  }
+  return points;
+}
+
+// ---- WORDS ----
+const words = ['KAFTIMDA', 'GULOM', 'ERP', '2026', '❤'];
+let wordIndex = 0;
+let points = [];
+const particles = [];
+const COUNT = 2000;
+let mouse = {x: W/2, y: H/2};
+let exploding = false;
+let phase = 'forming'; // forming | holding | exploding
+
+for (let i = 0; i < COUNT; i++) particles.push(new Particle());
+
+function loadWord(word) {
+  const fs = Math.min(W * 0.22, H * 0.4, word.length > 5 ? W*0.16 : W*0.22);
+  points = textToPoints(word, fs, W, H);
+}
+
+loadWord(words[0]);
+
+// assign targets
+function assignTargets() {
+  for (let i = 0; i < particles.length; i++) {
+    const p = particles[i];
+    if (points.length === 0) { p.tx = Math.random()*W; p.ty = Math.random()*H; return; }
+    const pt = points[i % points.length];
+    p.tx = pt.x + (Math.random()-0.5)*3;
+    p.ty = pt.y + (Math.random()-0.5)*3;
+    p.forming = true;
+  }
+}
+assignTargets();
+
+// ---- EXPLODE ----
+function explode() {
+  for (const p of particles) {
+    p.vx = (Math.random()-0.5) * 30;
+    p.vy = (Math.random()-0.5) * 30;
+    p.forming = false;
+  }
+  phase = 'exploding';
+  setTimeout(() => {
+    wordIndex = (wordIndex+1) % words.length;
+    loadWord(words[wordIndex]);
+    assignTargets();
+    phase = 'forming';
+  }, 800);
+}
+
+// auto cycle
+let autoTimer = setInterval(explode, 2800);
+
+// click = manual explode
+document.addEventListener('click', () => {
+  clearInterval(autoTimer);
+  explode();
+  autoTimer = setInterval(explode, 2800);
+});
+
+// mouse
+document.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
+document.addEventListener('touchmove', e => {
+  mouse.x = e.touches[0].clientX;
+  mouse.y = e.touches[0].clientY;
+});
+
+// ---- DRAW CURSOR ----
+function drawCursor(x, y) {
+  const r = 18;
+  ctx.save();
+  ctx.strokeStyle = 'rgba(0,255,180,0.7)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI*2);
+  ctx.stroke();
+  ctx.strokeStyle = 'rgba(0,255,180,0.3)';
+  ctx.beginPath();
+  ctx.arc(x, y, r+8, 0, Math.PI*2);
+  ctx.stroke();
+  ctx.restore();
+}
+
+// ---- MAIN LOOP ----
+let hueShift = 0;
+function loop() {
+  requestAnimationFrame(loop);
+  ctx.fillStyle = 'rgba(0,0,0,0.18)';
+  ctx.fillRect(0, 0, W, H);
+
+  hueShift += 0.4;
+
+  for (const p of particles) {
+    const mx = mouse.x - p.x;
+    const my = mouse.y - p.y;
+    const md = Math.sqrt(mx*mx + my*my);
+    const repel = 80;
+
+    if (p.forming) {
+      // spring toward target
+      const dx = p.tx - p.x;
+      const dy = p.ty - p.y;
+      p.vx += dx * 0.08;
+      p.vy += dy * 0.08;
+    }
+
+    // mouse repel
+    if (md < repel) {
+      const force = (repel - md) / repel * 6;
+      p.vx -= (mx / md) * force;
+      p.vy -= (my / md) * force;
+    }
+
+    p.vx *= 0.82;
+    p.vy *= 0.82;
+    p.x += p.vx;
+    p.y += p.vy;
+
+    // color based on distance to target
+    const dist = Math.hypot(p.tx - p.x, p.ty - p.y);
+    const hue = (hueShift + dist * 0.5) % 360;
+    const sat = phase === 'exploding' ? 90 : 70;
+    const light = 55 + Math.min(dist, 40);
+
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
+    ctx.fillStyle = `hsla(${hue},${sat}%,${light}%,0.9)`;
+    ctx.fill();
+  }
+
+  drawCursor(mouse.x, mouse.y);
+}
+
+loop();
+
+window.addEventListener('resize', () => {
+  W = canvas.width = innerWidth;
+  H = canvas.height = innerHeight;
+  loadWord(words[wordIndex]);
+  assignTargets();
+});
+</script>
+</body>
+</html>
