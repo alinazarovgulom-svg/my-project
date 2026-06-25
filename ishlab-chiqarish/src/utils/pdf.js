@@ -93,7 +93,7 @@ export function buildWorkPDFHtml(rows, filters, deptName, showDept = true, autoP
         return `<td class="slot-td">
           <div class="qty-badge" style="background:${bg}">
             <div class="qty-num" style="color:${color}">${e.qty}</div>
-            <div class="qty-exp">${e.exp}</div>
+            <div class="qty-exp">${Math.round(e.exp)}</div>
           </div>
           ${e.note ? `<div class="slot-note">${esc(e.note)}</div>` : ''}
         </td>`
