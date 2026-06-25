@@ -313,6 +313,20 @@ export function exportPDF(rows, filters, deptName, showDept = true) {
 export async function exportPDFBlob(rows, filters, deptName, showDept = true) {
   if (!rows.length) return null
 
+  // Try server-side Puppeteer first — same beautiful design as the print button
+  try {
+    const html = buildWorkPDFHtml(rows, filters, deptName, showDept, false)
+    const res = await fetch('/api/html-to-pdf', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ html }),
+    })
+    if (res.ok) return await res.blob()
+  } catch {
+    // fall through to jsPDF
+  }
+
+  // Fallback: pure client-side jsPDF
   const [{ jsPDF }, { default: autoTable }] = await Promise.all([
     import('jspdf'),
     import('jspdf-autotable'),
