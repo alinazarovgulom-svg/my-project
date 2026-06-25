@@ -242,9 +242,25 @@ export function exportPDF(rows, filters, deptName, showDept = true) {
     <div class="brand">KAFTIMDA</div>
     <div class="sub">Ishlab chiqarish tizimi</div>
   </div>
-  <div class="hdr-r">
-    <div class="dept">${esc(deptName)}</div>
-    <div class="meta">${esc(filters)}<br>Chiqarilgan: ${printed}</div>
+  <div class="hdr-r" style="display:flex;align-items:center;gap:12px">
+    <div style="text-align:right">
+      <div class="dept">${esc(deptName)}</div>
+      <div class="meta">${esc(filters)}<br>Chiqarilgan: ${printed}</div>
+    </div>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="46" height="46" style="flex-shrink:0">
+      <rect x="18" y="26" width="9" height="28" rx="4.5" fill="white"/>
+      <rect x="29" y="20" width="9" height="34" rx="4.5" fill="white"/>
+      <rect x="40" y="16" width="9" height="38" rx="4.5" fill="white"/>
+      <rect x="51" y="20" width="9" height="34" rx="4.5" fill="white"/>
+      <rect x="62" y="32" width="9" height="22" rx="4.5" fill="white"/>
+      <rect x="16" y="50" width="57" height="28" rx="8" fill="white"/>
+      <rect x="28" y="49" width="6" height="8" rx="1.5" fill="#f59e0b"/>
+      <rect x="43" y="49" width="6" height="8" rx="1.5" fill="#f59e0b"/>
+      <rect x="22" y="55" width="35" height="17" rx="2" fill="#f59e0b"/>
+      <rect x="36" y="61" width="7" height="11" rx="1" fill="#1e40af"/>
+      <rect x="25" y="58" width="7" height="7" rx="1" fill="rgba(255,255,255,0.35)"/>
+      <rect x="46" y="58" width="7" height="7" rx="1" fill="rgba(255,255,255,0.35)"/>
+    </svg>
   </div>
 </div>
 
@@ -430,9 +446,25 @@ export function exportAttendancePDF(absentEmps, allEmps, absences, departments, 
     <div class="brand">KAFTIMDA</div>
     <div class="sub">Ishlab chiqarish tizimi</div>
   </div>
-  <div class="hdr-r">
-    <div class="title">Davomat hisoboti</div>
-    <div class="meta">${fmtDate(date)}<br>Chiqarilgan: ${printed}</div>
+  <div class="hdr-r" style="display:flex;align-items:center;gap:12px">
+    <div style="text-align:right">
+      <div class="title">Davomat hisoboti</div>
+      <div class="meta">${fmtDate(date)}<br>Chiqarilgan: ${printed}</div>
+    </div>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="46" height="46" style="flex-shrink:0">
+      <rect x="18" y="26" width="9" height="28" rx="4.5" fill="white"/>
+      <rect x="29" y="20" width="9" height="34" rx="4.5" fill="white"/>
+      <rect x="40" y="16" width="9" height="38" rx="4.5" fill="white"/>
+      <rect x="51" y="20" width="9" height="34" rx="4.5" fill="white"/>
+      <rect x="62" y="32" width="9" height="22" rx="4.5" fill="white"/>
+      <rect x="16" y="50" width="57" height="28" rx="8" fill="white"/>
+      <rect x="28" y="49" width="6" height="8" rx="1.5" fill="#f59e0b"/>
+      <rect x="43" y="49" width="6" height="8" rx="1.5" fill="#f59e0b"/>
+      <rect x="22" y="55" width="35" height="17" rx="2" fill="#f59e0b"/>
+      <rect x="36" y="61" width="7" height="11" rx="1" fill="#1e40af"/>
+      <rect x="25" y="58" width="7" height="7" rx="1" fill="rgba(255,255,255,0.35)"/>
+      <rect x="46" y="58" width="7" height="7" rx="1" fill="rgba(255,255,255,0.35)"/>
+    </svg>
   </div>
 </div>
 
