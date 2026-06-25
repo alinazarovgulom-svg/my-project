@@ -314,20 +314,194 @@ export async function exportPDF(rows, filters, deptName, showDept = true) {
 
 export async function exportPDFBlob(rows, filters, deptName, showDept = true) {
   if (!rows.length) return null
-  const html = buildWorkPDFHtml(rows, filters, deptName, showDept, false)
 
-  const res = await fetch('/api/html-to-pdf', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ html }),
+  const [{ jsPDF }, { default: autoTable }] = await Promise.all([
+    import('jspdf'),
+    import('jspdf-autotable'),
+  ])
+
+  const doc = new jsPDF({ orientation: 'landscape', format: 'a4', unit: 'mm' })
+  const pageW = doc.internal.pageSize.getWidth()
+
+  // ── Header ────────────────────────────────────────────────────────────────
+  doc.setFillColor(15, 28, 58)
+  doc.rect(0, 0, pageW, 22, 'F')
+  doc.setDrawColor(217, 119, 6)
+  doc.setLineWidth(0.8)
+  doc.line(0, 22, pageW, 22)
+
+  doc.setTextColor(255, 255, 255)
+  doc.setFontSize(18)
+  doc.setFont('helvetica', 'bold')
+  doc.text('KAFTIMDA', 10, 11)
+  doc.setFontSize(8)
+  doc.setFont('helvetica', 'normal')
+  doc.setTextColor(147, 197, 253)
+  doc.text(`${deptName}  ·  ${filters}`, 10, 17)
+  doc.setTextColor(148, 163, 184)
+  doc.text(`kaftimda@gmail.com  ·  +998 91 760 66 66`, pageW - 10, 11, { align: 'right' })
+  const printed = new Date().toLocaleDateString('uz-UZ', { day: '2-digit', month: '2-digit', year: 'numeric' })
+  doc.text(`Chiqarilgan: ${printed}`, pageW - 10, 17, { align: 'right' })
+
+  // ── Stats ─────────────────────────────────────────────────────────────────
+  const totalDone   = rows.reduce((s, r) => s + Number(r.quantity || 0), 0)
+  const totalExp    = rows.reduce((s, r) => s + Number(r.expected  || 0), 0)
+  const totalTayyor = rows.filter(r => r.isFinal).reduce((s, r) => s + Number(r.quantity || 0), 0)
+  const empCount    = new Set(rows.map(r => r.empName)).size
+  const eff         = totalExp > 0 ? Math.round((totalDone / totalExp) * 100) : 0
+
+  const stats = [
+    { label: 'Tayyor mahsulot', val: totalTayyor, bg: [255, 251, 235] },
+    { label: 'Xodimlar',        val: empCount,    bg: [239, 246, 255] },
+    { label: 'Bajargan',        val: totalDone,   bg: [240, 253, 244] },
+    { label: 'Kutilgan',        val: Math.round(totalExp), bg: [254, 252, 232] },
+    { label: 'Samaradorlik',    val: eff + '%',   bg: eff >= 100 ? [240, 253, 244] : eff >= 80 ? [254, 252, 232] : [254, 242, 242] },
+  ]
+  const cardW = (pageW - 20) / stats.length
+  stats.forEach((s, i) => {
+    const x = 10 + i * cardW
+    doc.setFillColor(...s.bg)
+    doc.roundedRect(x, 25, cardW - 2, 12, 1.5, 1.5, 'F')
+    doc.setTextColor(30, 41, 59)
+    doc.setFontSize(12)
+    doc.setFont('helvetica', 'bold')
+    doc.text(String(s.val), x + (cardW - 2) / 2, 32, { align: 'center' })
+    doc.setFontSize(7)
+    doc.setFont('helvetica', 'normal')
+    doc.setTextColor(100, 116, 139)
+    doc.text(s.label, x + (cardW - 2) / 2, 36, { align: 'center' })
   })
 
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}))
-    throw new Error(err.error || `PDF xatolik: ${res.status}`)
+  // ── Tables per date ───────────────────────────────────────────────────────
+  const empStats = new Map()
+  rows.forEach(r => {
+    const s = empStats.get(r.empName) ?? { done: 0, exp: 0 }
+    s.done += Number(r.quantity || 0)
+    s.exp  += Number(r.expected  || 0)
+    empStats.set(r.empName, s)
+  })
+  const empRank = new Map(
+    [...empStats.entries()]
+      .sort(([, a], [, b]) => (b.exp > 0 ? b.done / b.exp : 0) - (a.exp > 0 ? a.done / a.exp : 0))
+      .map(([name], i) => [name, i])
+  )
+
+  const dates = [...new Set(rows.map(r => r.date))].sort()
+  let startY = 40
+
+  for (const date of dates) {
+    const dr = rows.filter(r => r.date === date)
+    const slots = [...new Set(dr.map(r => `${r.startTime}–${r.endTime}`))].sort()
+
+    const groupMap = new Map()
+    dr.forEach(r => {
+      const key = `${r.empName}||${r.deptName}||${r.opName}`
+      if (!groupMap.has(key)) groupMap.set(key, { empName: r.empName, deptName: r.deptName, opName: r.opName, norm: r.norm, bySlot: {} })
+      groupMap.get(key).bySlot[`${r.startTime}–${r.endTime}`] = { qty: Number(r.quantity), exp: Number(r.expected) }
+    })
+
+    const groups = [...groupMap.values()].sort((a, b) =>
+      (empRank.get(a.empName) ?? 999) - (empRank.get(b.empName) ?? 999)
+    )
+
+    const [yyyy, mm, dd] = date.split('-')
+    const dateStr = `${dd}.${mm}.${yyyy}`
+
+    const head = [['#', 'Xodim', ...(showDept ? ["Bo'lim"] : []), 'Operatsiya', 'Norma', ...slots, 'Jami']]
+
+    const body = groups.map((g, i) => {
+      const rank = (empRank.get(g.empName) ?? 0) + 1
+      const medal = rank === 1 ? '🥇 ' : rank === 2 ? '🥈 ' : rank === 3 ? '🥉 ' : `#${rank} `
+      const eVal = empStats.get(g.empName)
+      const e = eVal && eVal.exp > 0 ? Math.round((eVal.done / eVal.exp) * 100) : 0
+      const totDone = slots.reduce((s, sl) => s + (g.bySlot[sl]?.qty ?? 0), 0)
+      const totExp  = slots.reduce((s, sl) => s + (g.bySlot[sl]?.exp ?? 0), 0)
+      return [
+        i + 1,
+        `${medal}${g.empName} (${e}%)`,
+        ...(showDept ? [g.deptName] : []),
+        g.opName,
+        `${g.norm} d/s`,
+        ...slots.map(sl => {
+          const cell = g.bySlot[sl]
+          return cell ? `${cell.qty} / ${Math.round(cell.exp)}` : '—'
+        }),
+        `${totDone} / ${Math.round(totExp)}`,
+      ]
+    })
+
+    const slotStartIdx = 4 + (showDept ? 1 : 0)
+
+    autoTable(doc, {
+      head,
+      body,
+      startY,
+      theme: 'grid',
+      styles: { fontSize: 7.5, cellPadding: 2, valign: 'middle' },
+      headStyles: { fillColor: [51, 65, 85], textColor: 255, fontStyle: 'bold', fontSize: 7.5 },
+      columnStyles: { 0: { halign: 'center', cellWidth: 8 } },
+      alternateRowStyles: { fillColor: [248, 250, 252] },
+      margin: { left: 10, right: 10 },
+      willDrawCell(d) {
+        if (d.section !== 'body') return
+        if (d.column.index < slotStartIdx) return
+        if (d.cell.raw === '—') return
+        const parts = String(d.cell.raw).split(' / ')
+        if (parts.length !== 2) return
+        const [qty, exp] = parts.map(Number)
+        if (isNaN(qty) || isNaN(exp)) return
+        if (qty > exp)      d.cell.styles.textColor = [21, 128, 61]
+        else if (qty === exp) d.cell.styles.textColor = [133, 77, 14]
+        else                  d.cell.styles.textColor = [153, 27, 27]
+        d.cell.styles.fontStyle = 'bold'
+        d.cell.styles.halign = 'center'
+      },
+      didDrawPage() {
+        doc.setFillColor(15, 28, 58)
+        doc.rect(0, 0, pageW, 22, 'F')
+        doc.setTextColor(255, 255, 255)
+        doc.setFontSize(14)
+        doc.setFont('helvetica', 'bold')
+        doc.text('KAFTIMDA', 10, 11)
+        doc.setFontSize(8)
+        doc.setFont('helvetica', 'normal')
+        doc.setTextColor(147, 197, 253)
+        doc.text(`${deptName}  ·  ${filters}`, 10, 17)
+      },
+    })
+
+    startY = doc.lastAutoTable.finalY + 8
+    // Add date label before next section
+    if (date !== dates[dates.length - 1]) {
+      doc.setFontSize(8)
+      doc.setFont('helvetica', 'bold')
+      doc.setTextColor(255, 255, 255)
+      doc.setFillColor(30, 64, 175)
+      doc.roundedRect(10, startY, 40, 6, 1, 1, 'F')
+      doc.text(dateStr, 30, startY + 4, { align: 'center' })
+      startY += 9
+    }
   }
 
-  return await res.blob()
+  // ── Legend ────────────────────────────────────────────────────────────────
+  startY = doc.lastAutoTable.finalY + 4
+  doc.setFontSize(7)
+  doc.setFont('helvetica', 'normal')
+  const legend = [
+    { color: [21, 128, 61],  label: 'Normadan yuqori' },
+    { color: [133, 77, 14],  label: 'Normaga teng' },
+    { color: [153, 27, 27],  label: 'Normadan past' },
+  ]
+  let lx = 10
+  legend.forEach(l => {
+    doc.setFillColor(...l.color)
+    doc.rect(lx, startY, 4, 4, 'F')
+    doc.setTextColor(100, 116, 139)
+    doc.text(l.label, lx + 6, startY + 3)
+    lx += 40
+  })
+
+  return doc.output('blob')
 }
 
 // ── Attendance PDF ────────────────────────────────────────────────────────────

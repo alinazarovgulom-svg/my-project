@@ -11,6 +11,10 @@ export async function sendPDFToTelegram(pdfBlob, filename, caption = '') {
     body: JSON.stringify({ pdf: base64, filename, caption }),
   })
 
+  if (!res.ok) {
+    const text = await res.text().catch(() => res.statusText)
+    throw new Error(`Server xatolik (${res.status}): ${text.slice(0, 200)}`)
+  }
   const data = await res.json()
   if (!data.ok) throw new Error(data.error || 'Telegram xatolik')
   return data
