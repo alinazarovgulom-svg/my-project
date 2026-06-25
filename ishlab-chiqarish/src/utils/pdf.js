@@ -298,16 +298,18 @@ ${autoPrint ? '<scr' + 'ipt>window.onload=function(){window.print()}</' + 'scrip
 </html>`
 }
 
-export function exportPDF(rows, filters, deptName, showDept = true) {
+export async function exportPDF(rows, filters, deptName, showDept = true) {
   if (!rows.length) return
-  const html = buildWorkPDFHtml(rows, filters, deptName, showDept, true)
-  const win = window.open('', '_blank', 'width=1200,height=850')
-  if (!win) {
-    alert("Brauzer popup'ni blokladi. Iltimos, ruxsat bering va qaytadan bosing.")
-    return
-  }
-  win.document.write(html)
-  win.document.close()
+  const blob = await exportPDFBlob(rows, filters, deptName, showDept)
+  if (!blob) return
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `hisobot-${Date.now()}.pdf`
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
 }
 
 export async function exportPDFBlob(rows, filters, deptName, showDept = true) {
