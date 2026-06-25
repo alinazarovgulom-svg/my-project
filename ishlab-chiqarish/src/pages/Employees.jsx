@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react'
 import {
   collection, addDoc, updateDoc, deleteDoc, doc,
-  onSnapshot, serverTimestamp, query, orderBy, where, getDocs,
+  onSnapshot, serverTimestamp, query, orderBy, getDocs,
 } from 'firebase/firestore'
 import { db } from '../firebase/config'
 import { useDepartments } from '../contexts/DepartmentsContext'
 import { useAuth } from '../contexts/AuthContext'
-import { Plus, Pencil, Trash2, X, Check, Search } from 'lucide-react'
+import { Plus, Pencil, Trash2, X, Check, Search, Archive, RotateCcw } from 'lucide-react'
 
 export default function Employees() {
   const { can, userDoc } = useAuth()
@@ -17,10 +17,12 @@ export default function Employees() {
   const [employees, setEmployees] = useState([])
   const [allOps, setAllOps] = useState([])
   const [filterDept, setFilterDept] = useState('all')
+  const [filterStatus, setFilterStatus] = useState('active')
   const [modal, setModal] = useState(null)
   const [form, setForm] = useState({ firstName: '', lastName: '', departmentId: '', operationIds: [] })
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(null)
+  const [search, setSearch] = useState('')
 
   useEffect(() => {
     const q = query(collection(db, 'factory_employees'), orderBy('lastName'))
@@ -34,7 +36,10 @@ export default function Employees() {
 
   const deptOps = allOps.filter(o => o.departmentId === form.departmentId)
 
-  const openAdd = () => { setForm({ firstName: '', lastName: '', departmentId: visibleDepts[0]?.id || '', operationIds: [] }); setModal('add') }
+  const openAdd = () => {
+    setForm({ firstName: '', lastName: '', departmentId: visibleDepts[0]?.id || '', operationIds: [] })
+    setModal('add')
+  }
   const openEdit = (emp) => {
     setForm({
       firstName: emp.firstName,
@@ -68,7 +73,7 @@ export default function Employees() {
       operationIds: form.operationIds,
     }
     if (modal === 'add') {
-      await addDoc(collection(db, 'factory_employees'), { ...data, createdAt: serverTimestamp() })
+      await addDoc(collection(db, 'factory_employees'), { ...data, isActive: true, createdAt: serverTimestamp() })
     } else {
       await updateDoc(doc(db, 'factory_employees', modal.id), data)
     }
@@ -76,18 +81,29 @@ export default function Employees() {
     setModal(null)
   }
 
+  const handleArchive = async (id) => {
+    if (!confirm('Xodimni arxivlaysizmi? DepartmentWork va Davomatda ko\'rinmay qoladi.')) return
+    await updateDoc(doc(db, 'factory_employees', id), { isActive: false })
+  }
+
+  const handleRestore = async (id) => {
+    await updateDoc(doc(db, 'factory_employees', id), { isActive: true })
+  }
+
   const handleDelete = async (id) => {
-    if (!confirm('O\'chirishni tasdiqlaysizmi?')) return
+    if (!confirm('Xodimni butunlay o\'chirasizmi? Bu amalni qaytarib bo\'lmaydi.')) return
     setDeleting(id)
     await deleteDoc(doc(db, 'factory_employees', id))
     setDeleting(null)
   }
 
-  const [search, setSearch] = useState('')
-
   const visibleDeptIds = new Set(visibleDepts.map(d => d.id))
+
+  const byStatus = (e) => filterStatus === 'active' ? e.isActive !== false : e.isActive === false
+
   const filtered = employees
     .filter(e => visibleDeptIds.has(e.departmentId))
+    .filter(byStatus)
     .filter(e => filterDept === 'all' || e.departmentId === filterDept)
     .filter(e => {
       if (!search.trim()) return true
@@ -95,11 +111,14 @@ export default function Employees() {
       return `${e.lastName} ${e.firstName}`.toLowerCase().includes(q)
     })
 
+  const activeCount = employees.filter(e => visibleDeptIds.has(e.departmentId) && e.isActive !== false).length
+  const archivedCount = employees.filter(e => visibleDeptIds.has(e.departmentId) && e.isActive === false).length
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-xl font-bold text-gray-800">Xodimlar</h1>
-        {can.manageEmployees && (
+        {can.manageEmployees && filterStatus === 'active' && (
           <button
             onClick={openAdd}
             className="flex items-center gap-2 bg-blue-700 hover:bg-blue-800 text-white text-sm px-4 py-2 rounded-lg transition-colors"
@@ -107,6 +126,22 @@ export default function Employees() {
             <Plus className="w-4 h-4" /> Qo'shish
           </button>
         )}
+      </div>
+
+      {/* Status toggle */}
+      <div className="flex gap-2 mb-4">
+        <button
+          onClick={() => setFilterStatus('active')}
+          className={`px-4 py-1.5 rounded-full text-xs font-medium transition-colors ${filterStatus === 'active' ? 'bg-blue-700 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+        >
+          Faol ({activeCount})
+        </button>
+        <button
+          onClick={() => setFilterStatus('archived')}
+          className={`px-4 py-1.5 rounded-full text-xs font-medium transition-colors ${filterStatus === 'archived' ? 'bg-gray-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+        >
+          Arxivlangan ({archivedCount})
+        </button>
       </div>
 
       {/* Search */}
@@ -121,16 +156,16 @@ export default function Employees() {
         />
       </div>
 
-      {/* Filter */}
+      {/* Dept filter */}
       <div className="flex gap-2 mb-5 flex-wrap">
         <button
           onClick={() => setFilterDept('all')}
           className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${filterDept === 'all' ? 'bg-blue-700 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
         >
-          Barchasi ({[...visibleDeptIds].reduce((s, id) => s + employees.filter(e => e.departmentId === id).length, 0)})
+          Barchasi
         </button>
         {visibleDepts.map(d => {
-          const count = employees.filter(e => e.departmentId === d.id).length
+          const count = employees.filter(e => e.departmentId === d.id && byStatus(e)).length
           return (
             <button
               key={d.id}
@@ -146,7 +181,9 @@ export default function Employees() {
       {/* Table */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         {filtered.length === 0 ? (
-          <div className="text-center py-16 text-gray-400 text-sm">Xodimlar topilmadi</div>
+          <div className="text-center py-16 text-gray-400 text-sm">
+            {filterStatus === 'archived' ? 'Arxivlangan xodimlar yo\'q' : 'Xodimlar topilmadi'}
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -156,14 +193,14 @@ export default function Employees() {
                   <th className="text-left px-4 py-3 font-medium text-gray-600">Ismi Familyasi</th>
                   <th className="text-left px-4 py-3 font-medium text-gray-600">Bo'lim</th>
                   <th className="text-left px-4 py-3 font-medium text-gray-600">Operatsiyalar</th>
-                  {can.manageEmployees && <th className="px-4 py-3 w-20" />}
+                  {can.manageEmployees && <th className="px-4 py-3 w-24" />}
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
                 {filtered.map((emp, i) => {
                   const empOps = allOps.filter(o => emp.operationIds?.includes(o.id))
                   return (
-                    <tr key={emp.id} className="hover:bg-gray-50">
+                    <tr key={emp.id} className={`hover:bg-gray-50 ${filterStatus === 'archived' ? 'opacity-60' : ''}`}>
                       <td className="px-4 py-3 text-gray-400">{i + 1}</td>
                       <td className="px-4 py-3 font-medium text-gray-800">
                         {emp.lastName} {emp.firstName}
@@ -187,16 +224,30 @@ export default function Employees() {
                       {can.manageEmployees && (
                         <td className="px-4 py-3">
                           <div className="flex gap-2 justify-end">
-                            <button onClick={() => openEdit(emp)} className="text-gray-400 hover:text-blue-600 transition-colors">
-                              <Pencil className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => handleDelete(emp.id)}
-                              disabled={deleting === emp.id}
-                              className="text-gray-400 hover:text-red-600 transition-colors disabled:opacity-40"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
+                            {filterStatus === 'active' ? (
+                              <>
+                                <button onClick={() => openEdit(emp)} className="text-gray-400 hover:text-blue-600 transition-colors" title="Tahrirlash">
+                                  <Pencil className="w-4 h-4" />
+                                </button>
+                                <button onClick={() => handleArchive(emp.id)} className="text-gray-400 hover:text-amber-600 transition-colors" title="Arxivlash">
+                                  <Archive className="w-4 h-4" />
+                                </button>
+                              </>
+                            ) : (
+                              <>
+                                <button onClick={() => handleRestore(emp.id)} className="text-gray-400 hover:text-green-600 transition-colors" title="Qayta faollashtirish">
+                                  <RotateCcw className="w-4 h-4" />
+                                </button>
+                                <button
+                                  onClick={() => handleDelete(emp.id)}
+                                  disabled={deleting === emp.id}
+                                  className="text-gray-400 hover:text-red-600 transition-colors disabled:opacity-40"
+                                  title="Butunlay o'chirish"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </>
+                            )}
                           </div>
                         </td>
                       )}

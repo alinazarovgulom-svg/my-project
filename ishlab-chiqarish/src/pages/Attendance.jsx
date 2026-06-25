@@ -110,7 +110,7 @@ export default function Attendance() {
   }
 
   // Absent = no work entries today (only within visible departments)
-  const visibleEmps = employees.filter(e => visibleDeptIds.has(e.departmentId))
+  const visibleEmps = employees.filter(e => visibleDeptIds.has(e.departmentId) && e.isActive !== false)
   const absentEmps = visibleEmps.filter(e => !presentIds.has(e.id))
   const presentCount = visibleEmps.length - absentEmps.length
 
