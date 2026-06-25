@@ -80,6 +80,8 @@ export default function Dashboard() {
         query(collection(db, 'factory_work_entries'), where('date', '==', today))
       )
 
+      const visibleDeptIds = new Set(departments.map(d => d.id))
+
       const deptData = {}
       departments.forEach(d => {
         deptData[d.id] = { employees: 0, attended: 0, done: 0, expected: 0, tayyor: 0 }
@@ -89,6 +91,9 @@ export default function Dashboard() {
         const deptId = doc.data().departmentId
         if (deptData[deptId]) deptData[deptId].employees++
       })
+
+      const visibleEmpCount = empSnap.docs.filter(d => visibleDeptIds.has(d.data().departmentId) && d.data().isActive !== false).length
+      const visibleOpCount = opSnap.docs.filter(d => visibleDeptIds.has(d.data().departmentId)).length
 
       const seenEmp = new Set()
       entriesSnap.forEach(doc => {
@@ -106,7 +111,7 @@ export default function Dashboard() {
         })
       })
 
-      setStats({ employees: empSnap.size, operations: opSnap.size })
+      setStats({ employees: visibleEmpCount, operations: visibleOpCount })
       setDeptStats(deptData)
       setLoading(false)
     }
@@ -115,10 +120,13 @@ export default function Dashboard() {
 
   // Last 7 days trend
   useEffect(() => {
+    if (!departments.length) return
     async function loadWeek() {
       const last7 = Array.from({ length: 7 }, (_, i) =>
         format(subDays(new Date(), 6 - i), 'yyyy-MM-dd')
       )
+
+      const weekDeptIds = new Set(departments.map(d => d.id))
 
       const [opSnap, entriesSnap] = await Promise.all([
         getDocs(collection(db, 'factory_operations')),
@@ -137,6 +145,7 @@ export default function Dashboard() {
 
       entriesSnap.forEach(doc => {
         const d = doc.data()
+        if (!weekDeptIds.has(d.departmentId)) return
         const day = dayMap[d.date]
         if (!day) return
         const hours = calcHours(d.startTime, d.endTime)
@@ -147,14 +156,14 @@ export default function Dashboard() {
       })
 
       setWeekData(last7.map(date => ({
-        date: date.slice(5).replace('-', '.'), // "06.22"
+        date: date.slice(5).replace('-', '.'),
         samaradorlik: dayMap[date].expected > 0
           ? Math.round((dayMap[date].done / dayMap[date].expected) * 100)
           : null,
       })))
     }
     loadWeek()
-  }, [])
+  }, [departments])
 
   const totalAttended = Object.values(deptStats).reduce((s, d) => s + d.attended, 0)
   const totalDone     = Object.values(deptStats).reduce((s, d) => s + d.done, 0)
