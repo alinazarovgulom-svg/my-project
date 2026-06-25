@@ -314,51 +314,20 @@ export async function exportPDF(rows, filters, deptName, showDept = true) {
 
 export async function exportPDFBlob(rows, filters, deptName, showDept = true) {
   if (!rows.length) return null
-  const fullHtml = buildWorkPDFHtml(rows, filters, deptName, showDept, false)
+  const html = buildWorkPDFHtml(rows, filters, deptName, showDept, false)
 
-  // Extract style and body from full HTML page
-  const styleContent = (fullHtml.match(/<style>([\s\S]*?)<\/style>/) || [])[1] || ''
-  const bodyContent  = (fullHtml.match(/<body>([\s\S]*?)<\/body>/)   || [])[1] || ''
+  const res = await fetch('/api/html-to-pdf', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ html }),
+  })
 
-  // Remove @page rule — jsPDF handles page size via options
-  const cleanStyle = styleContent.replace(/@page\s*\{[^}]*\}/g, '')
-
-  // Styles must be in document.head — html2canvas ignores <style> inside cloned subtree
-  const styleEl = document.createElement('style')
-  styleEl.setAttribute('data-pdf-temp', '1')
-  styleEl.textContent = cleanStyle
-  document.head.appendChild(styleEl)
-
-  const wrapper = document.createElement('div')
-  wrapper.style.cssText = 'position:fixed;top:0;left:0;width:1150px;background:#ffffff;z-index:99999;pointer-events:none;'
-  wrapper.insertAdjacentHTML('beforeend', bodyContent)
-  document.body.appendChild(wrapper)
-
-  // Wait for browser to apply styles and render
-  await new Promise(resolve => setTimeout(resolve, 150))
-
-  try {
-    const { default: html2pdf } = await import('html2pdf.js')
-    return await html2pdf()
-      .set({
-        margin: [8, 10, 8, 10],
-        filename: 'hisobot.pdf',
-        html2canvas: {
-          scale: 2,
-          useCORS: true,
-          allowTaint: true,
-          backgroundColor: '#ffffff',
-          logging: false,
-          windowWidth: 1150,
-        },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
-      })
-      .from(wrapper)
-      .outputPdf('blob')
-  } finally {
-    document.body.removeChild(wrapper)
-    document.head.removeChild(styleEl)
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error(err.error || `PDF xatolik: ${res.status}`)
   }
+
+  return await res.blob()
 }
 
 // ── Attendance PDF ────────────────────────────────────────────────────────────
