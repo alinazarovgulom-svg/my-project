@@ -322,7 +322,7 @@ export async function exportPDFBlob(rows, filters, deptName, showDept = true) {
   const cleanStyle = styleContent.replace(/@page\s*\{[^}]*\}/g, '')
 
   const wrapper = document.createElement('div')
-  wrapper.style.cssText = 'position:fixed;left:-9999px;top:0;width:1150px;background:#ffffff;'
+  wrapper.style.cssText = 'position:absolute;left:-9999px;top:0;width:1150px;background:#ffffff;'
 
   const styleEl = document.createElement('style')
   styleEl.textContent = cleanStyle
@@ -343,6 +343,7 @@ export async function exportPDFBlob(rows, filters, deptName, showDept = true) {
           allowTaint: true,
           backgroundColor: '#ffffff',
           logging: false,
+          windowWidth: 1150,
         },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
       })
