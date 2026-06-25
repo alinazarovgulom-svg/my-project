@@ -174,13 +174,13 @@ export function exportPDF(rows, filters, deptName, showDept = true) {
          border-bottom:2.5px solid #D97706; margin-bottom:7px; }
   .hdr-l .brand { font-size:22px; font-weight:900; letter-spacing:0.3px; line-height:1.1; }
   .hdr-l .amber { width:68px; height:2.5px; background:#D97706; border-radius:1px; margin-top:5px; }
-  .hdr-l .sub   { font-size:8.5px; color:#4b6080; margin-top:6px; line-height:1.5; }
+  .hdr-l .sub   { font-size:10px; color:#93c5fd; margin-top:7px; line-height:1.7; font-weight:500; }
   .hdr-r { display:flex; align-items:center; gap:22px; }
   .hdr-r .contacts { text-align:right; }
-  .hdr-r .phone  { font-size:13px; font-weight:600; color:white; letter-spacing:0.3px; }
-  .hdr-r .detail { font-size:9px; color:#4b6080; margin-top:2px; }
-  .hdr-r .insta  { display:flex; flex-direction:column; align-items:center; gap:4px; }
-  .hdr-r .insta-handle { color:#94a3b8; font-size:9px; font-weight:600; white-space:nowrap; }
+  .hdr-r .detail { font-size:9.5px; color:#94a3b8; margin-top:3px; display:flex; align-items:center; justify-content:flex-end; gap:4px; }
+  .hdr-r .detail:first-child { margin-top:0; }
+  .hdr-r .insta  { display:flex; flex-direction:column; align-items:center; gap:6px; }
+  .hdr-r .insta-handle { color:#94a3b8; font-size:9.5px; white-space:nowrap; }
 
   /* Stat cards */
   .stats { display:flex; gap:6px; margin-bottom:8px; }
@@ -249,15 +249,20 @@ export function exportPDF(rows, filters, deptName, showDept = true) {
   </div>
   <div class="hdr-r">
     <div class="contacts">
-      <div class="phone">+998 91 760 66 66</div>
+      <div class="detail">
+        <svg viewBox="0 0 16 16" width="11" height="11" xmlns="http://www.w3.org/2000/svg">
+          <path d="M3.3 6.9c1 2 2.8 3.7 4.8 4.8l1.6-1.6c.2-.2.5-.3.7-.1.8.3 1.7.5 2.6.5.4 0 .7.3.7.7V14c0 .4-.3.7-.7.7C6 14.7 1.3 10 1.3 4.3c0-.4.3-.7.7-.7H5c.4 0 .7.3.7.7 0 1 .2 1.9.5 2.7.1.3 0 .6-.2.7L3.3 6.9z" fill="#94a3b8"/>
+        </svg>
+        +998 91 760 66 66
+      </div>
       <div class="detail">kaftimda@gmail.com</div>
       <div class="detail">kaftimda.uz</div>
     </div>
     <div class="insta">
-      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect x="2" y="2" width="20" height="20" rx="5.5" stroke="white" stroke-width="1.8"/>
-        <circle cx="12" cy="12" r="4.5" stroke="white" stroke-width="1.8"/>
-        <circle cx="17.5" cy="6.5" r="1.2" fill="white"/>
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="2" y="2" width="20" height="20" rx="5.5" stroke="#94a3b8" stroke-width="1.8"/>
+        <circle cx="12" cy="12" r="4.5" stroke="#94a3b8" stroke-width="1.8"/>
+        <circle cx="17.5" cy="6.5" r="1.2" fill="#94a3b8"/>
       </svg>
       <span class="insta-handle">@KAFTIMDA</span>
     </div>
@@ -388,13 +393,13 @@ export function exportAttendancePDF(absentEmps, allEmps, absences, departments, 
          border-bottom:2.5px solid #D97706; margin-bottom:7px; }
   .hdr-l .brand { font-size:22px; font-weight:900; letter-spacing:0.3px; line-height:1.1; }
   .hdr-l .amber { width:68px; height:2.5px; background:#D97706; border-radius:1px; margin-top:5px; }
-  .hdr-l .sub   { font-size:8.5px; color:#4b6080; margin-top:6px; line-height:1.5; }
+  .hdr-l .sub   { font-size:10px; color:#93c5fd; margin-top:7px; line-height:1.7; font-weight:500; }
   .hdr-r { display:flex; align-items:center; gap:22px; }
   .hdr-r .contacts { text-align:right; }
-  .hdr-r .phone  { font-size:13px; font-weight:600; color:white; letter-spacing:0.3px; }
-  .hdr-r .detail { font-size:9px; color:#4b6080; margin-top:2px; }
-  .hdr-r .insta  { display:flex; flex-direction:column; align-items:center; gap:4px; }
-  .hdr-r .insta-handle { color:#94a3b8; font-size:9px; font-weight:600; white-space:nowrap; }
+  .hdr-r .detail { font-size:9.5px; color:#94a3b8; margin-top:3px; display:flex; align-items:center; justify-content:flex-end; gap:4px; }
+  .hdr-r .detail:first-child { margin-top:0; }
+  .hdr-r .insta  { display:flex; flex-direction:column; align-items:center; gap:6px; }
+  .hdr-r .insta-handle { color:#94a3b8; font-size:9.5px; white-space:nowrap; }
 
   .stats { display:flex; gap:6px; margin-bottom:8px; }
   .card  { flex:1; border-radius:6px; padding:7px 10px; border:1px solid #e2e8f0; text-align:center; }
@@ -453,15 +458,20 @@ export function exportAttendancePDF(absentEmps, allEmps, absences, departments, 
   </div>
   <div class="hdr-r">
     <div class="contacts">
-      <div class="phone">+998 91 760 66 66</div>
+      <div class="detail">
+        <svg viewBox="0 0 16 16" width="11" height="11" xmlns="http://www.w3.org/2000/svg">
+          <path d="M3.3 6.9c1 2 2.8 3.7 4.8 4.8l1.6-1.6c.2-.2.5-.3.7-.1.8.3 1.7.5 2.6.5.4 0 .7.3.7.7V14c0 .4-.3.7-.7.7C6 14.7 1.3 10 1.3 4.3c0-.4.3-.7.7-.7H5c.4 0 .7.3.7.7 0 1 .2 1.9.5 2.7.1.3 0 .6-.2.7L3.3 6.9z" fill="#94a3b8"/>
+        </svg>
+        +998 91 760 66 66
+      </div>
       <div class="detail">kaftimda@gmail.com</div>
       <div class="detail">kaftimda.uz</div>
     </div>
     <div class="insta">
-      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect x="2" y="2" width="20" height="20" rx="5.5" stroke="white" stroke-width="1.8"/>
-        <circle cx="12" cy="12" r="4.5" stroke="white" stroke-width="1.8"/>
-        <circle cx="17.5" cy="6.5" r="1.2" fill="white"/>
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="2" y="2" width="20" height="20" rx="5.5" stroke="#94a3b8" stroke-width="1.8"/>
+        <circle cx="12" cy="12" r="4.5" stroke="#94a3b8" stroke-width="1.8"/>
+        <circle cx="17.5" cy="6.5" r="1.2" fill="#94a3b8"/>
       </svg>
       <span class="insta-handle">@KAFTIMDA</span>
     </div>
