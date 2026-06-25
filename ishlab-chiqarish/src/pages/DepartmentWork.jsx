@@ -7,7 +7,9 @@ import {
 import { db } from '../firebase/config'
 import { useDepartments } from '../contexts/DepartmentsContext'
 import { useAuth } from '../contexts/AuthContext'
-import { Calendar, Clock, Save, CheckCircle, RefreshCw, X, Search, MoreVertical } from 'lucide-react'
+import { Calendar, Clock, Save, CheckCircle, RefreshCw, X, Search, MoreVertical, Send } from 'lucide-react'
+import { exportPDFBlob } from '../utils/pdf'
+import { sendPDFToTelegram } from '../utils/telegram'
 
 function calcHours(start, end) {
   const [sh, sm] = start.split(':').map(Number)
@@ -57,6 +59,8 @@ export default function DepartmentWork() {
   const [pickerSel, setPickerSel] = useState([]) // temp selection in picker
   const [search, setSearch] = useState('')
   const [activeShift, setActiveShift] = useState(null)
+  const [tgSending, setTgSending] = useState(false)
+  const [tgMsg, setTgMsg] = useState('')
 
   useEffect(() => {
     getDocs(query(collection(db, 'factory_shifts'), where('isActive', '==', true)))
@@ -180,6 +184,59 @@ export default function DepartmentWork() {
 
   const hours = Math.max(0, calcHours(startTime, endTime) - breakMinutes / 60)
 
+  const handleSendTelegram = async () => {
+    if (isDirty) {
+      setTgMsg("Avval ma'lumotlarni saqlang")
+      setTimeout(() => setTgMsg(''), 3000)
+      return
+    }
+
+    const rows = []
+    employees.forEach(emp => {
+      const empEntries = entries[emp.id] || {}
+      const activeOpIds = overrides[emp.id] ?? emp.operationIds ?? []
+      allOps.filter(o => activeOpIds.includes(o.id)).forEach(op => {
+        const data = empEntries[op.id] || {}
+        rows.push({
+          empName: `${emp.lastName} ${emp.firstName}`,
+          deptName: dept.name,
+          opName: op.name,
+          norm: op.norm,
+          quantity: Number(data.quantity || 0),
+          expected: op.norm * hours,
+          note: data.note || '',
+          date,
+          startTime,
+          endTime,
+          breakMinutes,
+          isFinal: !!(op.isFinal),
+        })
+      })
+    })
+
+    if (!rows.length) {
+      setTgMsg("Kiritilgan ma'lumot yo'q")
+      setTimeout(() => setTgMsg(''), 3000)
+      return
+    }
+
+    setTgSending(true)
+    setTgMsg('')
+    try {
+      const filters = `${date} · ${startTime}–${endTime}`
+      const blob = await exportPDFBlob(rows, filters, dept.name, false)
+      const filename = `${dept.name}-${date}-${startTime.replace(':', '')}.pdf`
+      const caption = `📊 ${dept.name} | ${date} | ${startTime}–${endTime}`
+      await sendPDFToTelegram(blob, filename, caption)
+      setTgMsg('✓ Yuborildi!')
+    } catch (err) {
+      setTgMsg('Xatolik: ' + err.message)
+    } finally {
+      setTgSending(false)
+      setTimeout(() => setTgMsg(''), 4000)
+    }
+  }
+
   if (!dept) return <div className="text-red-500 p-4">Bo'lim topilmadi</div>
   if (!hasAccess) return (
     <div className="flex flex-col items-center justify-center h-64 text-center">
@@ -302,21 +359,41 @@ export default function DepartmentWork() {
               />
             </div>
             {can.enterHourly && (
-              <button
-                onClick={saveAll}
-                disabled={savingAll}
-                className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-colors flex-shrink-0 ${
-                  savedAll
-                    ? 'bg-green-100 text-green-700'
-                    : 'bg-blue-700 hover:bg-blue-800 text-white'
-                } disabled:opacity-60`}
-              >
-                {savedAll ? (
-                  <><CheckCircle className="w-4 h-4" /> Hammasi saqlandi</>
-                ) : (
-                  <><Save className="w-4 h-4" /> {savingAll ? 'Saqlanmoqda...' : 'Barchasini saqlash'}</>
-                )}
-              </button>
+              <div className="flex gap-2 flex-shrink-0">
+                <div className="relative">
+                  <button
+                    onClick={handleSendTelegram}
+                    disabled={tgSending}
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium bg-sky-500 hover:bg-sky-600 text-white transition-colors disabled:opacity-60"
+                    title="Telegram guruhga yuborish"
+                  >
+                    <Send className="w-4 h-4" />
+                    {tgSending ? 'Yuborilmoqda...' : 'Telegram'}
+                  </button>
+                  {tgMsg && (
+                    <div className={`absolute bottom-full mb-1.5 left-0 whitespace-nowrap text-xs rounded-lg px-3 py-1.5 shadow-md ${
+                      tgMsg.startsWith('✓') ? 'bg-green-600 text-white' : 'bg-gray-800 text-white'
+                    }`}>
+                      {tgMsg}
+                    </div>
+                  )}
+                </div>
+                <button
+                  onClick={saveAll}
+                  disabled={savingAll}
+                  className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                    savedAll
+                      ? 'bg-green-100 text-green-700'
+                      : 'bg-blue-700 hover:bg-blue-800 text-white'
+                  } disabled:opacity-60`}
+                >
+                  {savedAll ? (
+                    <><CheckCircle className="w-4 h-4" /> Hammasi saqlandi</>
+                  ) : (
+                    <><Save className="w-4 h-4" /> {savingAll ? 'Saqlanmoqda...' : 'Barchasini saqlash'}</>
+                  )}
+                </button>
+              </div>
             )}
           </div>
         <div className="space-y-4">

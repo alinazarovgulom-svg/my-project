@@ -7,7 +7,6 @@ function esc(str) {
 }
 
 function fmtDate(iso) {
-  // '2026-06-21' → '21.06.2026'
   const [y, m, d] = iso.split('-')
   return `${d}.${m}.${y}`
 }
@@ -18,10 +17,7 @@ function qtyStyle(qty, exp) {
   return               { bg: '#fee2e2', color: '#991b1b' }
 }
 
-export function exportPDF(rows, filters, deptName, showDept = true) {
-  if (!rows.length) return
-
-  // ── Global stats ─────────────────────────────────────────────────────────
+function buildWorkPDFHtml(rows, filters, deptName, showDept = true, autoPrint = true) {
   const totalDone   = rows.reduce((s, r) => s + Number(r.quantity || 0), 0)
   const totalExp    = rows.reduce((s, r) => s + Number(r.expected  || 0), 0)
   const totalTayyor = rows.filter(r => r.isFinal).reduce((s, r) => s + Number(r.quantity || 0), 0)
@@ -30,7 +26,6 @@ export function exportPDF(rows, filters, deptName, showDept = true) {
   const effColor    = eff >= 100 ? '#15803d' : eff >= 80 ? '#854d0e' : '#991b1b'
   const effBg       = eff >= 100 ? '#f0fdf4' : eff >= 80 ? '#fefce8' : '#fef2f2'
 
-  // ── Employee efficiency ranking (across all dates) ───────────────────────
   const empStats = new Map()
   rows.forEach(r => {
     const s = empStats.get(r.empName) ?? { done: 0, exp: 0, deptName: r.deptName }
@@ -38,7 +33,6 @@ export function exportPDF(rows, filters, deptName, showDept = true) {
     s.exp  += Number(r.expected  || 0)
     empStats.set(r.empName, s)
   })
-  // Sort: highest efficiency first; equal → alphabetical
   const empRank = new Map(
     [...empStats.entries()]
       .sort(([nameA, a], [nameB, b]) => {
@@ -53,12 +47,10 @@ export function exportPDF(rows, filters, deptName, showDept = true) {
     return s && s.exp > 0 ? Math.round((s.done / s.exp) * 100) : 0
   }
 
-  // ── Group rows by date ────────────────────────────────────────────────────
   const dates = [...new Set(rows.map(r => r.date))].sort()
 
   const sections = dates.map(date => {
     const dr = rows.filter(r => r.date === date)
-
     const slots = [...new Set(dr.map(r => `${r.startTime}–${r.endTime}`))].sort()
 
     const groupMap = new Map()
@@ -72,7 +64,6 @@ export function exportPDF(rows, filters, deptName, showDept = true) {
       }
     })
 
-    // Sort groups by employee rank (best first), then operation name
     const groups = [...groupMap.values()].sort((a, b) =>
       (empRank.get(a.empName) ?? 999) - (empRank.get(b.empName) ?? 999) ||
       a.opName.localeCompare(b.opName)
@@ -81,7 +72,6 @@ export function exportPDF(rows, filters, deptName, showDept = true) {
     return { date, slots, groups }
   })
 
-  // ── Build each date section ───────────────────────────────────────────────
   const sectionsHtml = sections.map(({ date, slots, groups }) => {
     const slotHeaders = slots
       .map(s => `<th class="slot-th">${esc(s)}</th>`)
@@ -158,7 +148,7 @@ export function exportPDF(rows, filters, deptName, showDept = true) {
 
   const printed = new Date().toLocaleDateString('uz-UZ', { day: '2-digit', month: '2-digit', year: 'numeric' })
 
-  const html = `<!DOCTYPE html>
+  return `<!DOCTYPE html>
 <html lang="uz">
 <head>
 <meta charset="utf-8">
@@ -168,7 +158,6 @@ export function exportPDF(rows, filters, deptName, showDept = true) {
   * { margin:0; padding:0; box-sizing:border-box; }
   body { font-family: Arial, Helvetica, sans-serif; font-size:10px; color:#1e293b; }
 
-  /* Header */
   .hdr { background:#0f1c3a; color:#fff; padding:13px 18px;
          display:flex; justify-content:space-between; align-items:center;
          border-bottom:2.5px solid #D97706; margin-bottom:7px; }
@@ -179,24 +168,19 @@ export function exportPDF(rows, filters, deptName, showDept = true) {
   .hdr-r .contacts { text-align:right; }
   .hdr-r .detail { font-size:9.5px; color:#94a3b8; margin-top:3px; display:flex; align-items:center; justify-content:flex-end; gap:4px; }
   .hdr-r .detail:first-child { margin-top:0; }
-  .hdr-r .insta  { display:flex; flex-direction:column; align-items:center; gap:6px; }
-  .hdr-r .insta-handle { color:#94a3b8; font-size:9.5px; white-space:nowrap; }
 
-  /* Stat cards */
   .stats { display:flex; gap:6px; margin-bottom:8px; }
   .card  { flex:1; border-radius:6px; padding:6px 10px;
            border:1px solid #e2e8f0; text-align:center; }
   .card-val { font-size:14px; font-weight:700; }
   .card-lbl { font-size:8px; color:#64748b; margin-top:1px; }
 
-  /* Date section */
   .date-section { margin-bottom:10px; }
   .date-hdr { background:#1e40af; color:#fff; font-size:10px; font-weight:700;
               padding:4px 8px; border-radius:4px 4px 0 0; letter-spacing:.3px; }
 
-  /* Table */
   table { width:100%; border-collapse:collapse; font-size:10px; }
-  thead { display:table-header-group; }   /* repeat header on every printed page */
+  thead { display:table-header-group; }
   thead tr { background:#334155; color:#fff; }
   thead th { padding:5px 6px; text-align:left; font-weight:600;
              font-size:9px; white-space:nowrap; }
@@ -219,14 +203,12 @@ export function exportPDF(rows, filters, deptName, showDept = true) {
   .qty-exp { font-size:8.5px; color:#64748b; line-height:1.3; }
   .slot-note { font-size:8px; color:#475569; font-style:italic; margin-top:2px; max-width:80px; word-wrap:break-word; }
 
-  /* Legend */
   .legend { display:flex; align-items:center; gap:12px; margin-top:8px;
             padding-top:6px; border-top:1px solid #e2e8f0; flex-wrap:wrap; }
   .legend-item { display:flex; align-items:center; gap:4px; font-size:9px; color:#64748b; }
   .dot { width:10px; height:10px; border-radius:3px; flex-shrink:0; }
   .legend-note { margin-left:auto; font-size:8px; color:#94a3b8; }
 
-  /* Footer */
   .footer { display:flex; justify-content:space-between; margin-top:7px;
             padding-top:5px; border-top:1px solid #e2e8f0;
             font-size:8.5px; color:#94a3b8; }
@@ -234,8 +216,8 @@ export function exportPDF(rows, filters, deptName, showDept = true) {
 
   @media print {
     body { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-    .date-hdr { page-break-after:avoid; }        /* date title stays with its table */
-    tbody tr  { page-break-inside:avoid; }       /* no row cut in half across pages */
+    .date-hdr { page-break-after:avoid; }
+    tbody tr  { page-break-inside:avoid; }
   }
 </style>
 </head>
@@ -311,10 +293,14 @@ ${sectionsHtml}
   <div>kaftimda@gmail.com &nbsp;·&nbsp; +998 91 760 66 66</div>
 </div>
 
-<script>window.onload = function() { window.print(); }</script>
+${autoPrint ? '<scr' + 'ipt>window.onload=function(){window.print()}</' + 'script>' : ''}
 </body>
 </html>`
+}
 
+export function exportPDF(rows, filters, deptName, showDept = true) {
+  if (!rows.length) return
+  const html = buildWorkPDFHtml(rows, filters, deptName, showDept, true)
   const win = window.open('', '_blank', 'width=1200,height=850')
   if (!win) {
     alert("Brauzer popup'ni blokladi. Iltimos, ruxsat bering va qaytadan bosing.")
@@ -322,6 +308,49 @@ ${sectionsHtml}
   }
   win.document.write(html)
   win.document.close()
+}
+
+export async function exportPDFBlob(rows, filters, deptName, showDept = true) {
+  if (!rows.length) return null
+  const fullHtml = buildWorkPDFHtml(rows, filters, deptName, showDept, false)
+
+  // Extract style and body from full HTML page
+  const styleContent = (fullHtml.match(/<style>([\s\S]*?)<\/style>/) || [])[1] || ''
+  const bodyContent  = (fullHtml.match(/<body>([\s\S]*?)<\/body>/)   || [])[1] || ''
+
+  // Remove @page rule — jsPDF handles page size via options
+  const cleanStyle = styleContent.replace(/@page\s*\{[^}]*\}/g, '')
+
+  const wrapper = document.createElement('div')
+  wrapper.style.cssText = 'position:fixed;left:-9999px;top:0;width:1150px;background:#ffffff;'
+
+  const styleEl = document.createElement('style')
+  styleEl.textContent = cleanStyle
+  wrapper.appendChild(styleEl)
+  wrapper.insertAdjacentHTML('beforeend', bodyContent)
+
+  document.body.appendChild(wrapper)
+
+  try {
+    const { default: html2pdf } = await import('html2pdf.js')
+    return await html2pdf()
+      .set({
+        margin: [8, 10, 8, 10],
+        filename: 'hisobot.pdf',
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: '#ffffff',
+          logging: false,
+        },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
+      })
+      .from(wrapper)
+      .outputPdf('blob')
+  } finally {
+    document.body.removeChild(wrapper)
+  }
 }
 
 // ── Attendance PDF ────────────────────────────────────────────────────────────
@@ -344,7 +373,6 @@ export function exportAttendancePDF(absentEmps, allEmps, absences, departments, 
   const totalPresent = allEmps.length - totalAbsent
   const printed      = new Date().toLocaleDateString('uz-UZ', { day: '2-digit', month: '2-digit', year: 'numeric' })
 
-  // Group absent employees by department (preserving departments order)
   const deptGroups = departments
     .map(dept => ({ dept, emps: absentEmps.filter(e => e.departmentId === dept.id) }))
     .filter(g => g.emps.length > 0)
@@ -397,8 +425,6 @@ export function exportAttendancePDF(absentEmps, allEmps, absences, departments, 
   .hdr-r .contacts { text-align:right; }
   .hdr-r .detail { font-size:9.5px; color:#94a3b8; margin-top:3px; display:flex; align-items:center; justify-content:flex-end; gap:4px; }
   .hdr-r .detail:first-child { margin-top:0; }
-  .hdr-r .insta  { display:flex; flex-direction:column; align-items:center; gap:6px; }
-  .hdr-r .insta-handle { color:#94a3b8; font-size:9.5px; white-space:nowrap; }
 
   .stats { display:flex; gap:6px; margin-bottom:8px; }
   .card  { flex:1; border-radius:6px; padding:7px 10px; border:1px solid #e2e8f0; text-align:center; }
@@ -422,7 +448,6 @@ export function exportAttendancePDF(absentEmps, allEmps, absences, departments, 
   .td-note   { color:#64748b; font-size:9.5px; }
   .reason-badge { padding:2px 8px; border-radius:10px; font-size:9.5px; font-weight:700; }
 
-  /* Department group header row */
   .dept-group-row td { background:#dbeafe; color:#1e3a8a; font-weight:700;
                        font-size:10px; padding:5px 8px; page-break-after:avoid; }
   .dept-count { margin-left:8px; font-size:9px; color:#2563eb;
@@ -473,9 +498,6 @@ export function exportAttendancePDF(absentEmps, allEmps, absences, departments, 
         @KAFTIMDA
       </div>
     </div>
-    <div class="insta" style="display:none">
-      <span class="insta-handle">@KAFTIMDA</span>
-    </div>
   </div>
 </div>
 
@@ -522,7 +544,7 @@ ${totalAbsent === 0
   <div>kaftimda@gmail.com &nbsp;·&nbsp; +998 91 760 66 66</div>
 </div>
 
-<script>window.onload = function() { window.print(); }</script>
+<scr` + `ipt>window.onload=function(){window.print()}<\/script>
 </body>
 </html>`
 
