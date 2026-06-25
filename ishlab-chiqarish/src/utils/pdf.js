@@ -169,14 +169,18 @@ export function exportPDF(rows, filters, deptName, showDept = true) {
   body { font-family: Arial, Helvetica, sans-serif; font-size:10px; color:#1e293b; }
 
   /* Header */
-  .hdr { background:#1e40af; color:#fff; padding:9px 14px;
+  .hdr { background:#0f1c3a; color:#fff; padding:13px 18px;
          display:flex; justify-content:space-between; align-items:center;
-         border-bottom:2.5px solid #3b82f6; margin-bottom:7px; }
-  .hdr-l .brand { font-size:18px; font-weight:700; }
-  .hdr-l .sub   { font-size:9px; color:#93c5fd; margin-top:2px; }
-  .hdr-r { text-align:right; }
-  .hdr-r .dept  { font-size:11px; font-weight:600; }
-  .hdr-r .meta  { font-size:9px; color:#93c5fd; margin-top:2px; line-height:1.6; }
+         border-bottom:2.5px solid #D97706; margin-bottom:7px; }
+  .hdr-l .brand { font-size:22px; font-weight:900; letter-spacing:0.3px; line-height:1.1; }
+  .hdr-l .amber { width:68px; height:2.5px; background:#D97706; border-radius:1px; margin-top:5px; }
+  .hdr-l .sub   { font-size:8.5px; color:#4b6080; margin-top:6px; line-height:1.5; }
+  .hdr-r { display:flex; align-items:center; gap:22px; }
+  .hdr-r .contacts { text-align:right; }
+  .hdr-r .phone  { font-size:13px; font-weight:600; color:white; letter-spacing:0.3px; }
+  .hdr-r .detail { font-size:9px; color:#4b6080; margin-top:2px; }
+  .hdr-r .insta  { display:flex; flex-direction:column; align-items:center; gap:4px; }
+  .hdr-r .insta-handle { color:#94a3b8; font-size:9px; font-weight:600; white-space:nowrap; }
 
   /* Stat cards */
   .stats { display:flex; gap:6px; margin-bottom:8px; }
@@ -240,11 +244,23 @@ export function exportPDF(rows, filters, deptName, showDept = true) {
 <div class="hdr">
   <div class="hdr-l">
     <div class="brand">KAFTIMDA</div>
-    <div class="sub">Ishlab chiqarish tizimi</div>
+    <div class="amber"></div>
+    <div class="sub">${esc(deptName)} &nbsp;·&nbsp; ${esc(filters)}<br>Chiqarilgan: ${printed}</div>
   </div>
   <div class="hdr-r">
-    <div class="dept">${esc(deptName)}</div>
-    <div class="meta">${esc(filters)}<br>Chiqarilgan: ${printed}</div>
+    <div class="contacts">
+      <div class="phone">+998 91 760 66 66</div>
+      <div class="detail">kaftimda@gmail.com</div>
+      <div class="detail">kaftimda.uz</div>
+    </div>
+    <div class="insta">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="2" y="2" width="20" height="20" rx="5.5" stroke="white" stroke-width="1.8"/>
+        <circle cx="12" cy="12" r="4.5" stroke="white" stroke-width="1.8"/>
+        <circle cx="17.5" cy="6.5" r="1.2" fill="white"/>
+      </svg>
+      <span class="insta-handle">@KAFTIMDA</span>
+    </div>
   </div>
 </div>
 
@@ -367,14 +383,18 @@ export function exportAttendancePDF(absentEmps, allEmps, absences, departments, 
   * { margin:0; padding:0; box-sizing:border-box; }
   body { font-family: Arial, Helvetica, sans-serif; font-size:10px; color:#1e293b; }
 
-  .hdr { background:#1e40af; color:#fff; padding:9px 14px;
+  .hdr { background:#0f1c3a; color:#fff; padding:13px 18px;
          display:flex; justify-content:space-between; align-items:center;
-         border-bottom:2.5px solid #3b82f6; margin-bottom:7px; }
-  .hdr-l .brand { font-size:18px; font-weight:700; }
-  .hdr-l .sub   { font-size:9px; color:#93c5fd; margin-top:2px; }
-  .hdr-r { text-align:right; }
-  .hdr-r .title { font-size:13px; font-weight:700; }
-  .hdr-r .meta  { font-size:9px; color:#93c5fd; margin-top:3px; }
+         border-bottom:2.5px solid #D97706; margin-bottom:7px; }
+  .hdr-l .brand { font-size:22px; font-weight:900; letter-spacing:0.3px; line-height:1.1; }
+  .hdr-l .amber { width:68px; height:2.5px; background:#D97706; border-radius:1px; margin-top:5px; }
+  .hdr-l .sub   { font-size:8.5px; color:#4b6080; margin-top:6px; line-height:1.5; }
+  .hdr-r { display:flex; align-items:center; gap:22px; }
+  .hdr-r .contacts { text-align:right; }
+  .hdr-r .phone  { font-size:13px; font-weight:600; color:white; letter-spacing:0.3px; }
+  .hdr-r .detail { font-size:9px; color:#4b6080; margin-top:2px; }
+  .hdr-r .insta  { display:flex; flex-direction:column; align-items:center; gap:4px; }
+  .hdr-r .insta-handle { color:#94a3b8; font-size:9px; font-weight:600; white-space:nowrap; }
 
   .stats { display:flex; gap:6px; margin-bottom:8px; }
   .card  { flex:1; border-radius:6px; padding:7px 10px; border:1px solid #e2e8f0; text-align:center; }
@@ -428,11 +448,23 @@ export function exportAttendancePDF(absentEmps, allEmps, absences, departments, 
 <div class="hdr">
   <div class="hdr-l">
     <div class="brand">KAFTIMDA</div>
-    <div class="sub">Ishlab chiqarish tizimi</div>
+    <div class="amber"></div>
+    <div class="sub">Davomat hisoboti &nbsp;·&nbsp; ${fmtDate(date)}<br>Chiqarilgan: ${printed}</div>
   </div>
   <div class="hdr-r">
-    <div class="title">Davomat hisoboti</div>
-    <div class="meta">${fmtDate(date)}<br>Chiqarilgan: ${printed}</div>
+    <div class="contacts">
+      <div class="phone">+998 91 760 66 66</div>
+      <div class="detail">kaftimda@gmail.com</div>
+      <div class="detail">kaftimda.uz</div>
+    </div>
+    <div class="insta">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="2" y="2" width="20" height="20" rx="5.5" stroke="white" stroke-width="1.8"/>
+        <circle cx="12" cy="12" r="4.5" stroke="white" stroke-width="1.8"/>
+        <circle cx="17.5" cy="6.5" r="1.2" fill="white"/>
+      </svg>
+      <span class="insta-handle">@KAFTIMDA</span>
+    </div>
   </div>
 </div>
 
