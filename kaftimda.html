@@ -3,521 +3,417 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>KAFTIMDA — Biznesingizni tizimlashtiramiz</title>
-
-<!-- Favicon -->
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%230a0d18'/><text x='50' y='72' font-size='64' text-anchor='middle' font-family='Arial Black,Arial' font-weight='900' fill='%23f0b429'>K</text></svg>"/>
-
-<!-- Open Graph -->
-<meta property="og:title" content="KAFTIMDA — Biznesingizni tizimlashtiramiz"/>
-<meta property="og:description" content="Har qanday biznesni tizimlashtirish. ERP joriy etish, jarayonlar tahlili va avtomatlashtirish."/>
+<title>KAFTIMDA — Biznes Tizimlashtirish</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='16' fill='%23f0b429'/><text y='75' x='50' text-anchor='middle' font-family='Arial Black,sans-serif' font-size='60' font-weight='900' fill='%23000'>K</text></svg>"/>
+<meta property="og:title" content="KAFTIMDA — Biznes Tizimlashtirish"/>
+<meta property="og:description" content="ERP · KPI · Avtomatlashtirish — Har qanday biznesni tizimlashtiramiz"/>
 <meta property="og:url" content="https://timely-dasik-f38b80.netlify.app"/>
 <meta property="og:type" content="website"/>
-<meta property="og:image" content="https://timely-dasik-f38b80.netlify.app/og.png"/>
-<meta name="twitter:card" content="summary_large_image"/>
-<meta name="twitter:title" content="KAFTIMDA — Biznesingizni tizimlashtiramiz"/>
-<meta name="twitter:description" content="Har qanday biznesni tizimlashtirish."/>
-
-<!-- Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Syne:wght@700;800&display=swap"/>
-
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Syne:wght@700;800&display=swap"/>
 <style>
-
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-
-:root{
-  --gold:#f0b429;
-  --gold2:#ffd97d;
-  --bg:#04060d;
-  --ink:#0a0d18;
-}
-
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{--gold:#f0b429;--gold2:#ffd97d;--bg:#000;--s1:#0c0c0c;--s2:#111;--bd:rgba(240,180,41,0.18);--muted:rgba(255,255,255,0.38)}
 html{scroll-behavior:smooth}
-body{font-family:'Space Grotesk',system-ui,-apple-system,sans-serif;background:var(--bg);color:#e8edf8;overflow-x:hidden}
-@media(hover:hover){html{cursor:none}}
-
-/* CURSOR — faqat sichqonchali qurilmalarda */
-@media(hover:hover){
-.cur,.cur-dot{position:fixed;border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%)}
-.cur{width:40px;height:40px;border:1.5px solid rgba(240,180,41,0.5);transition:transform 0.15s,width 0.3s,height 0.3s,border-color 0.3s;top:0;left:0}
-.cur-dot{width:6px;height:6px;background:var(--gold);transition:transform 0.05s;top:0;left:0}
-body:has(a:hover) .cur,body:has(button:hover) .cur{width:64px;height:64px;border-color:var(--gold);background:rgba(240,180,41,0.08)}
-}
+body{font-family:'Space Grotesk',system-ui,-apple-system,sans-serif;background:var(--bg);color:#fff;overflow-x:hidden}
+body::after{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");opacity:.03;pointer-events:none;z-index:998}
 
 /* LOADER */
-#loader{position:fixed;inset:0;background:var(--bg);z-index:9000;display:flex;align-items:center;justify-content:center;transition:opacity 0.6s,visibility 0.6s}
-#loader.out{opacity:0;visibility:hidden}
-.loader-text{font-family:'Syne',sans-serif;font-size:clamp(2rem,8vw,5rem);font-weight:800;letter-spacing:-2px;overflow:hidden}
-.loader-text span{display:inline-block;animation:loaderChar 1.2s cubic-bezier(0.22,1,0.36,1) both}
-.loader-text span:nth-child(1){animation-delay:0s}
-.loader-text span:nth-child(2){animation-delay:.05s}
-.loader-text span:nth-child(3){animation-delay:.1s}
-.loader-text span:nth-child(4){animation-delay:.15s}
-.loader-text span:nth-child(5){animation-delay:.2s}
-.loader-text span:nth-child(6){animation-delay:.25s}
-.loader-text span:nth-child(7){animation-delay:.3s}
-.loader-text span:nth-child(8){animation-delay:.35s}
-.gold-char{color:var(--gold)}
-@keyframes loaderChar{from{transform:translateY(100%);opacity:0}to{transform:translateY(0);opacity:1}}
+#ldr{position:fixed;inset:0;background:#000;z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:28px;transition:opacity .7s ease,visibility .7s ease}
+#ldr.out{opacity:0;visibility:hidden}
+.ldr-logo{position:relative;font-family:'Syne',Arial Black,sans-serif;font-size:clamp(40px,10vw,84px);font-weight:800;letter-spacing:-3px;overflow:hidden;padding:0 4px}
+.ldr-k{color:var(--gold)}.ldr-r{color:#fff}
+.ldr-beam{position:absolute;top:0;left:-40%;width:40%;height:100%;background:linear-gradient(90deg,transparent,rgba(240,180,41,.9),transparent);animation:beam 1.7s cubic-bezier(.4,0,.2,1) forwards}
+@keyframes beam{0%{left:-40%}100%{left:140%}}
+.ldr-bar{width:260px;height:1px;background:rgba(255,255,255,.07);overflow:hidden}
+.ldr-fill{height:100%;background:var(--gold);width:0;animation:lfill 1.9s cubic-bezier(.4,0,.2,1) forwards}
+@keyframes lfill{0%{width:0}60%{width:65%}100%{width:100%}}
+.ldr-pct{position:absolute;bottom:32px;right:32px;font-size:11px;letter-spacing:3px;color:var(--muted);font-family:'Syne',sans-serif}
 
 /* CANVAS */
-#particles{position:fixed;inset:0;z-index:0;pointer-events:none}
+#cv{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.5}
+
+/* CURSOR */
+@media(hover:hover){
+  html{cursor:none}
+  .cur{position:fixed;width:34px;height:34px;border:1px solid rgba(240,180,41,.55);border-radius:50%;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:width .3s,height .3s;mix-blend-mode:difference}
+  .cdot{position:fixed;width:4px;height:4px;background:var(--gold);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%)}
+}
 
 /* NAV */
-nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:28px 48px;display:flex;align-items:center;justify-content:space-between;mix-blend-mode:normal}
-.nav-logo{font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:800;letter-spacing:4px;text-decoration:none;color:#e8edf8}
-.nav-logo em{color:var(--gold);font-style:normal}
-.nav-pill{display:flex;gap:4px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:100px;padding:6px}
-.nav-pill a{color:rgba(232,237,248,0.6);text-decoration:none;font-size:0.82rem;font-weight:500;padding:7px 18px;border-radius:100px;transition:all 0.3s}
-.nav-pill a:hover{color:#e8edf8;background:rgba(255,255,255,0.07)}
-.nav-cta{font-size:0.82rem;font-weight:600;color:var(--bg);background:var(--gold);border:none;padding:10px 24px;border-radius:100px;cursor:none;transition:all 0.3s;text-decoration:none;display:inline-block}
-.nav-cta:hover{background:var(--gold2);transform:scale(1.05)}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;justify-content:space-between;align-items:center;padding:18px 40px;background:rgba(0,0,0,.55);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-bottom:1px solid rgba(255,255,255,.05)}
+@media(max-width:600px){nav{padding:14px 20px}}
+.nav-logo{font-family:'Syne',sans-serif;font-size:19px;font-weight:800;letter-spacing:-1px;text-decoration:none;color:#fff}
+.nav-logo .g{color:var(--gold)}
+.nav-btn{background:var(--gold);color:#000;padding:9px 22px;border-radius:50px;font-weight:700;font-size:13px;text-decoration:none;transition:all .25s;white-space:nowrap}
+.nav-btn:hover{background:var(--gold2);transform:translateY(-1px);box-shadow:0 8px 28px rgba(240,180,41,.35)}
 
 /* HERO */
-.hero{min-height:100vh;display:flex;flex-direction:column;justify-content:flex-end;padding:0 48px 80px;position:relative;z-index:1}
-.hero-label{font-size:0.75rem;letter-spacing:4px;text-transform:uppercase;color:var(--gold);font-weight:600;margin-bottom:24px;opacity:0;animation:fadeIn 0.8s 1.8s ease forwards}
-.hero-title{font-family:'Syne',sans-serif;font-size:clamp(3.5rem,9vw,8rem);font-weight:800;line-height:0.95;letter-spacing:-4px;overflow:hidden;margin-bottom:40px}
-.hero-title .line{overflow:hidden;display:block}
-.hero-title .line span{display:block;transform:translateY(110%);animation:slideUp 1s cubic-bezier(0.22,1,0.36,1) both}
-.hero-title .line:nth-child(1) span{animation-delay:1.4s}
-.hero-title .line:nth-child(2) span{animation-delay:1.55s}
-.hero-title .line:nth-child(3) span{animation-delay:1.7s}
-.hero-title .gold-word{color:var(--gold)}
-.hero-bottom{display:flex;align-items:flex-end;justify-content:space-between;gap:40px;opacity:0;animation:fadeIn 0.8s 2s ease forwards}
-.hero-desc{max-width:380px;color:rgba(232,237,248,0.55);font-size:1rem;line-height:1.7;font-weight:400}
-.hero-btns{display:flex;gap:12px;flex-shrink:0}
-.btn-main{display:inline-flex;align-items:center;gap:10px;padding:16px 32px;background:var(--gold);color:var(--bg);font-size:0.9rem;font-weight:700;border-radius:100px;text-decoration:none;transition:all 0.4s cubic-bezier(0.34,1.56,0.64,1);cursor:none;border:none}
-.btn-main:hover{background:var(--gold2);transform:scale(1.06)}
-.btn-sec{display:inline-flex;align-items:center;gap:10px;padding:16px 32px;background:transparent;color:#e8edf8;font-size:0.9rem;font-weight:600;border-radius:100px;text-decoration:none;border:1px solid rgba(255,255,255,0.12);transition:all 0.3s;cursor:none}
-.btn-sec:hover{border-color:var(--gold);color:var(--gold)}
-.scroll-hint{position:absolute;bottom:40px;right:48px;display:flex;flex-direction:column;align-items:center;gap:8px;color:rgba(232,237,248,0.3);font-size:0.72rem;letter-spacing:2px;text-transform:uppercase;opacity:0;animation:fadeIn 1s 2.5s ease forwards}
-.scroll-line{width:1px;height:60px;background:linear-gradient(to bottom,rgba(240,180,41,0.6),transparent);animation:scrollPulse 2s ease-in-out infinite}
-@keyframes scrollPulse{0%,100%{transform:scaleY(1);opacity:1}50%{transform:scaleY(0.5);opacity:0.4}}
+.hero{position:relative;z-index:1;min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:110px 24px 90px}
+.hero-tag{font-size:11px;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:var(--gold);margin-bottom:32px;display:flex;align-items:center;gap:12px;opacity:0;transform:translateY(14px);transition:all .6s ease}
+.hero-tag::before,.hero-tag::after{content:'';display:block;width:36px;height:1px;background:var(--gold);opacity:.4}
+.hero-tag.on{opacity:1;transform:none}
+.hero-h{font-family:'Syne',Arial Black,sans-serif;font-size:clamp(64px,16vw,180px);font-weight:800;line-height:.88;letter-spacing:-6px;margin-bottom:10px}
+.hero-h .g{color:var(--gold)}
+.hero-sh{font-family:'Syne',Arial Black,sans-serif;font-size:clamp(22px,5vw,56px);font-weight:800;line-height:1.1;letter-spacing:-2px;margin-bottom:28px;color:rgba(255,255,255,.82)}
+.hero-sh .g{color:var(--gold)}
+.wr{display:inline-block;overflow:hidden;vertical-align:bottom}
+.wi{display:inline-block;transform:translateY(105%);transition:transform .9s cubic-bezier(.4,0,.2,1)}
+.wi.on{transform:translateY(0)}
+.hero-p{font-size:clamp(15px,2vw,17px);color:var(--muted);max-width:460px;line-height:1.75;margin-bottom:44px;opacity:0;transition:opacity .7s ease .5s}
+.hero-p.on{opacity:1}
+.hero-acts{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;opacity:0;transition:opacity .7s ease .7s}
+.hero-acts.on{opacity:1}
+.btn-primary{background:var(--gold);color:#000;padding:14px 32px;border-radius:50px;font-weight:700;font-size:15px;text-decoration:none;transition:all .3s;position:relative;overflow:hidden;border:none;cursor:pointer;display:inline-block}
+.btn-primary::after{content:'';position:absolute;inset:0;background:linear-gradient(45deg,transparent 30%,rgba(255,255,255,.25) 50%,transparent 70%);transform:translateX(-100%);transition:transform .5s}
+.btn-primary:hover::after{transform:translateX(100%)}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 16px 40px rgba(240,180,41,.35)}
+.btn-outline{background:transparent;color:rgba(255,255,255,.65);padding:14px 32px;border-radius:50px;font-weight:500;font-size:15px;text-decoration:none;border:1px solid rgba(255,255,255,.14);transition:all .3s;display:inline-block}
+.btn-outline:hover{color:#fff;border-color:rgba(255,255,255,.35)}
+.scroll-hint{position:absolute;bottom:28px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:6px;opacity:.35}
+.scroll-hint span{font-size:9px;letter-spacing:3px;text-transform:uppercase}
+.scroll-line{width:1px;height:36px;background:linear-gradient(to bottom,var(--gold),transparent);animation:sh 1.6s ease-in-out infinite}
+@keyframes sh{0%,100%{opacity:.4}50%{opacity:1}}
 
-@keyframes slideUp{to{transform:translateY(0)}}
-@keyframes fadeIn{to{opacity:1}}
+/* MARQUEE */
+.mq{position:relative;z-index:1;overflow:hidden;padding:16px 0;background:var(--gold)}
+.mq-track{display:flex;white-space:nowrap;animation:mql 22s linear infinite}
+.mq-item{flex-shrink:0;font-family:'Syne',sans-serif;font-size:12px;font-weight:800;letter-spacing:3px;text-transform:uppercase;color:#000;padding-right:56px}
+.mq-sep{color:rgba(0,0,0,.3)}
+@keyframes mql{from{transform:translateX(0)}to{transform:translateX(-50%)}}
 
-/* TICKER */
-.ticker{border-top:1px solid rgba(255,255,255,0.06);border-bottom:1px solid rgba(255,255,255,0.06);padding:18px 0;overflow:hidden;position:relative;z-index:1;background:rgba(255,255,255,0.015)}
-.ticker-inner{display:flex;gap:0;width:max-content;animation:tick 20s linear infinite}
-.ticker-inner span{white-space:nowrap;padding:0 48px;font-size:0.8rem;letter-spacing:3px;text-transform:uppercase;color:rgba(232,237,248,0.3);font-weight:500}
-.ticker-inner span em{color:var(--gold);font-style:normal;margin-right:8px}
-@keyframes tick{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+/* STATS */
+.stats{position:relative;z-index:1;display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid rgba(255,255,255,.05);border-bottom:1px solid rgba(255,255,255,.05)}
+.sc{padding:56px 32px;text-align:center;border-right:1px solid rgba(255,255,255,.05);position:relative;overflow:hidden}
+.sc::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--gold);transform:scaleX(0);transform-origin:left;transition:transform .8s cubic-bezier(.4,0,.2,1)}
+.sc.on::after{transform:scaleX(1)}
+.sc:last-child{border-right:none}
+.sn{font-family:'Syne',sans-serif;font-size:clamp(40px,7vw,80px);font-weight:800;color:var(--gold);line-height:1;display:block}
+.sl{font-size:12px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-top:10px}
+@media(max-width:600px){.sc{padding:36px 16px}.sn{font-size:36px}}
 
-/* BENTO */
-.bento-section{padding:100px 48px;position:relative;z-index:1}
-.bento-header{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:48px;gap:24px}
-.bento-tag{font-size:0.72rem;letter-spacing:4px;text-transform:uppercase;color:var(--gold);font-weight:600;margin-bottom:12px}
-.bento-title{font-family:'Syne',sans-serif;font-size:clamp(2rem,4vw,3.2rem);font-weight:800;letter-spacing:-1px;line-height:1.1}
-.bento-sub{max-width:340px;color:rgba(232,237,248,0.45);font-size:0.9rem;line-height:1.7}
+/* SECTION */
+section{position:relative;z-index:1;padding:96px 24px}
+.wrap{max-width:1100px;margin:0 auto}
+.s-tag{display:inline-block;font-size:10px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:var(--gold);margin-bottom:14px;opacity:0;transform:translateX(-16px);transition:all .6s ease}
+.s-tag.on{opacity:1;transform:none}
+.s-h{font-family:'Syne',sans-serif;font-size:clamp(28px,4.5vw,52px);font-weight:800;line-height:1.1;margin-bottom:56px;opacity:0;transform:translateY(20px);transition:all .7s ease .1s}
+.s-h.on{opacity:1;transform:none}
 
-.bento-grid{display:grid;grid-template-columns:repeat(12,1fr);grid-template-rows:auto;gap:16px}
-
-.bcard{background:var(--ink);border:1px solid rgba(255,255,255,0.06);border-radius:24px;padding:36px;position:relative;overflow:hidden;transition:all 0.5s cubic-bezier(0.34,1.56,0.64,1)}
-.bcard::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 80% 20%,rgba(240,180,41,0.06) 0%,transparent 60%);opacity:0;transition:opacity 0.5s}
-.bcard:hover{transform:translateY(-6px);border-color:rgba(240,180,41,0.2);box-shadow:0 24px 80px rgba(0,0,0,0.5),0 0 0 1px rgba(240,180,41,0.08)}
-.bcard:hover::before{opacity:1}
-
-.bcard-1{grid-column:span 4}
-.bcard-2{grid-column:span 5}
-.bcard-3{grid-column:span 3}
-.bcard-4{grid-column:span 3}
-.bcard-5{grid-column:span 5}
-.bcard-6{grid-column:span 4}
-
-.bcard-icon{width:52px;height:52px;border-radius:14px;background:rgba(240,180,41,0.1);border:1px solid rgba(240,180,41,0.15);display:flex;align-items:center;justify-content:center;font-size:1.4rem;margin-bottom:28px;transition:all 0.4s cubic-bezier(0.34,1.56,0.64,1)}
-.bcard:hover .bcard-icon{transform:rotate(-8deg) scale(1.15);background:rgba(240,180,41,0.18)}
-.bcard h3{font-size:1.05rem;font-weight:700;margin-bottom:10px;line-height:1.3}
-.bcard p{font-size:0.875rem;color:rgba(232,237,248,0.45);line-height:1.65}
-.bcard-num{position:absolute;bottom:24px;right:28px;font-family:'Syne',sans-serif;font-size:5rem;font-weight:800;color:rgba(240,180,41,0.04);line-height:1}
-
-/* BIG CARD */
-.bcard-big{grid-column:span 7;background:linear-gradient(135deg,rgba(240,180,41,0.08) 0%,var(--ink) 60%);border-color:rgba(240,180,41,0.12);display:flex;flex-direction:column;justify-content:space-between;min-height:280px}
-.bcard-big .bcard-tag{font-size:0.7rem;letter-spacing:3px;text-transform:uppercase;color:var(--gold);font-weight:600;margin-bottom:16px}
-.bcard-big h2{font-family:'Syne',sans-serif;font-size:clamp(1.6rem,3vw,2.4rem);font-weight:800;letter-spacing:-0.5px;line-height:1.1;margin-bottom:0}
-.bcard-big .bcard-arrow{width:48px;height:48px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:1.2rem;transition:transform 0.3s;align-self:flex-end}
-.bcard-big:hover .bcard-arrow{transform:rotate(-45deg) scale(1.1)}
-
-/* STAT CARD */
-.bcard-stat{grid-column:span 3;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:180px}
-.bcard-stat .big-num{font-family:'Syne',sans-serif;font-size:3.5rem;font-weight:800;background:linear-gradient(135deg,var(--gold),var(--gold2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1;margin-bottom:8px}
-.bcard-stat .stat-label{font-size:0.8rem;color:rgba(232,237,248,0.4);font-weight:500;letter-spacing:1px}
+/* SERVICES */
+.srv-list{display:flex;flex-direction:column;border:1px solid rgba(255,255,255,.06);border-radius:16px;overflow:hidden}
+.srv-row{display:grid;grid-template-columns:72px 1fr auto;align-items:center;gap:24px;padding:36px 40px;border-bottom:1px solid rgba(255,255,255,.05);background:var(--s1);position:relative;overflow:hidden;opacity:0;transform:translateY(24px);transition:opacity .7s ease,transform .7s ease,background .35s}
+.srv-row.on{opacity:1;transform:none}
+.srv-row:last-child{border-bottom:none}
+.srv-row::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--gold);transform:scaleY(0);transform-origin:bottom;transition:transform .4s cubic-bezier(.4,0,.2,1)}
+.srv-row:hover{background:var(--s2)}
+.srv-row:hover::before{transform:scaleY(1)}
+.srv-n{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:rgba(240,180,41,.32);letter-spacing:2px}
+.srv-title{font-family:'Syne',sans-serif;font-size:clamp(17px,2.5vw,22px);font-weight:700;margin-bottom:8px}
+.srv-text{font-size:14px;color:var(--muted);line-height:1.7;max-width:540px}
+.srv-icon{font-size:30px;opacity:.75}
+@media(max-width:640px){.srv-row{grid-template-columns:1fr;gap:10px;padding:26px 22px}.srv-icon{display:none}}
 
 /* PROCESS */
-.process{padding:100px 48px;position:relative;z-index:1}
-.process-title-row{display:flex;align-items:center;gap:24px;margin-bottom:80px}
-.process-tag{font-size:0.72rem;letter-spacing:4px;text-transform:uppercase;color:var(--gold);font-weight:600}
-.process-line{flex:1;height:1px;background:linear-gradient(90deg,rgba(240,180,41,0.3),transparent)}
-.process-title{font-family:'Syne',sans-serif;font-size:clamp(2rem,4vw,3rem);font-weight:800;letter-spacing:-1px}
-
-.steps-row{display:grid;grid-template-columns:repeat(4,1fr);gap:0;position:relative}
-.steps-row::before{content:'';position:absolute;top:44px;left:calc(12.5%);right:calc(12.5%);height:1px;background:repeating-linear-gradient(90deg,rgba(240,180,41,0.2) 0px,rgba(240,180,41,0.2) 6px,transparent 6px,transparent 14px)}
-
-.step-item{padding:0 24px;text-align:center}
-.step-ball{width:88px;height:88px;border-radius:50%;background:var(--ink);border:1px solid rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;margin:0 auto 28px;position:relative;z-index:1;font-size:1.8rem;transition:all 0.5s cubic-bezier(0.34,1.56,0.64,1)}
-.step-ball::after{content:attr(data-n);position:absolute;top:-6px;right:-6px;width:24px;height:24px;background:var(--gold);color:var(--bg);border-radius:50%;font-size:0.65rem;font-weight:800;display:flex;align-items:center;justify-content:center;font-family:'Space Grotesk',sans-serif}
-.step-item:hover .step-ball{transform:scale(1.12);border-color:var(--gold);box-shadow:0 0 0 8px rgba(240,180,41,0.07),0 0 40px rgba(240,180,41,0.15)}
-.step-item h3{font-size:1rem;font-weight:700;color:var(--gold);margin-bottom:10px}
-.step-item p{font-size:0.855rem;color:rgba(232,237,248,0.45);line-height:1.65}
+.proc-wrap{background:var(--s1);border-top:1px solid rgba(255,255,255,.04);border-bottom:1px solid rgba(255,255,255,.04)}
+.proc-grid{display:grid;grid-template-columns:repeat(4,1fr);position:relative}
+.proc-grid::before{content:'';position:absolute;top:23px;left:calc(12.5% + 4px);right:calc(12.5% + 4px);height:1px;background:linear-gradient(90deg,var(--gold),rgba(240,180,41,.15));z-index:0}
+.ps{padding:0 28px 48px;opacity:0;transform:translateY(18px);transition:opacity .6s ease,transform .6s ease}
+.ps.on{opacity:1;transform:none}
+.ps-dot{width:48px;height:48px;border-radius:50%;background:var(--bg);border:2px solid var(--gold);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:13px;font-weight:800;color:var(--gold);margin-bottom:20px;position:relative;z-index:1}
+.ps-t{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;margin-bottom:8px}
+.ps-p{font-size:13px;color:var(--muted);line-height:1.7}
+@media(max-width:768px){.proc-grid{grid-template-columns:1fr 1fr}.proc-grid::before{display:none}.ps{padding:24px 20px}}
+@media(max-width:480px){.proc-grid{grid-template-columns:1fr}}
 
 /* CONTACT */
-.contact{padding:100px 48px;position:relative;z-index:1}
-.contact-inner{display:grid;grid-template-columns:1fr 1.2fr;gap:64px;align-items:start}
-.contact-left h2{font-family:'Syne',sans-serif;font-size:clamp(2.2rem,4.5vw,3.8rem);font-weight:800;letter-spacing:-1.5px;line-height:1.05;margin-bottom:24px}
-.contact-left h2 em{color:var(--gold);font-style:normal;display:block}
-.contact-left p{color:rgba(232,237,248,0.45);font-size:0.95rem;line-height:1.7;margin-bottom:48px}
-
-.clink{display:flex;align-items:center;gap:16px;padding:20px 24px;border:1px solid rgba(255,255,255,0.07);border-radius:16px;text-decoration:none;color:#e8edf8;margin-bottom:12px;transition:all 0.4s cubic-bezier(0.34,1.56,0.64,1);background:rgba(255,255,255,0.02);position:relative;overflow:hidden}
-.clink::after{content:'↗';position:absolute;right:24px;opacity:0;transform:translate(-4px,4px);transition:all 0.3s;color:var(--gold);font-size:1.1rem}
-.clink:hover{transform:translateX(8px);border-color:rgba(240,180,41,0.25);background:rgba(240,180,41,0.04);padding-right:48px}
-.clink:hover::after{opacity:1;transform:translate(0,0)}
-.clink-ic{width:48px;height:48px;border-radius:12px;background:rgba(240,180,41,0.08);border:1px solid rgba(240,180,41,0.12);display:flex;align-items:center;justify-content:center;font-size:1.15rem;flex-shrink:0;transition:all 0.3s}
-.clink:hover .clink-ic{transform:scale(1.1) rotate(-8deg)}
-.clink-t strong{display:block;font-size:0.7rem;letter-spacing:1.5px;text-transform:uppercase;color:rgba(232,237,248,0.35);margin-bottom:3px}
-.clink-t span{font-size:0.95rem;font-weight:600}
-
-/* FORM */
-.form-wrap{background:var(--ink);border:1px solid rgba(255,255,255,0.07);border-radius:28px;padding:48px;position:relative;overflow:hidden}
-.form-wrap::before{content:'';position:absolute;top:-40px;right:-40px;width:200px;height:200px;background:radial-gradient(circle,rgba(240,180,41,0.08) 0%,transparent 70%);pointer-events:none}
-.form-wrap::after{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(240,180,41,0.4),transparent)}
-.form-wrap h3{font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;margin-bottom:32px;letter-spacing:-0.3px}
-.fg{margin-bottom:20px}
-.fg label{display:block;font-size:0.72rem;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:rgba(232,237,248,0.35);margin-bottom:9px}
-.fg input,.fg textarea{width:100%;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:14px 18px;color:#e8edf8;font-size:0.95rem;font-family:'Space Grotesk',sans-serif;outline:none;transition:all 0.3s;resize:none}
-.fg input:focus,.fg textarea:focus{border-color:var(--gold);background:rgba(240,180,41,0.03);box-shadow:0 0 0 4px rgba(240,180,41,0.07)}
-.fg input::placeholder,.fg textarea::placeholder{color:rgba(232,237,248,0.2)}
-.submit-btn{width:100%;padding:16px;background:var(--gold);color:var(--bg);font-size:0.95rem;font-weight:700;font-family:'Space Grotesk',sans-serif;border:none;border-radius:12px;cursor:none;transition:all 0.4s cubic-bezier(0.34,1.56,0.64,1);margin-top:8px;letter-spacing:0.5px}
-.submit-btn:hover{background:var(--gold2);transform:translateY(-3px);box-shadow:0 12px 40px rgba(240,180,41,0.3)}
-.submit-btn:active{transform:translateY(-1px)}
+.contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:start}
+@media(max-width:900px){.contact-grid{grid-template-columns:1fr;gap:48px}}
+.c-h{font-family:'Syne',sans-serif;font-size:clamp(28px,4vw,48px);font-weight:800;line-height:1.1;margin-bottom:16px;opacity:0;transform:translateY(20px);transition:all .7s ease}
+.c-h.on{opacity:1;transform:none}
+.c-h .g{color:var(--gold)}
+.c-p{color:var(--muted);line-height:1.75;margin-bottom:30px;opacity:0;transition:opacity .7s ease .1s}
+.c-p.on{opacity:1}
+.c-links{display:flex;flex-direction:column;gap:10px}
+.c-link{display:flex;align-items:center;gap:14px;color:rgba(255,255,255,.5);text-decoration:none;font-size:14px;padding:13px 18px;border-radius:12px;border:1px solid rgba(255,255,255,.06);background:var(--s1);opacity:0;transform:translateX(-14px);transition:opacity .6s ease,transform .6s ease,color .3s,border-color .3s,background .3s}
+.c-link.on{opacity:1;transform:none}
+.c-link:hover{color:var(--gold);border-color:var(--bd);background:rgba(240,180,41,.04)}
+.c-icon{width:36px;height:36px;border-radius:9px;background:rgba(240,180,41,.07);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.form-box{opacity:0;transform:translateY(20px);transition:all .7s ease .2s}
+.form-box.on{opacity:1;transform:none}
+.fg{margin-bottom:14px}
+.fg label{display:block;font-size:11px;font-weight:600;color:rgba(255,255,255,.35);letter-spacing:.8px;text-transform:uppercase;margin-bottom:7px}
+.fg input,.fg select,.fg textarea{width:100%;background:var(--s1);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:12px 15px;font-size:14px;color:#fff;font-family:'Space Grotesk',sans-serif;outline:none;transition:border-color .3s,box-shadow .3s;-webkit-appearance:none;appearance:none}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(240,180,41,.08)}
+.fg select option{background:#111}
+.fg textarea{height:100px;resize:vertical}
+.sub{width:100%;background:var(--gold);color:#000;border:none;padding:14px;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Space Grotesk',sans-serif;transition:all .3s}
+.sub:hover{background:var(--gold2);transform:translateY(-2px);box-shadow:0 12px 32px rgba(240,180,41,.3)}
+.sub:disabled{opacity:.6;cursor:not-allowed;transform:none}
 
 /* FOOTER */
-footer{border-top:1px solid rgba(255,255,255,0.06);padding:40px 48px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:20px;position:relative;z-index:1}
-footer .f-logo{font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:800;letter-spacing:3px;text-decoration:none;color:#e8edf8}
-footer .f-logo em{color:var(--gold);font-style:normal}
-footer p{font-size:0.8rem;color:rgba(232,237,248,0.25)}
-
-/* REVEAL */
-.rv{opacity:0;transform:translateY(50px);transition:opacity 0.8s cubic-bezier(0.22,1,0.36,1),transform 0.8s cubic-bezier(0.22,1,0.36,1)}
-.rv.show{opacity:1;transform:translateY(0)}
-.rv-d1{transition-delay:.1s}.rv-d2{transition-delay:.2s}.rv-d3{transition-delay:.3s}
-.rv-d4{transition-delay:.4s}.rv-d5{transition-delay:.5s}.rv-d6{transition-delay:.6s}
-
-/* MOBILE */
-@media(max-width:900px){
-  nav{padding:20px 24px}
-  .nav-pill{display:none}
-  .hero{padding:0 24px 60px}
-  .hero-title{letter-spacing:-2px}
-  .hero-bottom{flex-direction:column;align-items:flex-start}
-  .bento-section,.process,.contact{padding:80px 24px}
-  .bento-grid{grid-template-columns:1fr 1fr}
-  .bcard-1,.bcard-2,.bcard-3,.bcard-4,.bcard-5,.bcard-6,.bcard-big,.bcard-stat{grid-column:span 2}
-  .steps-row{grid-template-columns:1fr 1fr;gap:24px}
-  .steps-row::before{display:none}
-  .contact-inner{grid-template-columns:1fr}
-  .form-wrap{padding:32px 24px}
-  footer{padding:32px 24px;flex-direction:column;text-align:center}
-}
-@media(max-width:480px){
-  .bento-grid{grid-template-columns:1fr}
-  .bcard-1,.bcard-2,.bcard-3,.bcard-4,.bcard-5,.bcard-6,.bcard-big,.bcard-stat{grid-column:span 1}
-  .steps-row{grid-template-columns:1fr}
-}
+footer{position:relative;z-index:1;border-top:1px solid rgba(255,255,255,.05);padding:44px 24px;text-align:center}
+.ft-logo{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;letter-spacing:-1px;margin-bottom:8px}
+.ft-logo .g{color:var(--gold)}
+.ft-t{font-size:12px;color:rgba(255,255,255,.22)}
 </style>
 </head>
 <body>
 
-<!-- CURSOR -->
-<div class="cur" id="cur"></div>
-<div class="cur-dot" id="curDot"></div>
-
-<!-- LOADER -->
-<div id="loader">
-  <div class="loader-text">
-    <span class="gold-char">K</span><span class="gold-char">A</span><span class="gold-char">F</span><span class="gold-char">T</span><span>I</span><span>M</span><span>D</span><span>A</span>
+<div id="ldr">
+  <div class="ldr-logo">
+    <span class="ldr-k">KAFTI</span><span class="ldr-r">MDA</span>
+    <div class="ldr-beam"></div>
   </div>
+  <div class="ldr-bar"><div class="ldr-fill"></div></div>
+  <div class="ldr-pct" id="ldrP">0%</div>
 </div>
 
-<!-- CANVAS -->
-<canvas id="particles"></canvas>
+<canvas id="cv"></canvas>
+<div class="cur" id="cur"></div>
+<div class="cdot" id="cdot"></div>
 
-<!-- NAV -->
 <nav>
-  <a class="nav-logo" href="#"><em>KAFTI</em>MDA</a>
-  <div class="nav-pill">
-    <a href="#xizmatlar">Xizmatlar</a>
-    <a href="#jarayon">Jarayon</a>
-    <a href="#aloqa">Aloqa</a>
-  </div>
-  <a href="#aloqa" class="nav-cta">Bog'lanish</a>
+  <a href="#" class="nav-logo"><span class="g">KAFTI</span>MDA</a>
+  <a href="#contact" class="nav-btn">Bog'lanish</a>
 </nav>
 
-<!-- HERO -->
-<section class="hero">
-  <p class="hero-label">Biznes tizimlashtirish · ERP · Avtomatlashtirish</p>
-  <h1 class="hero-title">
-    <span class="line"><span>Biznesingiz</span></span>
-    <span class="line"><span><span style="color:var(--gold)">kafting</span>izda</span></span>
-    <span class="line"><span>bo'lsin.</span></span>
-  </h1>
-  <div class="hero-bottom">
-    <p class="hero-desc">Tartibsizlikdan — aniq tizimga. Har qanday biznesni professional jarayon va nazoratga olib chiqamiz.</p>
-    <div class="hero-btns">
-      <a href="#aloqa" class="btn-main">Maslahat olish ↗</a>
-      <a href="#xizmatlar" class="btn-sec">Xizmatlar</a>
-    </div>
+<div class="hero">
+  <div class="hero-tag" id="hTag">Biznes Tizimlashtirish</div>
+  <h1 class="hero-h"><span class="wr"><span class="wi" id="w0"><span class="g">KAFTI</span>MDA</span></span></h1>
+  <div class="hero-sh">
+    <div><span class="wr"><span class="wi" id="w1">Har qanday biznesni</span></span></div>
+    <div><span class="wr"><span class="wi g" id="w2">tizimlashtiramiz.</span></span></div>
   </div>
-  <div class="scroll-hint">
-    <div class="scroll-line"></div>
-    <span>Scroll</span>
+  <p class="hero-p" id="hP">ERP joriy etish, jarayonlarni avtomatlashtirish va KPI nazorat orqali biznesingizni professional boshqaruvga o'tkazamiz.</p>
+  <div class="hero-acts" id="hA">
+    <a href="#contact" class="btn-primary">Bepul Maslahat →</a>
+    <a href="#xizmatlar" class="btn-outline">Xizmatlar</a>
   </div>
-</section>
+  <div class="scroll-hint"><span>Scroll</span><div class="scroll-line"></div></div>
+</div>
 
-<!-- TICKER -->
-<div class="ticker">
-  <div class="ticker-inner">
-    <span><em>✦</em>Biznes tizimlashtirish</span>
-    <span><em>✦</em>ERP joriy etish</span>
-    <span><em>✦</em>Jarayonlar tahlili</span>
-    <span><em>✦</em>Avtomatlashtirish</span>
-    <span><em>✦</em>KPI va hisobotlar</span>
-    <span><em>✦</em>Strategik rejalashtirish</span>
-    <span><em>✦</em>Biznes tizimlashtirish</span>
-    <span><em>✦</em>ERP joriy etish</span>
-    <span><em>✦</em>Jarayonlar tahlili</span>
-    <span><em>✦</em>Avtomatlashtirish</span>
-    <span><em>✦</em>KPI va hisobotlar</span>
-    <span><em>✦</em>Strategik rejalashtirish</span>
+<div class="mq">
+  <div class="mq-track">
+    <span class="mq-item">ERP Tizimi <span class="mq-sep"> · </span></span>
+    <span class="mq-item">KPI Nazorat <span class="mq-sep"> · </span></span>
+    <span class="mq-item">Avtomatlashtirish <span class="mq-sep"> · </span></span>
+    <span class="mq-item">Biznes Tahlil <span class="mq-sep"> · </span></span>
+    <span class="mq-item">Hisobot Tizimi <span class="mq-sep"> · </span></span>
+    <span class="mq-item">Xodimlar Boshqaruvi <span class="mq-sep"> · </span></span>
+    <span class="mq-item">ERP Tizimi <span class="mq-sep"> · </span></span>
+    <span class="mq-item">KPI Nazorat <span class="mq-sep"> · </span></span>
+    <span class="mq-item">Avtomatlashtirish <span class="mq-sep"> · </span></span>
+    <span class="mq-item">Biznes Tahlil <span class="mq-sep"> · </span></span>
+    <span class="mq-item">Hisobot Tizimi <span class="mq-sep"> · </span></span>
+    <span class="mq-item">Xodimlar Boshqaruvi <span class="mq-sep"> · </span></span>
   </div>
 </div>
 
-<!-- BENTO -->
-<section class="bento-section" id="xizmatlar">
-  <div class="bento-header rv">
-    <div>
-      <div class="bento-tag">Xizmatlar</div>
-      <h2 class="bento-title">Nima qilamiz?</h2>
-    </div>
-    <p class="bento-sub">Biznesingizning har bir sohasini aniq tizimga solamiz — shunda siz boshqarasiz, biznes o'zi ishlaydi.</p>
-  </div>
+<div class="stats" id="statsBox">
+  <div class="sc"><span class="sn" data-n="123" data-s="">0</span><div class="sl">Mijozlar</div></div>
+  <div class="sc"><span class="sn" data-n="98" data-s="%">0</span><div class="sl">Muvaffaqiyat</div></div>
+  <div class="sc"><span class="sn" data-n="5" data-s="">0</span><div class="sl">Yillik Tajriba</div></div>
+</div>
 
-  <div class="bento-grid">
-    <div class="bcard bcard-big rv rv-d1">
-      <div>
-        <div class="bcard-tag">Asosiy xizmat</div>
-        <h2>Biznesingizni <span style="color:var(--gold)">tizimga</span> solamiz</h2>
+<section id="xizmatlar">
+  <div class="wrap">
+    <div class="s-tag" data-rev>Xizmatlar</div>
+    <h2 class="s-h" data-rev>Biznesingiz uchun to'liq yechim</h2>
+    <div class="srv-list">
+      <div class="srv-row" data-rev>
+        <div class="srv-n">01</div>
+        <div><div class="srv-title">ERP Tizimi</div><div class="srv-text">Moliya, ombor, sotuvlar, xodimlar — barchasini bitta platformada boshqaring. Real-vaqt ma'lumotlar va avtomatik hisobotlar bilan biznesingizni to'liq nazorat qiling.</div></div>
+        <div class="srv-icon">⚙️</div>
       </div>
-      <a href="#aloqa" class="bcard-arrow">↗</a>
-    </div>
-    <div class="bcard bcard-stat rv rv-d2">
-      <div class="big-num" data-target="150">0</div>
-      <div class="stat-label">Mijozlar</div>
-    </div>
-    <div class="bcard bcard-stat rv rv-d3">
-      <div class="big-num" data-target="5">0</div>
-      <div class="stat-label">Yil tajriba</div>
-    </div>
-
-    <div class="bcard bcard-1 rv rv-d1">
-      <div class="bcard-icon">📊</div>
-      <h3>Jarayonlarni tizimlashtirish</h3>
-      <p>Tartibsiz jarayonlarni aniq bosqichlarga bo'lib, standartlashtirамиз.</p>
-      <div class="bcard-num">01</div>
-    </div>
-    <div class="bcard bcard-2 rv rv-d2">
-      <div class="bcard-icon">🗂️</div>
-      <h3>ERP joriy etish</h3>
-      <p>Moliya, ombor, xodimlar va sotuvni bitta tizimda boshqarish imkoniyati.</p>
-      <div class="bcard-num">02</div>
-    </div>
-    <div class="bcard bcard-3 rv rv-d3">
-      <div class="bcard-icon">📈</div>
-      <h3>KPI va hisobotlar</h3>
-      <p>Real vaqtda natijalarni kuzating.</p>
-      <div class="bcard-num">03</div>
-    </div>
-
-    <div class="bcard bcard-4 rv rv-d1">
-      <div class="bcard-icon">🤝</div>
-      <h3>Xodimlar boshqaruvi</h3>
-      <p>Rollar va mas'uliyatlarni aniq belgilash.</p>
-      <div class="bcard-num">04</div>
-    </div>
-    <div class="bcard bcard-5 rv rv-d2">
-      <div class="bcard-icon">🔄</div>
-      <h3>Avtomatlashtirish</h3>
-      <p>Takrorlanuvchi ishlarni avtomatlashtirish. Vaqtingiz va resurslaringizni tejang.</p>
-      <div class="bcard-num">05</div>
-    </div>
-    <div class="bcard bcard-6 rv rv-d3">
-      <div class="bcard-icon">🎯</div>
-      <h3>Strategik rejalashtirish</h3>
-      <p>Maqsad qo'yish va natijani o'lchash tizimini quramiz.</p>
-      <div class="bcard-num">06</div>
-    </div>
-  </div>
-</section>
-
-<!-- PROCESS -->
-<section class="process" id="jarayon">
-  <div class="process-title-row rv">
-    <span class="process-tag">Qanday ishlaymiz</span>
-    <div class="process-line"></div>
-  </div>
-  <h2 class="process-title rv" style="margin-bottom:80px">4 bosqichda <em style="color:var(--gold);font-style:normal">natijaga</em></h2>
-  <div class="steps-row">
-    <div class="step-item rv rv-d1">
-      <div class="step-ball" data-n="1">🔍</div>
-      <h3>Tahlil</h3>
-      <p>Biznesingizni chuqur o'rganamiz: muammolar, imkoniyatlar, jarayonlar.</p>
-    </div>
-    <div class="step-item rv rv-d2">
-      <div class="step-ball" data-n="2">🗺️</div>
-      <h3>Loyihalash</h3>
-      <p>Tizim arxitekturasi va jarayon xaritasini tuzamiz.</p>
-    </div>
-    <div class="step-item rv rv-d3">
-      <div class="step-ball" data-n="3">⚙️</div>
-      <h3>Joriy etish</h3>
-      <p>Tizimni o'rnatamiz va xodimlarni o'qitamiz.</p>
-    </div>
-    <div class="step-item rv rv-d4">
-      <div class="step-ball" data-n="4">🚀</div>
-      <h3>Qo'llab-quvvatlash</h3>
-      <p>Tizim to'liq ishlagunicha yonigingizdamiz.</p>
-    </div>
-  </div>
-</section>
-
-<!-- CONTACT -->
-<section class="contact" id="aloqa">
-  <div class="contact-inner">
-    <div>
-      <h2 class="rv">Bugun<em>boshlang.</em></h2>
-      <p class="rv rv-d1">Birinchi maslahat — bepul. Biznesingiz haqida gapirib bering, qolganini biz hal qilamiz.</p>
-      <div>
-        <a href="tel:+998917606666" class="clink rv rv-d1">
-          <div class="clink-ic">📞</div>
-          <div class="clink-t"><strong>Telefon</strong><span>+998 91 760 66 66</span></div>
-        </a>
-        <a href="https://t.me/Kaftimda_ERP" target="_blank" rel="noopener" class="clink rv rv-d2">
-          <div class="clink-ic">✈️</div>
-          <div class="clink-t"><strong>Telegram</strong><span>@Kaftimda_ERP</span></div>
-        </a>
-        <a href="mailto:kaftimda@gmail.com" class="clink rv rv-d3">
-          <div class="clink-ic">✉️</div>
-          <div class="clink-t"><strong>Email</strong><span>kaftimda@gmail.com</span></div>
-        </a>
+      <div class="srv-row" data-rev style="transition-delay:.12s">
+        <div class="srv-n">02</div>
+        <div><div class="srv-title">KPI Nazorat</div><div class="srv-text">Har bir bo'lim va xodimning ish samaradorligini aniq o'lchang. Maqsadli ko'rsatkichlar asosida to'g'ri qarorlar qabul qiling.</div></div>
+        <div class="srv-icon">📊</div>
+      </div>
+      <div class="srv-row" data-rev style="transition-delay:.24s">
+        <div class="srv-n">03</div>
+        <div><div class="srv-title">Jarayon Avtomatlashtirish</div><div class="srv-text">Takrorlanuvchi jarayonlarni avtomatlashtirib, xodimlaringiz vaqtini muhimroq vazifalarga sarflang. Xatolar minimumga tushadi, tezlik oshadi.</div></div>
+        <div class="srv-icon">🤖</div>
       </div>
     </div>
+  </div>
+</section>
 
-    <div class="form-wrap rv rv-d2">
-      <h3>Xabar qoldiring</h3>
-      <form name="murojaat" method="POST" data-netlify="true" onsubmit="submitForm(event)">
-        <input type="hidden" name="form-name" value="murojaat"/>
-        <div class="fg">
-          <label>Ismingiz</label>
-          <input type="text" name="ism" placeholder="Ism Familiya" required/>
-        </div>
-        <div class="fg">
-          <label>Telefon</label>
-          <input type="tel" name="telefon" placeholder="+998 __ ___ __ __" required/>
-        </div>
-        <div class="fg">
-          <label>Xabar</label>
-          <textarea rows="4" name="xabar" placeholder="Biznesingiz haqida qisqacha..."></textarea>
-        </div>
-        <button type="submit" class="submit-btn">Yuborish →</button>
-      </form>
+<section class="proc-wrap" id="jarayon">
+  <div class="wrap">
+    <div class="s-tag" data-rev>Jarayon</div>
+    <h2 class="s-h" data-rev>4 qadamda natijaga</h2>
+    <div class="proc-grid">
+      <div class="ps" data-rev><div class="ps-dot">01</div><div class="ps-t">Tahlil</div><div class="ps-p">Biznesingizning hozirgi holatini chuqur o'rganamiz va muammolarni aniqlaymiz</div></div>
+      <div class="ps" data-rev style="transition-delay:.12s"><div class="ps-dot">02</div><div class="ps-t">Rejalashtirish</div><div class="ps-p">Individual tizimlashtirish strategiyasini va amalga oshirish rejasini ishlab chiqamiz</div></div>
+      <div class="ps" data-rev style="transition-delay:.24s"><div class="ps-dot">03</div><div class="ps-t">Joriy etish</div><div class="ps-p">Tizimni o'rnatib, xodimlarni o'rgatamiz va ishga tushiramiz</div></div>
+      <div class="ps" data-rev style="transition-delay:.36s"><div class="ps-dot">04</div><div class="ps-t">Qo'llab-quvvatlash</div><div class="ps-p">Doimiy monitoring va texnik yordam bilan natijani saqlab boramiz</div></div>
     </div>
   </div>
 </section>
 
-<!-- FOOTER -->
+<section id="contact">
+  <div class="wrap">
+    <div class="contact-grid">
+      <div>
+        <h2 class="c-h" data-rev>Biznesingizni <span class="g">birgalikda</span> tizimlaylik</h2>
+        <p class="c-p" data-rev>Bepul konsultatsiya uchun murojaat qiling. Mutaxassislarimiz 24 soat ichida javob berishadi.</p>
+        <div class="c-links">
+          <a href="tel:+998917606666" class="c-link" data-rev><div class="c-icon">📞</div>+998 91 760 66 66</a>
+          <a href="mailto:kaftimda@gmail.com" class="c-link" data-rev style="transition-delay:.1s"><div class="c-icon">✉️</div>kaftimda@gmail.com</a>
+          <a href="https://t.me/Kaftimda_ERP" target="_blank" class="c-link" data-rev style="transition-delay:.2s"><div class="c-icon">✈️</div>@Kaftimda_ERP</a>
+        </div>
+      </div>
+      <div class="form-box" data-rev>
+        <form name="murojaat" method="POST" data-netlify="true" onsubmit="sendForm(event)">
+          <input type="hidden" name="form-name" value="murojaat"/>
+          <div class="fg"><label>Ismingiz</label><input type="text" name="ism" placeholder="Ali Karimov" required/></div>
+          <div class="fg"><label>Telefon</label><input type="tel" name="telefon" placeholder="+998 90 000 00 00" required/></div>
+          <div class="fg"><label>Biznes sohasi</label><select name="soha"><option value="">Tanlang</option><option>Savdo / Do'kon</option><option>Ishlab chiqarish</option><option>Restoran / Cafe</option><option>Qurilish</option><option>Logistika</option><option>IT / Xizmatlar</option><option>Boshqa</option></select></div>
+          <div class="fg"><label>Xabar</label><textarea name="xabar" placeholder="Biznesingiz haqida qisqacha..."></textarea></div>
+          <button type="submit" class="sub">Yuborish →</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+
 <footer>
-  <a class="f-logo" href="#"><em>KAFTI</em>MDA</a>
-  <p>&copy; 2026 KAFTIMDA — Har qanday biznesni tizimlashtirish.</p>
+  <div class="ft-logo"><span class="g">KAFTI</span>MDA</div>
+  <div class="ft-t">© 2025 KAFTIMDA. Har qanday biznesni tizimlashtiramiz.</div>
 </footer>
 
 <script>
-// CURSOR — faqat desktop
-const isTouch=('ontouchstart' in window)||navigator.maxTouchPoints>0;
-if(!isTouch){
-  const cur=document.getElementById('cur'),curDot=document.getElementById('curDot');
-  let mx=0,my=0,cx=0,cy=0;
-  document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;curDot.style.left=mx+'px';curDot.style.top=my+'px'});
-  function animCursor(){cx+=(mx-cx)*0.12;cy+=(my-cy)*0.12;cur.style.left=cx+'px';cur.style.top=cy+'px';requestAnimationFrame(animCursor)}
-  animCursor();
+const isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+
+/* LOADER */
+let p = 0;
+const pEl = document.getElementById('ldrP');
+const pi = setInterval(() => {
+  p = Math.min(p + Math.random() * 14 + 2, 99);
+  pEl.textContent = Math.floor(p) + '%';
+}, 90);
+setTimeout(() => {
+  clearInterval(pi);
+  pEl.textContent = '100%';
+  document.getElementById('ldr').classList.add('out');
+  setTimeout(heroIn, 80);
+}, 2000);
+
+function heroIn() {
+  document.getElementById('hTag').classList.add('on');
+  ['w0','w1','w2'].forEach((id, i) => {
+    setTimeout(() => document.getElementById(id).classList.add('on'), i * 140);
+  });
+  setTimeout(() => document.getElementById('hP').classList.add('on'), 480);
+  setTimeout(() => document.getElementById('hA').classList.add('on'), 680);
 }
 
-// LOADER
-setTimeout(()=>document.getElementById('loader').classList.add('out'),1500);
-
-// PARTICLES
-const canvas=document.getElementById('particles');
-const ctx=canvas.getContext('2d');
-let W,H,particles=[];
-function resize(){W=canvas.width=window.innerWidth;H=canvas.height=window.innerHeight}
-resize();window.addEventListener('resize',resize);
-
-class Particle{
-  constructor(){this.reset()}
-  reset(){this.x=Math.random()*W;this.y=Math.random()*H;this.vx=(Math.random()-0.5)*0.3;this.vy=(Math.random()-0.5)*0.3;this.r=Math.random()*1.5+0.5;this.a=Math.random()*0.4+0.05;this.gold=Math.random()<0.3}
-  update(){this.x+=this.vx;this.y+=this.vy;if(this.x<0||this.x>W||this.y<0||this.y>H)this.reset()}
-  draw(){ctx.beginPath();ctx.arc(this.x,this.y,this.r,0,Math.PI*2);ctx.fillStyle=this.gold?`rgba(240,180,41,${this.a})`:`rgba(200,210,255,${this.a*0.5})`;ctx.fill()}
+/* NEURAL CANVAS */
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+let W, H, nodes;
+const COUNT = isTouch ? 30 : 65;
+function resize() { W = cv.width = innerWidth; H = cv.height = innerHeight; }
+function mkNodes() {
+  nodes = Array.from({length: COUNT}, () => ({
+    x: Math.random() * W, y: Math.random() * H,
+    vx: (Math.random() - .5) * .4, vy: (Math.random() - .5) * .4
+  }));
 }
-
-const particleCount=isTouch?0:120;
-for(let i=0;i<particleCount;i++)particles.push(new Particle());
-
-function drawConnections(){
-  for(let i=0;i<particles.length;i++){
-    for(let j=i+1;j<particles.length;j++){
-      const dx=particles[i].x-particles[j].x,dy=particles[i].y-particles[j].y;
-      const d=Math.sqrt(dx*dx+dy*dy);
-      if(d<120){ctx.beginPath();ctx.moveTo(particles[i].x,particles[i].y);ctx.lineTo(particles[j].x,particles[j].y);ctx.strokeStyle=`rgba(240,180,41,${0.04*(1-d/120)})`;ctx.lineWidth=0.5;ctx.stroke()}
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+  nodes.forEach(n => {
+    n.x += n.vx; n.y += n.vy;
+    if (n.x < 0 || n.x > W) n.vx *= -1;
+    if (n.y < 0 || n.y > H) n.vy *= -1;
+  });
+  for (let i = 0; i < nodes.length; i++) {
+    for (let j = i + 1; j < nodes.length; j++) {
+      const dx = nodes[i].x - nodes[j].x, dy = nodes[i].y - nodes[j].y;
+      const d = Math.sqrt(dx*dx + dy*dy);
+      if (d < 150) {
+        ctx.beginPath();
+        ctx.strokeStyle = `rgba(240,180,41,${(1-d/150)*.22})`;
+        ctx.lineWidth = .5;
+        ctx.moveTo(nodes[i].x, nodes[i].y);
+        ctx.lineTo(nodes[j].x, nodes[j].y);
+        ctx.stroke();
+      }
     }
+    ctx.beginPath();
+    ctx.arc(nodes[i].x, nodes[i].y, 1.4, 0, Math.PI*2);
+    ctx.fillStyle = 'rgba(240,180,41,.4)';
+    ctx.fill();
   }
+  requestAnimationFrame(draw);
 }
+window.addEventListener('resize', () => { resize(); mkNodes(); });
+resize(); mkNodes(); draw();
 
-function animParticles(){ctx.clearRect(0,0,W,H);particles.forEach(p=>{p.update();p.draw()});drawConnections();requestAnimationFrame(animParticles)}
-animParticles();
+/* SCROLL REVEAL */
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('on'); });
+}, { threshold: .13 });
+document.querySelectorAll('[data-rev]').forEach(el => obs.observe(el));
 
-// SCROLL REVEAL
-const rvEls=document.querySelectorAll('.rv');
-const rvObs=new IntersectionObserver(entries=>{
-  entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('show');rvObs.unobserve(e.target)}});
-},{threshold:0.1,rootMargin:'0px 0px -60px 0px'});
-rvEls.forEach(el=>rvObs.observe(el));
-
-// COUNTERS
-const counters=document.querySelectorAll('.big-num[data-target]');
-const cObs=new IntersectionObserver(entries=>{
-  entries.forEach(e=>{
-    if(e.isIntersecting){
-      const el=e.target,target=+el.dataset.target;
-      let n=0;const step=target/50;
-      const t=setInterval(()=>{n+=step;if(n>=target){n=target;clearInterval(t)}el.textContent=Math.floor(n)+(target>=98?'%':'+')},20);
-      cObs.unobserve(el);
+/* STATS */
+function countUp(el, target, suffix) {
+  const dur = 1800, t0 = performance.now();
+  (function step(now) {
+    const prog = Math.min((now - t0) / dur, 1);
+    el.textContent = Math.floor((1 - Math.pow(1-prog, 3)) * target) + suffix;
+    if (prog < 1) requestAnimationFrame(step);
+  })(t0);
+}
+const sObs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.querySelectorAll('.sc').forEach(sc => sc.classList.add('on'));
+      e.target.querySelectorAll('[data-n]').forEach(el => countUp(el, +el.dataset.n, el.dataset.s));
+      sObs.unobserve(e.target);
     }
   });
-},{threshold:0.5});
-counters.forEach(c=>cObs.observe(c));
+}, { threshold: .3 });
+sObs.observe(document.getElementById('statsBox'));
 
-// FORM
-function submitForm(e){
+/* CURSOR */
+if (!isTouch) {
+  const cur = document.getElementById('cur'), dot = document.getElementById('cdot');
+  let mx = -200, my = -200, cx = -200, cy = -200;
+  document.addEventListener('mousemove', e => {
+    mx = e.clientX; my = e.clientY;
+    dot.style.cssText = `left:${mx}px;top:${my}px`;
+  });
+  (function ani() {
+    cx += (mx-cx)*.11; cy += (my-cy)*.11;
+    cur.style.cssText = `left:${cx}px;top:${cy}px`;
+    requestAnimationFrame(ani);
+  })();
+  document.querySelectorAll('a,button,.srv-row').forEach(el => {
+    el.addEventListener('mouseenter', () => { cur.style.width='56px'; cur.style.height='56px'; });
+    el.addEventListener('mouseleave', () => { cur.style.width='34px'; cur.style.height='34px'; });
+  });
+}
+
+/* FORM */
+function sendForm(e) {
   e.preventDefault();
-  const form=e.target,btn=form.querySelector('.submit-btn');
-  btn.textContent='Yuborilmoqda...';btn.disabled=true;
-  fetch('/',{
-    method:'POST',
-    headers:{'Content-Type':'application/x-www-form-urlencoded'},
-    body:new URLSearchParams(new FormData(form)).toString()
-  })
-  .then(()=>{btn.textContent='Yuborildi ✓';btn.style.background='#2d6a4f';form.reset();setTimeout(()=>{btn.textContent='Yuborish →';btn.style.background='';btn.disabled=false},3000)})
-  .catch(()=>{btn.textContent='Xato! Qayta urinib ko\'ring';btn.style.background='#7a2d2d';setTimeout(()=>{btn.textContent='Yuborish →';btn.style.background='';btn.disabled=false},3000)});
+  const form = e.target, btn = form.querySelector('.sub');
+  btn.textContent = 'Yuborilmoqda...'; btn.disabled = true;
+  fetch('/', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+    body: new URLSearchParams(new FormData(form)).toString()
+  }).then(() => {
+    btn.textContent = 'Yuborildi ✓'; btn.style.background = '#2d6a4f'; form.reset();
+    setTimeout(() => { btn.textContent='Yuborish →'; btn.style.background=''; btn.disabled=false; }, 4000);
+  }).catch(() => {
+    btn.textContent = "Xato! Qayta urinib ko'ring"; btn.style.background = '#a93226';
+    setTimeout(() => { btn.textContent='Yuborish →'; btn.style.background=''; btn.disabled=false; }, 3000);
+  });
 }
 </script>
 </body>
