@@ -533,7 +533,8 @@
 
       <div class="contact-form-wrap">
         <h3>Xabar qoldiring</h3>
-        <form onsubmit="handleForm(event)">
+        <form name="murojaat" method="POST" data-netlify="true" onsubmit="handleForm(event)">
+          <input type="hidden" name="form-name" value="murojaat" />
           <div class="form-group">
             <label>Ismingiz</label>
             <input type="text" placeholder="Ism Familiya" required />
