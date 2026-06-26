@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../store/AppContext'
-import { ArrowLeftRight, Users, BarChart2, RefreshCw, Handshake, Building2, Search, Car } from 'lucide-react'
+import { ArrowLeftRight, Users, BarChart2, RefreshCw, Handshake, Building2, Search } from 'lucide-react'
 import VerifiedBadge from '../components/VerifiedBadge'
 import { format } from 'date-fns'
 
@@ -15,7 +15,6 @@ export default function MenuPage() {
     { to: '/reports', icon: BarChart2, label: 'Hisobot', sub: 'Grafik va tahlil', accent: '#a855f7' },
     { to: '/exchange', icon: RefreshCw, label: 'Valyuta', sub: 'USD · EUR · RUB', accent: '#06b6d4' },
     { to: '/korxona', icon: Building2, label: 'Korxona', sub: workspace ? `${workspace.members?.length || 0} a'zo` : 'Jamoa', accent: '#e879f9' },
-    { to: '/haydovchilar', icon: Car, label: 'Haydovchilar', sub: 'Davomat · Ish haqi', accent: '#f59e0b' },
   ]
 
   const now = new Date()

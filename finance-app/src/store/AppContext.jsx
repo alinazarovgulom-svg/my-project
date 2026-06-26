@@ -32,8 +32,6 @@ export function AppProvider({ children }) {
   const [workspaceId, setWorkspaceId] = useState(() => getUserWorkspaceId(user?.id))
   const [workspace, setWorkspace] = useState(null)
   const [onlineMembers, setOnlineMembers] = useState([])
-  const [drivers, setDrivers] = useState([])
-  const [driverAttendance, setDriverAttendance] = useState({})
   const skipCloudUpdate = useRef(false)
 
   const [theme, setThemeState] = useState(() => localStorage.getItem('fin_theme') || 'dark')
@@ -92,8 +90,6 @@ export function AppProvider({ children }) {
       const s = getSettings(uid)
       setSettingsState(s.rates ? s : { rates: { USD: 12700, EUR: 13800, RUB: 140 } })
       setFamily(getUserFamily(uid))
-      setDrivers(getData('drivers', uid) || [])
-      setDriverAttendance(getData('driver_attendance', uid) || {})
     }
 
     // Lokal kategoriyalar va PIN
@@ -107,14 +103,12 @@ export function AppProvider({ children }) {
     // Cloud dan yangi ma'lumot bo'lsa yuklash
     const loadCloud = async () => {
       setSyncing(true)
-      const [cloudTx, cloudDebts, cloudSettings, cloudCats, cloudPin, cloudDrivers, cloudDriverAtt] = await Promise.all([
+      const [cloudTx, cloudDebts, cloudSettings, cloudCats, cloudPin] = await Promise.all([
         loadFromCloud(storeId, 'transactions', col),
         loadFromCloud(storeId, 'debts', col),
         loadFromCloud(uid, 'settings'),
         loadFromCloud(uid, 'categories'),
         loadFromCloud(uid, 'pin'),
-        loadFromCloud(storeId, 'drivers', col),
-        loadFromCloud(storeId, 'driver_attendance', col),
       ])
       if (cloudTx) { setTransactions(cloudTx); if (!wid) saveData('transactions', uid, cloudTx) }
       if (cloudDebts) {
@@ -131,8 +125,6 @@ export function AppProvider({ children }) {
         setPinState(cloudPin)
         localStorage.setItem(`finance_pin_${uid}`, cloudPin)
       }
-      if (cloudDrivers) { setDrivers(cloudDrivers); if (!wid) saveData('drivers', uid, cloudDrivers) }
-      if (cloudDriverAtt) { setDriverAttendance(cloudDriverAtt); if (!wid) saveData('driver_attendance', uid, cloudDriverAtt) }
       setSyncing(false)
     }
     loadCloud()
@@ -148,17 +140,6 @@ export function AppProvider({ children }) {
       setDebts(data)
       if (!wid) saveData('debts', uid, data)
     }, col)
-    const unsubDrivers = subscribeToCloud(storeId, 'drivers', (data) => {
-      if (skipCloudUpdate.current) return
-      setDrivers(data)
-      if (!wid) saveData('drivers', uid, data)
-    }, col)
-    const unsubDriverAtt = subscribeToCloud(storeId, 'driver_attendance', (data) => {
-      if (skipCloudUpdate.current) return
-      setDriverAttendance(data)
-      if (!wid) saveData('driver_attendance', uid, data)
-    }, col)
-
     const unsubSettings = subscribeToCloud(uid, 'settings', (data) => {
       if (skipCloudUpdate.current) return
       if (data?.rates) { setSettingsState(data); saveSettings(uid, data) }
@@ -177,7 +158,6 @@ export function AppProvider({ children }) {
 
     return () => {
       unsubTx(); unsubDebts(); unsubSettings(); unsubCats(); unsubPin()
-      unsubDrivers(); unsubDriverAtt()
       if (!workspaceId) updatePresence('offline')
       clearInterval(presenceInterval)
     }
@@ -236,34 +216,6 @@ export function AppProvider({ children }) {
       if (!wid) saveData('debts', uid, data)
       skipCloudUpdate.current = true
       syncToCloud(storeId, 'debts', data, col).finally(() => {
-        setTimeout(() => { skipCloudUpdate.current = false }, 500)
-      })
-    }
-  }, [uid])
-
-  const saveDrivers = useCallback((data) => {
-    setDrivers(data)
-    if (uid) {
-      const wid = getUserWorkspaceId(uid)
-      const storeId = wid || uid
-      const col = wid ? 'workspaces' : 'users'
-      if (!wid) saveData('drivers', uid, data)
-      skipCloudUpdate.current = true
-      syncToCloud(storeId, 'drivers', data, col).finally(() => {
-        setTimeout(() => { skipCloudUpdate.current = false }, 500)
-      })
-    }
-  }, [uid])
-
-  const saveDriverAttendance = useCallback((data) => {
-    setDriverAttendance(data)
-    if (uid) {
-      const wid = getUserWorkspaceId(uid)
-      const storeId = wid || uid
-      const col = wid ? 'workspaces' : 'users'
-      if (!wid) saveData('driver_attendance', uid, data)
-      skipCloudUpdate.current = true
-      syncToCloud(storeId, 'driver_attendance', data, col).finally(() => {
         setTimeout(() => { skipCloudUpdate.current = false }, 500)
       })
     }
@@ -363,8 +315,6 @@ export function AppProvider({ children }) {
       onlineMembers, updatePresence,
       showToast,
       theme, toggleTheme,
-      drivers, saveDrivers,
-      driverAttendance, saveDriverAttendance,
     }}>
       {children}
       <ToastContainer toasts={toasts} onRemove={removeToast} />

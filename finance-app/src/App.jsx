@@ -13,7 +13,6 @@ import Hamkorlar from './pages/Hamkorlar'
 import HamkorlarList from './pages/HamkorlarList'
 import HamkorDetail from './pages/HamkorDetail'
 import Korxona from './pages/Korxona'
-import Haydovchilar from './pages/Haydovchilar'
 import MenuPage from './pages/MenuPage'
 import Profile from './pages/Profile'
 import AppLock from './components/AppLock'
@@ -57,7 +56,6 @@ function ProtectedLayout() {
         <Route path="/hamkorlar/:sectionId" element={<AnimatedPage><HamkorlarList /></AnimatedPage>} />
         <Route path="/hamkorlar/:sectionId/:id" element={<AnimatedPage><HamkorDetail /></AnimatedPage>} />
         <Route path="/korxona" element={<AnimatedPage><Korxona /></AnimatedPage>} />
-        <Route path="/haydovchilar" element={<AnimatedPage><Haydovchilar /></AnimatedPage>} />
       </Routes>
       <BottomNav />
     </>
