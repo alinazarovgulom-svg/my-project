@@ -4,460 +4,809 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>KAFTIMDA — Biznesingizni tizimlashtiramiz</title>
-  <meta name="description" content="KAFTIMDA — har qanday biznesni tizimlashtirish. Professional yondashuv, aniq natija." />
+  <meta name="description" content="KAFTIMDA — har qanday biznesni tizimlashtirish." />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg:       #0d0f14;
-      --surface:  #161920;
-      --card:     #1e2330;
-      --accent:   #c9a84c;
-      --accent2:  #e8c96a;
-      --text:     #e8eaf0;
-      --muted:    #8a8fa8;
-      --border:   #2a2f42;
+      --gold: #c9a84c;
+      --gold2: #f0d080;
+      --gold3: #8a6820;
+      --bg: #080a0f;
+      --bg2: #0d1018;
+      --card: #111520;
+      --border: #1e2535;
+      --text: #eef0f8;
+      --muted: #6b7394;
     }
 
     html { scroll-behavior: smooth; }
 
     body {
-      font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+      font-family: 'Inter', sans-serif;
       background: var(--bg);
       color: var(--text);
-      line-height: 1.6;
-      min-height: 100vh;
+      overflow-x: hidden;
     }
 
-    /* ── HEADER ── */
-    header {
-      position: sticky;
-      top: 0;
+    /* ── CURSOR GLOW ── */
+    .cursor-glow {
+      position: fixed;
+      width: 400px;
+      height: 400px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(201,168,76,0.06) 0%, transparent 70%);
+      pointer-events: none;
+      transform: translate(-50%, -50%);
+      z-index: 0;
+      transition: transform 0.1s ease;
+    }
+
+    /* ── NAVBAR ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
       z-index: 100;
-      background: rgba(13,15,20,0.92);
-      backdrop-filter: blur(12px);
-      border-bottom: 1px solid var(--border);
-      padding: 0 24px;
+      padding: 20px 40px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      height: 64px;
+      transition: all 0.4s ease;
+    }
+
+    nav.scrolled {
+      background: rgba(8,10,15,0.85);
+      backdrop-filter: blur(20px);
+      padding: 14px 40px;
+      border-bottom: 1px solid var(--border);
     }
 
     .logo {
-      font-size: 1.4rem;
-      font-weight: 800;
-      letter-spacing: 2px;
-      color: var(--accent);
+      font-size: 1.5rem;
+      font-weight: 900;
+      letter-spacing: 3px;
       text-decoration: none;
     }
 
-    .logo span { color: var(--text); }
+    .logo-k { color: var(--gold); }
+    .logo-rest { color: var(--text); }
 
-    nav a {
+    .nav-links { display: flex; gap: 32px; }
+
+    .nav-links a {
       color: var(--muted);
       text-decoration: none;
-      margin-left: 28px;
-      font-size: 0.9rem;
+      font-size: 0.875rem;
       font-weight: 500;
-      transition: color 0.2s;
+      letter-spacing: 0.5px;
+      transition: color 0.3s;
     }
 
-    nav a:hover { color: var(--accent); }
+    .nav-links a:hover { color: var(--gold); }
 
     /* ── HERO ── */
     .hero {
-      min-height: 90vh;
+      min-height: 100vh;
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
       text-align: center;
-      padding: 80px 24px 60px;
+      padding: 120px 24px 80px;
       position: relative;
       overflow: hidden;
     }
 
-    .hero::before {
-      content: '';
+    .hero-bg {
       position: absolute;
       inset: 0;
       background:
-        radial-gradient(ellipse 60% 50% at 50% 20%, rgba(201,168,76,0.12) 0%, transparent 70%),
-        radial-gradient(ellipse 40% 30% at 80% 80%, rgba(201,168,76,0.06) 0%, transparent 60%);
-      pointer-events: none;
+        radial-gradient(ellipse 80% 60% at 50% -10%, rgba(201,168,76,0.15) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 40% at 20% 80%, rgba(201,168,76,0.05) 0%, transparent 50%),
+        radial-gradient(ellipse 50% 40% at 80% 80%, rgba(201,168,76,0.05) 0%, transparent 50%);
     }
 
-    .hero-tag {
-      display: inline-block;
-      border: 1px solid var(--accent);
-      color: var(--accent);
-      font-size: 0.75rem;
+    /* Animated grid */
+    .hero-grid {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(201,168,76,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(201,168,76,0.04) 1px, transparent 1px);
+      background-size: 60px 60px;
+      mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 30%, transparent 100%);
+      animation: gridPulse 4s ease-in-out infinite;
+    }
+
+    @keyframes gridPulse {
+      0%, 100% { opacity: 0.5; }
+      50% { opacity: 1; }
+    }
+
+    /* Floating orbs */
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(60px);
+      animation: orbFloat 6s ease-in-out infinite;
+    }
+
+    .orb-1 {
+      width: 300px; height: 300px;
+      background: rgba(201,168,76,0.08);
+      top: 10%; left: 10%;
+      animation-delay: 0s;
+    }
+
+    .orb-2 {
+      width: 200px; height: 200px;
+      background: rgba(201,168,76,0.06);
+      top: 60%; right: 10%;
+      animation-delay: 2s;
+    }
+
+    .orb-3 {
+      width: 150px; height: 150px;
+      background: rgba(240,208,128,0.05);
+      bottom: 20%; left: 30%;
+      animation-delay: 4s;
+    }
+
+    @keyframes orbFloat {
+      0%, 100% { transform: translateY(0) scale(1); }
+      50% { transform: translateY(-30px) scale(1.05); }
+    }
+
+    .hero-content { position: relative; z-index: 2; max-width: 900px; }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid rgba(201,168,76,0.3);
+      background: rgba(201,168,76,0.05);
+      color: var(--gold);
+      font-size: 0.72rem;
       letter-spacing: 3px;
       text-transform: uppercase;
-      padding: 6px 18px;
+      padding: 8px 20px;
       border-radius: 100px;
-      margin-bottom: 32px;
+      margin-bottom: 36px;
       font-weight: 600;
+      animation: fadeDown 0.8s ease both;
+    }
+
+    .hero-badge::before {
+      content: '';
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--gold);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.8); }
     }
 
     .hero h1 {
-      font-size: clamp(2.4rem, 6vw, 4.5rem);
+      font-size: clamp(2.8rem, 7vw, 5.5rem);
       font-weight: 900;
-      letter-spacing: -1px;
-      line-height: 1.1;
-      margin-bottom: 24px;
-      max-width: 800px;
+      line-height: 1.05;
+      letter-spacing: -2px;
+      margin-bottom: 28px;
+      animation: fadeUp 0.8s 0.2s ease both;
     }
 
-    .hero h1 em {
-      font-style: normal;
-      color: var(--accent);
+    .hero h1 .highlight {
+      background: linear-gradient(135deg, var(--gold) 0%, var(--gold2) 50%, var(--gold) 100%);
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: shimmer 3s linear infinite;
+    }
+
+    @keyframes shimmer {
+      0% { background-position: 0% center; }
+      100% { background-position: 200% center; }
     }
 
     .hero p {
-      font-size: clamp(1rem, 2vw, 1.2rem);
+      font-size: clamp(1rem, 2vw, 1.25rem);
       color: var(--muted);
       max-width: 560px;
-      margin-bottom: 44px;
+      margin: 0 auto 48px;
+      line-height: 1.7;
+      font-weight: 400;
+      animation: fadeUp 0.8s 0.4s ease both;
     }
 
-    .cta-group {
+    .hero-btns {
       display: flex;
-      gap: 14px;
-      flex-wrap: wrap;
+      gap: 16px;
       justify-content: center;
+      flex-wrap: wrap;
+      animation: fadeUp 0.8s 0.6s ease both;
     }
 
     .btn {
       display: inline-flex;
       align-items: center;
-      gap: 8px;
-      padding: 14px 30px;
-      border-radius: 8px;
+      gap: 10px;
+      padding: 15px 32px;
+      border-radius: 10px;
       font-size: 0.95rem;
       font-weight: 600;
       text-decoration: none;
-      transition: all 0.2s;
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      position: relative;
+      overflow: hidden;
       cursor: pointer;
       border: none;
     }
 
-    .btn-primary {
-      background: var(--accent);
-      color: #0d0f14;
+    .btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%);
+      transform: translateX(-100%);
+      transition: transform 0.5s ease;
     }
 
-    .btn-primary:hover {
-      background: var(--accent2);
-      transform: translateY(-2px);
-      box-shadow: 0 8px 24px rgba(201,168,76,0.3);
+    .btn:hover::before { transform: translateX(100%); }
+
+    .btn-gold {
+      background: linear-gradient(135deg, var(--gold3), var(--gold), var(--gold2));
+      color: #080a0f;
+      box-shadow: 0 0 0 0 rgba(201,168,76,0.4);
+    }
+
+    .btn-gold:hover {
+      transform: translateY(-3px) scale(1.02);
+      box-shadow: 0 8px 30px rgba(201,168,76,0.35), 0 0 0 4px rgba(201,168,76,0.1);
     }
 
     .btn-outline {
-      background: transparent;
+      background: rgba(255,255,255,0.03);
       color: var(--text);
       border: 1px solid var(--border);
+      backdrop-filter: blur(10px);
     }
 
     .btn-outline:hover {
-      border-color: var(--accent);
-      color: var(--accent);
-      transform: translateY(-2px);
+      transform: translateY(-3px);
+      border-color: var(--gold);
+      color: var(--gold);
+      background: rgba(201,168,76,0.05);
     }
 
-    /* ── SECTION ── */
-    section { padding: 80px 24px; }
+    /* ── STATS ── */
+    .stats {
+      position: relative;
+      z-index: 2;
+      padding: 60px 40px;
+      margin: 0 auto;
+      max-width: 900px;
+      animation: fadeUp 0.8s 0.8s ease both;
+    }
 
-    .container { max-width: 1080px; margin: 0 auto; }
+    .stats-inner {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+    }
 
-    .section-label {
-      font-size: 0.75rem;
+    .stat {
+      background: var(--card);
+      padding: 32px 24px;
+      text-align: center;
+      transition: background 0.3s;
+    }
+
+    .stat:hover { background: #161b28; }
+
+    .stat-num {
+      font-size: 2.4rem;
+      font-weight: 900;
+      background: linear-gradient(135deg, var(--gold), var(--gold2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+
+    .stat-label {
+      font-size: 0.82rem;
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    /* ── SECTIONS ── */
+    section { padding: 100px 24px; }
+    .container { max-width: 1100px; margin: 0 auto; }
+
+    .section-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.72rem;
       letter-spacing: 3px;
       text-transform: uppercase;
-      color: var(--accent);
-      font-weight: 600;
-      margin-bottom: 12px;
+      color: var(--gold);
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+
+    .section-tag::before {
+      content: '';
+      width: 20px; height: 1px;
+      background: var(--gold);
     }
 
     .section-title {
-      font-size: clamp(1.6rem, 3.5vw, 2.6rem);
+      font-size: clamp(1.8rem, 4vw, 3rem);
       font-weight: 800;
+      line-height: 1.15;
+      letter-spacing: -0.5px;
       margin-bottom: 16px;
-      line-height: 1.2;
     }
 
     .section-sub {
       color: var(--muted);
       font-size: 1rem;
-      max-width: 520px;
-      margin-bottom: 56px;
+      max-width: 500px;
+      line-height: 1.7;
+      margin-bottom: 64px;
     }
 
     /* ── SERVICES ── */
-    .services { background: var(--surface); }
-
-    .grid-3 {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 20px;
+    .services-bg {
+      background: linear-gradient(180deg, var(--bg) 0%, var(--bg2) 50%, var(--bg) 100%);
     }
 
-    .card {
+    .services-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 16px;
+    }
+
+    .service-card {
       background: var(--card);
       border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 36px 32px;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      cursor: default;
+    }
+
+    .service-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(201,168,76,0.06) 0%, transparent 60%);
+      opacity: 0;
+      transition: opacity 0.4s;
+    }
+
+    .service-card:hover {
+      transform: translateY(-8px);
+      border-color: rgba(201,168,76,0.3);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.4), 0 0 0 1px rgba(201,168,76,0.1);
+    }
+
+    .service-card:hover::before { opacity: 1; }
+
+    .service-icon {
+      width: 56px; height: 56px;
+      background: linear-gradient(135deg, rgba(201,168,76,0.15), rgba(201,168,76,0.05));
+      border: 1px solid rgba(201,168,76,0.2);
       border-radius: 14px;
-      padding: 32px 28px;
-      transition: border-color 0.2s, transform 0.2s;
-    }
-
-    .card:hover {
-      border-color: var(--accent);
-      transform: translateY(-4px);
-    }
-
-    .card-icon {
-      width: 48px;
-      height: 48px;
-      background: rgba(201,168,76,0.12);
-      border-radius: 10px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.4rem;
-      margin-bottom: 20px;
+      font-size: 1.5rem;
+      margin-bottom: 24px;
+      transition: transform 0.3s;
     }
 
-    .card h3 {
+    .service-card:hover .service-icon { transform: scale(1.1) rotate(-5deg); }
+
+    .service-card h3 {
       font-size: 1.1rem;
       font-weight: 700;
       margin-bottom: 10px;
+      color: var(--text);
     }
 
-    .card p { color: var(--muted); font-size: 0.92rem; }
+    .service-card p {
+      font-size: 0.9rem;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    .service-num {
+      position: absolute;
+      top: 24px; right: 28px;
+      font-size: 4rem;
+      font-weight: 900;
+      color: rgba(201,168,76,0.05);
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
 
     /* ── PROCESS ── */
-    .steps {
+    .process-steps {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
       gap: 0;
       position: relative;
     }
 
-    .step {
-      padding: 28px 24px;
-      position: relative;
+    .process-steps::before {
+      content: '';
+      position: absolute;
+      top: 36px; left: 80px; right: 80px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border), var(--border), transparent);
     }
 
-    .step-num {
-      font-size: 3rem;
-      font-weight: 900;
-      color: var(--border);
-      line-height: 1;
-      margin-bottom: 16px;
+    .step {
+      padding: 0 24px 40px;
+      position: relative;
+      text-align: center;
+    }
+
+    .step-circle {
+      width: 72px; height: 72px;
+      border-radius: 50%;
+      background: var(--card);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 24px;
+      font-size: 1.4rem;
+      position: relative;
+      z-index: 1;
+      transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .step:hover .step-circle {
+      background: linear-gradient(135deg, rgba(201,168,76,0.15), rgba(201,168,76,0.05));
+      border-color: var(--gold);
+      transform: scale(1.15);
+      box-shadow: 0 0 30px rgba(201,168,76,0.2);
+    }
+
+    .step-num-label {
+      position: absolute;
+      top: -8px; right: -4px;
+      width: 22px; height: 22px;
+      background: var(--gold);
+      color: var(--bg);
+      border-radius: 50%;
+      font-size: 0.65rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .step h3 {
       font-size: 1rem;
       font-weight: 700;
+      color: var(--gold);
       margin-bottom: 8px;
-      color: var(--accent);
     }
 
-    .step p { color: var(--muted); font-size: 0.9rem; }
+    .step p {
+      font-size: 0.875rem;
+      color: var(--muted);
+      line-height: 1.6;
+    }
 
     /* ── CONTACT ── */
-    .contact { background: var(--surface); }
+    .contact-bg {
+      background: linear-gradient(180deg, var(--bg) 0%, var(--bg2) 100%);
+    }
 
-    .contact-grid {
+    .contact-wrap {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 40px;
+      gap: 48px;
       align-items: start;
     }
 
-    .contact-info h2 {
-      font-size: clamp(1.5rem, 3vw, 2.2rem);
-      font-weight: 800;
-      margin-bottom: 16px;
-    }
+    .contact-links { display: flex; flex-direction: column; gap: 12px; margin-bottom: 40px; }
 
-    .contact-info p {
-      color: var(--muted);
-      margin-bottom: 36px;
-      font-size: 0.95rem;
-    }
-
-    .contact-links { display: flex; flex-direction: column; gap: 16px; }
-
-    .contact-link {
+    .c-link {
       display: flex;
       align-items: center;
-      gap: 14px;
-      text-decoration: none;
-      color: var(--text);
-      padding: 16px 20px;
+      gap: 16px;
+      padding: 18px 22px;
       background: var(--card);
       border: 1px solid var(--border);
+      border-radius: 14px;
+      text-decoration: none;
+      color: var(--text);
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .c-link::after {
+      content: '→';
+      position: absolute;
+      right: 20px;
+      opacity: 0;
+      transform: translateX(-8px);
+      transition: all 0.3s;
+      color: var(--gold);
+    }
+
+    .c-link:hover {
+      border-color: rgba(201,168,76,0.3);
+      transform: translateX(6px);
+      background: rgba(201,168,76,0.04);
+    }
+
+    .c-link:hover::after {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    .c-icon {
+      width: 44px; height: 44px;
       border-radius: 10px;
-      transition: border-color 0.2s, transform 0.2s;
-    }
-
-    .contact-link:hover {
-      border-color: var(--accent);
-      transform: translateX(4px);
-    }
-
-    .contact-link-icon {
-      width: 40px;
-      height: 40px;
-      border-radius: 8px;
-      background: rgba(201,168,76,0.12);
+      background: linear-gradient(135deg, rgba(201,168,76,0.15), rgba(201,168,76,0.05));
+      border: 1px solid rgba(201,168,76,0.15);
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 1.1rem;
       flex-shrink: 0;
+      transition: transform 0.3s;
     }
 
-    .contact-link-text strong {
+    .c-link:hover .c-icon { transform: rotate(-10deg) scale(1.1); }
+
+    .c-text strong {
       display: block;
-      font-size: 0.8rem;
-      letter-spacing: 1px;
+      font-size: 0.72rem;
+      letter-spacing: 1.5px;
       text-transform: uppercase;
       color: var(--muted);
       margin-bottom: 2px;
     }
 
-    .contact-link-text span {
-      font-size: 0.97rem;
-      font-weight: 600;
-    }
+    .c-text span { font-size: 0.95rem; font-weight: 600; }
 
-    /* form side */
-    .contact-form-wrap {
+    /* Form */
+    .form-box {
       background: var(--card);
       border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 36px;
+      border-radius: 24px;
+      padding: 40px;
+      position: relative;
+      overflow: hidden;
     }
 
-    .contact-form-wrap h3 {
-      font-size: 1.2rem;
-      font-weight: 700;
-      margin-bottom: 24px;
+    .form-box::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
     }
 
-    .form-group { margin-bottom: 18px; }
+    .form-box h3 {
+      font-size: 1.3rem;
+      font-weight: 800;
+      margin-bottom: 28px;
+    }
 
-    .form-group label {
+    .form-row { margin-bottom: 18px; }
+
+    .form-row label {
       display: block;
-      font-size: 0.82rem;
+      font-size: 0.75rem;
       font-weight: 600;
-      color: var(--muted);
+      letter-spacing: 1.5px;
       text-transform: uppercase;
-      letter-spacing: 1px;
+      color: var(--muted);
       margin-bottom: 8px;
     }
 
-    .form-group input,
-    .form-group textarea {
+    .form-row input,
+    .form-row textarea {
       width: 100%;
-      background: var(--surface);
+      background: rgba(255,255,255,0.03);
       border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 12px 14px;
+      border-radius: 10px;
+      padding: 13px 16px;
       color: var(--text);
       font-size: 0.95rem;
       font-family: inherit;
       outline: none;
-      transition: border-color 0.2s;
+      transition: all 0.3s;
       resize: none;
     }
 
-    .form-group input:focus,
-    .form-group textarea:focus { border-color: var(--accent); }
+    .form-row input:focus,
+    .form-row textarea:focus {
+      border-color: var(--gold);
+      background: rgba(201,168,76,0.03);
+      box-shadow: 0 0 0 3px rgba(201,168,76,0.08);
+    }
 
-    .form-group input::placeholder,
-    .form-group textarea::placeholder { color: var(--border); }
+    .form-row input::placeholder,
+    .form-row textarea::placeholder { color: rgba(107,115,148,0.5); }
 
     /* ── FOOTER ── */
     footer {
       border-top: 1px solid var(--border);
-      padding: 28px 24px;
-      text-align: center;
-      color: var(--muted);
-      font-size: 0.85rem;
+      padding: 32px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
     }
 
-    footer a { color: var(--accent); text-decoration: none; }
+    footer p { color: var(--muted); font-size: 0.85rem; }
+    footer a { color: var(--gold); text-decoration: none; }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeDown {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(40px);
+      transition: opacity 0.7s ease, transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .reveal-delay-1 { transition-delay: 0.1s; }
+    .reveal-delay-2 { transition-delay: 0.2s; }
+    .reveal-delay-3 { transition-delay: 0.3s; }
+    .reveal-delay-4 { transition-delay: 0.4s; }
+    .reveal-delay-5 { transition-delay: 0.5s; }
+    .reveal-delay-6 { transition-delay: 0.6s; }
 
     /* ── RESPONSIVE ── */
-    @media (max-width: 680px) {
-      nav { display: none; }
-      .contact-grid { grid-template-columns: 1fr; }
-      .contact-form-wrap { padding: 24px; }
+    @media (max-width: 768px) {
+      nav { padding: 16px 20px; }
+      nav.scrolled { padding: 12px 20px; }
+      .nav-links { display: none; }
+      .process-steps::before { display: none; }
+      .contact-wrap { grid-template-columns: 1fr; }
+      .form-box { padding: 28px 20px; }
+      .stats-inner { grid-template-columns: 1fr; }
+      footer { flex-direction: column; text-align: center; }
     }
   </style>
 </head>
 <body>
 
-<!-- HEADER -->
-<header>
-  <a class="logo" href="#">KAFT<span>IMDA</span></a>
-  <nav>
+<div class="cursor-glow" id="cursorGlow"></div>
+
+<!-- NAVBAR -->
+<nav id="navbar">
+  <a class="logo" href="#">
+    <span class="logo-k">KAFTI</span><span class="logo-rest">MDA</span>
+  </a>
+  <div class="nav-links">
     <a href="#xizmatlar">Xizmatlar</a>
     <a href="#jarayon">Jarayon</a>
     <a href="#aloqa">Aloqa</a>
-  </nav>
-</header>
+  </div>
+  <a href="#aloqa" class="btn btn-gold" style="padding:10px 22px; font-size:0.85rem;">Maslahat olish</a>
+</nav>
 
 <!-- HERO -->
 <section class="hero">
-  <div class="hero-tag">Biznes tizimlashtirish</div>
-  <h1>Biznesingiz <em>KAFTINGIZDA</em> bo'lsin</h1>
-  <p>Tartibsizlikdan — tizimga. Har qanday biznesni aniq jarayon va nazoratga olib chiqamiz.</p>
-  <div class="cta-group">
-    <a href="#aloqa" class="btn btn-primary">Bepul maslahat olish</a>
-    <a href="#xizmatlar" class="btn btn-outline">Xizmatlarni ko'rish</a>
+  <div class="hero-bg"></div>
+  <div class="hero-grid"></div>
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+
+  <div class="hero-content">
+    <div class="hero-badge">Biznes tizimlashtirish</div>
+    <h1>
+      Biznesingiz<br>
+      <span class="highlight">KAFTINGIZDA</span>
+    </h1>
+    <p>Tartibsizlikdan — aniq tizimga. Har qanday biznesni professional jarayon va nazoratga olib chiqamiz.</p>
+    <div class="hero-btns">
+      <a href="#aloqa" class="btn btn-gold">Bepul maslahat olish</a>
+      <a href="#xizmatlar" class="btn btn-outline">Xizmatlarni ko'rish</a>
+    </div>
   </div>
 </section>
 
-<!-- SERVICES -->
-<section class="services" id="xizmatlar">
-  <div class="container">
-    <div class="section-label">Xizmatlar</div>
-    <h2 class="section-title">Nima qilamiz?</h2>
-    <p class="section-sub">Biznesingizning har bir sohasini aniq tizimga solamiz — shunda siz boshqarasiz, biznes o'zi ishlaydi.</p>
+<!-- STATS -->
+<div class="stats">
+  <div class="stats-inner">
+    <div class="stat reveal">
+      <div class="stat-num" data-target="150">0</div>
+      <div class="stat-label">Mijozlar</div>
+    </div>
+    <div class="stat reveal reveal-delay-2">
+      <div class="stat-num" data-target="5">0</div>
+      <div class="stat-label">Yil tajriba</div>
+    </div>
+    <div class="stat reveal reveal-delay-4">
+      <div class="stat-num" data-target="98">0</div>
+      <div class="stat-label">% mamnuniyat</div>
+    </div>
+  </div>
+</div>
 
-    <div class="grid-3">
-      <div class="card">
-        <div class="card-icon">📊</div>
+<!-- SERVICES -->
+<section class="services-bg" id="xizmatlar">
+  <div class="container">
+    <div class="reveal">
+      <div class="section-tag">Xizmatlar</div>
+      <h2 class="section-title">Nima qilamiz?</h2>
+      <p class="section-sub">Biznesingizning har bir sohasini aniq tizimga solamiz — shunda siz boshqarasiz, biznes o'zi ishlaydi.</p>
+    </div>
+
+    <div class="services-grid">
+      <div class="service-card reveal reveal-delay-1">
+        <div class="service-num">01</div>
+        <div class="service-icon">📊</div>
         <h3>Jarayonlarni tizimlashtirish</h3>
         <p>Biznesingizdagi tartibsiz jarayonlarni aniq bosqichlarga bo'lib, standartlashtirамиз.</p>
       </div>
-      <div class="card">
-        <div class="card-icon">🗂️</div>
+      <div class="service-card reveal reveal-delay-2">
+        <div class="service-num">02</div>
+        <div class="service-icon">🗂️</div>
         <h3>ERP joriy etish</h3>
         <p>Moliya, ombor, xodimlar va sotuvni bitta tizimda boshqarish imkoniyati.</p>
       </div>
-      <div class="card">
-        <div class="card-icon">📈</div>
+      <div class="service-card reveal reveal-delay-3">
+        <div class="service-num">03</div>
+        <div class="service-icon">📈</div>
         <h3>KPI va hisobotlar</h3>
         <p>Real vaqtda natijalarni kuzating. Aniq ma'lumot — to'g'ri qaror.</p>
       </div>
-      <div class="card">
-        <div class="card-icon">🤝</div>
+      <div class="service-card reveal reveal-delay-4">
+        <div class="service-num">04</div>
+        <div class="service-icon">🤝</div>
         <h3>Xodimlar boshqaruvi</h3>
         <p>Rollar, mas'uliyat va ish oqimlarini aniq belgilash. Har kim nima qilishini biladi.</p>
       </div>
-      <div class="card">
-        <div class="card-icon">🔄</div>
+      <div class="service-card reveal reveal-delay-5">
+        <div class="service-num">05</div>
+        <div class="service-icon">🔄</div>
         <h3>Avtomatlashtirish</h3>
         <p>Takrorlanuvchi ishlarni avtomatlashtirish. Vaqtingiz va resurslaringizni tejang.</p>
       </div>
-      <div class="card">
-        <div class="card-icon">🎯</div>
+      <div class="service-card reveal reveal-delay-6">
+        <div class="service-num">06</div>
+        <div class="service-icon">🎯</div>
         <h3>Strategik rejalashtirish</h3>
         <p>Maqsad qo'yish, resurslarni taqsimlash va natijani o'lchash tizimini quramiz.</p>
       </div>
@@ -468,28 +817,42 @@
 <!-- PROCESS -->
 <section id="jarayon">
   <div class="container">
-    <div class="section-label">Qanday ishlаymiz</div>
-    <h2 class="section-title">4 bosqichda natijaga</h2>
-    <p class="section-sub">Tez va aniq. Birinchi haftadan boshlab o'zgarish sezilar darajada bo'ladi.</p>
+    <div class="reveal" style="text-align:center;">
+      <div class="section-tag">Qanday ishlaymiz</div>
+      <h2 class="section-title">4 bosqichda natijaga</h2>
+      <p class="section-sub" style="margin:0 auto 64px;">Tez va aniq. Birinchi haftadan boshlab o'zgarish sezilar darajada bo'ladi.</p>
+    </div>
 
-    <div class="steps">
-      <div class="step">
-        <div class="step-num">01</div>
+    <div class="process-steps">
+      <div class="step reveal reveal-delay-1">
+        <div class="step-circle">
+          🔍
+          <span class="step-num-label">1</span>
+        </div>
         <h3>Tahlil</h3>
         <p>Biznesingizni chuqur o'rganamiz: muammolar, imkoniyatlar, jarayonlar.</p>
       </div>
-      <div class="step">
-        <div class="step-num">02</div>
+      <div class="step reveal reveal-delay-2">
+        <div class="step-circle">
+          🗺️
+          <span class="step-num-label">2</span>
+        </div>
         <h3>Loyihalash</h3>
         <p>Tizim arxitekturasi va jarayon xaritasini tuzamiz.</p>
       </div>
-      <div class="step">
-        <div class="step-num">03</div>
+      <div class="step reveal reveal-delay-3">
+        <div class="step-circle">
+          ⚙️
+          <span class="step-num-label">3</span>
+        </div>
         <h3>Joriy etish</h3>
         <p>Tizimni biznesingizga moslab o'rnatamiz va xodimlarni o'qitamiz.</p>
       </div>
-      <div class="step">
-        <div class="step-num">04</div>
+      <div class="step reveal reveal-delay-4">
+        <div class="step-circle">
+          🚀
+          <span class="step-num-label">4</span>
+        </div>
         <h3>Qo'llab-quvvatlash</h3>
         <p>Tizim to'liq ishlagunicha yonigingizdamiz.</p>
       </div>
@@ -498,32 +861,34 @@
 </section>
 
 <!-- CONTACT -->
-<section class="contact" id="aloqa">
+<section class="contact-bg" id="aloqa">
   <div class="container">
-    <div class="contact-grid">
-      <div class="contact-info">
-        <div class="section-label">Aloqa</div>
-        <h2>Bugun boshlang</h2>
-        <p>Birinchi maslahat — bepul. Biznesingiz haqida gapirib bering, qolganini biz hal qilamiz.</p>
+    <div class="contact-wrap">
+      <div>
+        <div class="reveal">
+          <div class="section-tag">Aloqa</div>
+          <h2 class="section-title">Bugun boshlang</h2>
+          <p class="section-sub">Birinchi maslahat — bepul. Biznesingiz haqida gapirib bering, qolganini biz hal qilamiz.</p>
+        </div>
 
         <div class="contact-links">
-          <a href="tel:+998917606666" class="contact-link">
-            <div class="contact-link-icon">📞</div>
-            <div class="contact-link-text">
+          <a href="tel:+998917606666" class="c-link reveal reveal-delay-1">
+            <div class="c-icon">📞</div>
+            <div class="c-text">
               <strong>Telefon</strong>
               <span>+998 91 760 66 66</span>
             </div>
           </a>
-          <a href="https://t.me/Kaftimda_ERP" target="_blank" rel="noopener" class="contact-link">
-            <div class="contact-link-icon">✈️</div>
-            <div class="contact-link-text">
+          <a href="https://t.me/Kaftimda_ERP" target="_blank" rel="noopener" class="c-link reveal reveal-delay-2">
+            <div class="c-icon">✈️</div>
+            <div class="c-text">
               <strong>Telegram</strong>
               <span>@Kaftimda_ERP</span>
             </div>
           </a>
-          <a href="mailto:kaftimda@gmail.com" class="contact-link">
-            <div class="contact-link-icon">✉️</div>
-            <div class="contact-link-text">
+          <a href="mailto:kaftimda@gmail.com" class="c-link reveal reveal-delay-3">
+            <div class="c-icon">✉️</div>
+            <div class="c-text">
               <strong>Email</strong>
               <span>kaftimda@gmail.com</span>
             </div>
@@ -531,23 +896,23 @@
         </div>
       </div>
 
-      <div class="contact-form-wrap">
+      <div class="form-box reveal reveal-delay-2">
         <h3>Xabar qoldiring</h3>
         <form name="murojaat" method="POST" data-netlify="true" onsubmit="handleForm(event)">
           <input type="hidden" name="form-name" value="murojaat" />
-          <div class="form-group">
+          <div class="form-row">
             <label>Ismingiz</label>
-            <input type="text" placeholder="Ism Familiya" required />
+            <input type="text" name="ism" placeholder="Ism Familiya" required />
           </div>
-          <div class="form-group">
+          <div class="form-row">
             <label>Telefon</label>
-            <input type="tel" placeholder="+998 __ ___ __ __" required />
+            <input type="tel" name="telefon" placeholder="+998 __ ___ __ __" required />
           </div>
-          <div class="form-group">
+          <div class="form-row">
             <label>Xabar</label>
-            <textarea rows="4" placeholder="Biznesingiz haqida qisqacha..."></textarea>
+            <textarea rows="4" name="xabar" placeholder="Biznesingiz haqida qisqacha..."></textarea>
           </div>
-          <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;">
+          <button type="submit" class="btn btn-gold" style="width:100%; justify-content:center; margin-top:8px;">
             Yuborish
           </button>
         </form>
@@ -558,18 +923,77 @@
 
 <!-- FOOTER -->
 <footer>
-  <p>&copy; 2026 <a href="#">KAFTIMDA</a> — Har qanday biznesni tizimlashtirish.</p>
+  <a class="logo" href="#" style="font-size:1.1rem;">
+    <span class="logo-k">KAFTI</span><span class="logo-rest">MDA</span>
+  </a>
+  <p>&copy; 2026 KAFTIMDA — Har qanday biznesni tizimlashtirish.</p>
 </footer>
 
 <script>
+  // Cursor glow
+  const glow = document.getElementById('cursorGlow');
+  document.addEventListener('mousemove', e => {
+    glow.style.left = e.clientX + 'px';
+    glow.style.top = e.clientY + 'px';
+  });
+
+  // Navbar scroll
+  const navbar = document.getElementById('navbar');
+  window.addEventListener('scroll', () => {
+    navbar.classList.toggle('scrolled', window.scrollY > 40);
+  });
+
+  // Scroll reveal
+  const reveals = document.querySelectorAll('.reveal');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+        observer.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.1, rootMargin: '0px 0px -60px 0px' });
+
+  reveals.forEach(el => observer.observe(el));
+
+  // Counter animation
+  function animateCounter(el) {
+    const target = parseInt(el.dataset.target);
+    const suffix = el.textContent.includes('%') ? '%' : '+';
+    let current = 0;
+    const step = target / 60;
+    const timer = setInterval(() => {
+      current += step;
+      if (current >= target) {
+        current = target;
+        clearInterval(timer);
+      }
+      el.textContent = Math.floor(current) + suffix;
+    }, 16);
+  }
+
+  const statNums = document.querySelectorAll('.stat-num');
+  const statObserver = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        animateCounter(e.target);
+        statObserver.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.5 });
+
+  statNums.forEach(el => statObserver.observe(el));
+
+  // Form submit
   function handleForm(e) {
     e.preventDefault();
     const btn = e.target.querySelector('button[type="submit"]');
+    const original = btn.textContent;
     btn.textContent = 'Yuborildi ✓';
-    btn.style.background = '#2a7a4b';
+    btn.style.background = 'linear-gradient(135deg,#1a5c3a,#2a7a4b)';
     btn.disabled = true;
     setTimeout(() => {
-      btn.textContent = 'Yuborish';
+      btn.textContent = original;
       btn.style.background = '';
       btn.disabled = false;
       e.target.reset();
