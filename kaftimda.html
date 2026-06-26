@@ -54,9 +54,9 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;justify-content
 .hero-tag{font-size:11px;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:var(--gold);margin-bottom:32px;display:flex;align-items:center;gap:12px;opacity:0;transform:translateY(14px);transition:all .6s ease}
 .hero-tag::before,.hero-tag::after{content:'';display:block;width:36px;height:1px;background:var(--gold);opacity:.4}
 .hero-tag.on{opacity:1;transform:none}
-.hero-h{font-family:'Syne',Arial Black,sans-serif;font-size:clamp(64px,16vw,180px);font-weight:800;line-height:.88;letter-spacing:-6px;margin-bottom:10px}
+.hero-h{font-family:'Syne',Arial Black,sans-serif;font-size:clamp(44px,12vw,180px);font-weight:800;line-height:.9;letter-spacing:clamp(-2px,-0.6vw,-6px);margin-bottom:10px;max-width:100%;word-break:break-word}
 .hero-h .g{color:var(--gold)}
-.hero-sh{font-family:'Syne',Arial Black,sans-serif;font-size:clamp(22px,5vw,56px);font-weight:800;line-height:1.1;letter-spacing:-2px;margin-bottom:28px;color:rgba(255,255,255,.82)}
+.hero-sh{font-family:'Syne',Arial Black,sans-serif;font-size:clamp(18px,4.5vw,56px);font-weight:800;line-height:1.1;letter-spacing:clamp(-1px,-0.3vw,-2px);margin-bottom:28px;color:rgba(255,255,255,.82);max-width:100%}
 .hero-sh .g{color:var(--gold)}
 .wr{display:inline-block;overflow:hidden;vertical-align:bottom}
 .wi{display:inline-block;transform:translateY(105%);transition:transform .9s cubic-bezier(.4,0,.2,1)}
@@ -269,8 +269,8 @@ footer{position:relative;z-index:1;border-top:1px solid rgba(255,255,255,.05);pa
       <div class="form-box" data-rev>
         <form name="murojaat" method="POST" data-netlify="true" onsubmit="sendForm(event)">
           <input type="hidden" name="form-name" value="murojaat"/>
-          <div class="fg"><label>Ismingiz</label><input type="text" name="ism" placeholder="Ali Karimov" required/></div>
-          <div class="fg"><label>Telefon</label><input type="tel" name="telefon" placeholder="+998 90 000 00 00" required/></div>
+          <div class="fg"><label>Ismingiz</label><input type="text" name="ism" placeholder="" required/></div>
+          <div class="fg"><label>Telefon</label><input type="tel" name="telefon" placeholder="+998" required/></div>
           <div class="fg"><label>Biznes sohasi</label><select name="soha"><option value="">Tanlang</option><option>Savdo / Do'kon</option><option>Ishlab chiqarish</option><option>Restoran / Cafe</option><option>Qurilish</option><option>Logistika</option><option>IT / Xizmatlar</option><option>Boshqa</option></select></div>
           <div class="fg"><label>Xabar</label><textarea name="xabar" placeholder="Biznesingiz haqida qisqacha..."></textarea></div>
           <button type="submit" class="sub">Yuborish →</button>
