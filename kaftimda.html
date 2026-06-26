@@ -4,8 +4,26 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>KAFTIMDA — Biznesingizni tizimlashtiramiz</title>
+
+<!-- Favicon -->
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%230a0d18'/><text x='50' y='72' font-size='64' text-anchor='middle' font-family='Arial Black,Arial' font-weight='900' fill='%23f0b429'>K</text></svg>"/>
+
+<!-- Open Graph -->
+<meta property="og:title" content="KAFTIMDA — Biznesingizni tizimlashtiramiz"/>
+<meta property="og:description" content="Har qanday biznesni tizimlashtirish. ERP joriy etish, jarayonlar tahlili va avtomatlashtirish."/>
+<meta property="og:url" content="https://timely-dasik-f38b80.netlify.app"/>
+<meta property="og:type" content="website"/>
+<meta property="og:image" content="https://timely-dasik-f38b80.netlify.app/og.png"/>
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:title" content="KAFTIMDA — Biznesingizni tizimlashtiramiz"/>
+<meta name="twitter:description" content="Har qanday biznesni tizimlashtirish."/>
+
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Syne:wght@700;800&display=swap"/>
+
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Syne:wght@700;800&display=swap&font-display=swap');
 
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 
@@ -16,14 +34,17 @@
   --ink:#0a0d18;
 }
 
-html{scroll-behavior:smooth;cursor:none}
-body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:#e8edf8;overflow-x:hidden}
+html{scroll-behavior:smooth}
+body{font-family:'Space Grotesk',system-ui,-apple-system,sans-serif;background:var(--bg);color:#e8edf8;overflow-x:hidden}
+@media(hover:hover){html{cursor:none}}
 
-/* CURSOR */
+/* CURSOR — faqat sichqonchali qurilmalarda */
+@media(hover:hover){
 .cur,.cur-dot{position:fixed;border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%)}
 .cur{width:40px;height:40px;border:1.5px solid rgba(240,180,41,0.5);transition:transform 0.15s,width 0.3s,height 0.3s,border-color 0.3s;top:0;left:0}
 .cur-dot{width:6px;height:6px;background:var(--gold);transition:transform 0.05s;top:0;left:0}
 body:has(a:hover) .cur,body:has(button:hover) .cur{width:64px;height:64px;border-color:var(--gold);background:rgba(240,180,41,0.08)}
+}
 
 /* LOADER */
 #loader{position:fixed;inset:0;background:var(--bg);z-index:9000;display:flex;align-items:center;justify-content:center;transition:opacity 0.6s,visibility 0.6s}
@@ -421,12 +442,15 @@ footer p{font-size:0.8rem;color:rgba(232,237,248,0.25)}
 </footer>
 
 <script>
-// CURSOR
-const cur=document.getElementById('cur'),curDot=document.getElementById('curDot');
-let mx=0,my=0,cx=0,cy=0;
-document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;curDot.style.left=mx+'px';curDot.style.top=my+'px'});
-function animCursor(){cx+=(mx-cx)*0.12;cy+=(my-cy)*0.12;cur.style.left=cx+'px';cur.style.top=cy+'px';requestAnimationFrame(animCursor)}
-animCursor();
+// CURSOR — faqat desktop
+const isTouch=('ontouchstart' in window)||navigator.maxTouchPoints>0;
+if(!isTouch){
+  const cur=document.getElementById('cur'),curDot=document.getElementById('curDot');
+  let mx=0,my=0,cx=0,cy=0;
+  document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;curDot.style.left=mx+'px';curDot.style.top=my+'px'});
+  function animCursor(){cx+=(mx-cx)*0.12;cy+=(my-cy)*0.12;cur.style.left=cx+'px';cur.style.top=cy+'px';requestAnimationFrame(animCursor)}
+  animCursor();
+}
 
 // LOADER
 setTimeout(()=>document.getElementById('loader').classList.add('out'),1500);
@@ -445,7 +469,8 @@ class Particle{
   draw(){ctx.beginPath();ctx.arc(this.x,this.y,this.r,0,Math.PI*2);ctx.fillStyle=this.gold?`rgba(240,180,41,${this.a})`:`rgba(200,210,255,${this.a*0.5})`;ctx.fill()}
 }
 
-for(let i=0;i<120;i++)particles.push(new Particle());
+const particleCount=isTouch?0:120;
+for(let i=0;i<particleCount;i++)particles.push(new Particle());
 
 function drawConnections(){
   for(let i=0;i<particles.length;i++){
@@ -484,9 +509,15 @@ counters.forEach(c=>cObs.observe(c));
 // FORM
 function submitForm(e){
   e.preventDefault();
-  const btn=e.target.querySelector('.submit-btn');
-  btn.textContent='Yuborildi ✓';btn.style.background='#2d6a4f';btn.disabled=true;
-  setTimeout(()=>{btn.textContent='Yuborish →';btn.style.background='';btn.disabled=false;e.target.reset()},3000);
+  const form=e.target,btn=form.querySelector('.submit-btn');
+  btn.textContent='Yuborilmoqda...';btn.disabled=true;
+  fetch('/',{
+    method:'POST',
+    headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body:new URLSearchParams(new FormData(form)).toString()
+  })
+  .then(()=>{btn.textContent='Yuborildi ✓';btn.style.background='#2d6a4f';form.reset();setTimeout(()=>{btn.textContent='Yuborish →';btn.style.background='';btn.disabled=false},3000)})
+  .catch(()=>{btn.textContent='Xato! Qayta urinib ko\'ring';btn.style.background='#7a2d2d';setTimeout(()=>{btn.textContent='Yuborish →';btn.style.background='';btn.disabled=false},3000)});
 }
 </script>
 </body>
