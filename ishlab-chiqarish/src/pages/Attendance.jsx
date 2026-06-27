@@ -6,9 +6,10 @@ import {
 import { db } from '../firebase/config'
 import { useDepartments } from '../contexts/DepartmentsContext'
 import { useAuth } from '../contexts/AuthContext'
-import { Calendar, UserX, UserCheck, FileText, Download } from 'lucide-react'
-import { exportAttendancePDF } from '../utils/pdf'
+import { Calendar, UserX, UserCheck, FileText, Download, Send } from 'lucide-react'
+import { exportAttendancePDF, buildAttendancePDFHtml } from '../utils/pdf'
 import { exportAttendanceExcel } from '../utils/excel'
+import { sendHTMLToTelegram } from '../utils/telegram'
 
 const REASONS = [
   { value: 'kasallik', label: 'Kasallik',  badge: 'bg-blue-100 text-blue-700'   },
@@ -31,6 +32,8 @@ export default function Attendance() {
   const [absences, setAbsences]     = useState({})        // { [empId]: { reason, note } }
   const [notes, setNotes]           = useState({})
   const [saving, setSaving]         = useState({})
+  const [tgSending, setTgSending]   = useState(false)
+  const [tgMsg, setTgMsg]           = useState('')
 
   // All employees
   useEffect(() => {
@@ -141,6 +144,36 @@ export default function Attendance() {
               onChange={e => setDate(e.target.value)}
               className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
+          </div>
+          <div className="relative">
+            <button
+              disabled={tgSending}
+              onClick={async () => {
+                setTgSending(true)
+                setTgMsg('')
+                try {
+                  const html = buildAttendancePDFHtml(absentEmps, visibleEmps, absences, visibleDepts, date)
+                  const filename = `davomat-${date}.pdf`
+                  const caption = `📋 Davomat | ${date} | Kelmaganlar: ${absentEmps.length} nafar`
+                  await sendHTMLToTelegram(html, filename, caption)
+                  setTgMsg('✓ Yuborildi!')
+                } catch (err) {
+                  setTgMsg('Xatolik: ' + err.message)
+                } finally {
+                  setTgSending(false)
+                  setTimeout(() => setTgMsg(''), 4000)
+                }
+              }}
+              className="flex items-center gap-1.5 bg-blue-500 hover:bg-blue-600 disabled:opacity-60 text-white text-xs px-3 py-2 rounded-lg transition-colors"
+            >
+              <Send className="w-3.5 h-3.5" />
+              {tgSending ? 'Yuborilmoqda...' : 'Telegram'}
+            </button>
+            {tgMsg && (
+              <div className={`absolute top-full mt-1 right-0 text-xs px-2 py-1 rounded whitespace-nowrap z-10 ${tgMsg.startsWith('✓') ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                {tgMsg}
+              </div>
+            )}
           </div>
           <button
             onClick={() => exportAttendancePDF(absentEmps, visibleEmps, absences, visibleDepts, date)}

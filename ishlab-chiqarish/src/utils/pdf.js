@@ -531,7 +531,7 @@ const REASON_STYLE = {
   boshqa:   { bg: '#f1f5f9', color: '#475569' },
 }
 
-export function exportAttendancePDF(absentEmps, allEmps, absences, departments, date) {
+export function buildAttendancePDFHtml(absentEmps, allEmps, absences, departments, date) {
   const totalAbsent  = absentEmps.length
   const totalPresent = allEmps.length - totalAbsent
   const printed      = new Date().toLocaleDateString('uz-UZ', { day: '2-digit', month: '2-digit', year: 'numeric' })
@@ -711,6 +711,11 @@ ${totalAbsent === 0
 </body>
 </html>`
 
+  return html
+}
+
+export function exportAttendancePDF(absentEmps, allEmps, absences, departments, date) {
+  const html = buildAttendancePDFHtml(absentEmps, allEmps, absences, departments, date)
   const win = window.open('', '_blank', 'width=900,height=850')
   if (!win) {
     alert("Brauzer popup'ni blokladi. Iltimos, ruxsat bering va qaytadan bosing.")
