@@ -6,7 +6,7 @@ import {
 import { db } from '../firebase/config'
 import { useDepartments } from '../contexts/DepartmentsContext'
 import { useAuth } from '../contexts/AuthContext'
-import { Plus, Pencil, Trash2, X, Check, Star } from 'lucide-react'
+import { Plus, Pencil, Trash2, X, Check, Star, Search } from 'lucide-react'
 
 export default function Operations() {
   const { can, userDoc } = useAuth()
@@ -16,6 +16,7 @@ export default function Operations() {
     : departments.filter(d => userDoc.departmentIds.includes(d.id))
   const [operations, setOperations] = useState([])
   const [filterDept, setFilterDept] = useState('all')
+  const [search, setSearch] = useState('')
   const [modal, setModal] = useState(null) // null | 'add' | {id, ...}
   const [form, setForm] = useState({ name: '', norm: '', departmentId: '' })
   const [saving, setSaving] = useState(false)
@@ -74,7 +75,9 @@ export default function Operations() {
 
   const visibleOpIds = new Set(visibleDepts.map(d => d.id))
   const visibleOps = operations.filter(o => visibleOpIds.has(o.departmentId))
-  const filtered = filterDept === 'all' ? visibleOps : visibleOps.filter(o => o.departmentId === filterDept)
+  const filtered = visibleOps
+    .filter(o => filterDept === 'all' || o.departmentId === filterDept)
+    .filter(o => !search.trim() || o.name.toLowerCase().includes(search.trim().toLowerCase()))
 
   return (
     <div>
@@ -88,6 +91,18 @@ export default function Operations() {
             <Plus className="w-4 h-4" /> Qo'shish
           </button>
         )}
+      </div>
+
+      {/* Search */}
+      <div className="relative mb-4">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+        <input
+          type="text"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder="Operatsiya nomini qidiring..."
+          className="w-full border border-gray-300 rounded-lg pl-9 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
       </div>
 
       {/* Filter */}
