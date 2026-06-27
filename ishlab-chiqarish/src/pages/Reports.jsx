@@ -129,7 +129,7 @@ export default function Reports() {
         a.startTime.localeCompare(b.startTime) ||
         a.opName.localeCompare(b.opName)
       )
-      setRows(result.filter(r => r.quantity > 0))
+      setRows(result.filter(r => r.quantity > 0 || r.note.trim()))
     } catch (e) {
       console.error(e)
       setReportError('Xatolik yuz berdi: ' + (e.message || e.code || 'Qayta urinib ko\'ring'))

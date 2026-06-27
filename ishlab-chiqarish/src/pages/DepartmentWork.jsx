@@ -214,7 +214,7 @@ export default function DepartmentWork() {
       })
     })
 
-    const filteredRows = rows.filter(r => r.quantity > 0)
+    const filteredRows = rows.filter(r => r.quantity > 0 || r.note.trim())
     if (!filteredRows.length) {
       setTgMsg("Kiritilgan ma'lumot yo'q")
       setTimeout(() => setTgMsg(''), 3000)
