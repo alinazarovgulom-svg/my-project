@@ -110,7 +110,6 @@ export function buildWorkPDFHtml(rows, filters, deptName, showDept = true, autoP
           return `<span style="display:flex;align-items:center;gap:5px;flex-wrap:nowrap">
             <span style="font-size:11px">${medal}</span>
             <strong>${esc(g.empName)}</strong>
-            <span style="background:${eb};color:${ec};border-radius:8px;padding:2px 6px;font-size:9px;font-weight:700;white-space:nowrap">${e}%</span>
           </span>`
         })() : ''}</td>
         ${showDept ? `<td class="td-dept">${isFirst ? `<span class="dept-badge">${esc(g.deptName)}</span>` : ''}</td>` : ''}
@@ -267,10 +266,6 @@ export function buildWorkPDFHtml(rows, filters, deptName, showDept = true, autoP
     <div class="card-val" style="color:#854d0e">${totalExp.toFixed(0)}</div>
     <div class="card-lbl">Kutilgan</div>
   </div>
-  <div class="card" style="background:${effBg}">
-    <div class="card-val" style="color:${effColor}">${eff}%</div>
-    <div class="card-lbl">Samaradorlik</div>
-  </div>
 </div>
 
 ${sectionsHtml}
@@ -367,7 +362,6 @@ export async function exportPDFBlob(rows, filters, deptName, showDept = true) {
     { label: 'Xodimlar',        val: empCount,    bg: [239, 246, 255] },
     { label: 'Bajargan',        val: totalDone,   bg: [240, 253, 244] },
     { label: 'Kutilgan',        val: Math.round(totalExp), bg: [254, 252, 232] },
-    { label: 'Samaradorlik',    val: eff + '%',   bg: eff >= 100 ? [240, 253, 244] : eff >= 80 ? [254, 252, 232] : [254, 242, 242] },
   ]
   const cardW = (pageW - 20) / stats.length
   stats.forEach((s, i) => {
@@ -430,7 +424,7 @@ export async function exportPDFBlob(rows, filters, deptName, showDept = true) {
       const totExp  = slots.reduce((s, sl) => s + (g.bySlot[sl]?.exp ?? 0), 0)
       return [
         i + 1,
-        `${medal}${g.empName} (${e}%)`,
+        `${medal}${g.empName}`,
         ...(showDept ? [g.deptName] : []),
         g.opName,
         `${g.norm} d/s`,
