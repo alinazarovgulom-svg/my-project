@@ -214,7 +214,8 @@ export default function DepartmentWork() {
       })
     })
 
-    if (!rows.length) {
+    const filteredRows = rows.filter(r => r.quantity > 0)
+    if (!filteredRows.length) {
       setTgMsg("Kiritilgan ma'lumot yo'q")
       setTimeout(() => setTgMsg(''), 3000)
       return
@@ -224,7 +225,7 @@ export default function DepartmentWork() {
     setTgMsg('')
     try {
       const filters = `${date} · ${startTime}–${endTime}`
-      const html = buildWorkPDFHtml(rows, filters, dept.name, false, false)
+      const html = buildWorkPDFHtml(filteredRows, filters, dept.name, false, false)
       const filename = `${dept.name}-${date}-${startTime.replace(':', '')}.pdf`
       const caption = `📊 ${dept.name} | ${date} | ${startTime}–${endTime}`
       await sendHTMLToTelegram(html, filename, caption)
