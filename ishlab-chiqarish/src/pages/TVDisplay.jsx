@@ -142,7 +142,7 @@ export default function TVDisplay() {
   const eff = stats.expected > 0 ? Math.round((stats.done / stats.expected) * 100) : null
   const effColor = eff === null ? '#94a3b8' : eff >= 100 ? '#4ade80' : eff >= 80 ? '#fbbf24' : '#f87171'
   const timeStr = clock.toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: 'Asia/Tashkent' })
-  const dateStr = clock.toLocaleDateString('uz-UZ', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Asia/Tashkent' })
+  const dateStr = clock.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Asia/Tashkent' })
 
   return (
     <div style={{
@@ -170,7 +170,7 @@ export default function TVDisplay() {
         <div style={{ minWidth: 180 }}>
           <div style={{ fontSize: 30, fontWeight: 900, letterSpacing: 1 }}>KAFTIMDA</div>
           <div style={{ width: 68, height: 3, background: '#D97706', borderRadius: 2, margin: '5px 0 7px' }} />
-          <div style={{ fontSize: 18, color: '#93c5fd', fontWeight: 600 }}>{deptName}</div>
+          <div style={{ fontSize: 26, color: '#93c5fd', fontWeight: 700 }}>{deptName}</div>
         </div>
 
         {/* Stats */}
@@ -235,29 +235,29 @@ export default function TVDisplay() {
                     {/* Main row — name + total */}
                     <tr style={{ background: rowBg, borderTop: '2px solid rgba(255,255,255,0.08)' }}>
                       <td rowSpan={1 + emp.ops.length} style={{
-                        padding: '14px 20px',
+                        padding: '16px 20px',
                         textAlign: 'center',
                         color: '#475569',
-                        fontSize: 20,
+                        fontSize: 22,
                         fontWeight: 700,
                         verticalAlign: 'middle',
                       }}>
                         {rank}
                       </td>
-                      <td style={{ padding: '14px 20px 6px', fontSize: 22, fontWeight: 700, verticalAlign: 'bottom' }}>
+                      <td style={{ padding: '16px 20px 4px', fontSize: 26, fontWeight: 700, verticalAlign: 'bottom' }}>
                         {medal}{emp.name}
                       </td>
                       <td style={{
-                        padding: '14px 36px 6px 20px',
+                        padding: '16px 40px 4px 20px',
                         textAlign: 'right',
-                        fontSize: 28,
+                        fontSize: 32,
                         fontWeight: 900,
                         color: qtyColor,
                         verticalAlign: 'bottom',
                         whiteSpace: 'nowrap',
                       }}>
                         {emp.totalQty}{' '}
-                        <span style={{ fontSize: 13, color: '#64748b', fontWeight: 400 }}>dona</span>
+                        <span style={{ fontSize: 15, color: '#64748b', fontWeight: 400 }}>dona</span>
                       </td>
                     </tr>
 
@@ -265,20 +265,18 @@ export default function TVDisplay() {
                     {emp.ops.map(op => (
                       <tr key={op.name} style={{ background: rowBg }}>
                         <td colSpan={2} style={{
-                          padding: '2px 20px 10px 48px',
-                          fontSize: 14,
-                          color: '#94a3b8',
+                          padding: '4px 20px 14px 56px',
                           verticalAlign: 'top',
                         }}>
-                          <span style={{ color: '#cbd5e1', fontWeight: 600, marginRight: 14 }}>{op.name}</span>
+                          <span style={{ color: '#60a5fa', fontWeight: 700, marginRight: 20, fontSize: 18 }}>{op.name}</span>
                           {Object.entries(op.slots).sort().map(([slot, qty]) => (
-                            <span key={slot} style={{ marginRight: 14, whiteSpace: 'nowrap' }}>
-                              <span style={{ color: '#475569' }}>{slot}:</span>{' '}
-                              <strong style={{ color: '#f8fafc', fontSize: 16 }}>{qty}</strong>
+                            <span key={slot} style={{ marginRight: 20, whiteSpace: 'nowrap', display: 'inline-block' }}>
+                              <span style={{ color: '#64748b', fontSize: 16 }}>{slot}: </span>
+                              <strong style={{ color: '#f8fafc', fontSize: 22 }}>{qty}</strong>
                             </span>
                           ))}
-                          <span style={{ color: '#475569', marginLeft: 4 }}>
-                            = <strong style={{ color: '#94a3b8' }}>{op.total}</strong>
+                          <span style={{ color: '#475569', fontSize: 16, marginLeft: 4 }}>
+                            = <strong style={{ color: '#fbbf24', fontSize: 22 }}>{op.total}</strong>
                           </span>
                         </td>
                       </tr>
