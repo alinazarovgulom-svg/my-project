@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { collection, query, where, getDocs } from 'firebase/firestore'
 import { db } from '../firebase/config'
 import { useDepartments } from '../contexts/DepartmentsContext'
@@ -49,6 +49,7 @@ const CustomTooltip = ({ active, payload, label }) => {
 }
 
 export default function Dashboard() {
+  const navigate = useNavigate()
   const { departments: allDepartments } = useDepartments()
   const { userDoc, can } = useAuth()
   const departments = can.manageMembers || !userDoc?.departmentIds?.length
@@ -340,10 +341,10 @@ export default function Dashboard() {
           const eff = ds.expected > 0 ? Math.round((ds.done / ds.expected) * 100) : null
           const ec = effColor(eff)
           return (
-            <Link
+            <div
               key={dept.id}
-              to={`/department/${dept.id}`}
-              className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 hover:shadow-md hover:border-blue-200 transition-all group"
+              onClick={() => navigate(`/department/${dept.id}`)}
+              className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 hover:shadow-md hover:border-blue-200 transition-all group cursor-pointer"
             >
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full">
@@ -418,7 +419,7 @@ export default function Dashboard() {
                   </div>
                 </div>
               )}
-            </Link>
+            </div>
           )
         })}
       </div>
