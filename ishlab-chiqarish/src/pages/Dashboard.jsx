@@ -126,7 +126,7 @@ export default function Dashboard() {
           qty: opQty[d.id] || 0,
         })
       })
-      Object.values(opsByDeptData).forEach(arr => arr.sort((a, b) => a.order - b.order))
+      Object.values(opsByDeptData).forEach(arr => arr.sort((a, b) => b.qty - a.qty))
 
       setStats({ employees: visibleEmpCount, operations: visibleOpCount })
       setDeptStats(deptData)
