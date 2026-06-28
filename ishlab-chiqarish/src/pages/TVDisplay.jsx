@@ -24,7 +24,7 @@ export default function TVDisplay() {
   const { deptId } = useParams()
   const [deptName, setDeptName] = useState('...')
   const [rows, setRows] = useState([])
-  const [stats, setStats] = useState({ total: 0, attended: 0, done: 0, expected: 0, tayyor: 0 })
+  const [stats, setStats] = useState({ total: 0, attended: 0, absent: 0, done: 0, expected: 0, tayyor: 0 })
   const [page, setPage] = useState(0)
   const [clock, setClock] = useState(new Date())
 
@@ -77,7 +77,8 @@ export default function TVDisplay() {
 
         snap.forEach(entry => {
           const d = entry.data()
-          seenEmp.add(d.employeeId)
+          const hasQty = Object.values(d.operations || {}).some(op => Number(op.quantity) > 0)
+          if (hasQty) seenEmp.add(d.employeeId)
           const slot = `${d.startTime}–${d.endTime}`
           const hours = calcHours(d.startTime, d.endTime)
 
@@ -124,7 +125,7 @@ export default function TVDisplay() {
           .sort((a, b) => b.totalQty - a.totalQty)
 
         setRows(sorted)
-        setStats({ total: allEmps.length, attended: seenEmp.size, done: totalDone, expected: totalExp, tayyor: totalTayyor })
+        setStats({ total: allEmps.length, attended: seenEmp.size, absent: allEmps.length - seenEmp.size, done: totalDone, expected: totalExp, tayyor: totalTayyor })
         setPage(0)
       })
     }
@@ -186,8 +187,9 @@ export default function TVDisplay() {
         {/* Stats */}
         <div style={{ display: 'flex', gap: 14, flex: 1, justifyContent: 'center' }}>
           {[
-            { label: 'Jami xodim',      value: stats.total,                     color: '#f8fafc'  },
+            { label: 'Jami xodimlar',    value: stats.total,                     color: '#f8fafc'  },
             { label: 'Kelgan',           value: stats.attended,                   color: '#4ade80'  },
+            { label: 'Kelmagan',         value: stats.absent,                     color: '#f87171'  },
             { label: 'Tayyor mahsulot',  value: stats.tayyor,                     color: '#f59e0b'  },
             { label: 'Samaradorlik',     value: eff !== null ? `${eff}%` : '—',  color: effColor   },
           ].map(s => (
