@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { collection, query, where, getDocs } from 'firebase/firestore'
 import { db } from '../firebase/config'
 import { useDepartments } from '../contexts/DepartmentsContext'
@@ -49,7 +49,6 @@ const CustomTooltip = ({ active, payload, label }) => {
 }
 
 export default function Dashboard() {
-  const navigate = useNavigate()
   const { departments: allDepartments } = useDepartments()
   const { userDoc, can } = useAuth()
   const departments = can.manageMembers || !userDoc?.departmentIds?.length
@@ -60,7 +59,6 @@ export default function Dashboard() {
   const [opsByDept, setOpsByDept] = useState({})
   const [weekData, setWeekData]   = useState([])
   const [loading, setLoading]     = useState(true)
-  const [opSearch, setOpSearch]   = useState({})
 
   // Today's stats
   useEffect(() => {
@@ -341,10 +339,10 @@ export default function Dashboard() {
           const eff = ds.expected > 0 ? Math.round((ds.done / ds.expected) * 100) : null
           const ec = effColor(eff)
           return (
-            <div
+            <Link
               key={dept.id}
-              onClick={() => navigate(`/department/${dept.id}`)}
-              className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 hover:shadow-md hover:border-blue-200 transition-all group cursor-pointer"
+              to={`/department/${dept.id}`}
+              className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 hover:shadow-md hover:border-blue-200 transition-all group"
             >
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full">
@@ -392,34 +390,16 @@ export default function Dashboard() {
               )}
 
               {opsByDept[dept.id]?.length > 0 && (
-                <div
-                  className="mt-3 pt-2 border-t border-gray-100"
-                  onClick={e => e.stopPropagation()}
-                >
-                  <input
-                    type="text"
-                    placeholder="Operatsiya qidirish..."
-                    value={opSearch[dept.id] || ''}
-                    onClick={e => e.stopPropagation()}
-                    onChange={e => setOpSearch(prev => ({ ...prev, [dept.id]: e.target.value }))}
-                    className="w-full text-xs border border-gray-200 rounded-md px-2 py-1 mb-2 outline-none focus:border-blue-300 focus:ring-1 focus:ring-blue-100"
-                  />
-                  <div className="space-y-1">
-                    {opsByDept[dept.id]
-                      .filter(op => !opSearch[dept.id] || op.name.toLowerCase().includes((opSearch[dept.id] || '').toLowerCase()))
-                      .map(op => (
-                        <div key={op.id} className="flex items-center justify-between text-xs">
-                          <span className="text-gray-500 truncate">{op.name}</span>
-                          <span className="font-semibold text-gray-700 shrink-0 ml-2">{op.qty} dona</span>
-                        </div>
-                      ))}
-                    {opsByDept[dept.id].filter(op => !opSearch[dept.id] || op.name.toLowerCase().includes((opSearch[dept.id] || '').toLowerCase())).length === 0 && (
-                      <div className="text-xs text-gray-400 text-center py-1">Topilmadi</div>
-                    )}
-                  </div>
+                <div className="mt-3 pt-2 border-t border-gray-100 space-y-1">
+                  {opsByDept[dept.id].map(op => (
+                    <div key={op.id} className="flex items-center justify-between text-xs">
+                      <span className="text-gray-500 truncate">{op.name}</span>
+                      <span className="font-semibold text-gray-700 shrink-0 ml-2">{op.qty} dona</span>
+                    </div>
+                  ))}
                 </div>
               )}
-            </div>
+            </Link>
           )
         })}
       </div>
