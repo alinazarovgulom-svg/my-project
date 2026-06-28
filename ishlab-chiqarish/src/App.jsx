@@ -13,6 +13,7 @@ import Members from './pages/Members'
 import Departments from './pages/Departments'
 import Attendance from './pages/Attendance'
 import Shifts from './pages/Shifts'
+import TVDisplay from './pages/TVDisplay'
 import { useAuth } from './contexts/AuthContext'
 
 function AppRoutes() {
@@ -20,6 +21,7 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
+      <Route path="/tv/:deptId" element={<TVDisplay />} />
       <Route
         path="/*"
         element={
