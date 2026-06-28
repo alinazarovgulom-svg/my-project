@@ -197,11 +197,11 @@ export default function TVDisplay() {
               textAlign: 'center',
               background: 'rgba(255,255,255,0.07)',
               borderRadius: 12,
-              padding: '10px 24px',
-              minWidth: 110,
+              padding: '14px 28px',
+              minWidth: 130,
             }}>
-              <div style={{ fontSize: 32, fontWeight: 800, color: s.color, lineHeight: 1 }}>{s.value}</div>
-              <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 5 }}>{s.label}</div>
+              <div style={{ fontSize: 42, fontWeight: 800, color: s.color, lineHeight: 1 }}>{s.value}</div>
+              <div style={{ fontSize: 15, color: '#94a3b8', marginTop: 7 }}>{s.label}</div>
             </div>
           ))}
         </div>
