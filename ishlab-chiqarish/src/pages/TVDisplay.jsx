@@ -7,7 +7,7 @@ import { db } from '../firebase/config'
 import { format } from 'date-fns'
 
 const today = format(new Date(), 'yyyy-MM-dd')
-const PER_PAGE = 3
+const PER_PAGE = 2
 
 function shortSlot(slot) {
   return slot.replace(/(\d{2}):\d{2}[–-](\d{2}):\d{2}/, '$1-$2')
@@ -137,7 +137,7 @@ export default function TVDisplay() {
   useEffect(() => {
     const total = Math.ceil(rows.length / PER_PAGE)
     if (total <= 1) return
-    const t = setInterval(() => setPage(p => (p + 1) % total), 6000)
+    const t = setInterval(() => setPage(p => (p + 1) % total), 5000)
     return () => clearInterval(t)
   }, [rows.length])
 
@@ -326,7 +326,7 @@ export default function TVDisplay() {
             }} />
           ))}
           <span style={{ color: '#64748b', fontSize: 13, marginLeft: 16 }}>
-            {page + 1} / {totalPages} &nbsp;·&nbsp; har 6 soniyada almashinadi
+            {page + 1} / {totalPages} &nbsp;·&nbsp; har 5 soniyada almashinadi
           </span>
         </div>
       )}
