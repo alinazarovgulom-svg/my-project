@@ -178,7 +178,6 @@ export default function TVDisplay() {
           {[
             { label: 'Jami xodim',  value: stats.total,                       color: '#f8fafc' },
             { label: 'Kelgan',       value: stats.attended,                     color: '#4ade80' },
-            { label: 'Bajarildi',    value: stats.done,                         color: '#60a5fa' },
             { label: 'Samaradorlik', value: eff !== null ? `${eff}%` : '—',    color: effColor  },
           ].map(s => (
             <div key={s.label} style={{
