@@ -260,11 +260,11 @@ export function buildWorkPDFHtml(rows, filters, deptName, showDept = true, autoP
   </div>
   <div class="card" style="background:#f0fdf4">
     <div class="card-val" style="color:#15803d">${totalDone}</div>
-    <div class="card-lbl">Bajargan</div>
+    <div class="card-lbl">Bajarilgan operatsiyalar</div>
   </div>
   <div class="card" style="background:#fefce8">
     <div class="card-val" style="color:#854d0e">${totalExp.toFixed(0)}</div>
-    <div class="card-lbl">Kutilgan</div>
+    <div class="card-lbl">Kutilgan operatsiyalar</div>
   </div>
 </div>
 
@@ -360,8 +360,8 @@ export async function exportPDFBlob(rows, filters, deptName, showDept = true) {
   const stats = [
     { label: 'Tayyor mahsulot', val: totalTayyor, bg: [255, 251, 235] },
     { label: 'Xodimlar',        val: empCount,    bg: [239, 246, 255] },
-    { label: 'Bajargan',        val: totalDone,   bg: [240, 253, 244] },
-    { label: 'Kutilgan',        val: Math.round(totalExp), bg: [254, 252, 232] },
+    { label: 'Bajarilgan operatsiyalar', val: totalDone,   bg: [240, 253, 244] },
+    { label: 'Kutilgan operatsiyalar',   val: Math.round(totalExp), bg: [254, 252, 232] },
   ]
   const cardW = (pageW - 20) / stats.length
   stats.forEach((s, i) => {
