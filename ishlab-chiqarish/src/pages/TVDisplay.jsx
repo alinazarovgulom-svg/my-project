@@ -138,7 +138,7 @@ export default function TVDisplay() {
   useEffect(() => {
     const total = Math.ceil(rows.length / PER_PAGE)
     if (total <= 1) return
-    const t = setInterval(() => setPage(p => (p + 1) % total), 5000)
+    const t = setInterval(() => setPage(p => (p + 1) % total), 7000)
     return () => clearInterval(t)
   }, [rows.length])
 
@@ -278,7 +278,7 @@ export default function TVDisplay() {
                       <tr key={op.name} style={{ background: rowBg }}>
                         <td colSpan={2} style={{ padding: '2px 20px 12px 56px', verticalAlign: 'top' }}>
                           {/* Op name */}
-                          <div style={{ color: '#60a5fa', fontWeight: 700, fontSize: 26, marginBottom: 3 }}>
+                          <div style={{ color: '#60a5fa', fontWeight: 700, fontSize: 32, marginBottom: 3 }}>
                             {op.name}
                           </div>
                           {/* Norm */}
@@ -328,7 +328,7 @@ export default function TVDisplay() {
             }} />
           ))}
           <span style={{ color: '#64748b', fontSize: 13, marginLeft: 16 }}>
-            {page + 1} / {totalPages} &nbsp;·&nbsp; har 5 soniyada almashinadi
+            {page + 1} / {totalPages} &nbsp;·&nbsp; har 7 soniyada almashinadi
           </span>
         </div>
       )}
