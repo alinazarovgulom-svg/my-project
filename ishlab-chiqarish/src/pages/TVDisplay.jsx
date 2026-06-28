@@ -24,7 +24,7 @@ export default function TVDisplay() {
   const { deptId } = useParams()
   const [deptName, setDeptName] = useState('...')
   const [rows, setRows] = useState([])
-  const [stats, setStats] = useState({ total: 0, attended: 0, done: 0, expected: 0 })
+  const [stats, setStats] = useState({ total: 0, attended: 0, done: 0, expected: 0, tayyor: 0 })
   const [page, setPage] = useState(0)
   const [clock, setClock] = useState(new Date())
 
@@ -53,9 +53,12 @@ export default function TVDisplay() {
 
       const normMap = {}
       const opNameMap = {}
+      let finalOpId = null
       opSnap.forEach(d => {
-        normMap[d.id] = d.data().norm || 0
-        opNameMap[d.id] = d.data().name || d.id
+        const data = d.data()
+        normMap[d.id] = data.norm || 0
+        opNameMap[d.id] = data.name || d.id
+        if (data.isFinal && data.departmentId === deptId) finalOpId = d.id
       })
 
       const q = query(
@@ -70,6 +73,7 @@ export default function TVDisplay() {
         const seenEmp = new Set()
         let totalDone = 0
         let totalExp = 0
+        let totalTayyor = 0
 
         snap.forEach(entry => {
           const d = entry.data()
@@ -94,6 +98,7 @@ export default function TVDisplay() {
             empData[d.employeeId].totalExp += exp
             totalDone += qty
             totalExp  += exp
+            if (opId === finalOpId) totalTayyor += qty
           })
         })
 
@@ -118,7 +123,7 @@ export default function TVDisplay() {
           .sort((a, b) => b.totalQty - a.totalQty)
 
         setRows(sorted)
-        setStats({ total: allEmps.length, attended: seenEmp.size, done: totalDone, expected: totalExp })
+        setStats({ total: allEmps.length, attended: seenEmp.size, done: totalDone, expected: totalExp, tayyor: totalTayyor })
         setPage(0)
       })
     }
@@ -127,11 +132,11 @@ export default function TVDisplay() {
     return () => { cancelled = true; unsub() }
   }, [deptId])
 
-  // Auto-paginate every 10 seconds
+  // Auto-paginate every 6 seconds
   useEffect(() => {
     const total = Math.ceil(rows.length / PER_PAGE)
     if (total <= 1) return
-    const t = setInterval(() => setPage(p => (p + 1) % total), 10000)
+    const t = setInterval(() => setPage(p => (p + 1) % total), 6000)
     return () => clearInterval(t)
   }, [rows.length])
 
@@ -180,9 +185,10 @@ export default function TVDisplay() {
         {/* Stats */}
         <div style={{ display: 'flex', gap: 14, flex: 1, justifyContent: 'center' }}>
           {[
-            { label: 'Jami xodim',  value: stats.total,                       color: '#f8fafc' },
-            { label: 'Kelgan',       value: stats.attended,                     color: '#4ade80' },
-            { label: 'Samaradorlik', value: eff !== null ? `${eff}%` : '—',    color: effColor  },
+            { label: 'Jami xodim',      value: stats.total,                     color: '#f8fafc'  },
+            { label: 'Kelgan',           value: stats.attended,                   color: '#4ade80'  },
+            { label: 'Tayyor mahsulot',  value: stats.tayyor,                     color: '#f59e0b'  },
+            { label: 'Samaradorlik',     value: eff !== null ? `${eff}%` : '—',  color: effColor   },
           ].map(s => (
             <div key={s.label} style={{
               textAlign: 'center',
@@ -247,7 +253,7 @@ export default function TVDisplay() {
                       }}>
                         {rank}
                       </td>
-                      <td style={{ padding: '16px 20px 4px', fontSize: 34, fontWeight: 800, verticalAlign: 'bottom' }}>
+                      <td style={{ padding: '16px 20px 4px', fontSize: 30, fontWeight: 800, verticalAlign: 'bottom' }}>
                         {medal}{emp.name}
                       </td>
                       <td style={{
@@ -271,7 +277,7 @@ export default function TVDisplay() {
                           padding: '4px 20px 14px 56px',
                           verticalAlign: 'top',
                         }}>
-                          <span style={{ color: '#60a5fa', fontWeight: 700, marginRight: 24, fontSize: 22 }}>{op.name}</span>
+                          <span style={{ color: '#60a5fa', fontWeight: 700, marginRight: 24, fontSize: 30 }}>{op.name}</span>
                           {Object.entries(op.slots).sort().map(([slot, qty]) => (
                             <span key={slot} style={{ marginRight: 24, whiteSpace: 'nowrap', display: 'inline-block' }}>
                               <span style={{ color: '#94a3b8', fontSize: 18 }}>{shortSlot(slot)}: </span>
@@ -313,7 +319,7 @@ export default function TVDisplay() {
             }} />
           ))}
           <span style={{ color: '#64748b', fontSize: 13, marginLeft: 16 }}>
-            {page + 1} / {totalPages} &nbsp;·&nbsp; har 10 soniyada almashinadi
+            {page + 1} / {totalPages} &nbsp;·&nbsp; har 6 soniyada almashinadi
           </span>
         </div>
       )}
