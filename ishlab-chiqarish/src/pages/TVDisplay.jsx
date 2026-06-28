@@ -7,7 +7,11 @@ import { db } from '../firebase/config'
 import { format } from 'date-fns'
 
 const today = format(new Date(), 'yyyy-MM-dd')
-const PER_PAGE = 4
+const PER_PAGE = 3
+
+function shortSlot(slot) {
+  return slot.replace(/(\d{2}):\d{2}[–-](\d{2}):\d{2}/, '$1-$2')
+}
 
 function calcHours(start, end) {
   if (!start || !end) return 0
@@ -105,7 +109,7 @@ export default function TVDisplay() {
             }))
             return {
               id: e.id,
-              name: `${e.lastName || ''} ${e.firstName || ''}`.trim(),
+              name: [e.lastName, e.firstName].filter(s => s && s.trim() && s.trim() !== '.').join(' '),
               totalQty: data.totalQty,
               totalExp: data.totalExp,
               ops,
@@ -147,7 +151,7 @@ export default function TVDisplay() {
   return (
     <div style={{
       minHeight: '100vh',
-      background: '#0f172a',
+      background: '#2d3748',
       color: '#f8fafc',
       fontFamily: 'Arial, Helvetica, sans-serif',
       display: 'flex',
@@ -214,7 +218,7 @@ export default function TVDisplay() {
         ) : (
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
-              <tr style={{ background: '#1e3a8a' }}>
+              <tr style={{ background: '#1a202c' }}>
                 <th style={{ padding: '12px 20px', textAlign: 'center', width: 60, fontSize: 16, fontWeight: 700, color: '#93c5fd' }}>#</th>
                 <th style={{ padding: '12px 20px', textAlign: 'left', fontSize: 16, fontWeight: 700, color: '#93c5fd' }}>Xodim ismi</th>
                 <th style={{ padding: '12px 36px 12px 20px', textAlign: 'right', fontSize: 16, fontWeight: 700, color: '#93c5fd' }}>Jami</th>
@@ -224,7 +228,7 @@ export default function TVDisplay() {
               {pageRows.map((emp, i) => {
                 const rank = page * PER_PAGE + i + 1
                 const medal = rank === 1 ? '🥇 ' : rank === 2 ? '🥈 ' : rank === 3 ? '🥉 ' : ''
-                const rowBg = i % 2 === 1 ? 'rgba(255,255,255,0.04)' : 'transparent'
+                const rowBg = i % 2 === 1 ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.04)'
                 const qtyColor = emp.totalExp > 0
                   ? (emp.totalQty >= emp.totalExp ? '#4ade80' : emp.totalQty >= emp.totalExp * 0.8 ? '#fbbf24' : '#f87171')
                   : '#f8fafc'
@@ -243,7 +247,7 @@ export default function TVDisplay() {
                       }}>
                         {rank}
                       </td>
-                      <td style={{ padding: '16px 20px 4px', fontSize: 26, fontWeight: 700, verticalAlign: 'bottom' }}>
+                      <td style={{ padding: '16px 20px 4px', fontSize: 34, fontWeight: 800, verticalAlign: 'bottom' }}>
                         {medal}{emp.name}
                       </td>
                       <td style={{
@@ -267,15 +271,15 @@ export default function TVDisplay() {
                           padding: '4px 20px 14px 56px',
                           verticalAlign: 'top',
                         }}>
-                          <span style={{ color: '#60a5fa', fontWeight: 700, marginRight: 20, fontSize: 18 }}>{op.name}</span>
+                          <span style={{ color: '#60a5fa', fontWeight: 700, marginRight: 24, fontSize: 22 }}>{op.name}</span>
                           {Object.entries(op.slots).sort().map(([slot, qty]) => (
-                            <span key={slot} style={{ marginRight: 20, whiteSpace: 'nowrap', display: 'inline-block' }}>
-                              <span style={{ color: '#64748b', fontSize: 16 }}>{slot}: </span>
-                              <strong style={{ color: '#f8fafc', fontSize: 22 }}>{qty}</strong>
+                            <span key={slot} style={{ marginRight: 24, whiteSpace: 'nowrap', display: 'inline-block' }}>
+                              <span style={{ color: '#94a3b8', fontSize: 18 }}>{shortSlot(slot)}: </span>
+                              <strong style={{ color: '#f8fafc', fontSize: 26 }}>{qty}</strong>
                             </span>
                           ))}
-                          <span style={{ color: '#475569', fontSize: 16, marginLeft: 4 }}>
-                            = <strong style={{ color: '#fbbf24', fontSize: 22 }}>{op.total}</strong>
+                          <span style={{ color: '#94a3b8', fontSize: 18, marginLeft: 4 }}>
+                            = <strong style={{ color: '#fbbf24', fontSize: 26 }}>{op.total}</strong>
                           </span>
                         </td>
                       </tr>
