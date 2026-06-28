@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Fragment } from 'react'
 import { useParams } from 'react-router-dom'
 import {
   collection, query, where, onSnapshot, getDocs, doc, getDoc,
@@ -7,7 +7,7 @@ import { db } from '../firebase/config'
 import { format } from 'date-fns'
 
 const today = format(new Date(), 'yyyy-MM-dd')
-const PER_PAGE = 8
+const PER_PAGE = 4
 
 function calcHours(start, end) {
   if (!start || !end) return 0
@@ -48,7 +48,11 @@ export default function TVDisplay() {
         .filter(e => e.isActive !== false)
 
       const normMap = {}
-      opSnap.forEach(d => { normMap[d.id] = d.data().norm || 0 })
+      const opNameMap = {}
+      opSnap.forEach(d => {
+        normMap[d.id] = d.data().norm || 0
+        opNameMap[d.id] = d.data().name || d.id
+      })
 
       const q = query(
         collection(db, 'factory_work_entries'),
@@ -57,8 +61,8 @@ export default function TVDisplay() {
       )
 
       unsub = onSnapshot(q, snap => {
-        const empQty = {}
-        const empExp = {}
+        // empData: { empId: { ops: { opId: { slots: { slotKey: qty }, total, exp } } } }
+        const empData = {}
         const seenEmp = new Set()
         let totalDone = 0
         let totalExp = 0
@@ -66,25 +70,48 @@ export default function TVDisplay() {
         snap.forEach(entry => {
           const d = entry.data()
           seenEmp.add(d.employeeId)
+          const slot = `${d.startTime}–${d.endTime}`
           const hours = calcHours(d.startTime, d.endTime)
+
+          if (!empData[d.employeeId]) empData[d.employeeId] = { ops: {}, totalQty: 0, totalExp: 0 }
+
           Object.entries(d.operations || {}).forEach(([opId, val]) => {
             const qty = Number(val.quantity || 0)
-            empQty[d.employeeId] = (empQty[d.employeeId] || 0) + qty
-            empExp[d.employeeId] = (empExp[d.employeeId] || 0) + (normMap[opId] || 0) * hours
+            const exp = (normMap[opId] || 0) * hours
+
+            if (!empData[d.employeeId].ops[opId]) {
+              empData[d.employeeId].ops[opId] = { slots: {}, total: 0, exp: 0 }
+            }
+            empData[d.employeeId].ops[opId].slots[slot] =
+              (empData[d.employeeId].ops[opId].slots[slot] || 0) + qty
+            empData[d.employeeId].ops[opId].total += qty
+            empData[d.employeeId].ops[opId].exp   += exp
+            empData[d.employeeId].totalQty += qty
+            empData[d.employeeId].totalExp += exp
             totalDone += qty
-            totalExp += (normMap[opId] || 0) * hours
+            totalExp  += exp
           })
         })
 
         const sorted = allEmps
           .filter(e => seenEmp.has(e.id))
-          .map(e => ({
-            id: e.id,
-            name: `${e.lastName || ''} ${e.firstName || ''}`.trim(),
-            qty: empQty[e.id] || 0,
-            exp: empExp[e.id] || 0,
-          }))
-          .sort((a, b) => b.qty - a.qty)
+          .map(e => {
+            const data = empData[e.id] || { ops: {}, totalQty: 0, totalExp: 0 }
+            const ops = Object.entries(data.ops).map(([opId, op]) => ({
+              name: opNameMap[opId] || opId,
+              slots: op.slots,
+              total: op.total,
+              exp: op.exp,
+            }))
+            return {
+              id: e.id,
+              name: `${e.lastName || ''} ${e.firstName || ''}`.trim(),
+              totalQty: data.totalQty,
+              totalExp: data.totalExp,
+              ops,
+            }
+          })
+          .sort((a, b) => b.totalQty - a.totalQty)
 
         setRows(sorted)
         setStats({ total: allEmps.length, attended: seenEmp.size, done: totalDone, expected: totalExp })
@@ -132,48 +159,47 @@ export default function TVDisplay() {
       <div style={{
         background: '#0f1c3a',
         borderBottom: '3px solid #D97706',
-        padding: '18px 40px',
+        padding: '16px 40px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
         gap: 24,
         flexShrink: 0,
       }}>
-
         {/* Brand */}
         <div style={{ minWidth: 180 }}>
-          <div style={{ fontSize: 32, fontWeight: 900, letterSpacing: 1 }}>KAFTIMDA</div>
-          <div style={{ width: 68, height: 3, background: '#D97706', borderRadius: 2, margin: '5px 0 8px' }} />
-          <div style={{ fontSize: 20, color: '#93c5fd', fontWeight: 600 }}>{deptName}</div>
+          <div style={{ fontSize: 30, fontWeight: 900, letterSpacing: 1 }}>KAFTIMDA</div>
+          <div style={{ width: 68, height: 3, background: '#D97706', borderRadius: 2, margin: '5px 0 7px' }} />
+          <div style={{ fontSize: 18, color: '#93c5fd', fontWeight: 600 }}>{deptName}</div>
         </div>
 
         {/* Stats */}
-        <div style={{ display: 'flex', gap: 16, flex: 1, justifyContent: 'center' }}>
+        <div style={{ display: 'flex', gap: 14, flex: 1, justifyContent: 'center' }}>
           {[
-            { label: 'Jami xodim',   value: stats.total,                         color: '#f8fafc' },
-            { label: 'Kelgan',        value: stats.attended,                       color: '#4ade80' },
-            { label: 'Bajarildi',     value: stats.done,                           color: '#60a5fa' },
-            { label: 'Samaradorlik',  value: eff !== null ? `${eff}%` : '—',      color: effColor  },
+            { label: 'Jami xodim',  value: stats.total,                       color: '#f8fafc' },
+            { label: 'Kelgan',       value: stats.attended,                     color: '#4ade80' },
+            { label: 'Bajarildi',    value: stats.done,                         color: '#60a5fa' },
+            { label: 'Samaradorlik', value: eff !== null ? `${eff}%` : '—',    color: effColor  },
           ].map(s => (
             <div key={s.label} style={{
               textAlign: 'center',
               background: 'rgba(255,255,255,0.07)',
-              borderRadius: 14,
-              padding: '12px 28px',
-              minWidth: 120,
+              borderRadius: 12,
+              padding: '10px 24px',
+              minWidth: 110,
             }}>
-              <div style={{ fontSize: 36, fontWeight: 800, color: s.color, lineHeight: 1 }}>{s.value}</div>
-              <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 6 }}>{s.label}</div>
+              <div style={{ fontSize: 32, fontWeight: 800, color: s.color, lineHeight: 1 }}>{s.value}</div>
+              <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 5 }}>{s.label}</div>
             </div>
           ))}
         </div>
 
         {/* Clock */}
         <div style={{ textAlign: 'right', minWidth: 180 }}>
-          <div style={{ fontSize: 42, fontWeight: 800, letterSpacing: 2, fontVariantNumeric: 'tabular-nums' }}>
+          <div style={{ fontSize: 38, fontWeight: 800, letterSpacing: 2, fontVariantNumeric: 'tabular-nums' }}>
             {timeStr}
           </div>
-          <div style={{ fontSize: 15, color: '#94a3b8', marginTop: 4 }}>{dateStr}</div>
+          <div style={{ fontSize: 14, color: '#94a3b8', marginTop: 4 }}>{dateStr}</div>
         </div>
       </div>
 
@@ -182,7 +208,7 @@ export default function TVDisplay() {
         {rows.length === 0 ? (
           <div style={{
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            height: '100%', color: '#475569', fontSize: 24,
+            height: '100%', color: '#475569', fontSize: 22,
           }}>
             Bugun ma'lumot kiritilmagan
           </div>
@@ -190,37 +216,74 @@ export default function TVDisplay() {
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ background: '#1e3a8a' }}>
-                <th style={{ padding: '14px 24px', textAlign: 'center', width: 70, fontSize: 17, fontWeight: 700, color: '#93c5fd' }}>#</th>
-                <th style={{ padding: '14px 24px', textAlign: 'left', fontSize: 17, fontWeight: 700, color: '#93c5fd' }}>Xodim ismi</th>
-                <th style={{ padding: '14px 40px 14px 24px', textAlign: 'right', fontSize: 17, fontWeight: 700, color: '#93c5fd' }}>Bugun bajargan</th>
+                <th style={{ padding: '12px 20px', textAlign: 'center', width: 60, fontSize: 16, fontWeight: 700, color: '#93c5fd' }}>#</th>
+                <th style={{ padding: '12px 20px', textAlign: 'left', fontSize: 16, fontWeight: 700, color: '#93c5fd' }}>Xodim ismi</th>
+                <th style={{ padding: '12px 36px 12px 20px', textAlign: 'right', fontSize: 16, fontWeight: 700, color: '#93c5fd' }}>Jami</th>
               </tr>
             </thead>
             <tbody>
               {pageRows.map((emp, i) => {
                 const rank = page * PER_PAGE + i + 1
                 const medal = rank === 1 ? '🥇 ' : rank === 2 ? '🥈 ' : rank === 3 ? '🥉 ' : ''
-                const qtyColor = emp.exp > 0
-                  ? (emp.qty >= emp.exp ? '#4ade80' : emp.qty >= emp.exp * 0.8 ? '#fbbf24' : '#f87171')
+                const rowBg = i % 2 === 1 ? 'rgba(255,255,255,0.04)' : 'transparent'
+                const qtyColor = emp.totalExp > 0
+                  ? (emp.totalQty >= emp.totalExp ? '#4ade80' : emp.totalQty >= emp.totalExp * 0.8 ? '#fbbf24' : '#f87171')
                   : '#f8fafc'
+
                 return (
-                  <tr
-                    key={emp.id}
-                    style={{
-                      background: i % 2 === 1 ? 'rgba(255,255,255,0.04)' : 'transparent',
-                      borderBottom: '1px solid rgba(255,255,255,0.05)',
-                    }}
-                  >
-                    <td style={{ padding: '16px 24px', textAlign: 'center', color: '#475569', fontSize: 20, fontWeight: 600 }}>
-                      {rank}
-                    </td>
-                    <td style={{ padding: '16px 24px', fontSize: 24, fontWeight: 600 }}>
-                      {medal}{emp.name}
-                    </td>
-                    <td style={{ padding: '16px 40px 16px 24px', textAlign: 'right', fontSize: 30, fontWeight: 800, color: qtyColor }}>
-                      {emp.qty}{' '}
-                      <span style={{ fontSize: 15, color: '#64748b', fontWeight: 400 }}>dona</span>
-                    </td>
-                  </tr>
+                  <Fragment key={emp.id}>
+                    {/* Main row — name + total */}
+                    <tr style={{ background: rowBg, borderTop: '2px solid rgba(255,255,255,0.08)' }}>
+                      <td rowSpan={1 + emp.ops.length} style={{
+                        padding: '14px 20px',
+                        textAlign: 'center',
+                        color: '#475569',
+                        fontSize: 20,
+                        fontWeight: 700,
+                        verticalAlign: 'middle',
+                      }}>
+                        {rank}
+                      </td>
+                      <td style={{ padding: '14px 20px 6px', fontSize: 22, fontWeight: 700, verticalAlign: 'bottom' }}>
+                        {medal}{emp.name}
+                      </td>
+                      <td style={{
+                        padding: '14px 36px 6px 20px',
+                        textAlign: 'right',
+                        fontSize: 28,
+                        fontWeight: 900,
+                        color: qtyColor,
+                        verticalAlign: 'bottom',
+                        whiteSpace: 'nowrap',
+                      }}>
+                        {emp.totalQty}{' '}
+                        <span style={{ fontSize: 13, color: '#64748b', fontWeight: 400 }}>dona</span>
+                      </td>
+                    </tr>
+
+                    {/* Operation detail rows */}
+                    {emp.ops.map(op => (
+                      <tr key={op.name} style={{ background: rowBg }}>
+                        <td colSpan={2} style={{
+                          padding: '2px 20px 10px 48px',
+                          fontSize: 14,
+                          color: '#94a3b8',
+                          verticalAlign: 'top',
+                        }}>
+                          <span style={{ color: '#cbd5e1', fontWeight: 600, marginRight: 14 }}>{op.name}</span>
+                          {Object.entries(op.slots).sort().map(([slot, qty]) => (
+                            <span key={slot} style={{ marginRight: 14, whiteSpace: 'nowrap' }}>
+                              <span style={{ color: '#475569' }}>{slot}:</span>{' '}
+                              <strong style={{ color: '#f8fafc', fontSize: 16 }}>{qty}</strong>
+                            </span>
+                          ))}
+                          <span style={{ color: '#475569', marginLeft: 4 }}>
+                            = <strong style={{ color: '#94a3b8' }}>{op.total}</strong>
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </Fragment>
                 )
               })}
             </tbody>
@@ -231,7 +294,7 @@ export default function TVDisplay() {
       {/* ── Pagination ── */}
       {totalPages > 1 && (
         <div style={{
-          padding: '14px 40px',
+          padding: '12px 40px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -248,7 +311,7 @@ export default function TVDisplay() {
               transition: 'all 0.4s',
             }} />
           ))}
-          <span style={{ color: '#64748b', fontSize: 14, marginLeft: 16 }}>
+          <span style={{ color: '#64748b', fontSize: 13, marginLeft: 16 }}>
             {page + 1} / {totalPages} &nbsp;·&nbsp; har 10 soniyada almashinadi
           </span>
         </div>
