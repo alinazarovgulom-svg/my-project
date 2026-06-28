@@ -59,6 +59,7 @@ export default function Dashboard() {
   const [opsByDept, setOpsByDept] = useState({})
   const [weekData, setWeekData]   = useState([])
   const [loading, setLoading]     = useState(true)
+  const [opSearch, setOpSearch]   = useState({})
 
   // Today's stats
   useEffect(() => {
@@ -390,13 +391,31 @@ export default function Dashboard() {
               )}
 
               {opsByDept[dept.id]?.length > 0 && (
-                <div className="mt-3 pt-2 border-t border-gray-100 space-y-1">
-                  {opsByDept[dept.id].map(op => (
-                    <div key={op.id} className="flex items-center justify-between text-xs">
-                      <span className="text-gray-500 truncate">{op.name}</span>
-                      <span className="font-semibold text-gray-700 shrink-0 ml-2">{op.qty} dona</span>
-                    </div>
-                  ))}
+                <div
+                  className="mt-3 pt-2 border-t border-gray-100"
+                  onClick={e => e.stopPropagation()}
+                >
+                  <input
+                    type="text"
+                    placeholder="Operatsiya qidirish..."
+                    value={opSearch[dept.id] || ''}
+                    onClick={e => e.stopPropagation()}
+                    onChange={e => setOpSearch(prev => ({ ...prev, [dept.id]: e.target.value }))}
+                    className="w-full text-xs border border-gray-200 rounded-md px-2 py-1 mb-2 outline-none focus:border-blue-300 focus:ring-1 focus:ring-blue-100"
+                  />
+                  <div className="space-y-1">
+                    {opsByDept[dept.id]
+                      .filter(op => !opSearch[dept.id] || op.name.toLowerCase().includes((opSearch[dept.id] || '').toLowerCase()))
+                      .map(op => (
+                        <div key={op.id} className="flex items-center justify-between text-xs">
+                          <span className="text-gray-500 truncate">{op.name}</span>
+                          <span className="font-semibold text-gray-700 shrink-0 ml-2">{op.qty} dona</span>
+                        </div>
+                      ))}
+                    {opsByDept[dept.id].filter(op => !opSearch[dept.id] || op.name.toLowerCase().includes((opSearch[dept.id] || '').toLowerCase())).length === 0 && (
+                      <div className="text-xs text-gray-400 text-center py-1">Topilmadi</div>
+                    )}
+                  </div>
                 </div>
               )}
             </Link>
