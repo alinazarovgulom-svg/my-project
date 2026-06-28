@@ -108,6 +108,7 @@ export default function TVDisplay() {
             const data = empData[e.id] || { ops: {}, totalQty: 0, totalExp: 0 }
             const ops = Object.entries(data.ops).map(([opId, op]) => ({
               name: opNameMap[opId] || opId,
+              norm: normMap[opId] || 0,
               slots: op.slots,
               total: op.total,
               exp: op.exp,
@@ -277,7 +278,8 @@ export default function TVDisplay() {
                           padding: '4px 20px 14px 56px',
                           verticalAlign: 'top',
                         }}>
-                          <span style={{ color: '#60a5fa', fontWeight: 700, marginRight: 24, fontSize: 30 }}>{op.name}</span>
+                          <span style={{ color: '#60a5fa', fontWeight: 700, marginRight: 12, fontSize: 30 }}>{op.name}</span>
+                          <span style={{ color: '#64748b', fontSize: 18, marginRight: 24 }}>({op.norm} dona/soat)</span>
                           {Object.entries(op.slots).sort().map(([slot, qty]) => (
                             <span key={slot} style={{ marginRight: 24, whiteSpace: 'nowrap', display: 'inline-block' }}>
                               <span style={{ color: '#94a3b8', fontSize: 18 }}>{shortSlot(slot)}: </span>
