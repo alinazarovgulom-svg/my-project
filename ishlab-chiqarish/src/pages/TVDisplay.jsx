@@ -114,8 +114,8 @@ export default function TVDisplay() {
   const pageRows = rows.slice(page * PER_PAGE, (page + 1) * PER_PAGE)
   const eff = stats.expected > 0 ? Math.round((stats.done / stats.expected) * 100) : null
   const effColor = eff === null ? '#94a3b8' : eff >= 100 ? '#4ade80' : eff >= 80 ? '#fbbf24' : '#f87171'
-  const timeStr = clock.toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-  const dateStr = format(clock, 'dd.MM.yyyy')
+  const timeStr = clock.toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: 'Asia/Tashkent' })
+  const dateStr = clock.toLocaleDateString('uz-UZ', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Asia/Tashkent' })
 
   return (
     <div style={{
