@@ -274,21 +274,26 @@ export default function TVDisplay() {
                     {/* Operation detail rows */}
                     {emp.ops.map(op => (
                       <tr key={op.name} style={{ background: rowBg }}>
-                        <td colSpan={2} style={{
-                          padding: '4px 20px 14px 56px',
-                          verticalAlign: 'top',
-                        }}>
-                          <span style={{ color: '#60a5fa', fontWeight: 700, marginRight: 12, fontSize: 30 }}>{op.name}</span>
-                          <span style={{ color: '#64748b', fontSize: 18, marginRight: 24 }}>({op.norm} dona/soat)</span>
-                          {Object.entries(op.slots).sort().map(([slot, qty]) => (
-                            <span key={slot} style={{ marginRight: 24, whiteSpace: 'nowrap', display: 'inline-block' }}>
-                              <span style={{ color: '#94a3b8', fontSize: 18 }}>{shortSlot(slot)}: </span>
-                              <strong style={{ color: '#f8fafc', fontSize: 26 }}>{qty}</strong>
-                            </span>
-                          ))}
-                          <span style={{ color: '#94a3b8', fontSize: 18, marginLeft: 4 }}>
-                            = <strong style={{ color: '#fbbf24', fontSize: 26 }}>{op.total}</strong>
-                          </span>
+                        <td colSpan={2} style={{ padding: '2px 20px 12px 56px', verticalAlign: 'top' }}>
+                          {/* Op name */}
+                          <div style={{ color: '#60a5fa', fontWeight: 700, fontSize: 26, marginBottom: 3 }}>
+                            {op.name}
+                          </div>
+                          {/* Norm */}
+                          <div style={{ color: '#fbbf24', fontSize: 17, marginBottom: 5, fontWeight: 600 }}>
+                            Norma: {op.norm} dona/soat
+                          </div>
+                          {/* Slots + total */}
+                          <div>
+                            {Object.entries(op.slots).sort().map(([slot, qty]) => (
+                              <span key={slot} style={{ marginRight: 28, whiteSpace: 'nowrap', display: 'inline-block' }}>
+                                <span style={{ color: '#cbd5e1', fontSize: 17 }}>{shortSlot(slot)}: </span>
+                                <strong style={{ color: '#f8fafc', fontSize: 28 }}>{qty}</strong>
+                              </span>
+                            ))}
+                            <span style={{ color: '#cbd5e1', fontSize: 17 }}>= </span>
+                            <strong style={{ color: '#fbbf24', fontSize: 28 }}>{op.total}</strong>
+                          </div>
                         </td>
                       </tr>
                     ))}
