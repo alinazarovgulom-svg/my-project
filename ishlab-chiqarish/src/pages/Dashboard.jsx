@@ -56,6 +56,7 @@ export default function Dashboard() {
     : allDepartments.filter(d => userDoc.departmentIds.includes(d.id))
   const [stats, setStats]       = useState({ employees: 0, operations: 0 })
   const [deptStats, setDeptStats] = useState({})
+  const [opsByDept, setOpsByDept] = useState({})
   const [weekData, setWeekData]   = useState([])
   const [loading, setLoading]     = useState(true)
 
@@ -96,6 +97,7 @@ export default function Dashboard() {
       const visibleOpCount = opSnap.docs.filter(d => visibleDeptIds.has(d.data().departmentId)).length
 
       const seenEmp = new Set()
+      const opQty = {}
       entriesSnap.forEach(doc => {
         const d = doc.data()
         const dd = deptData[d.departmentId]
@@ -108,11 +110,27 @@ export default function Dashboard() {
           dd.done     += qty
           dd.expected += (normMap[opId] || 0) * hours
           if (finalOpMap[d.departmentId] === opId) dd.tayyor += qty
+          opQty[opId] = (opQty[opId] || 0) + qty
         })
       })
 
+      const opsByDeptData = {}
+      departments.forEach(d => { opsByDeptData[d.id] = [] })
+      opSnap.forEach(d => {
+        const data = d.data()
+        if (!opsByDeptData[data.departmentId]) return
+        opsByDeptData[data.departmentId].push({
+          id: d.id,
+          name: data.name,
+          order: data.order ?? Infinity,
+          qty: opQty[d.id] || 0,
+        })
+      })
+      Object.values(opsByDeptData).forEach(arr => arr.sort((a, b) => a.order - b.order))
+
       setStats({ employees: visibleEmpCount, operations: visibleOpCount })
       setDeptStats(deptData)
+      setOpsByDept(opsByDeptData)
       setLoading(false)
     }
     load()
@@ -368,6 +386,17 @@ export default function Dashboard() {
                   <div className="text-xs text-amber-700">
                     <strong>{ds.tayyor}</strong> tayyor mahsulot
                   </div>
+                </div>
+              )}
+
+              {opsByDept[dept.id]?.length > 0 && (
+                <div className="mt-3 pt-2 border-t border-gray-100 space-y-1">
+                  {opsByDept[dept.id].map(op => (
+                    <div key={op.id} className="flex items-center justify-between text-xs">
+                      <span className="text-gray-500 truncate">{op.name}</span>
+                      <span className="font-semibold text-gray-700 shrink-0 ml-2">{op.qty} dona</span>
+                    </div>
+                  ))}
                 </div>
               )}
             </Link>
