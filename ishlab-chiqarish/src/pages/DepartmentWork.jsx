@@ -84,7 +84,7 @@ export default function DepartmentWork() {
   // Load all operations
   useEffect(() => {
     getDocs(collection(db, 'factory_operations')).then(snap => {
-      setAllOps(snap.docs.map(d => ({ id: d.id, ...d.data() })))
+      setAllOps(snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (a.order ?? Infinity) - (b.order ?? Infinity)))
     })
   }, [])
 
