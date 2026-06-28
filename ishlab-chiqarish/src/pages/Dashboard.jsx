@@ -88,8 +88,8 @@ export default function Dashboard() {
       })
 
       empSnap.forEach(doc => {
-        const deptId = doc.data().departmentId
-        if (deptData[deptId]) deptData[deptId].employees++
+        const emp = doc.data()
+        if (deptData[emp.departmentId] && emp.isActive !== false) deptData[emp.departmentId].employees++
       })
 
       const visibleEmpCount = empSnap.docs.filter(d => visibleDeptIds.has(d.data().departmentId) && d.data().isActive !== false).length
