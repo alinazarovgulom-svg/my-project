@@ -6,7 +6,7 @@ import {
 import { db } from '../firebase/config'
 import { useDepartments } from '../contexts/DepartmentsContext'
 import { useAuth } from '../contexts/AuthContext'
-import { Plus, Pencil, Trash2, X, Check, Star, Search } from 'lucide-react'
+import { Plus, Pencil, Trash2, X, Check, Star, Search, ChevronUp, ChevronDown } from 'lucide-react'
 
 export default function Operations() {
   const { can, userDoc } = useAuth()
@@ -21,6 +21,7 @@ export default function Operations() {
   const [form, setForm] = useState({ name: '', norm: '', departmentId: '' })
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(null)
+  const [reordering, setReordering] = useState(null)
 
   useEffect(() => {
     const q = query(collection(db, 'factory_operations'), orderBy('createdAt', 'desc'))
@@ -37,10 +38,14 @@ export default function Operations() {
     if (!form.name.trim() || !form.norm || !form.departmentId) return
     setSaving(true)
     if (modal === 'add') {
+      const maxOrder = operations
+        .filter(o => o.departmentId === form.departmentId)
+        .reduce((max, o) => Math.max(max, o.order ?? 0), 0)
       await addDoc(collection(db, 'factory_operations'), {
         name: form.name.trim(),
         norm: Number(form.norm),
         departmentId: form.departmentId,
+        order: maxOrder + 1,
         createdAt: serverTimestamp(),
       })
     } else {
@@ -73,8 +78,26 @@ export default function Operations() {
     setDeleting(null)
   }
 
+  const reorder = async (op, dir) => {
+    const deptList = operations
+      .filter(o => o.departmentId === op.departmentId)
+      .sort((a, b) => (a.order ?? Infinity) - (b.order ?? Infinity))
+    const idx = deptList.findIndex(o => o.id === op.id)
+    const swapIdx = dir === 'up' ? idx - 1 : idx + 1
+    if (swapIdx < 0 || swapIdx >= deptList.length) return
+    const other = deptList[swapIdx]
+    setReordering(op.id)
+    await Promise.all([
+      updateDoc(doc(db, 'factory_operations', op.id),    { order: other.order ?? swapIdx }),
+      updateDoc(doc(db, 'factory_operations', other.id), { order: op.order ?? idx }),
+    ])
+    setReordering(null)
+  }
+
   const visibleOpIds = new Set(visibleDepts.map(d => d.id))
-  const visibleOps = operations.filter(o => visibleOpIds.has(o.departmentId))
+  const visibleOps = operations
+    .filter(o => visibleOpIds.has(o.departmentId))
+    .sort((a, b) => (a.order ?? Infinity) - (b.order ?? Infinity))
   const filtered = visibleOps
     .filter(o => filterDept === 'all' || o.departmentId === filterDept)
     .filter(o => !search.trim() || o.name.toLowerCase().includes(search.trim().toLowerCase()))
@@ -139,6 +162,7 @@ export default function Operations() {
                   <th className="text-left px-4 py-3 font-medium text-gray-600">Bo'lim</th>
                   <th className="text-left px-4 py-3 font-medium text-gray-600">Norma (1 soat)</th>
                   <th className="text-left px-4 py-3 font-medium text-gray-600">Yakuniy</th>
+                  {can.manageOperations && <th className="px-4 py-3 w-24 text-center font-medium text-gray-600">Tartib</th>}
                   {can.manageOperations && <th className="px-4 py-3 w-20" />}
                 </tr>
               </thead>
@@ -169,6 +193,26 @@ export default function Operations() {
                         {op.isFinal && <span className="font-medium">Yakuniy</span>}
                       </button>
                     </td>
+                    {can.manageOperations && (
+                      <td className="px-4 py-3">
+                        <div className="flex gap-1 justify-center">
+                          <button
+                            onClick={() => reorder(op, 'up')}
+                            disabled={reordering === op.id || filtered.indexOf(op) === 0}
+                            className="text-gray-400 hover:text-blue-600 transition-colors disabled:opacity-20"
+                          >
+                            <ChevronUp className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => reorder(op, 'down')}
+                            disabled={reordering === op.id || filtered.indexOf(op) === filtered.length - 1}
+                            className="text-gray-400 hover:text-blue-600 transition-colors disabled:opacity-20"
+                          >
+                            <ChevronDown className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    )}
                     {can.manageOperations && (
                       <td className="px-4 py-3">
                         <div className="flex gap-2 justify-end">
