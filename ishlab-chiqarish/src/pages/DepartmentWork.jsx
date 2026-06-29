@@ -9,7 +9,7 @@ import { useDepartments } from '../contexts/DepartmentsContext'
 import { useAuth } from '../contexts/AuthContext'
 import { Calendar, Clock, Save, CheckCircle, RefreshCw, X, Search, MoreVertical, Send, AlarmClock } from 'lucide-react'
 import { buildWorkPDFHtml } from '../utils/pdf'
-import { sendHTMLToTelegram } from '../utils/telegram'
+import { sendHTMLToTelegram, sendTelegramMessage } from '../utils/telegram'
 
 function calcHours(start, end) {
   const [sh, sm] = start.split(':').map(Number)
@@ -183,6 +183,30 @@ export default function DepartmentWork() {
     setSaving(s => ({ ...s, [empId]: false }))
     setSaved(s => ({ ...s, [empId]: true }))
     setTimeout(() => setSaved(s => ({ ...s, [empId]: false })), 2000)
+
+    if (emp?.telegramId) {
+      const opLines = Object.entries(operations).map(([opId, val]) => {
+        const op = allOps.find(o => o.id === opId)
+        if (!op) return ''
+        const qty = Number(val.quantity || 0)
+        const exp = Number(val.expected || 0)
+        const pct = exp > 0 ? Math.round((qty / exp) * 100) : 0
+        const icon = pct >= 100 ? '✅' : pct >= 95 ? '🟡' : '🔴'
+        return `${icon} ${op.name}: ${qty} dona (${pct}%)`
+      }).filter(Boolean).join('\n')
+
+      const totalQty = Object.values(operations).reduce((s, v) => s + Number(v.quantity || 0), 0)
+      const totalExp = Object.values(operations).reduce((s, v) => s + Number(v.expected || 0), 0)
+      const totalPct = totalExp > 0 ? Math.round((totalQty / totalExp) * 100) : 0
+
+      let msg = `👤 <b>${emp.lastName} ${emp.firstName}</b>\n`
+      msg += `📅 ${date}, ${empStart}–${empEnd}\n\n`
+      msg += opLines ? opLines + '\n\n' : ''
+      msg += `📊 Umumiy: <b>${totalPct}%</b>`
+      if (totalPay > 0) msg += `\n💰 Bugungi maosh: <b>${totalPay.toLocaleString()} so'm</b>`
+
+      sendTelegramMessage(emp.telegramId, msg)
+    }
   }
 
   const saveAll = async () => {

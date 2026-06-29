@@ -19,7 +19,7 @@ export default function Employees() {
   const [filterDept, setFilterDept] = useState('all')
   const [filterStatus, setFilterStatus] = useState('active')
   const [modal, setModal] = useState(null)
-  const [form, setForm] = useState({ firstName: '', lastName: '', departmentId: '', operationIds: [], salaryType: 'hourly', hourlyRate: '', salaryHistory: [] })
+  const [form, setForm] = useState({ firstName: '', lastName: '', departmentId: '', operationIds: [], salaryType: 'hourly', hourlyRate: '', salaryHistory: [], telegramId: '' })
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(null)
   const [search, setSearch] = useState('')
@@ -38,7 +38,7 @@ export default function Employees() {
   const deptOps = allOps.filter(o => o.departmentId === form.departmentId)
 
   const openAdd = () => {
-    setForm({ firstName: '', lastName: '', departmentId: visibleDepts[0]?.id || '', operationIds: [], salaryType: 'hourly', hourlyRate: '', salaryHistory: [] })
+    setForm({ firstName: '', lastName: '', departmentId: visibleDepts[0]?.id || '', operationIds: [], salaryType: 'hourly', hourlyRate: '', salaryHistory: [], telegramId: '' })
     setOpSearch('')
     setModal('add')
   }
@@ -51,6 +51,7 @@ export default function Employees() {
       salaryType: emp.salaryType || 'hourly',
       hourlyRate: emp.hourlyRate ?? '',
       salaryHistory: emp.salaryHistory || [],
+      telegramId: emp.telegramId || '',
     })
     setOpSearch('')
     setModal(emp)
@@ -87,6 +88,7 @@ export default function Employees() {
       salaryType: form.salaryType,
       hourlyRate: newRate,
       salaryHistory,
+      telegramId: form.telegramId.trim() || null,
     }
     if (modal === 'add') {
       await addDoc(collection(db, 'factory_employees'), { ...data, isActive: true, createdAt: serverTimestamp() })
@@ -363,6 +365,21 @@ export default function Employees() {
                     </div>
                   </>
                 )}
+              </div>
+
+              {/* Telegram ID */}
+              <div className="border-t border-gray-100 pt-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Telegram ID — <span className="text-gray-400 font-normal">xabar yuborish uchun</span>
+                </label>
+                <input
+                  type="text"
+                  value={form.telegramId}
+                  onChange={e => setForm(f => ({ ...f, telegramId: e.target.value }))}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="590319878"
+                />
+                <p className="text-xs text-gray-400 mt-1">Xodim @KAFTIMDA_ERP botga /start yozib ID sini oladi</p>
               </div>
 
               {/* Maosh bo'limi */}

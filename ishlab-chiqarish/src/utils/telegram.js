@@ -1,3 +1,14 @@
+export async function sendTelegramMessage(chatId, text) {
+  if (!chatId) return
+  const res = await fetch('/api/send-message', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ chatId, text }),
+  })
+  if (!res.ok) return // xodimga xabar ketmasa tizim to'xtamaydi
+  return res.json()
+}
+
 export async function sendHTMLToTelegram(html, filename, caption = '') {
   const res = await fetch('/api/html-to-telegram-pdf', {
     method: 'POST',
