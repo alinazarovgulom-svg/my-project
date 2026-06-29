@@ -23,6 +23,7 @@ export default function Employees() {
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(null)
   const [search, setSearch] = useState('')
+  const [opSearch, setOpSearch] = useState('')
 
   useEffect(() => {
     const q = query(collection(db, 'factory_employees'), orderBy('lastName'))
@@ -38,6 +39,7 @@ export default function Employees() {
 
   const openAdd = () => {
     setForm({ firstName: '', lastName: '', departmentId: visibleDepts[0]?.id || '', operationIds: [] })
+    setOpSearch('')
     setModal('add')
   }
   const openEdit = (emp) => {
@@ -47,6 +49,7 @@ export default function Employees() {
       departmentId: emp.departmentId,
       operationIds: emp.operationIds || [],
     })
+    setOpSearch('')
     setModal(emp)
   }
 
@@ -317,20 +320,35 @@ export default function Employees() {
                 {deptOps.length === 0 ? (
                   <p className="text-xs text-gray-400">Bu bo'limda operatsiyalar mavjud emas</p>
                 ) : (
-                  <div className="space-y-2 max-h-48 overflow-y-auto">
-                    {deptOps.map(op => (
-                      <label key={op.id} className="flex items-center gap-3 cursor-pointer hover:bg-gray-50 p-2 rounded-lg">
-                        <input
-                          type="checkbox"
-                          checked={form.operationIds.includes(op.id)}
-                          onChange={() => toggleOp(op.id)}
-                          className="accent-blue-700"
-                        />
-                        <span className="text-sm text-gray-700 flex-1">{op.name}</span>
-                        <span className="text-xs text-gray-400">{op.norm} dona/soat</span>
-                      </label>
-                    ))}
-                  </div>
+                  <>
+                    <div className="relative mb-2">
+                      <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <input
+                        type="text"
+                        placeholder="Operatsiya qidirish..."
+                        value={opSearch}
+                        onChange={e => setOpSearch(e.target.value)}
+                        className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div className="space-y-2 max-h-48 overflow-y-auto">
+                      {deptOps.filter(op => op.name.toLowerCase().includes(opSearch.toLowerCase())).map(op => (
+                        <label key={op.id} className="flex items-center gap-3 cursor-pointer hover:bg-gray-50 p-2 rounded-lg">
+                          <input
+                            type="checkbox"
+                            checked={form.operationIds.includes(op.id)}
+                            onChange={() => toggleOp(op.id)}
+                            className="accent-blue-700"
+                          />
+                          <span className="text-sm text-gray-700 flex-1">{op.name}</span>
+                          <span className="text-xs text-gray-400">{op.norm} dona/soat</span>
+                        </label>
+                      ))}
+                      {deptOps.filter(op => op.name.toLowerCase().includes(opSearch.toLowerCase())).length === 0 && (
+                        <p className="text-xs text-gray-400 text-center py-2">Topilmadi</p>
+                      )}
+                    </div>
+                  </>
                 )}
               </div>
             </div>
