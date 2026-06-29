@@ -173,8 +173,8 @@ export default function TVDisplay() {
   return (
     <div style={{
       minHeight: '100vh',
-      background: '#2d3748',
-      color: '#f8fafc',
+      background: '#f1f5f9',
+      color: '#1e293b',
       fontFamily: 'Arial, Helvetica, sans-serif',
       display: 'flex',
       flexDirection: 'column',
@@ -235,7 +235,7 @@ export default function TVDisplay() {
         {rows.length === 0 ? (
           <div style={{
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            height: '100%', color: '#475569', fontSize: 22,
+            height: '100%', color: '#94a3b8', fontSize: 22,
           }}>
             Bugun ma'lumot kiritilmagan
           </div>
@@ -259,16 +259,16 @@ export default function TVDisplay() {
               {pageRows.map((emp, i) => {
                 const rank = page * PER_PAGE + i + 1
                 const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : ''
-                const rowBg = i % 2 === 1 ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.04)'
+                const rowBg = i % 2 === 1 ? '#e8edf3' : '#ffffff'
                 return emp.ops.map((op, opIdx) => {
                   const totalSt = slotColor(op.total, op.exp)
                   return (
                     <tr key={`${emp.id}-${op.name}`} style={{
                       background: rowBg,
-                      borderTop: opIdx === 0 ? '2px solid rgba(255,255,255,0.1)' : '1px solid rgba(255,255,255,0.04)',
+                      borderTop: opIdx === 0 ? '2px solid #cbd5e1' : '1px solid #e2e8f0',
                     }}>
                       {opIdx === 0 && (
-                        <td rowSpan={emp.ops.length} style={{ textAlign: 'center', fontSize: 20, fontWeight: 700, color: '#475569', verticalAlign: 'middle', padding: '10px 8px' }}>
+                        <td rowSpan={emp.ops.length} style={{ textAlign: 'center', fontSize: 20, fontWeight: 700, color: '#94a3b8', verticalAlign: 'middle', padding: '10px 8px' }}>
                           {rank}
                         </td>
                       )}
@@ -277,11 +277,11 @@ export default function TVDisplay() {
                           {medal && <span style={{ marginRight: 6 }}>{medal}</span>}{emp.name}
                         </td>
                       )}
-                      <td style={{ padding: '8px 12px', fontSize: 20, color: '#60a5fa', fontWeight: 600 }}>{op.name}</td>
-                      <td style={{ padding: '8px 6px', textAlign: 'center', fontSize: 15, color: '#fbbf24', fontWeight: 600 }}>{op.norm} d/s</td>
+                      <td style={{ padding: '8px 12px', fontSize: 26, color: '#1d4ed8', fontWeight: 700 }}>{op.name}</td>
+                      <td style={{ padding: '8px 6px', textAlign: 'center', fontSize: 19, color: '#b45309', fontWeight: 700 }}>{op.norm} d/s</td>
                       {allSlots.map(slot => {
                         const sd = op.slots[slot]
-                        if (!sd) return <td key={slot} style={{ textAlign: 'center', color: '#475569', fontSize: 18 }}>—</td>
+                        if (!sd) return <td key={slot} style={{ textAlign: 'center', color: '#cbd5e1', fontSize: 18 }}>—</td>
                         const st = slotColor(sd.qty, sd.exp)
                         return (
                           <td key={slot} style={{ textAlign: 'center', padding: '5px 4px' }}>
@@ -314,7 +314,7 @@ export default function TVDisplay() {
         alignItems: 'center',
         justifyContent: 'center',
         gap: 8,
-        borderTop: '1px solid rgba(255,255,255,0.06)',
+        borderTop: '1px solid #cbd5e1',
         flexShrink: 0,
         position: 'relative',
       }}>
@@ -324,11 +324,11 @@ export default function TVDisplay() {
               width: i === page ? 36 : 10,
               height: 10,
               borderRadius: 5,
-              background: i === page ? '#3b82f6' : 'rgba(255,255,255,0.2)',
+              background: i === page ? '#3b82f6' : '#cbd5e1',
               transition: 'all 0.4s',
             }} />
           ))}
-          <span style={{ color: '#64748b', fontSize: 13, marginLeft: 16 }}>
+          <span style={{ color: '#94a3b8', fontSize: 13, marginLeft: 16 }}>
             {page + 1} / {totalPages} &nbsp;·&nbsp; har 7 soniyada almashinadi
           </span>
         </>)}
