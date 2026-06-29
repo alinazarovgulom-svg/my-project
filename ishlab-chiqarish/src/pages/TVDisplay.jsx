@@ -293,8 +293,8 @@ export default function TVDisplay() {
                           {medal && <span style={{ marginRight: 6 }}>{medal}</span>}{emp.name}
                         </td>
                       )}
-                      <td style={{ padding: '8px 12px', fontSize: 26, color: '#1d4ed8', fontWeight: 700 }}>{op.name}</td>
-                      <td style={{ padding: '8px 6px', textAlign: 'center', fontSize: 19, color: '#b45309', fontWeight: 700 }}>{op.norm} d/s</td>
+                      <td style={{ padding: '8px 12px', fontSize: 32, color: '#1d4ed8', fontWeight: 700 }}>{op.name}</td>
+                      <td style={{ padding: '8px 6px', textAlign: 'center', fontSize: 24, color: '#b45309', fontWeight: 700 }}>{op.norm} d/s</td>
                       {allSlots.map(slot => {
                         const sd = op.slots[slot]
                         if (!sd) return <td key={slot} style={{ textAlign: 'center', color: '#cbd5e1', fontSize: 18 }}>—</td>
