@@ -206,7 +206,9 @@ export default function TVDisplay() {
       }}>
         {/* Brand */}
         <div style={{ minWidth: 180 }}>
-          <div style={{ fontSize: 30, fontWeight: 900, letterSpacing: 1 }}>KAFTIMDA</div>
+          <div style={{ fontSize: 30, fontWeight: 900, letterSpacing: 1 }}>
+            <span style={{ color: '#D97706' }}>KAFT</span><span style={{ color: '#ffffff' }}>IMDA</span>
+          </div>
           <div style={{ width: 68, height: 3, background: '#D97706', borderRadius: 2, margin: '5px 0 7px' }} />
           <div style={{ fontSize: 26, color: '#93c5fd', fontWeight: 700 }}>{deptName}</div>
         </div>
@@ -235,7 +237,7 @@ export default function TVDisplay() {
 
         {/* Clock */}
         <div style={{ textAlign: 'right', minWidth: 180 }}>
-          <div style={{ fontSize: 38, fontWeight: 800, letterSpacing: 2, fontVariantNumeric: 'tabular-nums' }}>
+          <div style={{ fontSize: 38, fontWeight: 800, letterSpacing: 2, fontVariantNumeric: 'tabular-nums', color: '#ffffff' }}>
             {timeStr}
           </div>
           <div style={{ fontSize: 14, color: '#94a3b8', marginTop: 4 }}>{dateStr}</div>
