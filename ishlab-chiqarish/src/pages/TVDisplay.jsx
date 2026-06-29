@@ -128,7 +128,19 @@ export default function TVDisplay() {
               ops,
             }
           })
-          .sort((a, b) => b.totalQty - a.totalQty)
+          .sort((a, b) => {
+            const tier = e => {
+              if (!e.totalExp) return 1
+              if (e.totalQty >= e.totalExp)        return 0
+              if (e.totalQty >= e.totalExp * 0.8)  return 1
+              return 2
+            }
+            const ta = tier(a), tb = tier(b)
+            if (ta !== tb) return ta - tb
+            const ea = a.totalExp > 0 ? a.totalQty / a.totalExp : 0
+            const eb = b.totalExp > 0 ? b.totalQty / b.totalExp : 0
+            return eb - ea
+          })
 
         setRows(sorted)
         setStats({ total: allEmps.length, attended: seenEmp.size, absent: allEmps.length - seenEmp.size, done: totalDone, expected: totalExp, tayyor: totalTayyor })
