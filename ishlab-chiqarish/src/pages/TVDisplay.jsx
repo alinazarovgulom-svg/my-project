@@ -95,10 +95,11 @@ export default function TVDisplay() {
               empData[d.employeeId].ops[opId] = { slots: {}, total: 0, exp: 0 }
             }
             if (!empData[d.employeeId].ops[opId].slots[slot]) {
-              empData[d.employeeId].ops[opId].slots[slot] = { qty: 0, exp: 0 }
+              empData[d.employeeId].ops[opId].slots[slot] = { qty: 0, exp: 0, note: '' }
             }
             empData[d.employeeId].ops[opId].slots[slot].qty += qty
             empData[d.employeeId].ops[opId].slots[slot].exp += exp
+            if (val.note) empData[d.employeeId].ops[opId].slots[slot].note = val.note
             empData[d.employeeId].ops[opId].total += qty
             empData[d.employeeId].ops[opId].exp   += exp
             empData[d.employeeId].totalQty += qty
@@ -305,6 +306,9 @@ export default function TVDisplay() {
                               <div style={{ fontSize: 32, fontWeight: 800, color: st.color, lineHeight: 1.2 }}>{sd.qty}</div>
                               <div style={{ fontSize: 15, color: '#64748b', lineHeight: 1 }}>{Math.round(sd.exp)}</div>
                             </div>
+                            {sd.note && (
+                              <div style={{ fontSize: 13, color: '#64748b', fontStyle: 'italic', marginTop: 3, maxWidth: 120, wordBreak: 'break-word' }}>{sd.note}</div>
+                            )}
                           </td>
                         )
                       })}
