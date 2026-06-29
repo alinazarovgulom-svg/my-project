@@ -214,11 +214,6 @@ export default function TVDisplay() {
             {timeStr}
           </div>
           <div style={{ fontSize: 14, color: '#94a3b8', marginTop: 4 }}>{dateStr}</div>
-          {lastUpdated && (
-            <div style={{ fontSize: 11, color: '#475569', marginTop: 4 }}>
-              Yangilandi: {lastUpdated.toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tashkent' })}
-            </div>
-          )}
         </div>
       </div>
 
@@ -315,16 +310,17 @@ export default function TVDisplay() {
       </div>
 
       {/* ── Pagination ── */}
-      {totalPages > 1 && (
-        <div style={{
-          padding: '12px 40px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: 8,
-          borderTop: '1px solid rgba(255,255,255,0.06)',
-          flexShrink: 0,
-        }}>
+      <div style={{
+        padding: '12px 40px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+        borderTop: '1px solid rgba(255,255,255,0.06)',
+        flexShrink: 0,
+        position: 'relative',
+      }}>
+        {totalPages > 1 && (<>
           {Array.from({ length: totalPages }, (_, i) => (
             <div key={i} style={{
               width: i === page ? 36 : 10,
@@ -337,8 +333,13 @@ export default function TVDisplay() {
           <span style={{ color: '#64748b', fontSize: 13, marginLeft: 16 }}>
             {page + 1} / {totalPages} &nbsp;·&nbsp; har 7 soniyada almashinadi
           </span>
-        </div>
-      )}
+        </>)}
+        {lastUpdated && (
+          <div style={{ position: 'absolute', right: 40, fontSize: 13, color: '#f87171', fontWeight: 600 }}>
+            🔴 Yangilandi: {lastUpdated.toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tashkent' })}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
