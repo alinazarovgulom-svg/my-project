@@ -259,16 +259,16 @@ export default function TVDisplay() {
           <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
             <thead>
               <tr style={{ background: '#1a202c' }}>
-                <th style={{ width: 56, padding: '10px 8px', textAlign: 'center', fontSize: 15, fontWeight: 700, color: '#93c5fd' }}>#</th>
-                <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: 15, fontWeight: 700, color: '#93c5fd' }}>Xodim</th>
-                <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: 15, fontWeight: 700, color: '#93c5fd' }}>Operatsiya</th>
-                <th style={{ width: 110, padding: '10px 8px', textAlign: 'center', fontSize: 14, fontWeight: 700, color: '#93c5fd' }}>Norma</th>
+                <th style={{ width: 56, padding: '10px 8px', textAlign: 'center', fontSize: 19, fontWeight: 700, color: '#93c5fd' }}>#</th>
+                <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: 19, fontWeight: 700, color: '#93c5fd' }}>Xodim</th>
+                <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: 19, fontWeight: 700, color: '#93c5fd' }}>Operatsiya</th>
+                <th style={{ width: 110, padding: '10px 8px', textAlign: 'center', fontSize: 18, fontWeight: 700, color: '#93c5fd' }}>Norma</th>
                 {allSlots.map(slot => (
-                  <th key={slot} style={{ width: 130, padding: '10px 6px', textAlign: 'center', fontSize: 13, fontWeight: 700, color: '#93c5fd' }}>
+                  <th key={slot} style={{ width: 130, padding: '10px 6px', textAlign: 'center', fontSize: 17, fontWeight: 700, color: '#93c5fd' }}>
                     {shortSlot(slot)}
                   </th>
                 ))}
-                <th style={{ width: 110, padding: '10px 8px', textAlign: 'center', fontSize: 15, fontWeight: 700, color: '#93c5fd' }}>Jami</th>
+                <th style={{ width: 110, padding: '10px 8px', textAlign: 'center', fontSize: 19, fontWeight: 700, color: '#93c5fd' }}>Jami</th>
               </tr>
             </thead>
             <tbody>
