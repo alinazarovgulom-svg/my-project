@@ -18,7 +18,7 @@ export default function Operations() {
   const [filterDept, setFilterDept] = useState('all')
   const [search, setSearch] = useState('')
   const [modal, setModal] = useState(null) // null | 'add' | {id, ...}
-  const [form, setForm] = useState({ name: '', norm: '', departmentId: '' })
+  const [form, setForm] = useState({ name: '', norm: '', unitPrice: '', departmentId: '' })
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(null)
   const [reordering, setReordering] = useState(null)
@@ -30,8 +30,8 @@ export default function Operations() {
     })
   }, [])
 
-  const openAdd = () => { setForm({ name: '', norm: '', departmentId: visibleDepts[0]?.id || '' }); setModal('add') }
-  const openEdit = (op) => { setForm({ name: op.name, norm: op.norm, departmentId: op.departmentId }); setModal(op) }
+  const openAdd = () => { setForm({ name: '', norm: '', unitPrice: '', departmentId: visibleDepts[0]?.id || '' }); setModal('add') }
+  const openEdit = (op) => { setForm({ name: op.name, norm: op.norm, unitPrice: op.unitPrice ?? '', departmentId: op.departmentId }); setModal(op) }
   const closeModal = () => setModal(null)
 
   const handleSave = async () => {
@@ -44,6 +44,7 @@ export default function Operations() {
       await addDoc(collection(db, 'factory_operations'), {
         name: form.name.trim(),
         norm: Number(form.norm),
+        unitPrice: form.unitPrice !== '' ? Number(form.unitPrice) : 0,
         departmentId: form.departmentId,
         order: maxOrder + 1,
         createdAt: serverTimestamp(),
@@ -52,6 +53,7 @@ export default function Operations() {
       await updateDoc(doc(db, 'factory_operations', modal.id), {
         name: form.name.trim(),
         norm: Number(form.norm),
+        unitPrice: form.unitPrice !== '' ? Number(form.unitPrice) : 0,
         departmentId: form.departmentId,
       })
     }
@@ -161,6 +163,7 @@ export default function Operations() {
                   <th className="text-left px-4 py-3 font-medium text-gray-600">Operatsiya nomi</th>
                   <th className="text-left px-4 py-3 font-medium text-gray-600">Bo'lim</th>
                   <th className="text-left px-4 py-3 font-medium text-gray-600">Norma (1 soat)</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-600">Dona narxi (so'm)</th>
                   <th className="text-left px-4 py-3 font-medium text-gray-600">Yakuniy</th>
                   {can.manageOperations && <th className="px-4 py-3 w-24 text-center font-medium text-gray-600">Tartib</th>}
                   {can.manageOperations && <th className="px-4 py-3 w-20" />}
@@ -176,6 +179,7 @@ export default function Operations() {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-gray-600">{op.norm} dona</td>
+                    <td className="px-4 py-3 text-gray-600">{op.unitPrice ? `${op.unitPrice.toLocaleString()} so'm` : '—'}</td>
                     <td className="px-4 py-3">
                       <button
                         onClick={() => can.manageOperations && handleToggleFinal(op)}
@@ -284,6 +288,19 @@ export default function Operations() {
                   onChange={e => setForm(f => ({ ...f, norm: e.target.value }))}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="10"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Dona narxi (so'm) — <span className="text-gray-400 font-normal">akkord uchun</span>
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  value={form.unitPrice}
+                  onChange={e => setForm(f => ({ ...f, unitPrice: e.target.value }))}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="150"
                 />
               </div>
             </div>

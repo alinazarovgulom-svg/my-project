@@ -19,7 +19,7 @@ export default function Employees() {
   const [filterDept, setFilterDept] = useState('all')
   const [filterStatus, setFilterStatus] = useState('active')
   const [modal, setModal] = useState(null)
-  const [form, setForm] = useState({ firstName: '', lastName: '', departmentId: '', operationIds: [] })
+  const [form, setForm] = useState({ firstName: '', lastName: '', departmentId: '', operationIds: [], salaryType: 'hourly', hourlyRate: '', salaryHistory: [] })
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(null)
   const [search, setSearch] = useState('')
@@ -38,7 +38,7 @@ export default function Employees() {
   const deptOps = allOps.filter(o => o.departmentId === form.departmentId)
 
   const openAdd = () => {
-    setForm({ firstName: '', lastName: '', departmentId: visibleDepts[0]?.id || '', operationIds: [] })
+    setForm({ firstName: '', lastName: '', departmentId: visibleDepts[0]?.id || '', operationIds: [], salaryType: 'hourly', hourlyRate: '', salaryHistory: [] })
     setOpSearch('')
     setModal('add')
   }
@@ -48,6 +48,9 @@ export default function Employees() {
       lastName: emp.lastName,
       departmentId: emp.departmentId,
       operationIds: emp.operationIds || [],
+      salaryType: emp.salaryType || 'hourly',
+      hourlyRate: emp.hourlyRate ?? '',
+      salaryHistory: emp.salaryHistory || [],
     })
     setOpSearch('')
     setModal(emp)
@@ -69,11 +72,21 @@ export default function Employees() {
   const handleSave = async () => {
     if (!form.firstName.trim() || !form.lastName.trim()) return
     setSaving(true)
+    const newRate = form.hourlyRate !== '' ? Number(form.hourlyRate) : null
+    const today = new Date().toISOString().slice(0, 10)
+    const prevHistory = form.salaryHistory || []
+    const lastEntry = prevHistory[prevHistory.length - 1]
+    const salaryHistory = newRate !== null && (!lastEntry || lastEntry.hourlyRate !== newRate)
+      ? [...prevHistory, { hourlyRate: newRate, from: today }]
+      : prevHistory
     const data = {
       firstName: form.firstName.trim(),
       lastName: form.lastName.trim(),
       departmentId: form.departmentId,
       operationIds: form.operationIds,
+      salaryType: form.salaryType,
+      hourlyRate: newRate,
+      salaryHistory,
     }
     if (modal === 'add') {
       await addDoc(collection(db, 'factory_employees'), { ...data, isActive: true, createdAt: serverTimestamp() })
@@ -349,6 +362,48 @@ export default function Employees() {
                       )}
                     </div>
                   </>
+                )}
+              </div>
+
+              {/* Maosh bo'limi */}
+              <div className="border-t border-gray-100 pt-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Maosh turi</label>
+                <select
+                  value={form.salaryType}
+                  onChange={e => setForm(f => ({ ...f, salaryType: e.target.value }))}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 mb-3"
+                >
+                  <option value="hourly">Soatlik</option>
+                  <option value="piece">Akkord (dona uchun)</option>
+                  <option value="both">Aralash (soatlik + akkord)</option>
+                </select>
+
+                {(form.salaryType === 'hourly' || form.salaryType === 'both') && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Soatlik stavka (so'm)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={form.hourlyRate}
+                      onChange={e => setForm(f => ({ ...f, hourlyRate: e.target.value }))}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="5000"
+                    />
+                  </div>
+                )}
+
+                {form.salaryHistory?.length > 0 && (
+                  <div className="mt-3">
+                    <p className="text-xs text-gray-500 mb-1.5">Maosh tarixi:</p>
+                    <div className="space-y-1 max-h-28 overflow-y-auto">
+                      {[...form.salaryHistory].reverse().map((h, i) => (
+                        <div key={i} className="flex justify-between text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded">
+                          <span>{h.from}</span>
+                          <span>{h.hourlyRate?.toLocaleString()} so'm/soat</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 )}
               </div>
             </div>

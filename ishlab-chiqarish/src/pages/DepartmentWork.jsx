@@ -143,13 +143,24 @@ export default function DepartmentWork() {
     setSaving(s => ({ ...s, [empId]: true }))
     const entryId = `${date}_${deptId}_${startTime.replace(':','')}_${endTime.replace(':','')}_${empId}`
     const normMap = Object.fromEntries(allOps.map(o => [o.id, o.norm || 0]))
+    const unitPriceMap = Object.fromEntries(allOps.map(o => [o.id, o.unitPrice || 0]))
+    const emp = employees.find(e => e.id === empId)
+    const salaryType = emp?.salaryType || 'hourly'
+    const hourlyRate = emp?.hourlyRate || 0
     const rawOps = entries[empId] || {}
     const operations = Object.fromEntries(
-      Object.entries(rawOps).map(([opId, val]) => [
-        opId,
-        { ...val, norm: normMap[opId] || 0, expected: (normMap[opId] || 0) * hours },
-      ])
+      Object.entries(rawOps).map(([opId, val]) => {
+        const qty = Number(val.quantity || 0)
+        const unitPrice = unitPriceMap[opId] || 0
+        const piecePay = unitPrice * qty
+        return [opId, { ...val, norm: normMap[opId] || 0, expected: (normMap[opId] || 0) * hours, unitPrice, piecePay }]
+      })
     )
+    const totalPiecePay = Object.values(operations).reduce((s, v) => s + (v.piecePay || 0), 0)
+    const hourlyPay = salaryType === 'piece' ? 0 : hourlyRate * hours
+    const totalPay = salaryType === 'hourly' ? hourlyPay
+      : salaryType === 'piece' ? totalPiecePay
+      : hourlyPay + totalPiecePay
     await setDoc(doc(db, 'factory_work_entries', entryId), {
       employeeId: empId,
       departmentId: deptId,
@@ -158,6 +169,9 @@ export default function DepartmentWork() {
       endTime,
       breakMinutes,
       operations,
+      salaryType,
+      hourlyRate,
+      totalPay,
       updatedAt: serverTimestamp(),
       updatedBy: user.uid,
     })

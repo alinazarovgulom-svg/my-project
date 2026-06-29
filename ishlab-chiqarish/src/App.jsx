@@ -14,6 +14,7 @@ import Departments from './pages/Departments'
 import Attendance from './pages/Attendance'
 import Shifts from './pages/Shifts'
 import TVDisplay from './pages/TVDisplay'
+import MonthlyReport from './pages/MonthlyReport'
 import { useAuth } from './contexts/AuthContext'
 
 function AppRoutes() {
@@ -34,6 +35,7 @@ function AppRoutes() {
                 <Route path="/departments" element={<Departments />} />
                 <Route path="/department/:deptId" element={<DepartmentWork />} />
                 <Route path="/reports" element={<Reports />} />
+                <Route path="/monthly" element={<MonthlyReport />} />
                 <Route path="/attendance" element={<Attendance />} />
                 <Route path="/members" element={<Members />} />
                 <Route path="/shifts" element={<Shifts />} />
