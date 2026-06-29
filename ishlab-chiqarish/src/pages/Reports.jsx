@@ -105,7 +105,7 @@ export default function Reports() {
         Object.entries(ops).forEach(([opId, data]) => {
           const op = opMap[opId]
           if (!op) return
-          const expected = op.norm * hours
+          const expected = data.expected !== undefined ? Number(data.expected) : op.norm * hours
           result.push({
             empName: `${emp.lastName} ${emp.firstName}`,
             deptName: getDeptName(emp.departmentId),

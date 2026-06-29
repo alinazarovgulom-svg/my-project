@@ -142,6 +142,14 @@ export default function DepartmentWork() {
   const saveEmployee = async (empId) => {
     setSaving(s => ({ ...s, [empId]: true }))
     const entryId = `${date}_${deptId}_${startTime.replace(':','')}_${endTime.replace(':','')}_${empId}`
+    const normMap = Object.fromEntries(allOps.map(o => [o.id, o.norm || 0]))
+    const rawOps = entries[empId] || {}
+    const operations = Object.fromEntries(
+      Object.entries(rawOps).map(([opId, val]) => [
+        opId,
+        { ...val, expected: (normMap[opId] || 0) * hours },
+      ])
+    )
     await setDoc(doc(db, 'factory_work_entries', entryId), {
       employeeId: empId,
       departmentId: deptId,
@@ -149,7 +157,7 @@ export default function DepartmentWork() {
       startTime,
       endTime,
       breakMinutes,
-      operations: entries[empId] || {},
+      operations,
       updatedAt: serverTimestamp(),
       updatedBy: user.uid,
     })

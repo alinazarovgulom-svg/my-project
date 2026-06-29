@@ -89,7 +89,7 @@ export default function TVDisplay() {
 
           Object.entries(d.operations || {}).forEach(([opId, val]) => {
             const qty = Number(val.quantity || 0)
-            const exp = (normMap[opId] || 0) * hours
+            const exp = val.expected !== undefined ? Number(val.expected) : (normMap[opId] || 0) * hours
 
             if (!empData[d.employeeId].ops[opId]) {
               empData[d.employeeId].ops[opId] = { slots: {}, total: 0, exp: 0 }
