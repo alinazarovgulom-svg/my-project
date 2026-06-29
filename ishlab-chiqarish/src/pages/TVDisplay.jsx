@@ -1,4 +1,4 @@
-import { useEffect, useState, Fragment } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import {
   collection, query, where, onSnapshot, getDocs, doc, getDoc,
@@ -94,8 +94,11 @@ export default function TVDisplay() {
             if (!empData[d.employeeId].ops[opId]) {
               empData[d.employeeId].ops[opId] = { slots: {}, total: 0, exp: 0 }
             }
-            empData[d.employeeId].ops[opId].slots[slot] =
-              (empData[d.employeeId].ops[opId].slots[slot] || 0) + qty
+            if (!empData[d.employeeId].ops[opId].slots[slot]) {
+              empData[d.employeeId].ops[opId].slots[slot] = { qty: 0, exp: 0 }
+            }
+            empData[d.employeeId].ops[opId].slots[slot].qty += qty
+            empData[d.employeeId].ops[opId].slots[slot].exp += exp
             empData[d.employeeId].ops[opId].total += qty
             empData[d.employeeId].ops[opId].exp   += exp
             empData[d.employeeId].totalQty += qty
@@ -154,6 +157,14 @@ export default function TVDisplay() {
 
   const totalPages = Math.ceil(rows.length / PER_PAGE)
   const pageRows = rows.slice(page * PER_PAGE, (page + 1) * PER_PAGE)
+  const allSlots = [...new Set(rows.flatMap(emp => emp.ops.flatMap(op => Object.keys(op.slots))))].sort()
+
+  function slotColor(qty, exp) {
+    if (!exp) return { bg: 'rgba(255,255,255,0.08)', color: '#f8fafc' }
+    if (qty >= exp)        return { bg: 'rgba(74,222,128,0.18)',  color: '#4ade80' }
+    if (qty >= exp * 0.8)  return { bg: 'rgba(251,191,36,0.18)',  color: '#fbbf24' }
+    return                        { bg: 'rgba(248,113,113,0.18)', color: '#f87171' }
+  }
   const eff = stats.expected > 0 ? Math.round((stats.done / stats.expected) * 100) : null
   const effColor = eff === null ? '#94a3b8' : eff >= 100 ? '#4ade80' : eff >= 80 ? '#fbbf24' : '#f87171'
   const timeStr = clock.toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: 'Asia/Tashkent' })
@@ -229,82 +240,67 @@ export default function TVDisplay() {
             Bugun ma'lumot kiritilmagan
           </div>
         ) : (
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
             <thead>
               <tr style={{ background: '#1a202c' }}>
-                <th style={{ padding: '12px 20px', textAlign: 'center', width: 60, fontSize: 16, fontWeight: 700, color: '#93c5fd' }}>#</th>
-                <th style={{ padding: '12px 20px', textAlign: 'left', fontSize: 16, fontWeight: 700, color: '#93c5fd' }}>Xodim ismi</th>
-                <th style={{ padding: '12px 36px 12px 20px', textAlign: 'right', fontSize: 16, fontWeight: 700, color: '#93c5fd' }}>Jami</th>
+                <th style={{ width: 56, padding: '10px 8px', textAlign: 'center', fontSize: 15, fontWeight: 700, color: '#93c5fd' }}>#</th>
+                <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: 15, fontWeight: 700, color: '#93c5fd' }}>Xodim</th>
+                <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: 15, fontWeight: 700, color: '#93c5fd' }}>Operatsiya</th>
+                <th style={{ width: 110, padding: '10px 8px', textAlign: 'center', fontSize: 14, fontWeight: 700, color: '#93c5fd' }}>Norma</th>
+                {allSlots.map(slot => (
+                  <th key={slot} style={{ width: 130, padding: '10px 6px', textAlign: 'center', fontSize: 13, fontWeight: 700, color: '#93c5fd' }}>
+                    {shortSlot(slot)}
+                  </th>
+                ))}
+                <th style={{ width: 110, padding: '10px 8px', textAlign: 'center', fontSize: 15, fontWeight: 700, color: '#93c5fd' }}>Jami</th>
               </tr>
             </thead>
             <tbody>
               {pageRows.map((emp, i) => {
                 const rank = page * PER_PAGE + i + 1
-                const medal = rank === 1 ? '🥇 ' : rank === 2 ? '🥈 ' : rank === 3 ? '🥉 ' : ''
+                const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : ''
                 const rowBg = i % 2 === 1 ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.04)'
-                const qtyColor = emp.totalExp > 0
-                  ? (emp.totalQty >= emp.totalExp ? '#4ade80' : emp.totalQty >= emp.totalExp * 0.8 ? '#fbbf24' : '#f87171')
-                  : '#f8fafc'
-
-                return (
-                  <Fragment key={emp.id}>
-                    {/* Main row — name + total */}
-                    <tr style={{ background: rowBg, borderTop: '2px solid rgba(255,255,255,0.08)' }}>
-                      <td rowSpan={1 + emp.ops.length} style={{
-                        padding: '16px 20px',
-                        textAlign: 'center',
-                        color: '#475569',
-                        fontSize: 22,
-                        fontWeight: 700,
-                        verticalAlign: 'middle',
-                      }}>
-                        {rank}
-                      </td>
-                      <td style={{ padding: '16px 20px 4px', fontSize: 30, fontWeight: 800, verticalAlign: 'bottom' }}>
-                        {medal}{emp.name}
-                      </td>
-                      <td style={{
-                        padding: '16px 40px 4px 20px',
-                        textAlign: 'right',
-                        fontSize: 32,
-                        fontWeight: 900,
-                        color: qtyColor,
-                        verticalAlign: 'bottom',
-                        whiteSpace: 'nowrap',
-                      }}>
-                        {emp.totalQty}{' '}
-                        <span style={{ fontSize: 15, color: '#64748b', fontWeight: 400 }}>dona</span>
+                return emp.ops.map((op, opIdx) => {
+                  const totalSt = slotColor(op.total, op.exp)
+                  return (
+                    <tr key={`${emp.id}-${op.name}`} style={{
+                      background: rowBg,
+                      borderTop: opIdx === 0 ? '2px solid rgba(255,255,255,0.1)' : '1px solid rgba(255,255,255,0.04)',
+                    }}>
+                      {opIdx === 0 && (
+                        <td rowSpan={emp.ops.length} style={{ textAlign: 'center', fontSize: 20, fontWeight: 700, color: '#475569', verticalAlign: 'middle', padding: '10px 8px' }}>
+                          {rank}
+                        </td>
+                      )}
+                      {opIdx === 0 && (
+                        <td rowSpan={emp.ops.length} style={{ padding: '10px 12px', fontSize: 22, fontWeight: 800, verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
+                          {medal && <span style={{ marginRight: 6 }}>{medal}</span>}{emp.name}
+                        </td>
+                      )}
+                      <td style={{ padding: '8px 12px', fontSize: 20, color: '#60a5fa', fontWeight: 600 }}>{op.name}</td>
+                      <td style={{ padding: '8px 6px', textAlign: 'center', fontSize: 15, color: '#fbbf24', fontWeight: 600 }}>{op.norm} d/s</td>
+                      {allSlots.map(slot => {
+                        const sd = op.slots[slot]
+                        if (!sd) return <td key={slot} style={{ textAlign: 'center', color: '#475569', fontSize: 18 }}>—</td>
+                        const st = slotColor(sd.qty, sd.exp)
+                        return (
+                          <td key={slot} style={{ textAlign: 'center', padding: '5px 4px' }}>
+                            <div style={{ background: st.bg, borderRadius: 8, padding: '4px 8px', display: 'inline-block', minWidth: 58 }}>
+                              <div style={{ fontSize: 26, fontWeight: 800, color: st.color, lineHeight: 1.2 }}>{sd.qty}</div>
+                              <div style={{ fontSize: 12, color: '#64748b', lineHeight: 1 }}>{Math.round(sd.exp)}</div>
+                            </div>
+                          </td>
+                        )
+                      })}
+                      <td style={{ textAlign: 'center', padding: '5px 8px' }}>
+                        <div style={{ background: totalSt.bg, borderRadius: 8, padding: '4px 8px', display: 'inline-block', minWidth: 58 }}>
+                          <div style={{ fontSize: 26, fontWeight: 800, color: totalSt.color, lineHeight: 1.2 }}>{op.total}</div>
+                          <div style={{ fontSize: 12, color: '#64748b', lineHeight: 1 }}>{Math.round(op.exp)}</div>
+                        </div>
                       </td>
                     </tr>
-
-                    {/* Operation detail rows */}
-                    {emp.ops.map(op => (
-                      <tr key={op.name} style={{ background: rowBg }}>
-                        <td colSpan={2} style={{ padding: '2px 20px 12px 56px', verticalAlign: 'top' }}>
-                          {/* Op name */}
-                          <div style={{ color: '#60a5fa', fontWeight: 700, fontSize: 36, marginBottom: 3 }}>
-                            {op.name}
-                          </div>
-                          {/* Norm */}
-                          <div style={{ color: '#fbbf24', fontSize: 17, marginBottom: 5, fontWeight: 600 }}>
-                            Norma: {op.norm} dona/soat
-                          </div>
-                          {/* Slots + total */}
-                          <div>
-                            {Object.entries(op.slots).sort().map(([slot, qty]) => (
-                              <span key={slot} style={{ marginRight: 28, whiteSpace: 'nowrap', display: 'inline-block' }}>
-                                <span style={{ color: '#cbd5e1', fontSize: 17 }}>{shortSlot(slot)}: </span>
-                                <strong style={{ color: '#f8fafc', fontSize: 28 }}>{qty}</strong>
-                              </span>
-                            ))}
-                            <span style={{ color: '#cbd5e1', fontSize: 17 }}>= </span>
-                            <strong style={{ color: '#fbbf24', fontSize: 28 }}>{op.total}</strong>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </Fragment>
-                )
+                  )
+                })
               })}
             </tbody>
           </table>
