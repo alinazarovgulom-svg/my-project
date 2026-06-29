@@ -75,11 +75,13 @@ export default function TVDisplay() {
         let totalDone = 0
         let totalExp = 0
         let totalTayyor = 0
+        let lastEndTime = ''
 
         snap.forEach(entry => {
           const d = entry.data()
           const hasQty = Object.values(d.operations || {}).some(op => Number(op.quantity) > 0)
           if (hasQty) seenEmp.add(d.employeeId)
+          if (d.endTime && d.endTime > lastEndTime) lastEndTime = d.endTime
           const slot = `${d.startTime}–${d.endTime}`
           const hours = calcHours(d.startTime, d.endTime)
 
@@ -127,7 +129,7 @@ export default function TVDisplay() {
 
         setRows(sorted)
         setStats({ total: allEmps.length, attended: seenEmp.size, absent: allEmps.length - seenEmp.size, done: totalDone, expected: totalExp, tayyor: totalTayyor })
-        setLastUpdated(new Date())
+        setLastUpdated(lastEndTime || null)
         setPage(0)
       })
     }
@@ -335,8 +337,8 @@ export default function TVDisplay() {
           </span>
         </>)}
         {lastUpdated && (
-          <div style={{ position: 'absolute', right: 40, fontSize: 13, color: '#f87171', fontWeight: 600 }}>
-            🔴 Yangilandi: {lastUpdated.toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tashkent' })}
+          <div style={{ position: 'absolute', right: 40, fontSize: 17, color: '#f87171', fontWeight: 700 }}>
+            🔴 Yangilandi: {lastUpdated}
           </div>
         )}
       </div>
