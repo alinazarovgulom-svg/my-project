@@ -199,11 +199,22 @@ export default function DepartmentWork() {
       const totalExp = Object.values(operations).reduce((s, v) => s + Number(v.expected || 0), 0)
       const totalPct = totalExp > 0 ? Math.round((totalQty / totalExp) * 100) : 0
 
+      // Bugungi barcha smenalar maoshini yig'ish
+      let dailyTotalPay = totalPay
+      try {
+        const todaySnap = await getDocs(query(
+          collection(db, 'factory_work_entries'),
+          where('employeeId', '==', empId),
+          where('date', '==', date)
+        ))
+        dailyTotalPay = todaySnap.docs.reduce((s, d) => s + Number(d.data().totalPay || 0), 0)
+      } catch (_) {}
+
       let msg = `👤 <b>${emp.lastName} ${emp.firstName}</b>\n`
       msg += `📅 ${date}, ${empStart}–${empEnd}\n\n`
       msg += opLines ? opLines + '\n\n' : ''
       msg += `📊 Umumiy: <b>${totalPct}%</b>`
-      if (totalPay > 0) msg += `\n💰 Bugungi maosh: <b>${totalPay.toLocaleString()} so'm</b>`
+      if (dailyTotalPay > 0) msg += `\n💰 Bugungi jami maosh: <b>${dailyTotalPay.toLocaleString()} so'm</b>`
 
       sendTelegramMessage(emp.telegramId, msg)
     }
