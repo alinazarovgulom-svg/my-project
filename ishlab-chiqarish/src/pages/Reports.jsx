@@ -110,7 +110,7 @@ export default function Reports() {
             empName: `${emp.lastName} ${emp.firstName}`,
             deptName: getDeptName(emp.departmentId),
             opName: op.name,
-            norm: op.norm,
+            norm: data.norm !== undefined ? Number(data.norm) : op.norm,
             quantity: Number(data.quantity ?? 0),
             expected,
             note: data.note || '',

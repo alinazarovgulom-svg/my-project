@@ -147,7 +147,7 @@ export default function DepartmentWork() {
     const operations = Object.fromEntries(
       Object.entries(rawOps).map(([opId, val]) => [
         opId,
-        { ...val, expected: (normMap[opId] || 0) * hours },
+        { ...val, norm: normMap[opId] || 0, expected: (normMap[opId] || 0) * hours },
       ])
     )
     await setDoc(doc(db, 'factory_work_entries', entryId), {
