@@ -7,7 +7,7 @@ import {
 import { db } from '../firebase/config'
 import { useDepartments } from '../contexts/DepartmentsContext'
 import { useAuth } from '../contexts/AuthContext'
-import { Calendar, Clock, Save, CheckCircle, RefreshCw, X, Search, MoreVertical, Send } from 'lucide-react'
+import { Calendar, Clock, Save, CheckCircle, RefreshCw, X, Search, MoreVertical, Send, AlarmClock } from 'lucide-react'
 import { buildWorkPDFHtml } from '../utils/pdf'
 import { sendHTMLToTelegram } from '../utils/telegram'
 
@@ -54,6 +54,8 @@ export default function DepartmentWork() {
   const [savedAll, setSavedAll] = useState(false)
   const [isDirty, setIsDirty] = useState(false)
   const [overrides, setOverrides] = useState({}) // { [empId]: opId[] } — session only
+  const [empTimes, setEmpTimes] = useState({}) // { [empId]: { startTime, endTime } }
+  const [timePickerEmp, setTimePickerEmp] = useState(null)
   const [menuEmp, setMenuEmp] = useState(null) // 3-dot menu open for which empId
   const [pickerEmp, setPickerEmp] = useState(null) // empId whose picker is open
   const [pickerSel, setPickerSel] = useState([]) // temp selection in picker
@@ -141,23 +143,26 @@ export default function DepartmentWork() {
 
   const saveEmployee = async (empId) => {
     setSaving(s => ({ ...s, [empId]: true }))
+    const empStart = empTimes[empId]?.startTime || startTime
+    const empEnd = empTimes[empId]?.endTime || endTime
     const entryId = `${date}_${deptId}_${startTime.replace(':','')}_${endTime.replace(':','')}_${empId}`
     const normMap = Object.fromEntries(allOps.map(o => [o.id, o.norm || 0]))
     const unitPriceMap = Object.fromEntries(allOps.map(o => [o.id, o.unitPrice || 0]))
     const emp = employees.find(e => e.id === empId)
     const salaryType = emp?.salaryType || 'hourly'
     const hourlyRate = emp?.hourlyRate || 0
+    const empH = getEmpHours(empId)
     const rawOps = entries[empId] || {}
     const operations = Object.fromEntries(
       Object.entries(rawOps).map(([opId, val]) => {
         const qty = Number(val.quantity || 0)
         const unitPrice = unitPriceMap[opId] || 0
         const piecePay = unitPrice * qty
-        return [opId, { ...val, norm: normMap[opId] || 0, expected: (normMap[opId] || 0) * hours, unitPrice, piecePay }]
+        return [opId, { ...val, norm: normMap[opId] || 0, expected: (normMap[opId] || 0) * empH, unitPrice, piecePay }]
       })
     )
     const totalPiecePay = Object.values(operations).reduce((s, v) => s + (v.piecePay || 0), 0)
-    const hourlyPay = salaryType === 'piece' ? 0 : hourlyRate * hours
+    const hourlyPay = salaryType === 'piece' ? 0 : hourlyRate * empH
     const totalPay = salaryType === 'hourly' ? hourlyPay
       : salaryType === 'piece' ? totalPiecePay
       : hourlyPay + totalPiecePay
@@ -165,8 +170,8 @@ export default function DepartmentWork() {
       employeeId: empId,
       departmentId: deptId,
       date,
-      startTime,
-      endTime,
+      startTime: empStart,
+      endTime: empEnd,
       breakMinutes,
       operations,
       salaryType,
@@ -205,6 +210,11 @@ export default function DepartmentWork() {
   }
 
   const hours = Math.max(0, calcHours(startTime, endTime) - breakMinutes / 60)
+  const getEmpHours = (empId) => {
+    const t = empTimes[empId]
+    if (!t || !t.startTime || !t.endTime) return hours
+    return Math.max(0, calcHours(t.startTime, t.endTime) - breakMinutes / 60)
+  }
 
   const handleSendTelegram = async () => {
     if (isDirty) {
@@ -446,6 +456,12 @@ export default function DepartmentWork() {
                         Almashtrilgan
                       </span>
                     )}
+                    {empTimes[emp.id] && (
+                      <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full flex items-center gap-1">
+                        <AlarmClock className="w-3 h-3" />
+                        {empTimes[emp.id].startTime}–{empTimes[emp.id].endTime}
+                      </span>
+                    )}
                   </div>
                   {can.enterHourly && (
                     <div className="relative">
@@ -459,13 +475,20 @@ export default function DepartmentWork() {
                       {menuEmp === emp.id && (
                         <>
                           <div className="fixed inset-0 z-10" onClick={() => setMenuEmp(null)} />
-                          <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-20 min-w-[160px]">
+                          <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-20 min-w-[180px]">
                             <button
                               onClick={() => { openPicker(emp); setMenuEmp(null) }}
                               className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-lg"
                             >
                               <RefreshCw className="w-3.5 h-3.5 text-gray-400" />
                               Operatsiya almashtirish
+                            </button>
+                            <button
+                              onClick={() => { setTimePickerEmp(timePickerEmp === emp.id ? null : emp.id); setMenuEmp(null) }}
+                              className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-lg"
+                            >
+                              <Clock className="w-3.5 h-3.5 text-gray-400" />
+                              Vaqtni o'zgartirish
                             </button>
                           </div>
                         </>
@@ -509,6 +532,48 @@ export default function DepartmentWork() {
                   </div>
                 )}
 
+                {/* Per-employee time override panel */}
+                {timePickerEmp === emp.id && (
+                  <div className="border-b border-blue-100 bg-blue-50 px-4 py-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-medium text-blue-800">Xodim uchun alohida vaqt</span>
+                      <button onClick={() => setTimePickerEmp(null)} className="text-gray-400 hover:text-gray-600">
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="time"
+                        value={empTimes[emp.id]?.startTime || startTime}
+                        onChange={e => setEmpTimes(t => ({ ...t, [emp.id]: { ...t[emp.id], startTime: e.target.value, endTime: t[emp.id]?.endTime || endTime } }))}
+                        className="border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      />
+                      <span className="text-gray-400 text-sm">—</span>
+                      <input
+                        type="time"
+                        value={empTimes[emp.id]?.endTime || endTime}
+                        onChange={e => setEmpTimes(t => ({ ...t, [emp.id]: { ...t[emp.id], endTime: e.target.value, startTime: t[emp.id]?.startTime || startTime } }))}
+                        className="border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      />
+                      <button
+                        onClick={() => { setEmpTimes(t => { const n = { ...t }; delete n[emp.id]; return n }); setTimePickerEmp(null) }}
+                        className="text-xs text-red-500 hover:text-red-700 px-2 py-1.5"
+                      >
+                        Bekor
+                      </button>
+                      <button
+                        onClick={() => setTimePickerEmp(null)}
+                        className="text-xs bg-blue-700 hover:bg-blue-800 text-white px-3 py-1.5 rounded-lg"
+                      >
+                        Tasdiqlash
+                      </button>
+                    </div>
+                    <p className="text-xs text-blue-600 mt-1.5">
+                      Ishlagan soat: {getEmpHours(emp.id).toFixed(1)} soat
+                    </p>
+                  </div>
+                )}
+
                 {/* Operations */}
                 {empOps.length === 0 ? (
                   <div className="px-4 py-4 text-sm text-gray-400">
@@ -519,8 +584,9 @@ export default function DepartmentWork() {
                     {empOps.map(op => {
                       const qty = empEntries[op.id]?.quantity ?? ''
                       const note = empEntries[op.id]?.note ?? ''
-                      const expected = op.norm * hours
-                      const status = normStatus(qty, op.norm, hours)
+                      const empH = getEmpHours(emp.id)
+                      const expected = op.norm * empH
+                      const status = normStatus(qty, op.norm, empH)
 
                       return (
                         <div key={op.id} className="px-4 py-3">
