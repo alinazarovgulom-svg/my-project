@@ -176,8 +176,8 @@ export default function TVDisplay() {
     if (!exp) return { bg: 'rgba(255,255,255,0.08)', color: '#94a3b8' }
     if (qty > exp)          return { bg: 'rgba(74,222,128,0.18)',  color: '#16a34a' }  // yashil: 100%+
     if (qty === exp)        return { bg: 'rgba(251,191,36,0.18)',  color: '#d97706' }  // sariq: aynan 100%
-    if (qty >= exp * 0.95)  return { bg: 'rgba(248,113,113,0.18)', color: '#ef4444' }  // qizil: 95-99%
-    return                         { bg: 'rgba(153,27,27,0.18)',   color: '#991b1b' }  // to'q qizil: <95%
+    if (qty >= exp * 0.95)  return { bg: 'rgba(249,115,22,0.18)',  color: '#ea580c' }  // apelsin: 95-99%
+    return                         { bg: 'rgba(248,113,113,0.18)', color: '#ef4444' }  // qizil: <95%
   }
   const eff = stats.expected > 0 ? Math.round((stats.done / stats.expected) * 100) : null
   const effColor = eff === null ? '#94a3b8' : eff >= 100 ? '#4ade80' : eff >= 80 ? '#fbbf24' : '#f87171'
