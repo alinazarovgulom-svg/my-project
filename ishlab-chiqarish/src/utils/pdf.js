@@ -163,8 +163,9 @@ export function buildWorkPDFHtml(rows, filters, deptName, showDept = true, autoP
   .hdr-l .brand { font-size:22px; font-weight:900; letter-spacing:1px; line-height:1.1; }
   .hdr-l .brand .kaft { color:#D97706; }
   .hdr-l .brand .imda { color:#ffffff; }
-  .hdr-l .amber { width:68px; height:2.5px; background:#D97706; border-radius:1px; margin-top:5px; }
-  .hdr-l .sub   { font-size:10px; color:#93c5fd; margin-top:7px; line-height:1.7; font-weight:500; }
+  .hdr-l .amber   { width:68px; height:2.5px; background:#D97706; border-radius:1px; margin-top:5px; }
+  .hdr-l .tagline { font-size:9px; color:#93c5fd; margin-top:3px; letter-spacing:0.3px; }
+  .hdr-l .sub     { font-size:10px; color:#93c5fd; margin-top:5px; line-height:1.7; font-weight:500; }
   .hdr-r { display:flex; align-items:center; gap:22px; }
   .hdr-r .contacts { text-align:right; }
   .hdr-r .detail { font-size:9.5px; color:#94a3b8; margin-top:3px; display:flex; align-items:center; justify-content:flex-end; gap:4px; }
@@ -228,6 +229,7 @@ export function buildWorkPDFHtml(rows, filters, deptName, showDept = true, autoP
   <div class="hdr-l">
     <div class="brand"><span class="kaft">KAFT</span><span class="imda"> IMDA</span></div>
     <div class="amber"></div>
+    <div class="tagline">Biznesingiz kaftingizda</div>
     <div class="sub">${esc(deptName)} &nbsp;·&nbsp; ${esc(filters)}<br>Chiqarilgan: ${printed}</div>
   </div>
   <div class="hdr-r">
@@ -582,8 +584,9 @@ export function buildAttendancePDFHtml(absentEmps, allEmps, absences, department
   .hdr-l .brand { font-size:22px; font-weight:900; letter-spacing:1px; line-height:1.1; }
   .hdr-l .brand .kaft { color:#D97706; }
   .hdr-l .brand .imda { color:#ffffff; }
-  .hdr-l .amber { width:68px; height:2.5px; background:#D97706; border-radius:1px; margin-top:5px; }
-  .hdr-l .sub   { font-size:10px; color:#93c5fd; margin-top:7px; line-height:1.7; font-weight:500; }
+  .hdr-l .amber   { width:68px; height:2.5px; background:#D97706; border-radius:1px; margin-top:5px; }
+  .hdr-l .tagline { font-size:9px; color:#93c5fd; margin-top:3px; letter-spacing:0.3px; }
+  .hdr-l .sub     { font-size:10px; color:#93c5fd; margin-top:5px; line-height:1.7; font-weight:500; }
   .hdr-r { display:flex; align-items:center; gap:22px; }
   .hdr-r .contacts { text-align:right; }
   .hdr-r .detail { font-size:9.5px; color:#94a3b8; margin-top:3px; display:flex; align-items:center; justify-content:flex-end; gap:4px; }
@@ -641,6 +644,7 @@ export function buildAttendancePDFHtml(absentEmps, allEmps, absences, department
   <div class="hdr-l">
     <div class="brand"><span class="kaft">KAFT</span><span class="imda"> IMDA</span></div>
     <div class="amber"></div>
+    <div class="tagline">Biznesingiz kaftingizda</div>
     <div class="sub">Davomat hisoboti &nbsp;·&nbsp; ${fmtDate(date)}<br>Chiqarilgan: ${printed}</div>
   </div>
   <div class="hdr-r">
