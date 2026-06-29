@@ -213,7 +213,7 @@ export default function TVDisplay() {
             <span style={{ color: '#D97706' }}>KAFT</span><span style={{ color: '#ffffff' }}> IMDA</span>
           </div>
           <div style={{ height: 3, background: '#D97706', borderRadius: 2, margin: '6px 0 5px' }} />
-          <div style={{ fontSize: 13, color: '#93c5fd', letterSpacing: 0.3, marginBottom: 4 }}>Biznesingiz kaftingizda</div>
+          <div style={{ fontSize: 18, color: '#93c5fd', letterSpacing: 0.3, marginBottom: 4 }}>Biznesingiz kaftingizda</div>
           <div style={{ fontSize: 20, color: '#e2e8f0', fontWeight: 700 }}>{deptName}</div>
         </div>
 
