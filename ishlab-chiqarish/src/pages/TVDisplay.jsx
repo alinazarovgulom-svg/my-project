@@ -298,16 +298,16 @@ export default function TVDisplay() {
                         return (
                           <td key={slot} style={{ textAlign: 'center', padding: '5px 4px' }}>
                             <div style={{ background: st.bg, borderRadius: 8, padding: '4px 8px', display: 'inline-block', minWidth: 58 }}>
-                              <div style={{ fontSize: 26, fontWeight: 800, color: st.color, lineHeight: 1.2 }}>{sd.qty}</div>
-                              <div style={{ fontSize: 12, color: '#64748b', lineHeight: 1 }}>{Math.round(sd.exp)}</div>
+                              <div style={{ fontSize: 32, fontWeight: 800, color: st.color, lineHeight: 1.2 }}>{sd.qty}</div>
+                              <div style={{ fontSize: 15, color: '#64748b', lineHeight: 1 }}>{Math.round(sd.exp)}</div>
                             </div>
                           </td>
                         )
                       })}
                       <td style={{ textAlign: 'center', padding: '5px 8px' }}>
                         <div style={{ background: totalSt.bg, borderRadius: 8, padding: '4px 8px', display: 'inline-block', minWidth: 58 }}>
-                          <div style={{ fontSize: 26, fontWeight: 800, color: totalSt.color, lineHeight: 1.2 }}>{op.total}</div>
-                          <div style={{ fontSize: 12, color: '#64748b', lineHeight: 1 }}>{Math.round(op.exp)}</div>
+                          <div style={{ fontSize: 32, fontWeight: 800, color: totalSt.color, lineHeight: 1.2 }}>{op.total}</div>
+                          <div style={{ fontSize: 15, color: '#64748b', lineHeight: 1 }}>{Math.round(op.exp)}</div>
                         </div>
                       </td>
                     </tr>
