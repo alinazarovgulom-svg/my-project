@@ -83,7 +83,7 @@ export default function TVDisplay() {
           if (hasQty) seenEmp.add(d.employeeId)
           if (d.endTime && d.endTime > lastEndTime) lastEndTime = d.endTime
           const slot = `${d.startTime}–${d.endTime}`
-          const hours = calcHours(d.startTime, d.endTime)
+          const hours = Math.max(0, calcHours(d.startTime, d.endTime) - Number(d.breakMinutes || 0) / 60)
 
           if (!empData[d.employeeId]) empData[d.employeeId] = { ops: {}, totalQty: 0, totalExp: 0 }
 
