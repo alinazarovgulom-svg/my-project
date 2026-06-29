@@ -208,12 +208,13 @@ export default function TVDisplay() {
         flexShrink: 0,
       }}>
         {/* Brand */}
-        <div style={{ minWidth: 180 }}>
-          <div style={{ fontSize: 30, fontWeight: 900, letterSpacing: 1 }}>
-            <span style={{ color: '#D97706' }}>KAFT</span><span style={{ color: '#ffffff' }}>IMDA</span>
+        <div style={{ minWidth: 220 }}>
+          <div style={{ fontSize: 36, fontWeight: 900, letterSpacing: 2, lineHeight: 1 }}>
+            <span style={{ color: '#D97706' }}>KAFT</span><span style={{ color: '#ffffff' }}> IMDA</span>
           </div>
-          <div style={{ width: 68, height: 3, background: '#D97706', borderRadius: 2, margin: '5px 0 7px' }} />
-          <div style={{ fontSize: 26, color: '#93c5fd', fontWeight: 700 }}>{deptName}</div>
+          <div style={{ height: 3, background: '#D97706', borderRadius: 2, margin: '6px 0 5px' }} />
+          <div style={{ fontSize: 13, color: '#93c5fd', letterSpacing: 0.3, marginBottom: 4 }}>Biznesingiz kaftingizda</div>
+          <div style={{ fontSize: 20, color: '#e2e8f0', fontWeight: 700 }}>{deptName}</div>
         </div>
 
         {/* Stats */}
