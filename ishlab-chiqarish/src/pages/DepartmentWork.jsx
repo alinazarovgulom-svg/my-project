@@ -199,15 +199,16 @@ export default function DepartmentWork() {
       const totalExp = Object.values(operations).reduce((s, v) => s + Number(v.expected || 0), 0)
       const totalPct = totalExp > 0 ? Math.round((totalQty / totalExp) * 100) : 0
 
-      // Bugungi barcha smenalar maoshini yig'ish
+      // Bugungi barcha smenalar maoshini yig'ish (date bo'yicha query, JS da filter)
       let dailyTotalPay = totalPay
       try {
         const todaySnap = await getDocs(query(
           collection(db, 'factory_work_entries'),
-          where('employeeId', '==', empId),
           where('date', '==', date)
         ))
-        dailyTotalPay = todaySnap.docs.reduce((s, d) => s + Number(d.data().totalPay || 0), 0)
+        dailyTotalPay = todaySnap.docs
+          .filter(d => d.data().employeeId === empId)
+          .reduce((s, d) => s + Number(d.data().totalPay || 0), 0)
       } catch (_) {}
 
       let msg = `👤 <b>${emp.lastName} ${emp.firstName}</b>\n`
