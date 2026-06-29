@@ -27,6 +27,7 @@ export default function TVDisplay() {
   const [stats, setStats] = useState({ total: 0, attended: 0, absent: 0, done: 0, expected: 0, tayyor: 0 })
   const [page, setPage] = useState(0)
   const [clock, setClock] = useState(new Date())
+  const [lastUpdated, setLastUpdated] = useState(null)
 
   // Department name
   useEffect(() => {
@@ -126,6 +127,7 @@ export default function TVDisplay() {
 
         setRows(sorted)
         setStats({ total: allEmps.length, attended: seenEmp.size, absent: allEmps.length - seenEmp.size, done: totalDone, expected: totalExp, tayyor: totalTayyor })
+        setLastUpdated(new Date())
         setPage(0)
       })
     }
@@ -212,6 +214,11 @@ export default function TVDisplay() {
             {timeStr}
           </div>
           <div style={{ fontSize: 14, color: '#94a3b8', marginTop: 4 }}>{dateStr}</div>
+          {lastUpdated && (
+            <div style={{ fontSize: 11, color: '#475569', marginTop: 4 }}>
+              Yangilandi: {lastUpdated.toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tashkent' })}
+            </div>
+          )}
         </div>
       </div>
 
