@@ -130,10 +130,11 @@ export default function TVDisplay() {
           })
           .sort((a, b) => {
             const tier = e => {
-              if (!e.totalExp) return 1
-              if (e.totalQty >= e.totalExp)        return 0
-              if (e.totalQty >= e.totalExp * 0.8)  return 1
-              return 2
+              if (!e.totalExp) return 2
+              if (e.totalQty > e.totalExp)           return 0  // yashil: 100%+
+              if (e.totalQty === e.totalExp)         return 1  // sariq: aynan 100%
+              if (e.totalQty >= e.totalExp * 0.95)  return 2  // qizil: 95-99%
+              return 3                                          // to'q qizil: <95%
             }
             const ta = tier(a), tb = tier(b)
             if (ta !== tb) return ta - tb
@@ -172,10 +173,11 @@ export default function TVDisplay() {
   const allSlots = [...new Set(rows.flatMap(emp => emp.ops.flatMap(op => Object.keys(op.slots))))].sort()
 
   function slotColor(qty, exp) {
-    if (!exp) return { bg: 'rgba(255,255,255,0.08)', color: '#f8fafc' }
-    if (qty >= exp)        return { bg: 'rgba(74,222,128,0.18)',  color: '#4ade80' }
-    if (qty >= exp * 0.8)  return { bg: 'rgba(251,191,36,0.18)',  color: '#fbbf24' }
-    return                        { bg: 'rgba(248,113,113,0.18)', color: '#f87171' }
+    if (!exp) return { bg: 'rgba(255,255,255,0.08)', color: '#94a3b8' }
+    if (qty > exp)          return { bg: 'rgba(74,222,128,0.18)',  color: '#16a34a' }  // yashil: 100%+
+    if (qty === exp)        return { bg: 'rgba(251,191,36,0.18)',  color: '#d97706' }  // sariq: aynan 100%
+    if (qty >= exp * 0.95)  return { bg: 'rgba(248,113,113,0.18)', color: '#ef4444' }  // qizil: 95-99%
+    return                         { bg: 'rgba(153,27,27,0.18)',   color: '#991b1b' }  // to'q qizil: <95%
   }
   const eff = stats.expected > 0 ? Math.round((stats.done / stats.expected) * 100) : null
   const effColor = eff === null ? '#94a3b8' : eff >= 100 ? '#4ade80' : eff >= 80 ? '#fbbf24' : '#f87171'
