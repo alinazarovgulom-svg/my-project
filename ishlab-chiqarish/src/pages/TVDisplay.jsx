@@ -10,7 +10,7 @@ const today = format(new Date(), 'yyyy-MM-dd')
 const PER_PAGE = 2
 
 function shortSlot(slot) {
-  return slot.replace(/(\d{2}):\d{2}[–-](\d{2}):\d{2}/, '$1-$2')
+  return slot.replace('–', ' – ')
 }
 
 function calcHours(start, end) {
@@ -285,7 +285,7 @@ export default function TVDisplay() {
                       <tr key={op.name} style={{ background: rowBg }}>
                         <td colSpan={2} style={{ padding: '2px 20px 12px 56px', verticalAlign: 'top' }}>
                           {/* Op name */}
-                          <div style={{ color: '#60a5fa', fontWeight: 700, fontSize: 32, marginBottom: 3 }}>
+                          <div style={{ color: '#60a5fa', fontWeight: 700, fontSize: 36, marginBottom: 3 }}>
                             {op.name}
                           </div>
                           {/* Norm */}
