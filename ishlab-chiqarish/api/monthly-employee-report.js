@@ -65,16 +65,12 @@ export default async function handler(req, res) {
     for (const [empId, s] of Object.entries(summary)) {
       const emp = empMap[empId]
       if (!emp?.telegramId) continue
-      const pct = s.totalExp > 0 ? Math.round((s.totalQty / s.totalExp) * 100) : null
       const absents = absMap[empId] || 0
-      const pctIcon = !pct ? '⚪' : pct >= 100 ? '🟢' : pct >= 95 ? '🟡' : '🔴'
 
       let msg = `📊 <b>${label} — oylik hisobot</b>\n`
       msg += `👤 <b>${emp.lastName} ${emp.firstName}</b>\n\n`
       msg += `📅 Ish kunlari: ${s.totalDays}\n`
       msg += `📦 Bajarilgan: ${s.totalQty.toLocaleString()} dona\n`
-      msg += `🎯 Kutilgan: ${Math.round(s.totalExp).toLocaleString()} dona\n`
-      msg += `${pctIcon} Samaradorlik: <b>${pct !== null ? pct + '%' : '—'}</b>\n`
       if (absents > 0) msg += `❌ Kelmagan: ${absents} kun\n`
       if (s.totalPay > 0) msg += `\n💰 Jami maosh: <b>${s.totalPay.toLocaleString()} so'm</b>`
 

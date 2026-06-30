@@ -189,15 +189,8 @@ export default function DepartmentWork() {
         const op = allOps.find(o => o.id === opId)
         if (!op) return ''
         const qty = Number(val.quantity || 0)
-        const exp = Number(val.expected || 0)
-        const pct = exp > 0 ? Math.round((qty / exp) * 100) : 0
-        const icon = pct >= 100 ? '✅' : pct >= 95 ? '🟡' : '🔴'
-        return `${icon} ${op.name}: ${qty} dona (${pct}%)`
+        return `• ${op.name}: ${qty} dona`
       }).filter(Boolean).join('\n')
-
-      const totalQty = Object.values(operations).reduce((s, v) => s + Number(v.quantity || 0), 0)
-      const totalExp = Object.values(operations).reduce((s, v) => s + Number(v.expected || 0), 0)
-      const totalPct = totalExp > 0 ? Math.round((totalQty / totalExp) * 100) : 0
 
       // Bugungi barcha smenalar maoshini yig'ish (date bo'yicha query, JS da filter)
       let dailyTotalPay = totalPay
@@ -213,8 +206,7 @@ export default function DepartmentWork() {
 
       let msg = `👤 <b>${emp.lastName} ${emp.firstName}</b>\n`
       msg += `📅 ${date}, ${empStart}–${empEnd}\n\n`
-      msg += opLines ? opLines + '\n\n' : ''
-      msg += `📊 Umumiy: <b>${totalPct}%</b>`
+      msg += opLines ? opLines + '\n' : ''
       if (dailyTotalPay > 0) msg += `\n💰 Bugungi jami maosh: <b>${dailyTotalPay.toLocaleString()} so'm</b>`
 
       sendTelegramMessage(emp.telegramId, msg)
