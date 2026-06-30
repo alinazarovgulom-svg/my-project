@@ -205,7 +205,8 @@ export default function DepartmentWork() {
       } catch (_) {}
 
       let msg = `👤 <b>${emp.lastName} ${emp.firstName}</b>\n`
-      msg += `📅 ${date}, ${empStart}–${empEnd}\n\n`
+      msg += `📅 ${date}, ${empStart}–${empEnd}\n`
+      msg += `⏱ Ishlagan: <b>${empH.toFixed(1)} soat</b>\n\n`
       msg += opLines ? opLines + '\n' : ''
       if (dailyTotalPay > 0) msg += `\n💰 Bugungi jami maosh: <b>${dailyTotalPay.toLocaleString()} so'm</b>`
 
