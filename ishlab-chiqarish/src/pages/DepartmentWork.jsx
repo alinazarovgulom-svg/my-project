@@ -352,10 +352,19 @@ export default function DepartmentWork() {
                 Orqaga
               </button>
               <button
-                onClick={() => { setWarnEmps([]); doSaveAll() }}
+                onClick={async () => {
+                  const warnIds = new Set(warnEmps.map(e => e.id))
+                  setWarnEmps([])
+                  setSavingAll(true)
+                  await Promise.all(employees.filter(e => !warnIds.has(e.id)).map(e => saveEmployee(e.id)))
+                  setSavingAll(false)
+                  setSavedAll(true)
+                  setIsDirty(false)
+                  setTimeout(() => setSavedAll(false), 2500)
+                }}
                 className="flex-1 bg-blue-700 hover:bg-blue-800 text-white rounded-lg py-2.5 text-sm font-medium transition-colors"
               >
-                Barchasini saqlash
+                Kiritilganlarni saqlash
               </button>
             </div>
           </div>
