@@ -64,6 +64,7 @@ export default function DepartmentWork() {
   const [tgSending, setTgSending] = useState(false)
   const [tgMsg, setTgMsg] = useState('')
   const [warnEmps, setWarnEmps] = useState([])
+  const [absentEmpIds, setAbsentEmpIds] = useState(new Set())
 
   useEffect(() => {
     getDocs(query(collection(db, 'factory_shifts'), where('isActive', '==', true)))
@@ -90,6 +91,19 @@ export default function DepartmentWork() {
       setAllOps(snap.docs.map(d => ({ id: d.id, ...d.data() })))
     })
   }, [])
+
+  // Load confirmed absences for this date and department
+  useEffect(() => {
+    if (!date) return
+    const q = query(
+      collection(db, 'factory_absences'),
+      where('date', '==', date),
+      where('departmentId', '==', deptId)
+    )
+    return onSnapshot(q, snap => {
+      setAbsentEmpIds(new Set(snap.docs.map(d => d.data().employeeId)))
+    })
+  }, [date, deptId])
 
   // Reset overrides and dirty flag when date/time changes
   useEffect(() => {
@@ -217,6 +231,7 @@ export default function DepartmentWork() {
 
   const getMissingEmps = () => {
     return employees.filter(emp => {
+      if (absentEmpIds.has(emp.id)) return false
       const activeOpIds = overrides[emp.id] ?? emp.operationIds ?? []
       if (!activeOpIds.length) return false
       const empEntries = entries[emp.id] || {}
@@ -510,8 +525,15 @@ export default function DepartmentWork() {
               </div>
             )}
           </div>
+        {absentEmpIds.size > 0 && (
+          <div className="bg-red-50 border border-red-100 rounded-xl px-4 py-2.5 mb-3 text-xs text-red-700 flex items-center gap-2">
+            <span>🔴</span>
+            <span>{absentEmpIds.size} xodim davomat da kelmagan belgilangan — ro'yxatda ko'rinmaydi</span>
+          </div>
+        )}
         <div className="space-y-4">
           {employees.filter(emp => {
+            if (absentEmpIds.has(emp.id)) return false
             if (!search.trim()) return true
             const q = search.trim().toLowerCase()
             return `${emp.lastName} ${emp.firstName}`.toLowerCase().includes(q)
