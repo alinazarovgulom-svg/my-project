@@ -9,23 +9,23 @@ function initFirebase() {
 
 function getPrevWeekRange() {
   const now = new Date(Date.now() + 5 * 60 * 60 * 1000) // Tashkent UTC+5
-  // Cron shanba kuni ishlaydi — dushanba (−5) dan juma (−1) gacha
+  // Cron shanba kuni ishlaydi — o'tgan shanba (−7) dan o'tgan juma (−1) gacha
   const pad = n => String(n).padStart(2, '0')
   const fmt = d => `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`
 
-  const saturday = new Date(now)
-  saturday.setUTCHours(0, 0, 0, 0)
+  const today = new Date(now)
+  today.setUTCHours(0, 0, 0, 0)
 
-  const monday = new Date(saturday)
-  monday.setUTCDate(saturday.getUTCDate() - 5)
+  const prevSaturday = new Date(today)
+  prevSaturday.setUTCDate(today.getUTCDate() - 7)
 
-  const friday = new Date(saturday)
-  friday.setUTCDate(saturday.getUTCDate() - 1)
+  const prevFriday = new Date(today)
+  prevFriday.setUTCDate(today.getUTCDate() - 1)
 
-  const monthName = monday.toLocaleString('uz-UZ', { month: 'long' })
-  const label = `${monday.getUTCDate()}–${friday.getUTCDate()} ${monthName}`
+  const monthName = prevSaturday.toLocaleString('uz-UZ', { month: 'long' })
+  const label = `${prevSaturday.getUTCDate()}–${prevFriday.getUTCDate()} ${monthName}`
 
-  return { from: fmt(monday), to: fmt(friday), label }
+  return { from: fmt(prevSaturday), to: fmt(prevFriday), label }
 }
 
 export default async function handler(req, res) {
