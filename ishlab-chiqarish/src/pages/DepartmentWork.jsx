@@ -63,7 +63,6 @@ export default function DepartmentWork() {
   const [activeShift, setActiveShift] = useState(null)
   const [tgSending, setTgSending] = useState(false)
   const [tgMsg, setTgMsg] = useState('')
-  const [warnEmps, setWarnEmps] = useState([])
 
   useEffect(() => {
     getDocs(query(collection(db, 'factory_shifts'), where('isActive', '==', true)))
@@ -215,31 +214,13 @@ export default function DepartmentWork() {
     }
   }
 
-  const getMissingEmps = () => {
-    return employees.filter(emp => {
-      const activeOpIds = overrides[emp.id] ?? emp.operationIds ?? []
-      if (!activeOpIds.length) return false
-      const empEntries = entries[emp.id] || {}
-      return activeOpIds.some(opId => {
-        const qty = empEntries[opId]?.quantity
-        return qty === '' || qty === undefined || qty === null || Number(qty) === 0
-      })
-    })
-  }
-
-  const doSaveAll = async () => {
+  const saveAll = async () => {
     setSavingAll(true)
     await Promise.all(employees.map(emp => saveEmployee(emp.id)))
     setSavingAll(false)
     setSavedAll(true)
     setIsDirty(false)
     setTimeout(() => setSavedAll(false), 2500)
-  }
-
-  const saveAll = async () => {
-    const missing = getMissingEmps()
-    if (missing.length > 0) { setWarnEmps(missing); return }
-    await doSaveAll()
   }
 
   const openPicker = (emp) => {
@@ -329,39 +310,6 @@ export default function DepartmentWork() {
 
   return (
     <div>
-      {/* Missing quantities warning modal */}
-      {warnEmps.length > 0 && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
-            <div className="text-3xl mb-3">⚠️</div>
-            <h3 className="font-bold text-gray-800 mb-1">Miqdor kiritilmagan</h3>
-            <p className="text-sm text-gray-500 mb-3">Quyidagi xodimlar uchun ba'zi operatsiyalar bo'sh qolgan:</p>
-            <ul className="space-y-1 mb-5">
-              {warnEmps.map(emp => (
-                <li key={emp.id} className="text-sm text-gray-700 flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block" />
-                  {emp.lastName} {emp.firstName}
-                </li>
-              ))}
-            </ul>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setWarnEmps([])}
-                className="flex-1 border border-gray-300 rounded-lg py-2.5 text-sm text-gray-600 hover:bg-gray-50 transition-colors"
-              >
-                Orqaga
-              </button>
-              <button
-                onClick={() => { setWarnEmps([]); doSaveAll() }}
-                className="flex-1 bg-amber-500 hover:bg-amber-600 text-white rounded-lg py-2.5 text-sm font-medium transition-colors"
-              >
-                Baribir saqlash
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-xl font-bold text-gray-800">{dept.name}</h1>
