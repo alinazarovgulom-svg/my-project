@@ -203,78 +203,103 @@ export default function Employees() {
             {filterStatus === 'archived' ? 'Arxivlangan xodimlar yo\'q' : 'Xodimlar topilmadi'}
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50 border-b border-gray-100">
-                <tr>
-                  <th className="text-left px-4 py-3 font-medium text-gray-600">#</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-600">Ismi Familyasi</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-600">Bo'lim</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-600">Operatsiyalar</th>
-                  {can.manageEmployees && <th className="px-4 py-3 w-24" />}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {filtered.map((emp, i) => {
-                  const empOps = allOps.filter(o => emp.operationIds?.includes(o.id))
-                  return (
-                    <tr key={emp.id} className={`hover:bg-gray-50 ${filterStatus === 'archived' ? 'opacity-60' : ''}`}>
-                      <td className="px-4 py-3 text-gray-400">{i + 1}</td>
-                      <td className="px-4 py-3 font-medium text-gray-800">
-                        {emp.lastName} {emp.firstName}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className="bg-blue-50 text-blue-700 text-xs px-2 py-0.5 rounded-full">
+          <>
+            {/* Mobile card list */}
+            <div className="md:hidden divide-y divide-gray-50">
+              {filtered.map((emp) => {
+                const empOps = allOps.filter(o => emp.operationIds?.includes(o.id))
+                return (
+                  <div key={emp.id} className={`px-4 py-3 ${filterStatus === 'archived' ? 'opacity-60' : ''}`}>
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <div className="text-sm font-medium text-gray-800">{emp.lastName} {emp.firstName}</div>
+                        <span className="bg-blue-50 text-blue-700 text-xs px-2 py-0.5 rounded-full mt-1 inline-block">
                           {getDeptName(emp.departmentId)}
                         </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex flex-wrap gap-1">
-                          {empOps.length === 0 ? (
-                            <span className="text-gray-400 text-xs">Tayinlanmagan</span>
-                          ) : empOps.map(op => (
-                            <span key={op.id} className="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full">
-                              {op.name}
-                            </span>
-                          ))}
-                        </div>
-                      </td>
+                        {empOps.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-1.5">
+                            {empOps.map(op => (
+                              <span key={op.id} className="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full">{op.name}</span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                       {can.manageEmployees && (
+                        <div className="flex gap-1 shrink-0">
+                          {filterStatus === 'active' ? (
+                            <>
+                              <button onClick={() => openEdit(emp)} className="p-2 text-gray-400 hover:text-blue-600"><Pencil className="w-4 h-4" /></button>
+                              <button onClick={() => handleArchive(emp.id)} className="p-2 text-gray-400 hover:text-amber-600"><Archive className="w-4 h-4" /></button>
+                            </>
+                          ) : (
+                            <>
+                              <button onClick={() => handleRestore(emp.id)} className="p-2 text-gray-400 hover:text-green-600"><RotateCcw className="w-4 h-4" /></button>
+                              <button onClick={() => handleDelete(emp.id)} disabled={deleting === emp.id} className="p-2 text-gray-400 hover:text-red-600 disabled:opacity-40"><Trash2 className="w-4 h-4" /></button>
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+
+            {/* Desktop table */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50 border-b border-gray-100">
+                  <tr>
+                    <th className="text-left px-4 py-3 font-medium text-gray-600">#</th>
+                    <th className="text-left px-4 py-3 font-medium text-gray-600">Ismi Familyasi</th>
+                    <th className="text-left px-4 py-3 font-medium text-gray-600">Bo'lim</th>
+                    <th className="text-left px-4 py-3 font-medium text-gray-600">Operatsiyalar</th>
+                    {can.manageEmployees && <th className="px-4 py-3 w-24" />}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {filtered.map((emp, i) => {
+                    const empOps = allOps.filter(o => emp.operationIds?.includes(o.id))
+                    return (
+                      <tr key={emp.id} className={`hover:bg-gray-50 ${filterStatus === 'archived' ? 'opacity-60' : ''}`}>
+                        <td className="px-4 py-3 text-gray-400">{i + 1}</td>
+                        <td className="px-4 py-3 font-medium text-gray-800">{emp.lastName} {emp.firstName}</td>
                         <td className="px-4 py-3">
-                          <div className="flex gap-2 justify-end">
-                            {filterStatus === 'active' ? (
-                              <>
-                                <button onClick={() => openEdit(emp)} className="text-gray-400 hover:text-blue-600 transition-colors" title="Tahrirlash">
-                                  <Pencil className="w-4 h-4" />
-                                </button>
-                                <button onClick={() => handleArchive(emp.id)} className="text-gray-400 hover:text-amber-600 transition-colors" title="Arxivlash">
-                                  <Archive className="w-4 h-4" />
-                                </button>
-                              </>
-                            ) : (
-                              <>
-                                <button onClick={() => handleRestore(emp.id)} className="text-gray-400 hover:text-green-600 transition-colors" title="Qayta faollashtirish">
-                                  <RotateCcw className="w-4 h-4" />
-                                </button>
-                                <button
-                                  onClick={() => handleDelete(emp.id)}
-                                  disabled={deleting === emp.id}
-                                  className="text-gray-400 hover:text-red-600 transition-colors disabled:opacity-40"
-                                  title="Butunlay o'chirish"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </button>
-                              </>
-                            )}
+                          <span className="bg-blue-50 text-blue-700 text-xs px-2 py-0.5 rounded-full">{getDeptName(emp.departmentId)}</span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex flex-wrap gap-1">
+                            {empOps.length === 0 ? (
+                              <span className="text-gray-400 text-xs">Tayinlanmagan</span>
+                            ) : empOps.map(op => (
+                              <span key={op.id} className="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full">{op.name}</span>
+                            ))}
                           </div>
                         </td>
-                      )}
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
+                        {can.manageEmployees && (
+                          <td className="px-4 py-3">
+                            <div className="flex gap-2 justify-end">
+                              {filterStatus === 'active' ? (
+                                <>
+                                  <button onClick={() => openEdit(emp)} className="text-gray-400 hover:text-blue-600 transition-colors"><Pencil className="w-4 h-4" /></button>
+                                  <button onClick={() => handleArchive(emp.id)} className="text-gray-400 hover:text-amber-600 transition-colors"><Archive className="w-4 h-4" /></button>
+                                </>
+                              ) : (
+                                <>
+                                  <button onClick={() => handleRestore(emp.id)} className="text-gray-400 hover:text-green-600 transition-colors"><RotateCcw className="w-4 h-4" /></button>
+                                  <button onClick={() => handleDelete(emp.id)} disabled={deleting === emp.id} className="text-gray-400 hover:text-red-600 transition-colors disabled:opacity-40"><Trash2 className="w-4 h-4" /></button>
+                                </>
+                              )}
+                            </div>
+                          </td>
+                        )}
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
 

@@ -156,88 +156,90 @@ export default function Operations() {
             Operatsiyalar topilmadi
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50 border-b border-gray-100">
-                <tr>
-                  <th className="text-left px-4 py-3 font-medium text-gray-600">Operatsiya nomi</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-600">Bo'lim</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-600">Norma (1 soat)</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-600">Dona narxi (so'm)</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-600">Yakuniy</th>
-                  {can.manageOperations && <th className="px-4 py-3 w-24 text-center font-medium text-gray-600">Tartib</th>}
-                  {can.manageOperations && <th className="px-4 py-3 w-20" />}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {filtered.map(op => (
-                  <tr key={op.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 font-medium text-gray-800">{op.name}</td>
-                    <td className="px-4 py-3">
-                      <span className="bg-blue-50 text-blue-700 text-xs px-2 py-0.5 rounded-full">
+          <>
+            {/* Mobile card list */}
+            <div className="md:hidden divide-y divide-gray-50">
+              {filtered.map(op => (
+                <div key={op.id} className="px-4 py-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="text-sm font-medium text-gray-800">{op.name}</span>
+                        {op.isFinal && <Star className="w-3.5 h-3.5 fill-amber-500 text-amber-500 shrink-0" />}
+                      </div>
+                      <span className="bg-blue-50 text-blue-700 text-xs px-2 py-0.5 rounded-full mt-1 inline-block">
                         {getDeptName(op.departmentId)}
                       </span>
-                    </td>
-                    <td className="px-4 py-3 text-gray-600">{op.norm} dona</td>
-                    <td className="px-4 py-3 text-gray-600">{op.unitPrice ? `${op.unitPrice.toLocaleString()} so'm` : '—'}</td>
-                    <td className="px-4 py-3">
-                      <button
-                        onClick={() => can.manageOperations && handleToggleFinal(op)}
-                        disabled={!can.manageOperations}
-                        title={op.isFinal ? 'Yakuniy operatsiya — bosib olib tashlash' : 'Yakuniy operatsiya qilib belgilash'}
-                        className={`flex items-center gap-1.5 text-xs transition-colors ${
-                          op.isFinal
-                            ? 'text-amber-600'
-                            : can.manageOperations
-                              ? 'text-gray-300 hover:text-amber-400'
-                              : 'text-gray-200 cursor-default'
-                        }`}
-                      >
-                        <Star className={`w-4 h-4 ${op.isFinal ? 'fill-amber-500 text-amber-500' : ''}`} />
-                        {op.isFinal && <span className="font-medium">Yakuniy</span>}
-                      </button>
-                    </td>
+                      <div className="text-xs text-gray-400 mt-1">
+                        {op.norm} dona/soat{op.unitPrice ? ` · ${op.unitPrice.toLocaleString()} so'm` : ''}
+                      </div>
+                    </div>
                     {can.manageOperations && (
-                      <td className="px-4 py-3">
-                        <div className="flex gap-1 justify-center">
-                          <button
-                            onClick={() => reorder(op, 'up')}
-                            disabled={reordering === op.id || filtered.indexOf(op) === 0}
-                            className="text-gray-400 hover:text-blue-600 transition-colors disabled:opacity-20"
-                          >
-                            <ChevronUp className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => reorder(op, 'down')}
-                            disabled={reordering === op.id || filtered.indexOf(op) === filtered.length - 1}
-                            className="text-gray-400 hover:text-blue-600 transition-colors disabled:opacity-20"
-                          >
-                            <ChevronDown className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </td>
+                      <div className="flex gap-1 shrink-0">
+                        <button onClick={() => openEdit(op)} className="p-2 text-gray-400 hover:text-blue-600"><Pencil className="w-4 h-4" /></button>
+                        <button onClick={() => handleDelete(op.id)} disabled={deleting === op.id} className="p-2 text-gray-400 hover:text-red-600 disabled:opacity-40"><Trash2 className="w-4 h-4" /></button>
+                      </div>
                     )}
-                    {can.manageOperations && (
-                      <td className="px-4 py-3">
-                        <div className="flex gap-2 justify-end">
-                          <button onClick={() => openEdit(op)} className="text-gray-400 hover:text-blue-600 transition-colors">
-                            <Pencil className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(op.id)}
-                            disabled={deleting === op.id}
-                            className="text-gray-400 hover:text-red-600 transition-colors disabled:opacity-40"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </td>
-                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop table */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50 border-b border-gray-100">
+                  <tr>
+                    <th className="text-left px-4 py-3 font-medium text-gray-600">Operatsiya nomi</th>
+                    <th className="text-left px-4 py-3 font-medium text-gray-600">Bo'lim</th>
+                    <th className="text-left px-4 py-3 font-medium text-gray-600">Norma (1 soat)</th>
+                    <th className="text-left px-4 py-3 font-medium text-gray-600">Dona narxi (so'm)</th>
+                    <th className="text-left px-4 py-3 font-medium text-gray-600">Yakuniy</th>
+                    {can.manageOperations && <th className="px-4 py-3 w-24 text-center font-medium text-gray-600">Tartib</th>}
+                    {can.manageOperations && <th className="px-4 py-3 w-20" />}
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {filtered.map(op => (
+                    <tr key={op.id} className="hover:bg-gray-50">
+                      <td className="px-4 py-3 font-medium text-gray-800">{op.name}</td>
+                      <td className="px-4 py-3">
+                        <span className="bg-blue-50 text-blue-700 text-xs px-2 py-0.5 rounded-full">{getDeptName(op.departmentId)}</span>
+                      </td>
+                      <td className="px-4 py-3 text-gray-600">{op.norm} dona</td>
+                      <td className="px-4 py-3 text-gray-600">{op.unitPrice ? `${op.unitPrice.toLocaleString()} so'm` : '—'}</td>
+                      <td className="px-4 py-3">
+                        <button
+                          onClick={() => can.manageOperations && handleToggleFinal(op)}
+                          disabled={!can.manageOperations}
+                          className={`flex items-center gap-1.5 text-xs transition-colors ${op.isFinal ? 'text-amber-600' : can.manageOperations ? 'text-gray-300 hover:text-amber-400' : 'text-gray-200 cursor-default'}`}
+                        >
+                          <Star className={`w-4 h-4 ${op.isFinal ? 'fill-amber-500 text-amber-500' : ''}`} />
+                          {op.isFinal && <span className="font-medium">Yakuniy</span>}
+                        </button>
+                      </td>
+                      {can.manageOperations && (
+                        <td className="px-4 py-3">
+                          <div className="flex gap-1 justify-center">
+                            <button onClick={() => reorder(op, 'up')} disabled={reordering === op.id || filtered.indexOf(op) === 0} className="text-gray-400 hover:text-blue-600 transition-colors disabled:opacity-20"><ChevronUp className="w-4 h-4" /></button>
+                            <button onClick={() => reorder(op, 'down')} disabled={reordering === op.id || filtered.indexOf(op) === filtered.length - 1} className="text-gray-400 hover:text-blue-600 transition-colors disabled:opacity-20"><ChevronDown className="w-4 h-4" /></button>
+                          </div>
+                        </td>
+                      )}
+                      {can.manageOperations && (
+                        <td className="px-4 py-3">
+                          <div className="flex gap-2 justify-end">
+                            <button onClick={() => openEdit(op)} className="text-gray-400 hover:text-blue-600 transition-colors"><Pencil className="w-4 h-4" /></button>
+                            <button onClick={() => handleDelete(op.id)} disabled={deleting === op.id} className="text-gray-400 hover:text-red-600 transition-colors disabled:opacity-40"><Trash2 className="w-4 h-4" /></button>
+                          </div>
+                        </td>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
 
