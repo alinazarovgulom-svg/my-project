@@ -168,9 +168,40 @@ export default function Layout({ children }) {
           <span className="font-bold text-sm">KAFTIMDA</span>
         </div>
 
-        <main className="flex-1 overflow-y-auto p-4 md:p-6">
+        <main className="flex-1 overflow-y-auto p-4 md:p-6 pb-20 lg:pb-6">
           {children}
         </main>
+
+        {/* Mobile bottom navigation */}
+        <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex z-30">
+          {[
+            { to: '/', label: 'Bosh', icon: LayoutDashboard },
+            { to: '/attendance', label: 'Davomat', icon: CalendarCheck },
+            { to: '/reports', label: 'Hisobot', icon: FileText },
+            { to: '/monthly', label: 'Oylik', icon: BarChart2 },
+          ].map(({ to, label, icon: Icon }) => {
+            const active = location.pathname === to
+            return (
+              <Link
+                key={to}
+                to={to}
+                className={`flex-1 flex flex-col items-center justify-center py-2 gap-0.5 text-[10px] font-medium transition-colors ${
+                  active ? 'text-blue-700' : 'text-gray-400'
+                }`}
+              >
+                <Icon className="w-5 h-5" />
+                {label}
+              </Link>
+            )
+          })}
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="flex-1 flex flex-col items-center justify-center py-2 gap-0.5 text-[10px] font-medium text-gray-400"
+          >
+            <Menu className="w-5 h-5" />
+            Menyu
+          </button>
+        </nav>
       </div>
     </div>
   )

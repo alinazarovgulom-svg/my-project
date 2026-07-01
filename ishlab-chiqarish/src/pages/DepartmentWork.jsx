@@ -344,7 +344,7 @@ export default function DepartmentWork() {
             </div>
           </div>
         )}
-        <div className="flex flex-wrap gap-4 items-end">
+        <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-3 sm:gap-4 sm:items-end">
           <div>
             <label className="block text-xs font-medium text-gray-500 mb-1">
               <Calendar className="w-3.5 h-3.5 inline mr-1" />Sana
@@ -353,7 +353,7 @@ export default function DepartmentWork() {
               type="date"
               value={date}
               onChange={e => setDate(e.target.value)}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full sm:w-auto border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
           <div>
@@ -364,7 +364,7 @@ export default function DepartmentWork() {
               type="time"
               value={startTime}
               onChange={e => setStartTime(e.target.value)}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full sm:w-auto border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
           <div>
@@ -375,7 +375,7 @@ export default function DepartmentWork() {
               type="time"
               value={endTime}
               onChange={e => setEndTime(e.target.value)}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full sm:w-auto border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
           <div>
@@ -387,10 +387,10 @@ export default function DepartmentWork() {
               value={breakMinutes || ''}
               onChange={e => setBreakMinutes(e.target.value === '' ? 0 : Math.max(0, Number(e.target.value)))}
               placeholder="0"
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-24 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full sm:w-24 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
-          <div className="text-sm text-gray-500 pb-2">
+          <div className="col-span-2 sm:col-span-1 text-sm text-gray-500 sm:pb-2">
             <span className="font-semibold text-gray-700">{hours.toFixed(1)}</span> soat
             {breakMinutes > 0 && (
               <span className="text-xs text-orange-500 ml-1">(−{breakMinutes} daq.)</span>
@@ -452,9 +452,9 @@ export default function DepartmentWork() {
                   } disabled:opacity-60`}
                 >
                   {savedAll ? (
-                    <><CheckCircle className="w-4 h-4" /> Hammasi saqlandi</>
+                    <><CheckCircle className="w-4 h-4" /> <span className="hidden sm:inline">Hammasi </span>saqlandi</>
                   ) : (
-                    <><Save className="w-4 h-4" /> {savingAll ? 'Saqlanmoqda...' : 'Barchasini saqlash'}</>
+                    <><Save className="w-4 h-4" /> {savingAll ? 'Saqlanmoqda...' : <><span className="hidden sm:inline">Barchasini </span>saqlash</>}</>
                   )}
                 </button>
               </div>
@@ -631,7 +631,7 @@ export default function DepartmentWork() {
 
                       return (
                         <div key={op.id} className="px-4 py-3">
-                          <div className="flex flex-wrap items-center gap-3">
+                          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                             <div className="flex-1 min-w-0">
                               <div className="text-sm font-medium text-gray-700">{op.name}</div>
                               <div className="text-xs text-gray-400 mt-0.5">
@@ -656,7 +656,7 @@ export default function DepartmentWork() {
                               value={note}
                               onChange={e => setEntryVal(emp.id, op.id, 'note', e.target.value)}
                               disabled={!can.enterHourly}
-                              className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-40 md:w-52"
+                              className="w-full sm:w-40 md:w-52 border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                               placeholder="Izoh..."
                             />
                           </div>

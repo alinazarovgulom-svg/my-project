@@ -259,52 +259,49 @@ export default function Attendance() {
 
                     return (
                       <div key={emp.id} className="px-4 py-3 bg-red-50/40">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="text-xs text-gray-400 w-5 text-right">{i + 1}</span>
-
-                          <span className="flex-1 min-w-0 text-sm font-medium text-red-800">
-                            {emp.lastName} {emp.firstName}
-                          </span>
-
-                          {/* Reason select */}
-                          {can.enterHourly && (
-                            <select
-                              value={abs?.reason ?? ''}
-                              onChange={e => {
-                                if (e.target.value) handleReasonChange(emp, e.target.value)
-                                else removeReason(emp.id)
-                              }}
-                              disabled={saving[emp.id]}
-                              className="border border-red-200 bg-white rounded-lg px-2 py-1.5 text-xs text-red-700 focus:outline-none focus:ring-1 focus:ring-red-400"
-                            >
-                              <option value="">— Sabab —</option>
-                              {REASONS.map(r => (
-                                <option key={r.value} value={r.value}>{r.label}</option>
-                              ))}
-                            </select>
-                          )}
-
-                          {!can.enterHourly && abs && (
-                            <span className={`text-xs font-medium px-2 py-1 rounded-full ${reason?.badge}`}>
-                              {reason?.label}
+                        <div className="flex flex-col gap-1.5 sm:flex-row sm:flex-wrap sm:items-center sm:gap-2">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-gray-400 w-5 text-right shrink-0">{i + 1}</span>
+                            <span className="flex-1 min-w-0 text-sm font-medium text-red-800">
+                              {emp.lastName} {emp.firstName}
                             </span>
-                          )}
-
-                          {/* Note */}
-                          {can.enterHourly && (
-                            <input
-                              type="text"
-                              value={notes[emp.id] ?? ''}
-                              onChange={e => setNotes(n => ({ ...n, [emp.id]: e.target.value }))}
-                              onBlur={() => handleNoteBlur(emp)}
-                              placeholder="Izoh..."
-                              className="border border-gray-200 rounded-lg px-2 py-1.5 text-xs w-36 md:w-44 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                            />
-                          )}
-
-                          {!can.enterHourly && abs?.note && (
-                            <span className="text-xs text-gray-500">{abs.note}</span>
-                          )}
+                          </div>
+                          <div className="flex items-center gap-2 pl-7 sm:pl-0">
+                            {can.enterHourly && (
+                              <select
+                                value={abs?.reason ?? ''}
+                                onChange={e => {
+                                  if (e.target.value) handleReasonChange(emp, e.target.value)
+                                  else removeReason(emp.id)
+                                }}
+                                disabled={saving[emp.id]}
+                                className="flex-1 sm:flex-none border border-red-200 bg-white rounded-lg px-2 py-1.5 text-xs text-red-700 focus:outline-none focus:ring-1 focus:ring-red-400"
+                              >
+                                <option value="">— Sabab —</option>
+                                {REASONS.map(r => (
+                                  <option key={r.value} value={r.value}>{r.label}</option>
+                                ))}
+                              </select>
+                            )}
+                            {!can.enterHourly && abs && (
+                              <span className={`text-xs font-medium px-2 py-1 rounded-full ${reason?.badge}`}>
+                                {reason?.label}
+                              </span>
+                            )}
+                            {can.enterHourly && (
+                              <input
+                                type="text"
+                                value={notes[emp.id] ?? ''}
+                                onChange={e => setNotes(n => ({ ...n, [emp.id]: e.target.value }))}
+                                onBlur={() => handleNoteBlur(emp)}
+                                placeholder="Izoh..."
+                                className="flex-1 sm:flex-none border border-gray-200 rounded-lg px-2 py-1.5 text-xs sm:w-36 md:w-44 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                              />
+                            )}
+                            {!can.enterHourly && abs?.note && (
+                              <span className="text-xs text-gray-500">{abs.note}</span>
+                            )}
+                          </div>
                         </div>
                       </div>
                     )
