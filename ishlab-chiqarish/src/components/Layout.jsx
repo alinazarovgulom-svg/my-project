@@ -165,7 +165,32 @@ export default function Layout({ children }) {
           <button onClick={() => setSidebarOpen(true)}>
             <Menu className="w-5 h-5" />
           </button>
-          <span className="font-bold text-sm">KAFTIMDA</span>
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="font-bold text-sm shrink-0">KAFTIMDA</span>
+            {(() => {
+              const p = location.pathname
+              let title = ''
+              if (p === '/attendance') title = 'Davomat'
+              else if (p === '/operations') title = 'Operatsiyalar'
+              else if (p === '/employees') title = 'Xodimlar'
+              else if (p === '/reports') title = 'Hisobotlar'
+              else if (p === '/monthly') title = 'Oylik hisobot'
+              else if (p === '/shifts') title = 'Smena jadvali'
+              else if (p === '/members') title = "A'zolar"
+              else if (p === '/departments') title = "Bo'limlar"
+              else if (p.startsWith('/department/')) {
+                const dept = departments.find(d => d.id === p.split('/')[2])
+                title = dept?.name || "Bo'lim"
+              }
+              if (!title) return null
+              return (
+                <>
+                  <span className="text-blue-400 text-sm">·</span>
+                  <span className="text-sm text-blue-200 truncate">{title}</span>
+                </>
+              )
+            })()}
+          </div>
         </div>
 
         <main className="flex-1 overflow-y-auto p-4 md:p-6 pb-20 lg:pb-6">
