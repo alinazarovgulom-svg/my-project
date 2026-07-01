@@ -195,11 +195,19 @@ export default function Layout({ children }) {
             )
           })}
           <button
-            onClick={() => setSidebarOpen(true)}
-            className="flex-1 flex flex-col items-center justify-center py-2 gap-0.5 text-[10px] font-medium text-gray-400"
+            onClick={() => {
+              if (visibleDepts.length === 1) {
+                navigate(`/department/${visibleDepts[0].id}`)
+              } else {
+                setSidebarOpen(true)
+              }
+            }}
+            className={`flex-1 flex flex-col items-center justify-center py-2 gap-0.5 text-[10px] font-medium transition-colors ${
+              location.pathname.startsWith('/department/') ? 'text-blue-700' : 'text-gray-400'
+            }`}
           >
-            <Menu className="w-5 h-5" />
-            Menyu
+            <Building2 className="w-5 h-5" />
+            Bo'limlar
           </button>
         </nav>
       </div>
