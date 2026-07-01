@@ -59,6 +59,7 @@ export default function DepartmentWork() {
   const [menuEmp, setMenuEmp] = useState(null) // 3-dot menu open for which empId
   const [pickerEmp, setPickerEmp] = useState(null) // empId whose picker is open
   const [pickerSel, setPickerSel] = useState([]) // temp selection in picker
+  const [pickerSearch, setPickerSearch] = useState('')
   const [search, setSearch] = useState('')
   const [activeShift, setActiveShift] = useState(null)
   const [tgSending, setTgSending] = useState(false)
@@ -227,6 +228,7 @@ export default function DepartmentWork() {
     const current = overrides[emp.id] ?? emp.operationIds ?? []
     setPickerSel(current)
     setPickerEmp(emp.id)
+    setPickerSearch('')
   }
 
   const applyPicker = (empId) => {
@@ -531,12 +533,22 @@ export default function DepartmentWork() {
                   <div className="border-b border-orange-100 bg-orange-50 px-4 py-3">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-xs font-medium text-orange-800">Operatsiyalarni tanlang (faqat shu sessiya uchun)</span>
-                      <button onClick={() => setPickerEmp(null)} className="text-gray-400 hover:text-gray-600">
+                      <button onClick={() => { setPickerEmp(null); setPickerSearch('') }} className="text-gray-400 hover:text-gray-600">
                         <X className="w-4 h-4" />
                       </button>
                     </div>
+                    <div className="relative mb-2">
+                      <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+                      <input
+                        type="text"
+                        value={pickerSearch}
+                        onChange={e => setPickerSearch(e.target.value)}
+                        placeholder="Operatsiya qidirish..."
+                        className="w-full border border-orange-200 bg-white rounded-lg pl-8 pr-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-orange-400"
+                      />
+                    </div>
                     <div className="flex flex-wrap gap-2 mb-3">
-                      {allOps.filter(o => o.departmentId === deptId).map(op => (
+                      {allOps.filter(o => o.departmentId === deptId).filter(o => !pickerSearch.trim() || o.name.toLowerCase().includes(pickerSearch.trim().toLowerCase())).map(op => (
                         <label key={op.id} className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border cursor-pointer transition-colors ${
                           pickerSel.includes(op.id)
                             ? 'bg-blue-700 text-white border-blue-700'
