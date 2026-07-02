@@ -206,7 +206,7 @@ export default function Dashboard() {
 
       {/* Summary cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-5 gap-4 mb-8">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 card-hover">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
               <Users className="w-5 h-5 text-indigo-700" />
@@ -217,7 +217,7 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 card-hover">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
               <Users className="w-5 h-5 text-green-700" />
@@ -228,7 +228,7 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 card-hover">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
               <Settings className="w-5 h-5 text-purple-700" />
@@ -239,7 +239,7 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 card-hover">
           <div className="flex items-center gap-3">
             <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${loading || totalEff === null ? 'bg-gray-100' : effColor(totalEff).bg}`}>
               <TrendingUp className={`w-5 h-5 ${loading || totalEff === null ? 'text-gray-400' : effColor(totalEff).text}`} />
@@ -252,7 +252,7 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 card-hover">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
               <Package className="w-5 h-5 text-amber-700" />
@@ -269,7 +269,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
 
         {/* Line chart: last 7 days */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 card-hover">
           <div className="text-sm font-semibold text-gray-700 mb-4">Oxirgi 7 kun samaradorligi</div>
           {!hasWeekData ? (
             <div className="h-48 flex items-center justify-center text-gray-400 text-sm">
@@ -301,7 +301,7 @@ export default function Dashboard() {
         </div>
 
         {/* Bar chart: department comparison today */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 card-hover">
           <div className="text-sm font-semibold text-gray-700 mb-4">Bo'limlar samaradorligi — bugun</div>
           {deptChartData.length === 0 ? (
             <div className="h-48 flex items-center justify-center text-gray-400 text-sm">

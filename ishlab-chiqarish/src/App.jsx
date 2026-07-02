@@ -16,6 +16,7 @@ import Shifts from './pages/Shifts'
 import TVDisplay from './pages/TVDisplay'
 import MonthlyReport from './pages/MonthlyReport'
 import EmployeeCard from './pages/EmployeeCard'
+import Settings from './pages/Settings'
 import { useAuth } from './contexts/AuthContext'
 
 function AppRoutes() {
@@ -41,6 +42,7 @@ function AppRoutes() {
                 <Route path="/attendance" element={<Attendance />} />
                 <Route path="/members" element={<Members />} />
                 <Route path="/shifts" element={<Shifts />} />
+                <Route path="/settings" element={<Settings />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </Layout>
