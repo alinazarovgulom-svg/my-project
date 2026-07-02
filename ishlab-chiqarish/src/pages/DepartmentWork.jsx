@@ -290,8 +290,25 @@ export default function DepartmentWork() {
     setTgSending(true)
     setTgMsg('')
     try {
+      // Bugungi jami tayyor mahsulot (barcha smenalar bo'yicha)
+      let dailyTayyor = null
+      try {
+        const dailySnap = await getDocs(query(
+          collection(db, 'factory_work_entries'),
+          where('departmentId', '==', deptId),
+          where('date', '==', date),
+        ))
+        dailyTayyor = 0
+        dailySnap.forEach(d => {
+          Object.entries(d.data().operations || {}).forEach(([opId, data]) => {
+            const op = allOps.find(o => o.id === opId)
+            if (op?.isFinal) dailyTayyor += Number(data.quantity || 0)
+          })
+        })
+      } catch (_) {}
+
       const filters = `${date} · ${startTime}–${endTime}`
-      const html = buildWorkPDFHtml(filteredRows, filters, dept.name, false, false)
+      const html = buildWorkPDFHtml(filteredRows, filters, dept.name, false, false, dailyTayyor)
       const filename = `${dept.name}-${date}-${startTime.replace(':', '')}.pdf`
       const caption = `📊 ${dept.name} | ${date} | ${startTime}–${endTime}`
       await sendHTMLToTelegram(html, filename, caption)
