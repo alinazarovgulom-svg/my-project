@@ -39,7 +39,7 @@ export default function Layout({ children }) {
           <span className="text-amber-500">KAFT</span><span className="text-white">IMDA</span>
         </div>
         <div className="h-0.5 bg-amber-500 rounded-full mt-1.5 w-full" />
-        <div className="text-xs text-blue-300 mt-1.5 tracking-wide">Ishlab chiqarish tizimi</div>
+        <div className="text-xs text-blue-300 mt-1.5 tracking-wide">Biznesingiz kaftingizda</div>
       </div>
 
       {/* Nav */}
