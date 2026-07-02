@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { useParams } from 'react-router-dom'
 import {
   collection, query, where, onSnapshot, getDocs,
-  doc, setDoc, serverTimestamp,
+  doc, setDoc, serverTimestamp, documentId,
 } from 'firebase/firestore'
 import { db } from '../firebase/config'
 import { useDepartments } from '../contexts/DepartmentsContext'
@@ -93,6 +93,7 @@ export default function DepartmentWork() {
     setOverrides({})
     setPickerEmp(null)
     setIsDirty(false)
+    setEntries({})
   }, [date, startTime, endTime])
 
   // Warn on browser tab close / refresh
@@ -105,14 +106,14 @@ export default function DepartmentWork() {
   }, [isDirty])
 
   // Load existing entries when date/time changes
+  // Uses document ID prefix range so per-employee time overrides don't break the query
   useEffect(() => {
     if (!date || !startTime || !endTime) return
+    const shiftPrefix = `${date}_${deptId}_${startTime.replace(':','')}_${endTime.replace(':','')}_`
     const q = query(
       collection(db, 'factory_work_entries'),
-      where('departmentId', '==', deptId),
-      where('date', '==', date),
-      where('startTime', '==', startTime),
-      where('endTime', '==', endTime),
+      where(documentId(), '>=', shiftPrefix),
+      where(documentId(), '<', shiftPrefix + ''),
     )
     return onSnapshot(q, snap => {
       const data = {}
@@ -124,6 +125,8 @@ export default function DepartmentWork() {
       })
       setEntries(data)
       if (loadedBreak !== null) setBreakMinutes(loadedBreak)
+    }, err => {
+      console.error('[DepartmentWork] entries onSnapshot error:', err)
     })
   }, [deptId, date, startTime, endTime])
 
