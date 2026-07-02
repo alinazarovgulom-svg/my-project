@@ -263,7 +263,30 @@ export default function Reports() {
                     setTgSending(true)
                     setTgMsg('')
                     try {
-                      const html = buildWorkPDFHtml(rows, filtersStr, filterLabel, filterType === 'employee', false)
+                      // Bugungi jami tayyor mahsulot (barcha smenalar bo'yicha, vaqt filtrisiz)
+                      let dailyTayyor = null
+                      try {
+                        const [dailySnap, opSnapD] = await Promise.all([
+                          getDocs(query(
+                            collection(db, 'factory_work_entries'),
+                            where('date', '>=', dateFrom),
+                            where('date', '<=', dateTo),
+                          )),
+                          getDocs(collection(db, 'factory_operations')),
+                        ])
+                        const opMapD = {}
+                        opSnapD.forEach(d => { opMapD[d.id] = d.data() })
+                        dailyTayyor = 0
+                        dailySnap.forEach(d => {
+                          const entry = d.data()
+                          if (filterType === 'dept' && entry.departmentId !== selectedDept) return
+                          if (filterType === 'employee' && selectedEmp && entry.employeeId !== selectedEmp.id) return
+                          Object.entries(entry.operations || {}).forEach(([opId, data]) => {
+                            if (opMapD[opId]?.isFinal) dailyTayyor += Number(data.quantity || 0)
+                          })
+                        })
+                      } catch (_) {}
+                      const html = buildWorkPDFHtml(rows, filtersStr, filterLabel, filterType === 'employee', false, dailyTayyor)
                       const filename = `hisobot-${filterLabel}-${Date.now()}.pdf`
                       const caption = `📊 ${filterLabel} | ${filtersStr}`
                       await sendHTMLToTelegram(html, filename, caption)

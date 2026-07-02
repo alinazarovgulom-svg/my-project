@@ -17,7 +17,7 @@ function qtyStyle(qty, exp) {
   return               { bg: '#fee2e2', color: '#991b1b' }
 }
 
-export function buildWorkPDFHtml(rows, filters, deptName, showDept = true, autoPrint = true) {
+export function buildWorkPDFHtml(rows, filters, deptName, showDept = true, autoPrint = true, dailyTayyor = null) {
   const totalDone   = rows.reduce((s, r) => s + Number(r.quantity || 0), 0)
   const totalExp    = rows.reduce((s, r) => s + Number(r.expected  || 0), 0)
   const totalTayyor = rows.filter(r => r.isFinal).reduce((s, r) => s + Number(r.quantity || 0), 0)
@@ -257,9 +257,13 @@ export function buildWorkPDFHtml(rows, filters, deptName, showDept = true, autoP
 </div>
 
 <div class="stats">
+  ${dailyTayyor !== null ? `<div class="card" style="background:#fef3c7;border-color:#fde68a">
+    <div class="card-val" style="color:#92400e">${dailyTayyor}</div>
+    <div class="card-lbl">Bugungi jami tayyor</div>
+  </div>` : ''}
   <div class="card" style="background:#fffbeb">
     <div class="card-val" style="color:#b45309">${totalTayyor}</div>
-    <div class="card-lbl">Tayyor mahsulot</div>
+    <div class="card-lbl">Bu smena tayyor</div>
   </div>
   <div class="card" style="background:#eff6ff">
     <div class="card-val" style="color:#1e40af">${empCount}</div>
