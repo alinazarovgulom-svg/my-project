@@ -83,7 +83,7 @@ export default function Shifts() {
         {can.manageMembers && (
           <button
             onClick={openAdd}
-            className="flex items-center gap-2 bg-blue-700 hover:bg-blue-800 text-white text-sm px-4 py-2 rounded-lg transition-colors"
+            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm px-4 py-2 rounded-lg transition-colors"
           >
             <Plus className="w-4 h-4" /> Jadval qo'shish
           </button>
@@ -97,13 +97,13 @@ export default function Shifts() {
       ) : (
         <div className="space-y-4">
           {shifts.map(shift => (
-            <div key={shift.id} className={`bg-white rounded-xl shadow-sm border overflow-hidden ${shift.isActive ? 'border-blue-300' : 'border-gray-100'}`}>
+            <div key={shift.id} className={`bg-white rounded-xl shadow-sm border overflow-hidden ${shift.isActive ? 'border-indigo-300' : 'border-gray-100'}`}>
               <div className="flex items-center justify-between px-5 py-4 bg-gray-50 border-b border-gray-100">
                 <div className="flex items-center gap-3">
                   <span className="font-semibold text-gray-800">{shift.name}</span>
                   {shift.isActive && (
-                    <span className="text-xs bg-blue-100 text-blue-700 font-medium px-2 py-0.5 rounded-full flex items-center gap-1">
-                      <Star className="w-3 h-3 fill-blue-600" /> Faol
+                    <span className="text-xs bg-indigo-100 text-indigo-700 font-medium px-2 py-0.5 rounded-full flex items-center gap-1">
+                      <Star className="w-3 h-3 fill-indigo-600" /> Faol
                     </span>
                   )}
                 </div>
@@ -112,7 +112,7 @@ export default function Shifts() {
                     {!shift.isActive && (
                       <button
                         onClick={() => handleSetActive(shift)}
-                        className="text-xs text-blue-600 hover:text-blue-800 border border-blue-200 rounded-lg px-3 py-1.5 transition-colors"
+                        className="text-xs text-indigo-600 hover:text-indigo-800 border border-indigo-200 rounded-lg px-3 py-1.5 transition-colors"
                       >
                         Faol qilish
                       </button>
@@ -167,7 +167,7 @@ export default function Shifts() {
                   type="text"
                   value={form.name}
                   onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   placeholder="Masalan: Yozgi jadval"
                 />
               </div>
@@ -179,7 +179,7 @@ export default function Shifts() {
                   </label>
                   <button
                     onClick={addSlot}
-                    className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                    className="text-xs text-indigo-600 hover:text-indigo-800 flex items-center gap-1"
                   >
                     <Plus className="w-3.5 h-3.5" /> Qo'shish
                   </button>
@@ -192,14 +192,14 @@ export default function Shifts() {
                         type="time"
                         value={slot.startTime}
                         onChange={e => updateSlot(i, 'startTime', e.target.value)}
-                        className="border border-gray-300 rounded-lg px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 flex-1"
+                        className="border border-gray-300 rounded-lg px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 flex-1"
                       />
                       <span className="text-gray-400">–</span>
                       <input
                         type="time"
                         value={slot.endTime}
                         onChange={e => updateSlot(i, 'endTime', e.target.value)}
-                        className="border border-gray-300 rounded-lg px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 flex-1"
+                        className="border border-gray-300 rounded-lg px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 flex-1"
                       />
                       <input
                         type="number"
@@ -207,7 +207,7 @@ export default function Shifts() {
                         max="120"
                         value={slot.breakMinutes || ''}
                         onChange={e => updateSlot(i, 'breakMinutes', e.target.value === '' ? 0 : Number(e.target.value))}
-                        className="border border-gray-300 rounded-lg px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-16 text-center"
+                        className="border border-gray-300 rounded-lg px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-16 text-center"
                         placeholder="0"
                       />
                       <button
@@ -229,7 +229,7 @@ export default function Shifts() {
               <button
                 onClick={handleSave}
                 disabled={saving || !form.name.trim() || form.slots.length === 0}
-                className="flex-1 bg-blue-700 hover:bg-blue-800 text-white rounded-lg py-2.5 text-sm font-medium disabled:opacity-60 flex items-center justify-center gap-2"
+                className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg py-2.5 text-sm font-medium disabled:opacity-60 flex items-center justify-center gap-2"
               >
                 <Check className="w-4 h-4" />
                 {saving ? 'Saqlanmoqda...' : 'Saqlash'}

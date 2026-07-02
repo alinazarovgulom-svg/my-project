@@ -352,12 +352,12 @@ export default function DepartmentWork() {
                     onClick={() => { setStartTime(slot.startTime); setEndTime(slot.endTime); setBreakMinutes(slot.breakMinutes || 0) }}
                     className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
                       isSelected
-                        ? 'bg-blue-700 text-white border-blue-700'
-                        : 'bg-white text-gray-600 border-gray-200 hover:border-blue-400 hover:text-blue-600'
+                        ? 'bg-indigo-600 text-white border-indigo-600'
+                        : 'bg-white text-gray-600 border-gray-200 hover:border-indigo-400 hover:text-indigo-600'
                     }`}
                   >
                     {slot.startTime}–{slot.endTime}
-                    {slot.breakMinutes > 0 && <span className={`ml-1 ${isSelected ? 'text-blue-200' : 'text-orange-400'}`}>⏸{slot.breakMinutes}'</span>}
+                    {slot.breakMinutes > 0 && <span className={`ml-1 ${isSelected ? 'text-indigo-200' : 'text-orange-400'}`}>⏸{slot.breakMinutes}'</span>}
                   </button>
                 )
               })}
@@ -373,7 +373,7 @@ export default function DepartmentWork() {
               type="date"
               value={date}
               onChange={e => setDate(e.target.value)}
-              className="w-full sm:w-auto border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full sm:w-auto border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>
           <div>
@@ -384,7 +384,7 @@ export default function DepartmentWork() {
               type="time"
               value={startTime}
               onChange={e => setStartTime(e.target.value)}
-              className="w-full sm:w-auto border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full sm:w-auto border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>
           <div>
@@ -395,7 +395,7 @@ export default function DepartmentWork() {
               type="time"
               value={endTime}
               onChange={e => setEndTime(e.target.value)}
-              className="w-full sm:w-auto border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full sm:w-auto border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>
           <div>
@@ -407,7 +407,7 @@ export default function DepartmentWork() {
               value={breakMinutes || ''}
               onChange={e => setBreakMinutes(e.target.value === '' ? 0 : Math.max(0, Number(e.target.value)))}
               placeholder="0"
-              className="w-full sm:w-24 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full sm:w-24 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>
           <div className="col-span-2 sm:col-span-1 text-sm text-gray-500 sm:pb-2">
@@ -439,7 +439,7 @@ export default function DepartmentWork() {
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 placeholder="Xodimni qidirish..."
-                className="w-full border border-gray-300 rounded-lg pl-9 pr-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-gray-300 rounded-lg pl-9 pr-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
             {can.enterHourly && (
@@ -468,7 +468,7 @@ export default function DepartmentWork() {
                   className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                     savedAll
                       ? 'bg-green-100 text-green-700'
-                      : 'bg-blue-700 hover:bg-blue-800 text-white'
+                      : 'bg-indigo-600 hover:bg-indigo-700 text-white'
                   } disabled:opacity-60`}
                 >
                   {savedAll ? (
@@ -496,7 +496,7 @@ export default function DepartmentWork() {
                 {/* Employee header */}
                 <div className="flex items-center justify-between px-4 py-3 bg-gray-50 border-b border-gray-100">
                   <div className="flex items-center gap-3">
-                    <div className="w-7 h-7 bg-blue-700 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                    <div className="w-7 h-7 bg-indigo-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
                       {idx + 1}
                     </div>
                     <span className="font-medium text-gray-800 text-sm">
@@ -508,7 +508,7 @@ export default function DepartmentWork() {
                       </span>
                     )}
                     {empTimes[emp.id] && (
-                      <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full flex items-center gap-1">
+                      <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full flex items-center gap-1">
                         <AlarmClock className="w-3 h-3" />
                         {empTimes[emp.id].startTime}–{empTimes[emp.id].endTime}
                       </span>
@@ -571,8 +571,8 @@ export default function DepartmentWork() {
                       {allOps.filter(o => o.departmentId === deptId).filter(o => !pickerSearch.trim() || o.name.toLowerCase().includes(pickerSearch.trim().toLowerCase())).map(op => (
                         <label key={op.id} className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border cursor-pointer transition-colors ${
                           pickerSel.includes(op.id)
-                            ? 'bg-blue-700 text-white border-blue-700'
-                            : 'bg-white text-gray-600 border-gray-200 hover:border-blue-300'
+                            ? 'bg-indigo-600 text-white border-indigo-600'
+                            : 'bg-white text-gray-600 border-gray-200 hover:border-indigo-300'
                         }`}>
                           <input
                             type="checkbox"
@@ -586,7 +586,7 @@ export default function DepartmentWork() {
                     </div>
                     <button
                       onClick={() => applyPicker(emp.id)}
-                      className="text-xs bg-blue-700 hover:bg-blue-800 text-white px-4 py-1.5 rounded-lg transition-colors"
+                      className="text-xs bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-1.5 rounded-lg transition-colors"
                     >
                       Tasdiqlash
                     </button>
@@ -595,9 +595,9 @@ export default function DepartmentWork() {
 
                 {/* Per-employee time override panel */}
                 {timePickerEmp === emp.id && (
-                  <div className="border-b border-blue-100 bg-blue-50 px-4 py-3">
+                  <div className="border-b border-indigo-100 bg-indigo-50 px-4 py-3">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs font-medium text-blue-800">Xodim uchun alohida vaqt</span>
+                      <span className="text-xs font-medium text-indigo-800">Xodim uchun alohida vaqt</span>
                       <button onClick={() => setTimePickerEmp(null)} className="text-gray-400 hover:text-gray-600">
                         <X className="w-4 h-4" />
                       </button>
@@ -607,14 +607,14 @@ export default function DepartmentWork() {
                         type="time"
                         value={empTimes[emp.id]?.startTime || startTime}
                         onChange={e => setEmpTimes(t => ({ ...t, [emp.id]: { ...t[emp.id], startTime: e.target.value, endTime: t[emp.id]?.endTime || endTime } }))}
-                        className="border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
                       />
                       <span className="text-gray-400 text-sm">—</span>
                       <input
                         type="time"
                         value={empTimes[emp.id]?.endTime || endTime}
                         onChange={e => setEmpTimes(t => ({ ...t, [emp.id]: { ...t[emp.id], endTime: e.target.value, startTime: t[emp.id]?.startTime || startTime } }))}
-                        className="border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
                       />
                       <button
                         onClick={() => { setEmpTimes(t => { const n = { ...t }; delete n[emp.id]; return n }); setTimePickerEmp(null) }}
@@ -624,12 +624,12 @@ export default function DepartmentWork() {
                       </button>
                       <button
                         onClick={() => setTimePickerEmp(null)}
-                        className="text-xs bg-blue-700 hover:bg-blue-800 text-white px-3 py-1.5 rounded-lg"
+                        className="text-xs bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg"
                       >
                         Tasdiqlash
                       </button>
                     </div>
-                    <p className="text-xs text-blue-600 mt-1.5">
+                    <p className="text-xs text-indigo-600 mt-1.5">
                       Ishlagan soat: {getEmpHours(emp.id).toFixed(1)} soat
                     </p>
                   </div>
@@ -666,7 +666,7 @@ export default function DepartmentWork() {
                                 value={qty}
                                 onChange={e => setEntryVal(emp.id, op.id, 'quantity', e.target.value === '' ? '' : Number(e.target.value))}
                                 disabled={!can.enterHourly}
-                                className={`w-24 border rounded-lg px-3 py-3 text-xl text-center focus:outline-none focus:ring-2 focus:ring-blue-500 font-bold ${statusStyle[status]}`}
+                                className={`w-24 border rounded-lg px-3 py-3 text-xl text-center focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold ${statusStyle[status]}`}
                                 placeholder="0"
                               />
                               <span className="text-xs text-gray-400">dona</span>
@@ -676,7 +676,7 @@ export default function DepartmentWork() {
                               value={note}
                               onChange={e => setEntryVal(emp.id, op.id, 'note', e.target.value)}
                               disabled={!can.enterHourly}
-                              className="w-full sm:w-40 md:w-52 border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              className="w-full sm:w-40 md:w-52 border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                               placeholder="Izoh..."
                             />
                           </div>

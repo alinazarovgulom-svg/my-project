@@ -208,8 +208,8 @@ export default function Dashboard() {
       <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-5 gap-4 mb-8">
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-              <Users className="w-5 h-5 text-blue-700" />
+            <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
+              <Users className="w-5 h-5 text-indigo-700" />
             </div>
             <div>
               <div className="text-2xl font-bold text-gray-800">{loading ? '—' : stats.employees}</div>
@@ -287,9 +287,9 @@ export default function Dashboard() {
                   type="monotone"
                   dataKey="samaradorlik"
                   name="Samaradorlik"
-                  stroke="#1d4ed8"
+                  stroke="#4f46e5"
                   strokeWidth={2.5}
-                  dot={{ r: 4, fill: '#1d4ed8' }}
+                  dot={{ r: 4, fill: '#4f46e5' }}
                   activeDot={{ r: 6 }}
                   connectNulls={false}
                 />
@@ -342,13 +342,13 @@ export default function Dashboard() {
             <Link
               key={dept.id}
               to={`/department/${dept.id}`}
-              className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 hover:shadow-md hover:border-blue-200 transition-all group"
+              className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 hover:shadow-md hover:border-indigo-200 transition-all group"
             >
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full">
+                <span className="text-xs font-semibold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-full">
                   {ds.employees} xodim
                 </span>
-                <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-blue-600 transition-colors" />
+                <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-indigo-600 transition-colors" />
               </div>
 
               <div className="text-sm font-semibold text-gray-800 mb-3">{dept.name}</div>
@@ -366,7 +366,7 @@ export default function Dashboard() {
 
               <div className="mb-2">
                 <div className="w-full bg-gray-100 rounded-full h-1.5">
-                  <div className="bg-blue-500 h-1.5 rounded-full transition-all" style={{ width: `${Math.min(attendPct, 100)}%` }} />
+                  <div className="bg-indigo-500 h-1.5 rounded-full transition-all" style={{ width: `${Math.min(attendPct, 100)}%` }} />
                 </div>
               </div>
 

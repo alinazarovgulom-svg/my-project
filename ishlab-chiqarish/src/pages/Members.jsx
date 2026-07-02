@@ -20,7 +20,7 @@ const ROLES = [
 
 const roleColors = {
   admin: 'bg-purple-100 text-purple-800',
-  entry: 'bg-blue-100 text-blue-800',
+  entry: 'bg-indigo-100 text-indigo-800',
   hourly: 'bg-orange-100 text-orange-800',
   reporter: 'bg-green-100 text-green-800',
   viewer: 'bg-gray-100 text-gray-700',
@@ -174,7 +174,7 @@ export default function Members() {
         {can.manageMembers && (
           <button
             onClick={openAdd}
-            className="flex items-center gap-2 bg-blue-700 hover:bg-blue-800 text-white text-sm px-4 py-2 rounded-lg transition-colors"
+            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm px-4 py-2 rounded-lg transition-colors"
           >
             <Plus className="w-4 h-4" /> A'zo qo'shish
           </button>
@@ -191,7 +191,7 @@ export default function Members() {
               const memberRoles = getRoles(member)
               return (
                 <div key={member.id} className={`flex items-center gap-4 px-5 py-4 hover:bg-gray-50 ${member.disabled ? 'opacity-50' : ''}`}>
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0 ${member.disabled ? 'bg-gray-400' : 'bg-blue-700'}`}>
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0 ${member.disabled ? 'bg-gray-400' : 'bg-indigo-600'}`}>
                     {member.name?.[0]?.toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -226,7 +226,7 @@ export default function Members() {
                   </div>
                   {can.manageMembers && (
                     <div className="flex gap-2">
-                      <button onClick={() => openEdit(member)} className="text-gray-400 hover:text-blue-600 transition-colors">
+                      <button onClick={() => openEdit(member)} className="text-gray-400 hover:text-indigo-600 transition-colors">
                         <Pencil className="w-4 h-4" />
                       </button>
                       <button
@@ -277,7 +277,7 @@ export default function Members() {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Ismi</label>
                 <input type="text" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   placeholder="Ism Familya" />
               </div>
               <div>
@@ -285,7 +285,7 @@ export default function Members() {
                 <input type="email" value={form.email}
                   onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
                   disabled={modal !== 'add'}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-50"
                   placeholder="email@misol.com" />
               </div>
               {modal === 'add' && (
@@ -293,7 +293,7 @@ export default function Members() {
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">Parol</label>
                   <input type="password" value={form.password}
                     onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     placeholder="Kamida 6 belgi" />
                 </div>
               )}
@@ -304,12 +304,12 @@ export default function Members() {
                     const Icon = role.icon
                     const checked = form.roles.includes(role.id)
                     return (
-                      <label key={role.id} className={`flex items-center gap-3 p-3 border rounded-xl cursor-pointer transition-colors ${checked ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:bg-gray-50'}`}>
+                      <label key={role.id} className={`flex items-center gap-3 p-3 border rounded-xl cursor-pointer transition-colors ${checked ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 hover:bg-gray-50'}`}>
                         <input
                           type="checkbox"
                           checked={checked}
                           onChange={() => toggleRole(role.id)}
-                          className="accent-blue-700 w-4 h-4"
+                          className="accent-indigo-600 w-4 h-4"
                         />
                         <Icon className="w-4 h-4 text-gray-600" />
                         <div>
@@ -330,12 +330,12 @@ export default function Members() {
                   {departments.map(dept => {
                     const checked = form.departmentIds.includes(dept.id)
                     return (
-                      <label key={dept.id} className={`flex items-center gap-2.5 p-2.5 border rounded-lg cursor-pointer transition-colors ${checked ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:bg-gray-50'}`}>
+                      <label key={dept.id} className={`flex items-center gap-2.5 p-2.5 border rounded-lg cursor-pointer transition-colors ${checked ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 hover:bg-gray-50'}`}>
                         <input
                           type="checkbox"
                           checked={checked}
                           onChange={() => toggleDept(dept.id)}
-                          className="accent-blue-700 w-4 h-4"
+                          className="accent-indigo-600 w-4 h-4"
                         />
                         <span className="text-sm text-gray-800">{dept.name}</span>
                       </label>
@@ -353,7 +353,7 @@ export default function Members() {
               <button
                 onClick={handleSave}
                 disabled={saving || !form.name.trim() || !form.email.trim() || form.roles.length === 0}
-                className="flex-1 bg-blue-700 hover:bg-blue-800 text-white rounded-lg py-2.5 text-sm font-medium transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
+                className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg py-2.5 text-sm font-medium transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
               >
                 <Check className="w-4 h-4" />
                 {saving ? 'Saqlanmoqda...' : 'Saqlash'}

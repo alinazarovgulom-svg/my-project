@@ -109,7 +109,7 @@ export default function MonthlyReport() {
   const pctColor = (pct) => {
     if (pct === null) return 'text-gray-400'
     if (pct > 100) return 'text-green-700 font-bold'
-    if (pct === 100) return 'text-blue-700 font-bold'
+    if (pct === 100) return 'text-indigo-700 font-bold'
     if (pct >= 95) return 'text-yellow-700 font-semibold'
     return 'text-red-700 font-semibold'
   }
@@ -151,7 +151,7 @@ export default function MonthlyReport() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
-          <BarChart2 className="w-5 h-5 text-blue-700" />
+          <BarChart2 className="w-5 h-5 text-indigo-700" />
           <h1 className="text-xl font-bold text-gray-800">Oylik hisobot</h1>
         </div>
         {searched && rows.length > 0 && (
@@ -173,7 +173,7 @@ export default function MonthlyReport() {
             <select
               value={year}
               onChange={e => setYear(Number(e.target.value))}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
             >
               {years.map(y => <option key={y} value={y}>{y}</option>)}
             </select>
@@ -183,7 +183,7 @@ export default function MonthlyReport() {
             <select
               value={month}
               onChange={e => setMonth(Number(e.target.value))}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
             >
               {months.map(m => (
                 <option key={m} value={m}>
@@ -197,7 +197,7 @@ export default function MonthlyReport() {
             <select
               value={selectedDept}
               onChange={e => setSelectedDept(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
             >
               {visibleDepts.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
             </select>
@@ -206,7 +206,7 @@ export default function MonthlyReport() {
             <button
               onClick={handleSearch}
               disabled={loading || !selectedDept}
-              className="w-full bg-blue-700 hover:bg-blue-800 text-white rounded-lg py-2 text-sm font-medium transition-colors disabled:opacity-60"
+              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg py-2 text-sm font-medium transition-colors disabled:opacity-60"
             >
               {loading ? 'Yuklanmoqda...' : 'Ko\'rish'}
             </button>

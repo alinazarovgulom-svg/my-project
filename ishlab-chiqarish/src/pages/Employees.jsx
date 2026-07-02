@@ -141,7 +141,7 @@ export default function Employees() {
         {can.manageEmployees && filterStatus === 'active' && (
           <button
             onClick={openAdd}
-            className="flex items-center gap-2 bg-blue-700 hover:bg-blue-800 text-white text-sm px-4 py-2 rounded-lg transition-colors"
+            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm px-4 py-2 rounded-lg transition-colors"
           >
             <Plus className="w-4 h-4" /> Qo'shish
           </button>
@@ -152,7 +152,7 @@ export default function Employees() {
       <div className="flex gap-2 mb-4">
         <button
           onClick={() => setFilterStatus('active')}
-          className={`px-4 py-1.5 rounded-full text-xs font-medium transition-colors ${filterStatus === 'active' ? 'bg-blue-700 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+          className={`px-4 py-1.5 rounded-full text-xs font-medium transition-colors ${filterStatus === 'active' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
         >
           Faol ({activeCount})
         </button>
@@ -172,7 +172,7 @@ export default function Employees() {
           value={search}
           onChange={e => setSearch(e.target.value)}
           placeholder="Xodimni qidirish (ism yoki familya)..."
-          className="w-full border border-gray-300 rounded-lg pl-9 pr-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full border border-gray-300 rounded-lg pl-9 pr-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
         />
       </div>
 
@@ -180,7 +180,7 @@ export default function Employees() {
       <div className="flex gap-2 mb-5 flex-wrap">
         <button
           onClick={() => setFilterDept('all')}
-          className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${filterDept === 'all' ? 'bg-blue-700 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+          className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${filterDept === 'all' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
         >
           Barchasi
         </button>
@@ -190,7 +190,7 @@ export default function Employees() {
             <button
               key={d.id}
               onClick={() => setFilterDept(d.id)}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${filterDept === d.id ? 'bg-blue-700 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${filterDept === d.id ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
             >
               {d.name} ({count})
             </button>
@@ -214,8 +214,8 @@ export default function Employees() {
                   <div key={emp.id} className={`px-4 py-3 ${filterStatus === 'archived' ? 'opacity-60' : ''}`}>
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0 cursor-pointer" onClick={() => navigate(`/employee/${emp.id}`)}>
-                        <div className="text-sm font-medium text-gray-800 hover:text-blue-700">{emp.lastName} {emp.firstName}</div>
-                        <span className="bg-blue-50 text-blue-700 text-xs px-2 py-0.5 rounded-full mt-1 inline-block">
+                        <div className="text-sm font-medium text-gray-800 hover:text-indigo-700">{emp.lastName} {emp.firstName}</div>
+                        <span className="bg-indigo-50 text-indigo-700 text-xs px-2 py-0.5 rounded-full mt-1 inline-block">
                           {getDeptName(emp.departmentId)}
                         </span>
                         {empOps.length > 0 && (
@@ -230,7 +230,7 @@ export default function Employees() {
                         <div className="flex gap-1 shrink-0">
                           {filterStatus === 'active' ? (
                             <>
-                              <button onClick={e => { e.stopPropagation(); openEdit(emp) }} className="p-2 text-gray-400 hover:text-blue-600"><Pencil className="w-4 h-4" /></button>
+                              <button onClick={e => { e.stopPropagation(); openEdit(emp) }} className="p-2 text-gray-400 hover:text-indigo-600"><Pencil className="w-4 h-4" /></button>
                               <button onClick={e => { e.stopPropagation(); handleArchive(emp.id) }} className="p-2 text-gray-400 hover:text-amber-600"><Archive className="w-4 h-4" /></button>
                             </>
                           ) : (
@@ -265,9 +265,9 @@ export default function Employees() {
                     return (
                       <tr key={emp.id} onClick={() => navigate(`/employee/${emp.id}`)} className={`hover:bg-gray-50 cursor-pointer ${filterStatus === 'archived' ? 'opacity-60' : ''}`}>
                         <td className="px-4 py-3 text-gray-400">{i + 1}</td>
-                        <td className="px-4 py-3 font-medium text-gray-800 hover:text-blue-700">{emp.lastName} {emp.firstName}</td>
+                        <td className="px-4 py-3 font-medium text-gray-800 hover:text-indigo-700">{emp.lastName} {emp.firstName}</td>
                         <td className="px-4 py-3">
-                          <span className="bg-blue-50 text-blue-700 text-xs px-2 py-0.5 rounded-full">{getDeptName(emp.departmentId)}</span>
+                          <span className="bg-indigo-50 text-indigo-700 text-xs px-2 py-0.5 rounded-full">{getDeptName(emp.departmentId)}</span>
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex flex-wrap gap-1">
@@ -283,7 +283,7 @@ export default function Employees() {
                             <div className="flex gap-2 justify-end">
                               {filterStatus === 'active' ? (
                                 <>
-                                  <button onClick={e => { e.stopPropagation(); openEdit(emp) }} className="text-gray-400 hover:text-blue-600 transition-colors"><Pencil className="w-4 h-4" /></button>
+                                  <button onClick={e => { e.stopPropagation(); openEdit(emp) }} className="text-gray-400 hover:text-indigo-600 transition-colors"><Pencil className="w-4 h-4" /></button>
                                   <button onClick={e => { e.stopPropagation(); handleArchive(emp.id) }} className="text-gray-400 hover:text-amber-600 transition-colors"><Archive className="w-4 h-4" /></button>
                                 </>
                               ) : (
@@ -326,7 +326,7 @@ export default function Employees() {
                     type="text"
                     value={form.lastName}
                     onChange={e => setForm(f => ({ ...f, lastName: e.target.value }))}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     placeholder="Karimov"
                   />
                 </div>
@@ -336,7 +336,7 @@ export default function Employees() {
                     type="text"
                     value={form.firstName}
                     onChange={e => setForm(f => ({ ...f, firstName: e.target.value }))}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     placeholder="Ali"
                   />
                 </div>
@@ -347,7 +347,7 @@ export default function Employees() {
                 <select
                   value={form.departmentId}
                   onChange={e => handleDeptChange(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 >
                   {visibleDepts.map(d => (
                     <option key={d.id} value={d.id}>{d.name}</option>
@@ -370,7 +370,7 @@ export default function Employees() {
                         placeholder="Operatsiya qidirish..."
                         value={opSearch}
                         onChange={e => setOpSearch(e.target.value)}
-                        className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500"
                       />
                     </div>
                     <div className="space-y-2 max-h-48 overflow-y-auto">
@@ -380,7 +380,7 @@ export default function Employees() {
                             type="checkbox"
                             checked={form.operationIds.includes(op.id)}
                             onChange={() => toggleOp(op.id)}
-                            className="accent-blue-700"
+                            className="accent-indigo-600"
                           />
                           <span className="text-sm text-gray-700 flex-1">{op.name}</span>
                           <span className="text-xs text-gray-400">{op.norm} dona/soat</span>
@@ -403,7 +403,7 @@ export default function Employees() {
                   type="text"
                   value={form.telegramId}
                   onChange={e => setForm(f => ({ ...f, telegramId: e.target.value }))}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   placeholder="590319878"
                 />
                 <p className="text-xs text-gray-400 mt-1">Xodim @KAFTIMDA_ERP botga /start yozib ID sini oladi</p>
@@ -415,7 +415,7 @@ export default function Employees() {
                 <select
                   value={form.salaryType}
                   onChange={e => setForm(f => ({ ...f, salaryType: e.target.value }))}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 mb-3"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 mb-3"
                 >
                   <option value="hourly">Soatlik</option>
                   <option value="piece">Akkord (dona uchun)</option>
@@ -430,7 +430,7 @@ export default function Employees() {
                       min="0"
                       value={form.hourlyRate}
                       onChange={e => setForm(f => ({ ...f, hourlyRate: e.target.value }))}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                       placeholder="5000"
                     />
                   </div>
@@ -459,7 +459,7 @@ export default function Employees() {
               <button
                 onClick={handleSave}
                 disabled={saving || !form.firstName.trim() || !form.lastName.trim()}
-                className="flex-1 bg-blue-700 hover:bg-blue-800 text-white rounded-lg py-2.5 text-sm font-medium transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
+                className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg py-2.5 text-sm font-medium transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
               >
                 <Check className="w-4 h-4" />
                 {saving ? 'Saqlanmoqda...' : 'Saqlash'}

@@ -46,7 +46,7 @@ export default function Departments() {
         {can.manageMembers && (
           <button
             onClick={openAdd}
-            className="flex items-center gap-2 bg-blue-700 hover:bg-blue-800 text-white text-sm px-4 py-2 rounded-lg transition-colors"
+            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm px-4 py-2 rounded-lg transition-colors"
           >
             <Plus className="w-4 h-4" /> Bo'lim qo'shish
           </button>
@@ -60,15 +60,15 @@ export default function Departments() {
           <div className="divide-y divide-gray-50">
             {departments.map((dept, i) => (
               <div key={dept.id} className="flex items-center gap-4 px-5 py-4 hover:bg-gray-50">
-                <div className="w-9 h-9 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Building2 className="w-4 h-4 text-blue-700" />
+                <div className="w-9 h-9 bg-indigo-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <Building2 className="w-4 h-4 text-indigo-700" />
                 </div>
                 <div className="flex-1">
                   <div className="font-medium text-gray-800 text-sm">{dept.name}</div>
                 </div>
                 {can.manageMembers && (
                   <div className="flex gap-2">
-                    <button onClick={() => openEdit(dept)} className="text-gray-400 hover:text-blue-600 transition-colors">
+                    <button onClick={() => openEdit(dept)} className="text-gray-400 hover:text-indigo-600 transition-colors">
                       <Pencil className="w-4 h-4" />
                     </button>
                     <button
@@ -111,7 +111,7 @@ export default function Departments() {
                 value={name}
                 onChange={e => setName(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleSave()}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 placeholder="Masalan: Tikuv bo'limi"
                 autoFocus
               />
@@ -124,7 +124,7 @@ export default function Departments() {
               <button
                 onClick={handleSave}
                 disabled={saving || !name.trim()}
-                className="flex-1 bg-blue-700 hover:bg-blue-800 text-white rounded-lg py-2.5 text-sm font-medium transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
+                className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg py-2.5 text-sm font-medium transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
               >
                 <Check className="w-4 h-4" />
                 {saving ? 'Saqlanmoqda...' : 'Saqlash'}
