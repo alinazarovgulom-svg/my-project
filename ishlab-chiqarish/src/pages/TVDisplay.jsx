@@ -210,7 +210,7 @@ export default function TVDisplay() {
         {/* Brand */}
         <div style={{ minWidth: 220 }}>
           <div style={{ fontSize: 36, fontWeight: 900, letterSpacing: 2, lineHeight: 1 }}>
-            <span style={{ color: '#D97706' }}>KAFT</span><span style={{ color: '#ffffff' }}> IMDA</span>
+            <span style={{ color: '#D97706' }}>KAFT</span><span style={{ color: '#ffffff' }}>IMDA</span>
           </div>
           <div style={{ height: 3, background: '#D97706', borderRadius: 2, margin: '6px 0 5px' }} />
           <div style={{ fontSize: 18, color: '#93c5fd', letterSpacing: 0.3, marginBottom: 4 }}>Biznesingiz kaftingizda</div>

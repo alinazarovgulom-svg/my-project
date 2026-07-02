@@ -229,7 +229,7 @@ export function buildWorkPDFHtml(rows, filters, deptName, showDept = true, autoP
 <div class="hdr">
   <div class="hdr-l">
     <div class="brand-wrap">
-      <div class="brand"><span class="kaft">KAFT</span><span class="imda"> IMDA</span></div>
+      <div class="brand"><span class="kaft">KAFT</span><span class="imda">IMDA</span></div>
       <div class="amber"></div>
     </div>
     <div class="tagline">Biznesingiz kaftingizda</div>
@@ -353,7 +353,7 @@ export async function exportPDFBlob(rows, filters, deptName, showDept = true) {
   doc.setTextColor(217, 119, 6)
   doc.text('KAFT', 10, 11)
   doc.setTextColor(255, 255, 255)
-  doc.text(' IMDA', 10 + doc.getTextWidth('KAFT'), 11)
+  doc.text('IMDA', 10 + doc.getTextWidth('KAFT'), 11)
   doc.setFontSize(8)
   doc.setFont('helvetica', 'normal')
   doc.setTextColor(147, 197, 253)
@@ -651,7 +651,7 @@ export function buildAttendancePDFHtml(absentEmps, allEmps, absences, department
 <div class="hdr">
   <div class="hdr-l">
     <div class="brand-wrap">
-      <div class="brand"><span class="kaft">KAFT</span><span class="imda"> IMDA</span></div>
+      <div class="brand"><span class="kaft">KAFT</span><span class="imda">IMDA</span></div>
       <div class="amber"></div>
     </div>
     <div class="tagline">Biznesingiz kaftingizda</div>

@@ -3,8 +3,8 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { useDepartments } from '../contexts/DepartmentsContext'
 import {
-  LayoutDashboard, Settings, Users, ClipboardList, FileText,
-  LogOut, Menu, X, ChevronDown, ChevronRight, Building2,
+  LayoutDashboard, Settings, Cog, Users, ClipboardList, FileText,
+  Menu, X, ChevronDown, ChevronRight, Building2,
   CalendarCheck, AlarmClock, BarChart2,
 } from 'lucide-react'
 
@@ -17,10 +17,11 @@ const navItems = [
   { to: '/monthly', label: 'Oylik hisobot', icon: BarChart2 },
   { to: '/shifts', label: 'Smena jadvali', icon: AlarmClock, adminOnly: true },
   { to: '/members', label: "A'zolar", icon: ClipboardList, adminOnly: true },
+  { to: '/settings', label: 'Sozlamalar', icon: Cog },
 ]
 
 export default function Layout({ children }) {
-  const { userDoc, signOut, can } = useAuth()
+  const { userDoc, can } = useAuth()
   const { departments } = useDepartments()
   const visibleDepts = can.manageMembers || !userDoc?.departmentIds?.length
     ? departments
@@ -30,11 +31,6 @@ export default function Layout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [deptOpen, setDeptOpen] = useState(true)
 
-  const handleLogout = async () => {
-    await signOut()
-    navigate('/login')
-  }
-
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
       {/* Logo */}
@@ -43,7 +39,7 @@ export default function Layout({ children }) {
           <span className="text-amber-500">KAFT</span><span className="text-white">IMDA</span>
         </div>
         <div className="h-0.5 bg-amber-500 rounded-full mt-1.5 w-full" />
-        <div className="text-xs text-blue-300 mt-1.5 tracking-wide">Ishlab chiqarish tizimi</div>
+        <div className="text-xs text-blue-300 mt-1.5 tracking-wide">Biznesingiz kaftingizda</div>
       </div>
 
       {/* Nav */}
@@ -111,7 +107,7 @@ export default function Layout({ children }) {
 
       {/* User */}
       <div className="p-4 border-t border-slate-700/60">
-        <div className="flex items-center gap-3 mb-3">
+        <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-indigo-500 rounded-full flex items-center justify-center text-white font-bold text-sm shadow">
             {userDoc?.name?.[0]?.toUpperCase() || 'U'}
           </div>
@@ -120,13 +116,6 @@ export default function Layout({ children }) {
             <div className="text-slate-400 text-xs">{userDoc?.role}</div>
           </div>
         </div>
-        <button
-          onClick={handleLogout}
-          className="w-full flex items-center gap-2 text-slate-400 hover:text-white text-xs transition-colors py-1"
-        >
-          <LogOut className="w-3.5 h-3.5" />
-          Chiqish
-        </button>
       </div>
     </div>
   )
@@ -192,7 +181,9 @@ export default function Layout({ children }) {
         </div>
 
         <main className="flex-1 overflow-y-auto p-4 md:p-6 pb-20 lg:pb-6">
-          {children}
+          <div key={location.pathname} className="page-enter">
+            {children}
+          </div>
         </main>
 
         {/* Mobile bottom navigation */}

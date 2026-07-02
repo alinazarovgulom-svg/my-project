@@ -53,7 +53,7 @@ export default function Login() {
             <Factory className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900">KAFTIMDA</h1>
-          <p className="text-gray-500 text-sm mt-1">Ishlab chiqarish tizimi</p>
+          <p className="text-gray-500 text-sm mt-1">Biznesingiz kaftingizda</p>
         </div>
 
         {error && (
