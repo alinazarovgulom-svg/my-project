@@ -7,8 +7,10 @@ import { db } from '../firebase/config'
 import { useDepartments } from '../contexts/DepartmentsContext'
 import { useAuth } from '../contexts/AuthContext'
 import { Plus, Pencil, Trash2, X, Check, Search, Archive, RotateCcw } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 
 export default function Employees() {
+  const navigate = useNavigate()
   const { can, userDoc } = useAuth()
   const { departments, getDeptName } = useDepartments()
   const visibleDepts = can.manageMembers || !userDoc?.departmentIds?.length
@@ -211,8 +213,8 @@ export default function Employees() {
                 return (
                   <div key={emp.id} className={`px-4 py-3 ${filterStatus === 'archived' ? 'opacity-60' : ''}`}>
                     <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <div className="text-sm font-medium text-gray-800">{emp.lastName} {emp.firstName}</div>
+                      <div className="min-w-0 cursor-pointer" onClick={() => navigate(`/employee/${emp.id}`)}>
+                        <div className="text-sm font-medium text-gray-800 hover:text-blue-700">{emp.lastName} {emp.firstName}</div>
                         <span className="bg-blue-50 text-blue-700 text-xs px-2 py-0.5 rounded-full mt-1 inline-block">
                           {getDeptName(emp.departmentId)}
                         </span>
@@ -261,9 +263,9 @@ export default function Employees() {
                   {filtered.map((emp, i) => {
                     const empOps = allOps.filter(o => emp.operationIds?.includes(o.id))
                     return (
-                      <tr key={emp.id} className={`hover:bg-gray-50 ${filterStatus === 'archived' ? 'opacity-60' : ''}`}>
+                      <tr key={emp.id} onClick={() => navigate(`/employee/${emp.id}`)} className={`hover:bg-gray-50 cursor-pointer ${filterStatus === 'archived' ? 'opacity-60' : ''}`}>
                         <td className="px-4 py-3 text-gray-400">{i + 1}</td>
-                        <td className="px-4 py-3 font-medium text-gray-800">{emp.lastName} {emp.firstName}</td>
+                        <td className="px-4 py-3 font-medium text-gray-800 hover:text-blue-700">{emp.lastName} {emp.firstName}</td>
                         <td className="px-4 py-3">
                           <span className="bg-blue-50 text-blue-700 text-xs px-2 py-0.5 rounded-full">{getDeptName(emp.departmentId)}</span>
                         </td>

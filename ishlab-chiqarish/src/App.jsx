@@ -15,6 +15,7 @@ import Attendance from './pages/Attendance'
 import Shifts from './pages/Shifts'
 import TVDisplay from './pages/TVDisplay'
 import MonthlyReport from './pages/MonthlyReport'
+import EmployeeCard from './pages/EmployeeCard'
 import { useAuth } from './contexts/AuthContext'
 
 function AppRoutes() {
@@ -32,6 +33,7 @@ function AppRoutes() {
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/operations" element={<Operations />} />
                 <Route path="/employees" element={<Employees />} />
+                <Route path="/employee/:empId" element={<EmployeeCard />} />
                 <Route path="/departments" element={<Departments />} />
                 <Route path="/department/:deptId" element={<DepartmentWork />} />
                 <Route path="/reports" element={<Reports />} />
