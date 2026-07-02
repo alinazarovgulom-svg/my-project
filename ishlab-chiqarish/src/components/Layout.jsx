@@ -38,20 +38,20 @@ export default function Layout({ children }) {
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
       {/* Logo */}
-      <div className="p-5 border-b border-blue-700">
+      <div className="p-5 border-b border-slate-700/60">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 bg-white rounded-lg flex items-center justify-center">
-            <Factory className="w-5 h-5 text-blue-700" />
+          <div className="w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-900/40">
+            <Factory className="w-5 h-5 text-white" />
           </div>
           <div>
-            <div className="font-bold text-white text-sm">KAFTIMDA</div>
-            <div className="text-blue-300 text-xs">Ishlab chiqarish</div>
+            <div className="font-bold text-white text-sm tracking-wide">KAFTIMDA</div>
+            <div className="text-slate-400 text-xs">Ishlab chiqarish</div>
           </div>
         </div>
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 py-4 overflow-y-auto">
+      <nav className="flex-1 py-3 overflow-y-auto">
         {navItems.map(({ to, label, icon: Icon, adminOnly }) => {
           if (adminOnly && !can.manageMembers) return null
           const active = location.pathname === to
@@ -60,13 +60,13 @@ export default function Layout({ children }) {
               key={to}
               to={to}
               onClick={() => setSidebarOpen(false)}
-              className={`flex items-center gap-3 px-5 py-3 text-sm transition-colors ${
+              className={`flex items-center gap-3 px-4 mx-2 py-2.5 rounded-lg text-sm transition-all mb-0.5 ${
                 active
-                  ? 'bg-blue-700 text-white font-medium'
-                  : 'text-blue-100 hover:bg-blue-700/50'
+                  ? 'bg-indigo-600 text-white font-medium shadow-sm'
+                  : 'text-slate-300 hover:bg-white/10 hover:text-white'
               }`}
             >
-              <Icon className="w-4 h-4" />
+              <Icon className="w-4 h-4 shrink-0" />
               {label}
             </Link>
           )
@@ -75,9 +75,9 @@ export default function Layout({ children }) {
         {/* Departments */}
         <button
           onClick={() => setDeptOpen(o => !o)}
-          className="w-full flex items-center gap-3 px-5 py-3 text-sm text-blue-100 hover:bg-blue-700/50 transition-colors"
+          className="w-[calc(100%-16px)] flex items-center gap-3 px-4 mx-2 py-2.5 rounded-lg text-sm text-slate-300 hover:bg-white/10 hover:text-white transition-all mt-1"
         >
-          <Building2 className="w-4 h-4" />
+          <Building2 className="w-4 h-4 shrink-0" />
           <span className="flex-1 text-left">Bo'limlar</span>
           {deptOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
         </button>
@@ -85,10 +85,10 @@ export default function Layout({ children }) {
           <Link
             to="/departments"
             onClick={() => setSidebarOpen(false)}
-            className={`flex items-center gap-3 pl-11 pr-5 py-2.5 text-xs transition-colors ${
+            className={`flex items-center gap-3 pl-11 pr-4 mx-2 py-2 rounded-lg text-xs transition-all w-[calc(100%-16px)] ${
               location.pathname === '/departments'
-                ? 'bg-blue-700 text-white font-medium'
-                : 'text-blue-300 hover:bg-blue-700/40 italic'
+                ? 'bg-indigo-600 text-white font-medium'
+                : 'text-slate-400 hover:bg-white/10 hover:text-slate-200 italic'
             }`}
           >
             + Boshqarish
@@ -101,10 +101,10 @@ export default function Layout({ children }) {
               key={dept.id}
               to={`/department/${dept.id}`}
               onClick={() => setSidebarOpen(false)}
-              className={`flex items-center gap-3 pl-11 pr-5 py-2.5 text-xs transition-colors ${
+              className={`flex items-center gap-3 pl-11 pr-4 mx-2 py-2 rounded-lg text-xs transition-all w-[calc(100%-16px)] ${
                 active
-                  ? 'bg-blue-700 text-white font-medium'
-                  : 'text-blue-200 hover:bg-blue-700/40'
+                  ? 'bg-indigo-600 text-white font-medium'
+                  : 'text-slate-300 hover:bg-white/10 hover:text-white'
               }`}
             >
               {dept.name}
@@ -114,19 +114,19 @@ export default function Layout({ children }) {
       </nav>
 
       {/* User */}
-      <div className="p-4 border-t border-blue-700">
+      <div className="p-4 border-t border-slate-700/60">
         <div className="flex items-center gap-3 mb-3">
-          <div className="w-8 h-8 bg-blue-400 rounded-full flex items-center justify-center text-white font-bold text-sm">
+          <div className="w-8 h-8 bg-indigo-500 rounded-full flex items-center justify-center text-white font-bold text-sm shadow">
             {userDoc?.name?.[0]?.toUpperCase() || 'U'}
           </div>
           <div className="flex-1 min-w-0">
             <div className="text-white text-xs font-medium truncate">{userDoc?.name}</div>
-            <div className="text-blue-300 text-xs">{userDoc?.role}</div>
+            <div className="text-slate-400 text-xs">{userDoc?.role}</div>
           </div>
         </div>
         <button
           onClick={handleLogout}
-          className="w-full flex items-center gap-2 text-blue-200 hover:text-white text-xs transition-colors py-1"
+          className="w-full flex items-center gap-2 text-slate-400 hover:text-white text-xs transition-colors py-1"
         >
           <LogOut className="w-3.5 h-3.5" />
           Chiqish
@@ -136,20 +136,20 @@ export default function Layout({ children }) {
   )
 
   return (
-    <div className="flex h-screen bg-gray-50">
-      {/* Desktop sidebar — only on lg+ (1024px), hidden on tablets */}
-      <aside className="hidden lg:flex w-56 bg-blue-800 flex-col flex-shrink-0">
+    <div className="flex h-screen bg-slate-50">
+      {/* Desktop sidebar */}
+      <aside className="hidden lg:flex w-56 bg-slate-900 flex-col flex-shrink-0 shadow-xl">
         <SidebarContent />
       </aside>
 
       {/* Mobile/tablet sidebar overlay */}
       {sidebarOpen && (
         <div className="lg:hidden fixed inset-0 z-40 flex">
-          <div className="fixed inset-0 bg-black/50" onClick={() => setSidebarOpen(false)} />
-          <aside className="relative w-64 bg-blue-800 flex flex-col z-50">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setSidebarOpen(false)} />
+          <aside className="relative w-64 bg-slate-900 flex flex-col z-50 shadow-2xl">
             <button
               onClick={() => setSidebarOpen(false)}
-              className="absolute top-4 right-4 text-white"
+              className="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
@@ -161,11 +161,14 @@ export default function Layout({ children }) {
       {/* Main */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Mobile/tablet top bar */}
-        <div className="lg:hidden bg-blue-800 text-white px-4 py-3 flex items-center gap-3 flex-shrink-0">
-          <button onClick={() => setSidebarOpen(true)}>
+        <div className="lg:hidden bg-slate-900 text-white px-4 py-3 flex items-center gap-3 flex-shrink-0 shadow-md">
+          <button onClick={() => setSidebarOpen(true)} className="text-slate-300 hover:text-white transition-colors">
             <Menu className="w-5 h-5" />
           </button>
           <div className="flex items-center gap-2 min-w-0">
+            <div className="w-6 h-6 bg-indigo-600 rounded-md flex items-center justify-center shrink-0">
+              <Factory className="w-3.5 h-3.5 text-white" />
+            </div>
             <span className="font-bold text-sm shrink-0">KAFTIMDA</span>
             {(() => {
               const p = location.pathname
@@ -185,8 +188,8 @@ export default function Layout({ children }) {
               if (!title) return null
               return (
                 <>
-                  <span className="text-blue-400 text-sm">·</span>
-                  <span className="text-sm text-blue-200 truncate">{title}</span>
+                  <span className="text-slate-600 text-sm">·</span>
+                  <span className="text-sm text-slate-400 truncate">{title}</span>
                 </>
               )
             })()}
@@ -198,7 +201,7 @@ export default function Layout({ children }) {
         </main>
 
         {/* Mobile bottom navigation */}
-        <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex z-30">
+        <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex z-30 shadow-lg">
           {[
             { to: '/', label: 'Bosh', icon: LayoutDashboard },
             { to: '/attendance', label: 'Davomat', icon: CalendarCheck },
@@ -211,7 +214,7 @@ export default function Layout({ children }) {
                 key={to}
                 to={to}
                 className={`flex-1 flex flex-col items-center justify-center py-2 gap-0.5 text-[10px] font-medium transition-colors ${
-                  active ? 'text-blue-700' : 'text-gray-400'
+                  active ? 'text-indigo-600' : 'text-gray-400'
                 }`}
               >
                 <Icon className="w-5 h-5" />
@@ -228,7 +231,7 @@ export default function Layout({ children }) {
               }
             }}
             className={`flex-1 flex flex-col items-center justify-center py-2 gap-0.5 text-[10px] font-medium transition-colors ${
-              location.pathname.startsWith('/department/') ? 'text-blue-700' : 'text-gray-400'
+              location.pathname.startsWith('/department/') ? 'text-indigo-600' : 'text-gray-400'
             }`}
           >
             <Building2 className="w-5 h-5" />

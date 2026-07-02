@@ -40,13 +40,19 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 to-blue-700 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-8">
+    <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Background decoration */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-96 h-96 bg-indigo-600/20 rounded-full blur-3xl" />
+        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-indigo-800/20 rounded-full blur-3xl" />
+      </div>
+
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-8 relative">
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-blue-700 rounded-2xl flex items-center justify-center mx-auto mb-4">
+          <div className="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-indigo-200">
             <Factory className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-800">KAFTIMDA</h1>
+          <h1 className="text-2xl font-bold text-gray-900">KAFTIMDA</h1>
           <p className="text-gray-500 text-sm mt-1">Ishlab chiqarish tizimi</p>
         </div>
 
@@ -63,7 +69,7 @@ export default function Login() {
               type="email"
               value={email}
               onChange={e => setEmail(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all bg-gray-50 focus:bg-white"
               placeholder="email@misol.com"
               required
             />
@@ -75,14 +81,14 @@ export default function Login() {
                 type={showPass ? 'text' : 'password'}
                 value={password}
                 onChange={e => setPassword(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10"
+                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all bg-gray-50 focus:bg-white pr-10"
                 placeholder="••••••••"
                 required
               />
               <button
                 type="button"
                 onClick={() => setShowPass(s => !s)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
               >
                 {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
@@ -91,7 +97,7 @@ export default function Login() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-700 hover:bg-blue-800 text-white rounded-lg py-2.5 text-sm font-medium transition-colors disabled:opacity-60 mt-2"
+            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl py-2.5 text-sm font-medium transition-all disabled:opacity-60 mt-2 shadow-sm hover:shadow-md"
           >
             {loading ? '...' : isRegister ? 'Ro\'yxatdan o\'tish' : 'Kirish'}
           </button>
@@ -100,7 +106,7 @@ export default function Login() {
         <div className="mt-4 text-center">
           <button
             onClick={() => { setIsRegister(r => !r); setError('') }}
-            className="text-sm text-blue-600 hover:underline"
+            className="text-sm text-indigo-600 hover:text-indigo-700 hover:underline transition-colors"
           >
             {isRegister ? 'Hisobim bor — Kirish' : 'Yangi hisob — Ro\'yxatdan o\'tish'}
           </button>

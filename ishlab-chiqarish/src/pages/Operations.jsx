@@ -111,7 +111,7 @@ export default function Operations() {
         {can.manageOperations && (
           <button
             onClick={openAdd}
-            className="flex items-center gap-2 bg-blue-700 hover:bg-blue-800 text-white text-sm px-4 py-2 rounded-lg transition-colors"
+            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm px-4 py-2 rounded-lg transition-colors"
           >
             <Plus className="w-4 h-4" /> Qo'shish
           </button>
@@ -126,7 +126,7 @@ export default function Operations() {
           value={search}
           onChange={e => setSearch(e.target.value)}
           placeholder="Operatsiya nomini qidiring..."
-          className="w-full border border-gray-300 rounded-lg pl-9 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full border border-gray-300 rounded-lg pl-9 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
         />
       </div>
 
@@ -134,7 +134,7 @@ export default function Operations() {
       <div className="flex gap-2 mb-5 flex-wrap">
         <button
           onClick={() => setFilterDept('all')}
-          className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${filterDept === 'all' ? 'bg-blue-700 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+          className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${filterDept === 'all' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
         >
           Barchasi
         </button>
@@ -142,7 +142,7 @@ export default function Operations() {
           <button
             key={d.id}
             onClick={() => setFilterDept(d.id)}
-            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${filterDept === d.id ? 'bg-blue-700 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${filterDept === d.id ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
           >
             {d.name}
           </button>
@@ -167,7 +167,7 @@ export default function Operations() {
                         <span className="text-sm font-medium text-gray-800">{op.name}</span>
                         {op.isFinal && <Star className="w-3.5 h-3.5 fill-amber-500 text-amber-500 shrink-0" />}
                       </div>
-                      <span className="bg-blue-50 text-blue-700 text-xs px-2 py-0.5 rounded-full mt-1 inline-block">
+                      <span className="bg-indigo-50 text-indigo-700 text-xs px-2 py-0.5 rounded-full mt-1 inline-block">
                         {getDeptName(op.departmentId)}
                       </span>
                       <div className="text-xs text-gray-400 mt-1">
@@ -176,7 +176,7 @@ export default function Operations() {
                     </div>
                     {can.manageOperations && (
                       <div className="flex gap-1 shrink-0">
-                        <button onClick={() => openEdit(op)} className="p-2 text-gray-400 hover:text-blue-600"><Pencil className="w-4 h-4" /></button>
+                        <button onClick={() => openEdit(op)} className="p-2 text-gray-400 hover:text-indigo-600"><Pencil className="w-4 h-4" /></button>
                         <button onClick={() => handleDelete(op.id)} disabled={deleting === op.id} className="p-2 text-gray-400 hover:text-red-600 disabled:opacity-40"><Trash2 className="w-4 h-4" /></button>
                       </div>
                     )}
@@ -204,7 +204,7 @@ export default function Operations() {
                     <tr key={op.id} className="hover:bg-gray-50">
                       <td className="px-4 py-3 font-medium text-gray-800">{op.name}</td>
                       <td className="px-4 py-3">
-                        <span className="bg-blue-50 text-blue-700 text-xs px-2 py-0.5 rounded-full">{getDeptName(op.departmentId)}</span>
+                        <span className="bg-indigo-50 text-indigo-700 text-xs px-2 py-0.5 rounded-full">{getDeptName(op.departmentId)}</span>
                       </td>
                       <td className="px-4 py-3 text-gray-600">{op.norm} dona</td>
                       <td className="px-4 py-3 text-gray-600">{op.unitPrice ? `${op.unitPrice.toLocaleString()} so'm` : '—'}</td>
@@ -221,15 +221,15 @@ export default function Operations() {
                       {can.manageOperations && (
                         <td className="px-4 py-3">
                           <div className="flex gap-1 justify-center">
-                            <button onClick={() => reorder(op, 'up')} disabled={reordering === op.id || filtered.indexOf(op) === 0} className="text-gray-400 hover:text-blue-600 transition-colors disabled:opacity-20"><ChevronUp className="w-4 h-4" /></button>
-                            <button onClick={() => reorder(op, 'down')} disabled={reordering === op.id || filtered.indexOf(op) === filtered.length - 1} className="text-gray-400 hover:text-blue-600 transition-colors disabled:opacity-20"><ChevronDown className="w-4 h-4" /></button>
+                            <button onClick={() => reorder(op, 'up')} disabled={reordering === op.id || filtered.indexOf(op) === 0} className="text-gray-400 hover:text-indigo-600 transition-colors disabled:opacity-20"><ChevronUp className="w-4 h-4" /></button>
+                            <button onClick={() => reorder(op, 'down')} disabled={reordering === op.id || filtered.indexOf(op) === filtered.length - 1} className="text-gray-400 hover:text-indigo-600 transition-colors disabled:opacity-20"><ChevronDown className="w-4 h-4" /></button>
                           </div>
                         </td>
                       )}
                       {can.manageOperations && (
                         <td className="px-4 py-3">
                           <div className="flex gap-2 justify-end">
-                            <button onClick={() => openEdit(op)} className="text-gray-400 hover:text-blue-600 transition-colors"><Pencil className="w-4 h-4" /></button>
+                            <button onClick={() => openEdit(op)} className="text-gray-400 hover:text-indigo-600 transition-colors"><Pencil className="w-4 h-4" /></button>
                             <button onClick={() => handleDelete(op.id)} disabled={deleting === op.id} className="text-gray-400 hover:text-red-600 transition-colors disabled:opacity-40"><Trash2 className="w-4 h-4" /></button>
                           </div>
                         </td>
@@ -263,7 +263,7 @@ export default function Operations() {
                   type="text"
                   value={form.name}
                   onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   placeholder="Masalan: Ko'ylak tikish"
                 />
               </div>
@@ -272,7 +272,7 @@ export default function Operations() {
                 <select
                   value={form.departmentId}
                   onChange={e => setForm(f => ({ ...f, departmentId: e.target.value }))}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 >
                   {visibleDepts.map(d => (
                     <option key={d.id} value={d.id}>{d.name}</option>
@@ -288,7 +288,7 @@ export default function Operations() {
                   min="1"
                   value={form.norm}
                   onChange={e => setForm(f => ({ ...f, norm: e.target.value }))}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   placeholder="10"
                 />
               </div>
@@ -301,7 +301,7 @@ export default function Operations() {
                   min="0"
                   value={form.unitPrice}
                   onChange={e => setForm(f => ({ ...f, unitPrice: e.target.value }))}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   placeholder="150"
                 />
               </div>
@@ -314,7 +314,7 @@ export default function Operations() {
               <button
                 onClick={handleSave}
                 disabled={saving || !form.name.trim() || !form.norm}
-                className="flex-1 bg-blue-700 hover:bg-blue-800 text-white rounded-lg py-2.5 text-sm font-medium transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
+                className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg py-2.5 text-sm font-medium transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
               >
                 <Check className="w-4 h-4" />
                 {saving ? 'Saqlanmoqda...' : 'Saqlash'}

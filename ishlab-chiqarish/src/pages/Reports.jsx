@@ -155,12 +155,12 @@ export default function Reports() {
             <div className="flex-1">
               <label className="block text-xs font-medium text-gray-500 mb-1">Sanadan</label>
               <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
             </div>
             <div className="flex-1">
               <label className="block text-xs font-medium text-gray-500 mb-1">Sanagacha</label>
               <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
             </div>
           </div>
 
@@ -169,12 +169,12 @@ export default function Reports() {
             <div className="flex-1">
               <label className="block text-xs font-medium text-gray-500 mb-1">Soatdan</label>
               <input type="time" value={startTime} onChange={e => setStartTime(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
             </div>
             <div className="flex-1">
               <label className="block text-xs font-medium text-gray-500 mb-1">Soatgacha</label>
               <input type="time" value={endTime} onChange={e => setEndTime(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
             </div>
           </div>
         </div>
@@ -183,13 +183,13 @@ export default function Reports() {
         <div className="flex gap-2 mb-4">
           <button
             onClick={() => { setFilterType('dept'); setSelectedEmp(null) }}
-            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${filterType === 'dept' ? 'bg-blue-700 text-white' : 'bg-gray-100 text-gray-600'}`}
+            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${filterType === 'dept' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600'}`}
           >
             Bo'lim bo'yicha
           </button>
           <button
             onClick={() => setFilterType('employee')}
-            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${filterType === 'employee' ? 'bg-blue-700 text-white' : 'bg-gray-100 text-gray-600'}`}
+            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${filterType === 'employee' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600'}`}
           >
             Xodim bo'yicha
           </button>
@@ -199,7 +199,7 @@ export default function Reports() {
           <select
             value={selectedDept}
             onChange={e => setSelectedDept(e.target.value)}
-            className="w-full md:w-64 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full md:w-64 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
           >
             {visibleDepts.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
           </select>
@@ -212,7 +212,7 @@ export default function Reports() {
               onChange={e => { setSelectedEmp(null); searchEmployees(e.target.value) }}
               onFocus={() => { if (!selectedEmp) searchEmployees(empSearch) }}
               onBlur={() => setTimeout(() => setEmployees([]), 200)}
-              className="w-full border border-gray-300 rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-gray-300 rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
               placeholder="Xodim qidirish yoki bosing..."
             />
             {employees.length > 0 && !selectedEmp && (
@@ -236,7 +236,7 @@ export default function Reports() {
           <button
             onClick={loadReport}
             disabled={loading || (filterType === 'employee' && !selectedEmp)}
-            className="flex items-center gap-2 bg-blue-700 hover:bg-blue-800 text-white text-sm px-4 py-2 rounded-lg transition-colors disabled:opacity-60"
+            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm px-4 py-2 rounded-lg transition-colors disabled:opacity-60"
           >
             <Search className="w-4 h-4" />
             {loading ? 'Yuklanmoqda...' : 'Hisobotni ko\'rish'}
@@ -472,7 +472,7 @@ export default function Reports() {
                             {filterType === 'employee' && (
                               <td className="px-4 py-2.5">
                                 {isNewEmp && (
-                                  <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full whitespace-nowrap">{r.deptName}</span>
+                                  <span className="text-xs bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full whitespace-nowrap">{r.deptName}</span>
                                 )}
                               </td>
                             )}

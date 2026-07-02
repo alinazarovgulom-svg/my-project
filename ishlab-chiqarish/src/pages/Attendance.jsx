@@ -12,7 +12,7 @@ import { exportAttendanceExcel } from '../utils/excel'
 import { sendHTMLToTelegram } from '../utils/telegram'
 
 const REASONS = [
-  { value: 'kasallik', label: 'Kasallik',  badge: 'bg-blue-100 text-blue-700'   },
+  { value: 'kasallik', label: 'Kasallik',  badge: 'bg-indigo-100 text-indigo-700'   },
   { value: 'tatil',    label: "Ta'til",    badge: 'bg-purple-100 text-purple-700' },
   { value: 'sababsiz', label: 'Sababsiz',  badge: 'bg-red-100 text-red-700'     },
   { value: 'boshqa',   label: 'Boshqa',    badge: 'bg-gray-100 text-gray-600'   },
@@ -142,7 +142,7 @@ export default function Attendance() {
               type="date"
               value={date}
               onChange={e => setDate(e.target.value)}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>
           <div className="relative">
@@ -164,7 +164,7 @@ export default function Attendance() {
                   setTimeout(() => setTgMsg(''), 4000)
                 }
               }}
-              className="flex items-center gap-1.5 bg-blue-500 hover:bg-blue-600 disabled:opacity-60 text-white text-xs px-3 py-2 rounded-lg transition-colors"
+              className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white text-xs px-3 py-2 rounded-lg transition-colors"
             >
               <Send className="w-3.5 h-3.5" />
               {tgSending ? 'Yuborilmoqda...' : 'Telegram'}
@@ -192,9 +192,9 @@ export default function Attendance() {
 
       {/* Summary cards */}
       <div className="grid grid-cols-3 gap-4 mb-6">
-        <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 text-center">
-          <div className="text-2xl font-bold text-blue-700">{visibleEmps.length}</div>
-          <div className="text-xs text-blue-500 mt-1">Jami xodimlar</div>
+        <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4 text-center">
+          <div className="text-2xl font-bold text-indigo-700">{visibleEmps.length}</div>
+          <div className="text-xs text-indigo-500 mt-1">Jami xodimlar</div>
         </div>
         <div className="bg-green-50 border border-green-100 rounded-xl p-4 text-center">
           <div className="text-2xl font-bold text-green-700">{presentCount}</div>
@@ -295,7 +295,7 @@ export default function Attendance() {
                                 onChange={e => setNotes(n => ({ ...n, [emp.id]: e.target.value }))}
                                 onBlur={() => handleNoteBlur(emp)}
                                 placeholder="Izoh..."
-                                className="flex-1 sm:flex-none border border-gray-200 rounded-lg px-2 py-1.5 text-xs sm:w-36 md:w-44 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                className="flex-1 sm:flex-none border border-gray-200 rounded-lg px-2 py-1.5 text-xs sm:w-36 md:w-44 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                               />
                             )}
                             {!can.enterHourly && abs?.note && (

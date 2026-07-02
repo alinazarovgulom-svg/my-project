@@ -15,7 +15,7 @@ function calcHours(start, end, breakMinutes) {
 
 const ABSENCE_LABEL = { kasallik: 'Kasallik', tatil: "Ta'til", sababsiz: 'Sababsiz', boshqa: 'Boshqa' }
 const ABSENCE_BADGE = {
-  kasallik: 'bg-blue-100 text-blue-700',
+  kasallik: 'bg-indigo-100 text-indigo-700',
   tatil: 'bg-purple-100 text-purple-700',
   sababsiz: 'bg-red-100 text-red-700',
   boshqa: 'bg-gray-100 text-gray-600',
@@ -82,7 +82,7 @@ export default function EmployeeCard() {
 
   if (!emp) return (
     <div className="flex items-center justify-center h-48">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
     </div>
   )
 
@@ -96,7 +96,7 @@ export default function EmployeeCard() {
         <div>
           <h1 className="text-xl font-bold text-gray-800">{emp.lastName} {emp.firstName}</h1>
           <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-            <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full">{getDeptName(emp.departmentId)}</span>
+            <span className="text-xs bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full">{getDeptName(emp.departmentId)}</span>
             <span className="text-xs text-gray-400">{salaryTypeLabel}</span>
             {emp.hourlyRate ? <span className="text-xs text-gray-400">{Number(emp.hourlyRate).toLocaleString()} so'm/soat</span> : null}
           </div>
@@ -110,21 +110,21 @@ export default function EmployeeCard() {
           type="month"
           value={month}
           onChange={e => setMonth(e.target.value)}
-          className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
         />
       </div>
 
       {loading ? (
         <div className="flex items-center justify-center h-32">
-          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600" />
+          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600" />
         </div>
       ) : (
         <>
           {/* Summary cards */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-            <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 text-center">
-              <div className="text-2xl font-bold text-blue-700">{uniqueDays}</div>
-              <div className="text-xs text-blue-500 mt-1">Kun ishladi</div>
+            <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4 text-center">
+              <div className="text-2xl font-bold text-indigo-700">{uniqueDays}</div>
+              <div className="text-xs text-indigo-500 mt-1">Kun ishladi</div>
             </div>
             <div className="bg-purple-50 border border-purple-100 rounded-xl p-4 text-center">
               <div className="text-2xl font-bold text-purple-700">{totalHours.toFixed(1)}</div>
