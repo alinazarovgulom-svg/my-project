@@ -230,13 +230,13 @@ export default function Employees() {
                         <div className="flex gap-1 shrink-0">
                           {filterStatus === 'active' ? (
                             <>
-                              <button onClick={() => openEdit(emp)} className="p-2 text-gray-400 hover:text-blue-600"><Pencil className="w-4 h-4" /></button>
-                              <button onClick={() => handleArchive(emp.id)} className="p-2 text-gray-400 hover:text-amber-600"><Archive className="w-4 h-4" /></button>
+                              <button onClick={e => { e.stopPropagation(); openEdit(emp) }} className="p-2 text-gray-400 hover:text-blue-600"><Pencil className="w-4 h-4" /></button>
+                              <button onClick={e => { e.stopPropagation(); handleArchive(emp.id) }} className="p-2 text-gray-400 hover:text-amber-600"><Archive className="w-4 h-4" /></button>
                             </>
                           ) : (
                             <>
-                              <button onClick={() => handleRestore(emp.id)} className="p-2 text-gray-400 hover:text-green-600"><RotateCcw className="w-4 h-4" /></button>
-                              <button onClick={() => handleDelete(emp.id)} disabled={deleting === emp.id} className="p-2 text-gray-400 hover:text-red-600 disabled:opacity-40"><Trash2 className="w-4 h-4" /></button>
+                              <button onClick={e => { e.stopPropagation(); handleRestore(emp.id) }} className="p-2 text-gray-400 hover:text-green-600"><RotateCcw className="w-4 h-4" /></button>
+                              <button onClick={e => { e.stopPropagation(); handleDelete(emp.id) }} disabled={deleting === emp.id} className="p-2 text-gray-400 hover:text-red-600 disabled:opacity-40"><Trash2 className="w-4 h-4" /></button>
                             </>
                           )}
                         </div>
@@ -283,13 +283,13 @@ export default function Employees() {
                             <div className="flex gap-2 justify-end">
                               {filterStatus === 'active' ? (
                                 <>
-                                  <button onClick={() => openEdit(emp)} className="text-gray-400 hover:text-blue-600 transition-colors"><Pencil className="w-4 h-4" /></button>
-                                  <button onClick={() => handleArchive(emp.id)} className="text-gray-400 hover:text-amber-600 transition-colors"><Archive className="w-4 h-4" /></button>
+                                  <button onClick={e => { e.stopPropagation(); openEdit(emp) }} className="text-gray-400 hover:text-blue-600 transition-colors"><Pencil className="w-4 h-4" /></button>
+                                  <button onClick={e => { e.stopPropagation(); handleArchive(emp.id) }} className="text-gray-400 hover:text-amber-600 transition-colors"><Archive className="w-4 h-4" /></button>
                                 </>
                               ) : (
                                 <>
-                                  <button onClick={() => handleRestore(emp.id)} className="text-gray-400 hover:text-green-600 transition-colors"><RotateCcw className="w-4 h-4" /></button>
-                                  <button onClick={() => handleDelete(emp.id)} disabled={deleting === emp.id} className="text-gray-400 hover:text-red-600 transition-colors disabled:opacity-40"><Trash2 className="w-4 h-4" /></button>
+                                  <button onClick={e => { e.stopPropagation(); handleRestore(emp.id) }} className="text-gray-400 hover:text-green-600 transition-colors"><RotateCcw className="w-4 h-4" /></button>
+                                  <button onClick={e => { e.stopPropagation(); handleDelete(emp.id) }} disabled={deleting === emp.id} className="text-gray-400 hover:text-red-600 transition-colors disabled:opacity-40"><Trash2 className="w-4 h-4" /></button>
                                 </>
                               )}
                             </div>
