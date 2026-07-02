@@ -171,12 +171,14 @@ export default function Members() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-xl font-bold text-gray-800">A'zolar</h1>
-        <button
-          onClick={openAdd}
-          className="flex items-center gap-2 bg-blue-700 hover:bg-blue-800 text-white text-sm px-4 py-2 rounded-lg transition-colors"
-        >
-          <Plus className="w-4 h-4" /> A'zo qo'shish
-        </button>
+        {can.manageMembers && (
+          <button
+            onClick={openAdd}
+            className="flex items-center gap-2 bg-blue-700 hover:bg-blue-800 text-white text-sm px-4 py-2 rounded-lg transition-colors"
+          >
+            <Plus className="w-4 h-4" /> A'zo qo'shish
+          </button>
+        )}
       </div>
 
       {/* Members list */}
