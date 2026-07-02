@@ -40,7 +40,7 @@ export default function Layout({ children }) {
       {/* Logo */}
       <div className="px-5 py-4 border-b border-slate-700/60">
         <div className="text-2xl font-black tracking-wide leading-none">
-          <span className="text-amber-500">KAFT</span><span className="text-white"> IMDA</span>
+          <span className="text-amber-500">KAFT</span><span className="text-white">IMDA</span>
         </div>
         <div className="h-0.5 bg-amber-500 rounded-full mt-1.5 w-full" />
         <div className="text-xs text-blue-300 mt-1.5 tracking-wide">Ishlab chiqarish tizimi</div>
@@ -163,7 +163,7 @@ export default function Layout({ children }) {
           </button>
           <div className="flex items-center gap-2 min-w-0">
             <span className="font-black text-base tracking-wide shrink-0">
-              <span className="text-amber-500">KAFT</span><span className="text-white"> IMDA</span>
+              <span className="text-amber-500">KAFT</span><span className="text-white">IMDA</span>
             </span>
             {(() => {
               const p = location.pathname
