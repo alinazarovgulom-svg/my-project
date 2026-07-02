@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { useDepartments } from '../contexts/DepartmentsContext'
 import {
   LayoutDashboard, Settings, Users, ClipboardList, FileText,
-  LogOut, Menu, X, ChevronDown, ChevronRight, Factory, Building2,
+  LogOut, Menu, X, ChevronDown, ChevronRight, Building2,
   CalendarCheck, AlarmClock, BarChart2,
 } from 'lucide-react'
 
@@ -38,16 +38,12 @@ export default function Layout({ children }) {
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
       {/* Logo */}
-      <div className="p-5 border-b border-slate-700/60">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-900/40">
-            <Factory className="w-5 h-5 text-white" />
-          </div>
-          <div>
-            <div className="font-bold text-white text-sm tracking-wide">KAFTIMDA</div>
-            <div className="text-slate-400 text-xs">Ishlab chiqarish</div>
-          </div>
+      <div className="px-5 py-4 border-b border-slate-700/60">
+        <div className="text-2xl font-black tracking-wide leading-none">
+          <span className="text-amber-500">KAFT</span><span className="text-white">IMDA</span>
         </div>
+        <div className="h-0.5 bg-amber-500 rounded-full mt-1.5 w-full" />
+        <div className="text-xs text-blue-300 mt-1.5 tracking-wide">Ishlab chiqarish tizimi</div>
       </div>
 
       {/* Nav */}
@@ -166,10 +162,9 @@ export default function Layout({ children }) {
             <Menu className="w-5 h-5" />
           </button>
           <div className="flex items-center gap-2 min-w-0">
-            <div className="w-6 h-6 bg-indigo-600 rounded-md flex items-center justify-center shrink-0">
-              <Factory className="w-3.5 h-3.5 text-white" />
-            </div>
-            <span className="font-bold text-sm shrink-0">KAFTIMDA</span>
+            <span className="font-black text-base tracking-wide shrink-0">
+              <span className="text-amber-500">KAFT</span><span className="text-white">IMDA</span>
+            </span>
             {(() => {
               const p = location.pathname
               let title = ''
