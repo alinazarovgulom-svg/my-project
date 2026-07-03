@@ -179,12 +179,15 @@ export default function DepartmentWork() {
         return
       }
     }
-    const deptOpIds = allOps.filter(o => o.departmentId === deptId).map(o => o.id)
     setGuestEmps(prev => [...prev, emp])
-    setOverrides(o => ({ ...o, [emp.id]: deptOpIds }))
+    setOverrides(o => ({ ...o, [emp.id]: [] }))
     setShowGuestPicker(false)
     setGuestSearch('')
     setGuestWarning('')
+    // Immediately open operation picker so manager assigns host dept tasks
+    setPickerSel([])
+    setPickerEmp(emp.id)
+    setPickerSearch('')
   }
 
   const removeGuest = (empId) => {
