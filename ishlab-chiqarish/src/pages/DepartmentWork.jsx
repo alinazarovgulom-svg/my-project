@@ -185,14 +185,20 @@ export default function DepartmentWork() {
 
   const confirmGuest = () => {
     if (!pendingGuest) return
+    setPickerSel([])
+    setPickerSearch('')
+    // Stay in modal, move to ops step
+  }
+
+  const addGuestWithOps = () => {
+    if (!pendingGuest) return
     setGuestEmps(prev => [...prev, pendingGuest])
-    setOverrides(o => ({ ...o, [pendingGuest.id]: [] }))
+    setOverrides(o => ({ ...o, [pendingGuest.id]: pickerSel }))
     setPendingGuest(null)
     setShowGuestPicker(false)
     setGuestSearch('')
     setGuestWarning('')
     setPickerSel([])
-    setPickerEmp(pendingGuest.id)
     setPickerSearch('')
   }
 
@@ -825,50 +831,71 @@ export default function DepartmentWork() {
               />
             </div>
 
-            <div className="max-h-52 overflow-y-auto space-y-0.5">
-              {allEmployees
-                .filter(e => e.departmentId !== deptId)
-                .filter(e => !guestEmps.some(g => g.id === e.id))
-                .filter(e => {
-                  if (!guestSearch.trim()) return true
-                  return `${e.lastName} ${e.firstName}`.toLowerCase().includes(guestSearch.toLowerCase())
-                })
-                .map(emp => (
-                  <button
-                    key={emp.id}
-                    onClick={() => selectPendingGuest(emp)}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors ${pendingGuest?.id === emp.id ? 'bg-amber-50 ring-2 ring-amber-300' : 'hover:bg-amber-50'}`}
-                  >
-                    <div className="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center text-amber-700 text-xs font-bold shrink-0">
-                      {emp.firstName?.[0]}{emp.lastName?.[0]}
-                    </div>
-                    <div className="min-w-0">
-                      <div className="text-sm font-medium text-gray-800">{emp.lastName} {emp.firstName}</div>
-                      <div className="text-xs text-gray-400">{departments.find(d => d.id === emp.departmentId)?.name || "Bo'lim yo'q"}</div>
-                    </div>
-                  </button>
-                ))
-              }
-            </div>
-
-            {pendingGuest && (
-              <div className="mt-3 pt-3 border-t border-amber-100">
-                <div className="text-sm text-gray-700 mb-3">
-                  <span className="font-semibold text-amber-700">{pendingGuest.lastName} {pendingGuest.firstName}</span>
-                  {' '}ni mehmon qilmoqchimisiz?
+            {!pendingGuest ? (
+              <div className="max-h-52 overflow-y-auto space-y-0.5">
+                {allEmployees
+                  .filter(e => e.departmentId !== deptId)
+                  .filter(e => !guestEmps.some(g => g.id === e.id))
+                  .filter(e => {
+                    if (!guestSearch.trim()) return true
+                    return `${e.lastName} ${e.firstName}`.toLowerCase().includes(guestSearch.toLowerCase())
+                  })
+                  .map(emp => (
+                    <button
+                      key={emp.id}
+                      onClick={() => selectPendingGuest(emp)}
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-amber-50 text-left transition-colors"
+                    >
+                      <div className="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center text-amber-700 text-xs font-bold shrink-0">
+                        {emp.firstName?.[0]}{emp.lastName?.[0]}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-sm font-medium text-gray-800">{emp.lastName} {emp.firstName}</div>
+                        <div className="text-xs text-gray-400">{departments.find(d => d.id === emp.departmentId)?.name || "Bo'lim yo'q"}</div>
+                      </div>
+                    </button>
+                  ))
+                }
+              </div>
+            ) : (
+              <div>
+                <div className="bg-amber-50 rounded-xl px-4 py-3 mb-4 flex items-center gap-3">
+                  <div className="w-9 h-9 bg-amber-200 rounded-full flex items-center justify-center text-amber-800 text-sm font-bold shrink-0">
+                    {pendingGuest.firstName?.[0]}{pendingGuest.lastName?.[0]}
+                  </div>
+                  <div>
+                    <div className="font-semibold text-gray-800">{pendingGuest.lastName} {pendingGuest.firstName}</div>
+                    <div className="text-xs text-gray-400">{departments.find(d => d.id === pendingGuest.departmentId)?.name}</div>
+                  </div>
                 </div>
+
+                <p className="text-xs font-medium text-gray-500 mb-2">Bajaradigan vazifasini tanlang:</p>
+                <div className="max-h-40 overflow-y-auto flex flex-wrap gap-2 mb-4">
+                  {allOps.filter(o => o.departmentId === deptId).map(op => (
+                    <label key={op.id} className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border cursor-pointer transition-colors ${
+                      pickerSel.includes(op.id)
+                        ? 'bg-indigo-600 text-white border-indigo-600'
+                        : 'bg-white text-gray-600 border-gray-200 hover:border-indigo-300'
+                    }`}>
+                      <input type="checkbox" className="hidden" checked={pickerSel.includes(op.id)} onChange={() => togglePickerOp(op.id)} />
+                      {op.name}
+                    </label>
+                  ))}
+                </div>
+
                 <div className="flex gap-2">
                   <button
-                    onClick={confirmGuest}
-                    className="flex-1 bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium py-2 rounded-lg transition-colors"
+                    onClick={addGuestWithOps}
+                    disabled={pickerSel.length === 0}
+                    className="flex-1 bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white text-sm font-medium py-2 rounded-lg transition-colors"
                   >
-                    Tasdiqlash
+                    Qo'shish
                   </button>
                   <button
-                    onClick={() => setPendingGuest(null)}
+                    onClick={() => { setPendingGuest(null); setPickerSel([]) }}
                     className="px-4 py-2 text-sm text-gray-500 hover:text-gray-700 border border-gray-200 rounded-lg transition-colors"
                   >
-                    Bekor
+                    Orqaga
                   </button>
                 </div>
               </div>
