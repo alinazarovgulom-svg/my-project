@@ -72,6 +72,7 @@ export default function DepartmentWork() {
   const [guestSearch, setGuestSearch] = useState('')
   const [guestWarning, setGuestWarning] = useState('')
   const [pendingGuest, setPendingGuest] = useState(null)
+  const [removingGuestId, setRemovingGuestId] = useState(null)
 
   useEffect(() => {
     getDocs(query(collection(db, 'factory_shifts'), where('isActive', '==', true)))
@@ -601,7 +602,7 @@ export default function DepartmentWork() {
                       <div className="relative flex items-center gap-1">
                         {isGuest && (
                           <button
-                            onClick={() => removeGuest(emp.id)}
+                            onClick={() => setRemovingGuestId(emp.id)}
                             className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
                             title="Mehmon xodimni olib tashlash"
                           >
@@ -638,6 +639,29 @@ export default function DepartmentWork() {
                       </div>
                     )}
                   </div>
+
+                  {/* Guest remove confirmation */}
+                  {isGuest && removingGuestId === emp.id && (
+                    <div className="border-b border-red-100 bg-red-50 px-4 py-3 flex items-center justify-between gap-3">
+                      <span className="text-sm text-red-700">
+                        <span className="font-semibold">{emp.lastName} {emp.firstName}</span> ni olib tashlaysizmi?
+                      </span>
+                      <div className="flex gap-2 shrink-0">
+                        <button
+                          onClick={() => { removeGuest(emp.id); setRemovingGuestId(null) }}
+                          className="bg-red-500 hover:bg-red-600 text-white text-xs px-3 py-1.5 rounded-lg transition-colors"
+                        >
+                          Tasdiqlash
+                        </button>
+                        <button
+                          onClick={() => setRemovingGuestId(null)}
+                          className="border border-gray-200 text-gray-600 hover:bg-gray-100 text-xs px-3 py-1.5 rounded-lg transition-colors"
+                        >
+                          Bekor
+                        </button>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Operation picker */}
                   {pickerEmp === emp.id && (
