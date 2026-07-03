@@ -215,10 +215,13 @@ export default function DepartmentWork() {
       })
     )
     const totalPiecePay = Object.values(operations).reduce((s, v) => s + (v.piecePay || 0), 0)
-    const hourlyPay = salaryType === 'piece' ? 0 : hourlyRate * empH
-    const totalPay = salaryType === 'hourly' ? hourlyPay
-      : salaryType === 'piece' ? totalPiecePay
-      : hourlyPay + totalPiecePay
+    // Guest employees already earn hourly pay in their home department — only piece work counts here
+    const hourlyPay = (isGuest || salaryType === 'piece') ? 0 : hourlyRate * empH
+    const totalPay = isGuest
+      ? (salaryType === 'hourly' ? 0 : totalPiecePay)
+      : (salaryType === 'hourly' ? hourlyPay
+        : salaryType === 'piece' ? totalPiecePay
+        : hourlyPay + totalPiecePay)
     await setDoc(doc(db, 'factory_work_entries', entryId), {
       employeeId: empId,
       departmentId: deptId,
