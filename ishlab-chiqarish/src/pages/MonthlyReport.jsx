@@ -44,7 +44,7 @@ export default function MonthlyReport() {
 
     const { from, to } = monthDates(year, month)
 
-    const [entriesSnap, empSnap, absSnap] = await Promise.all([
+    const [entriesSnap, empSnap, allEmpSnap, absSnap] = await Promise.all([
       getDocs(query(
         collection(db, 'factory_work_entries'),
         where('departmentId', '==', selectedDept),
@@ -52,6 +52,7 @@ export default function MonthlyReport() {
         where('date', '<=', to),
       )),
       getDocs(query(collection(db, 'factory_employees'), where('departmentId', '==', selectedDept))),
+      getDocs(collection(db, 'factory_employees')),
       getDocs(query(
         collection(db, 'factory_absences'),
         where('departmentId', '==', selectedDept),
@@ -62,6 +63,9 @@ export default function MonthlyReport() {
 
     const empMap = {}
     empSnap.docs.forEach(d => { empMap[d.id] = { id: d.id, ...d.data() } })
+
+    const allEmpMap = {}
+    allEmpSnap.docs.forEach(d => { allEmpMap[d.id] = { id: d.id, ...d.data() } })
 
     const absMap = {}
     absSnap.docs.forEach(d => {
@@ -74,11 +78,13 @@ export default function MonthlyReport() {
     entriesSnap.docs.forEach(d => {
       const e = d.data()
       const empId = e.employeeId
-      if (!empMap[empId]) return
+      const isGuest = !!e.isGuest
+      if (!empMap[empId] && !isGuest) return
+      if (isGuest && !allEmpMap[empId]) return
       const bm = e.breakMinutes || 0
       const h = Math.max(0, calcHours(e.startTime, e.endTime) - bm / 60)
       if (!summary[empId]) {
-        summary[empId] = { empId, totalHours: 0, totalDays: 0, totalQty: 0, totalExpected: 0, totalPay: 0 }
+        summary[empId] = { empId, totalHours: 0, totalDays: 0, totalQty: 0, totalExpected: 0, totalPay: 0, isGuest }
       }
       summary[empId].totalHours += h
       summary[empId].totalDays++
@@ -91,7 +97,7 @@ export default function MonthlyReport() {
     })
 
     const result = Object.values(summary).map(s => {
-      const emp = empMap[s.empId]
+      const emp = empMap[s.empId] || allEmpMap[s.empId]
       const pct = s.totalExpected > 0 ? Math.round((s.totalQty / s.totalExpected) * 100) : null
       return {
         ...s,
@@ -247,7 +253,12 @@ export default function MonthlyReport() {
                   {rows.map((r, i) => (
                     <tr key={r.empId} className="hover:bg-gray-50">
                       <td className="px-4 py-3 text-gray-400">{i + 1}</td>
-                      <td className="px-4 py-3 font-medium text-gray-800">{r.name}</td>
+                      <td className="px-4 py-3 font-medium text-gray-800">
+                        <span>{r.name}</span>
+                        {r.isGuest && (
+                          <span className="ml-2 text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full">Mehmon</span>
+                        )}
+                      </td>
                       <td className="px-4 py-3 text-center text-gray-600">{r.totalDays}</td>
                       <td className="px-4 py-3 text-center text-gray-600">{r.totalHours.toFixed(1)}</td>
                       <td className="px-4 py-3 text-center text-gray-600">{r.totalQty.toLocaleString()}</td>
