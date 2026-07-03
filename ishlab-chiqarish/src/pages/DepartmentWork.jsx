@@ -7,7 +7,7 @@ import {
 import { db } from '../firebase/config'
 import { useDepartments } from '../contexts/DepartmentsContext'
 import { useAuth } from '../contexts/AuthContext'
-import { Calendar, Clock, Save, CheckCircle, RefreshCw, X, Search, MoreVertical, Send, AlarmClock } from 'lucide-react'
+import { Calendar, Clock, Save, CheckCircle, RefreshCw, X, Search, MoreVertical, Send, AlarmClock, UserPlus } from 'lucide-react'
 import { buildWorkPDFHtml } from '../utils/pdf'
 import { sendHTMLToTelegram, sendTelegramMessage } from '../utils/telegram'
 
@@ -47,23 +47,30 @@ export default function DepartmentWork() {
   const [breakMinutes, setBreakMinutes] = useState(0)
   const [employees, setEmployees] = useState([])
   const [allOps, setAllOps] = useState([])
-  const [entries, setEntries] = useState({}) // { [empId]: { [opId]: { quantity, note } } }
+  const [entries, setEntries] = useState({})
   const [saving, setSaving] = useState({})
   const [saved, setSaved] = useState({})
   const [savingAll, setSavingAll] = useState(false)
   const [savedAll, setSavedAll] = useState(false)
   const [isDirty, setIsDirty] = useState(false)
-  const [overrides, setOverrides] = useState({}) // { [empId]: opId[] } — session only
-  const [empTimes, setEmpTimes] = useState({}) // { [empId]: { startTime, endTime } }
+  const [overrides, setOverrides] = useState({})
+  const [empTimes, setEmpTimes] = useState({})
   const [timePickerEmp, setTimePickerEmp] = useState(null)
-  const [menuEmp, setMenuEmp] = useState(null) // 3-dot menu open for which empId
-  const [pickerEmp, setPickerEmp] = useState(null) // empId whose picker is open
-  const [pickerSel, setPickerSel] = useState([]) // temp selection in picker
+  const [menuEmp, setMenuEmp] = useState(null)
+  const [pickerEmp, setPickerEmp] = useState(null)
+  const [pickerSel, setPickerSel] = useState([])
   const [pickerSearch, setPickerSearch] = useState('')
   const [search, setSearch] = useState('')
   const [activeShift, setActiveShift] = useState(null)
   const [tgSending, setTgSending] = useState(false)
   const [tgMsg, setTgMsg] = useState('')
+
+  // Guest worker state
+  const [guestEmps, setGuestEmps] = useState([])
+  const [allEmployees, setAllEmployees] = useState([])
+  const [showGuestPicker, setShowGuestPicker] = useState(false)
+  const [guestSearch, setGuestSearch] = useState('')
+  const [guestWarning, setGuestWarning] = useState('')
 
   useEffect(() => {
     getDocs(query(collection(db, 'factory_shifts'), where('isActive', '==', true)))
@@ -82,6 +89,18 @@ export default function DepartmentWork() {
         return nameA.localeCompare(nameB, 'uz')
       }))
     })
+  }, [deptId])
+
+  // Load all employees for guest picker
+  useEffect(() => {
+    getDocs(collection(db, 'factory_employees')).then(snap => {
+      setAllEmployees(snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(e => e.isActive !== false))
+    })
+  }, [])
+
+  // Reset guests when dept changes
+  useEffect(() => {
+    setGuestEmps([])
   }, [deptId])
 
   // Load all operations
@@ -108,15 +127,14 @@ export default function DepartmentWork() {
     return () => window.removeEventListener('beforeunload', handler)
   }, [isDirty])
 
-  // Load existing entries when date/time changes
-  // Uses document ID prefix range so per-employee time overrides don't break the query
+  // Load existing entries
   useEffect(() => {
     if (!date || !startTime || !endTime) return
     const shiftPrefix = `${date}_${deptId}_${startTime.replace(':','')}_${endTime.replace(':','')}_`
     const q = query(
       collection(db, 'factory_work_entries'),
       where(documentId(), '>=', shiftPrefix),
-      where(documentId(), '<', shiftPrefix + ''),
+      where(documentId(), '<', shiftPrefix + ''),
     )
     return onSnapshot(q, snap => {
       const data = {}
@@ -145,14 +163,45 @@ export default function DepartmentWork() {
     setIsDirty(true)
   }
 
+  const addGuest = async (emp) => {
+    if (guestEmps.some(e => e.id === emp.id) || employees.some(e => e.id === emp.id)) return
+    if (date) {
+      const snap = await getDocs(query(
+        collection(db, 'factory_work_entries'),
+        where('employeeId', '==', emp.id),
+        where('date', '==', date),
+      ))
+      if (!snap.empty) {
+        const existingDeptId = snap.docs[0].data().departmentId
+        const existingDept = departments.find(d => d.id === existingDeptId)
+        setGuestWarning(`${emp.lastName} ${emp.firstName} bugun ${existingDept?.name || "boshqa bo'limda"} allaqachon ishlagan!`)
+        setTimeout(() => setGuestWarning(''), 4000)
+        return
+      }
+    }
+    const deptOpIds = allOps.filter(o => o.departmentId === deptId).map(o => o.id)
+    setGuestEmps(prev => [...prev, emp])
+    setOverrides(o => ({ ...o, [emp.id]: deptOpIds }))
+    setShowGuestPicker(false)
+    setGuestSearch('')
+    setGuestWarning('')
+  }
+
+  const removeGuest = (empId) => {
+    setGuestEmps(prev => prev.filter(e => e.id !== empId))
+    setOverrides(o => { const n = { ...o }; delete n[empId]; return n })
+    setEntries(prev => { const n = { ...prev }; delete n[empId]; return n })
+  }
+
   const saveEmployee = async (empId) => {
     setSaving(s => ({ ...s, [empId]: true }))
+    const emp = employees.find(e => e.id === empId) || guestEmps.find(e => e.id === empId)
+    const isGuest = guestEmps.some(e => e.id === empId)
     const empStart = empTimes[empId]?.startTime || startTime
     const empEnd = empTimes[empId]?.endTime || endTime
     const entryId = `${date}_${deptId}_${startTime.replace(':','')}_${endTime.replace(':','')}_${empId}`
     const normMap = Object.fromEntries(allOps.map(o => [o.id, o.norm || 0]))
     const unitPriceMap = Object.fromEntries(allOps.map(o => [o.id, o.unitPrice || 0]))
-    const emp = employees.find(e => e.id === empId)
     const salaryType = emp?.salaryType || 'hourly'
     const hourlyRate = emp?.hourlyRate || 0
     const empH = getEmpHours(empId)
@@ -181,6 +230,7 @@ export default function DepartmentWork() {
       salaryType,
       hourlyRate,
       totalPay,
+      ...(isGuest && { isGuest: true, homeDepartmentId: emp.departmentId }),
       updatedAt: serverTimestamp(),
       updatedBy: user.uid,
     })
@@ -196,7 +246,6 @@ export default function DepartmentWork() {
         return `• ${op.name}: ${qty} dona`
       }).filter(Boolean).join('\n')
 
-      // Bugungi barcha smenalar maoshini yig'ish (date bo'yicha query, JS da filter)
       let dailyTotalPay = totalPay
       try {
         const todaySnap = await getDocs(query(
@@ -220,7 +269,8 @@ export default function DepartmentWork() {
 
   const saveAll = async () => {
     setSavingAll(true)
-    await Promise.all(employees.map(emp => saveEmployee(emp.id)))
+    const allWorkers = [...employees, ...guestEmps]
+    await Promise.all(allWorkers.map(emp => saveEmployee(emp.id)))
     setSavingAll(false)
     setSavedAll(true)
     setIsDirty(false)
@@ -257,8 +307,9 @@ export default function DepartmentWork() {
       return
     }
 
+    const allWorkers = [...employees, ...guestEmps]
     const rows = []
-    employees.forEach(emp => {
+    allWorkers.forEach(emp => {
       const empEntries = entries[emp.id] || {}
       const activeOpIds = overrides[emp.id] ?? emp.operationIds ?? []
       allOps.filter(o => activeOpIds.includes(o.id)).forEach(op => {
@@ -290,7 +341,6 @@ export default function DepartmentWork() {
     setTgSending(true)
     setTgMsg('')
     try {
-      // Bugungi jami tayyor mahsulot (barcha smenalar bo'yicha)
       let dailyTayyor = null
       try {
         const dailySnap = await getDocs(query(
@@ -329,6 +379,8 @@ export default function DepartmentWork() {
       <div className="text-gray-400 text-sm mt-1">Bu bo'limga kirishingiz cheklanган</div>
     </div>
   )
+
+  const allWorkersList = [...employees, ...guestEmps]
 
   return (
     <div>
@@ -430,9 +482,9 @@ export default function DepartmentWork() {
         </div>
       ) : (
         <>
-          {/* Search + Save All */}
-          <div className="flex gap-3 mb-4">
-            <div className="relative flex-1">
+          {/* Search + Guest + Save All */}
+          <div className="flex gap-3 mb-4 flex-wrap">
+            <div className="relative flex-1 min-w-[160px]">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
                 type="text"
@@ -444,12 +496,18 @@ export default function DepartmentWork() {
             </div>
             {can.enterHourly && (
               <div className="flex gap-2 flex-shrink-0">
+                <button
+                  onClick={() => { setShowGuestPicker(true); setGuestWarning('') }}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium border border-dashed border-amber-400 text-amber-700 hover:bg-amber-50 transition-colors"
+                >
+                  <UserPlus className="w-4 h-4" />
+                  Mehmon xodim
+                </button>
                 <div className="relative">
                   <button
                     onClick={handleSendTelegram}
                     disabled={tgSending}
                     className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium bg-sky-500 hover:bg-sky-600 text-white transition-colors disabled:opacity-60"
-                    title="Telegram guruhga yuborish"
                   >
                     <Send className="w-4 h-4" />
                     {tgSending ? 'Yuborilmoqda...' : 'Telegram'}
@@ -480,218 +538,309 @@ export default function DepartmentWork() {
               </div>
             )}
           </div>
-        <div className="space-y-4">
-          {employees.filter(emp => {
-            if (!search.trim()) return true
-            const q = search.trim().toLowerCase()
-            return `${emp.lastName} ${emp.firstName}`.toLowerCase().includes(q)
-          }).map((emp, idx) => {
-            const activeOpIds = overrides[emp.id] ?? emp.operationIds ?? []
-            const empOps = allOps.filter(o => activeOpIds.includes(o.id))
-            const isOverridden = overrides[emp.id] != null
-            const empEntries = entries[emp.id] || {}
 
-            return (
-              <div key={emp.id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                {/* Employee header */}
-                <div className="flex items-center justify-between px-4 py-3 bg-gray-50 border-b border-gray-100">
-                  <div className="flex items-center gap-3">
-                    <div className="w-7 h-7 bg-indigo-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
-                      {idx + 1}
-                    </div>
-                    <span className="font-medium text-gray-800 text-sm">
-                      {emp.lastName} {emp.firstName}
-                    </span>
-                    {isOverridden && (
-                      <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">
-                        Almashtrilgan
+          <div className="space-y-4">
+            {allWorkersList.filter(emp => {
+              if (!search.trim()) return true
+              const q = search.trim().toLowerCase()
+              return `${emp.lastName} ${emp.firstName}`.toLowerCase().includes(q)
+            }).map((emp, idx) => {
+              const isGuest = guestEmps.some(e => e.id === emp.id)
+              const activeOpIds = overrides[emp.id] ?? emp.operationIds ?? []
+              const empOps = allOps.filter(o => activeOpIds.includes(o.id))
+              const isOverridden = overrides[emp.id] != null && !isGuest
+              const empEntries = entries[emp.id] || {}
+
+              return (
+                <div key={emp.id} className={`bg-white rounded-xl shadow-sm border overflow-hidden ${isGuest ? 'border-amber-200' : 'border-gray-100'}`}>
+                  {/* Employee header */}
+                  <div className={`flex items-center justify-between px-4 py-3 border-b ${isGuest ? 'bg-amber-50 border-amber-100' : 'bg-gray-50 border-gray-100'}`}>
+                    <div className="flex items-center gap-3 flex-wrap">
+                      <div className={`w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold ${isGuest ? 'bg-amber-500' : 'bg-indigo-600'}`}>
+                        {idx + 1}
+                      </div>
+                      <span className="font-medium text-gray-800 text-sm">
+                        {emp.lastName} {emp.firstName}
                       </span>
-                    )}
-                    {empTimes[emp.id] && (
-                      <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full flex items-center gap-1">
-                        <AlarmClock className="w-3 h-3" />
-                        {empTimes[emp.id].startTime}–{empTimes[emp.id].endTime}
-                      </span>
-                    )}
-                  </div>
-                  {can.enterHourly && (
-                    <div className="relative">
-                      <button
-                        onClick={() => setMenuEmp(menuEmp === emp.id ? null : emp.id)}
-                        className="p-2 rounded-lg text-gray-400 hover:bg-gray-200 hover:text-gray-600 transition-colors"
-                        title="Boshqa amallar"
-                      >
-                        <MoreVertical className="w-4 h-4" />
-                      </button>
-                      {menuEmp === emp.id && (
-                        <>
-                          <div className="fixed inset-0 z-10" onClick={() => setMenuEmp(null)} />
-                          <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-20 min-w-[180px]">
-                            <button
-                              onClick={() => { openPicker(emp); setMenuEmp(null) }}
-                              className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-lg"
-                            >
-                              <RefreshCw className="w-3.5 h-3.5 text-gray-400" />
-                              Operatsiya almashtirish
-                            </button>
-                            <button
-                              onClick={() => { setTimePickerEmp(timePickerEmp === emp.id ? null : emp.id); setMenuEmp(null) }}
-                              className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-lg"
-                            >
-                              <Clock className="w-3.5 h-3.5 text-gray-400" />
-                              Vaqtni o'zgartirish
-                            </button>
-                          </div>
-                        </>
+                      {isGuest && (
+                        <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
+                          Mehmon · {departments.find(d => d.id === emp.departmentId)?.name}
+                        </span>
+                      )}
+                      {isOverridden && (
+                        <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">
+                          Almashtrilgan
+                        </span>
+                      )}
+                      {empTimes[emp.id] && (
+                        <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full flex items-center gap-1">
+                          <AlarmClock className="w-3 h-3" />
+                          {empTimes[emp.id].startTime}–{empTimes[emp.id].endTime}
+                        </span>
                       )}
                     </div>
-                  )}
-                </div>
-
-                {/* Operation picker modal */}
-                {pickerEmp === emp.id && (
-                  <div className="border-b border-orange-100 bg-orange-50 px-4 py-3">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs font-medium text-orange-800">Operatsiyalarni tanlang (faqat shu sessiya uchun)</span>
-                      <button onClick={() => { setPickerEmp(null); setPickerSearch('') }} className="text-gray-400 hover:text-gray-600">
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-                    <div className="relative mb-2">
-                      <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
-                      <input
-                        type="text"
-                        value={pickerSearch}
-                        onChange={e => setPickerSearch(e.target.value)}
-                        placeholder="Operatsiya qidirish..."
-                        className="w-full border border-orange-200 bg-white rounded-lg pl-8 pr-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-orange-400"
-                      />
-                    </div>
-                    <div className="flex flex-wrap gap-2 mb-3">
-                      {allOps.filter(o => o.departmentId === deptId).filter(o => !pickerSearch.trim() || o.name.toLowerCase().includes(pickerSearch.trim().toLowerCase())).map(op => (
-                        <label key={op.id} className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border cursor-pointer transition-colors ${
-                          pickerSel.includes(op.id)
-                            ? 'bg-indigo-600 text-white border-indigo-600'
-                            : 'bg-white text-gray-600 border-gray-200 hover:border-indigo-300'
-                        }`}>
-                          <input
-                            type="checkbox"
-                            className="hidden"
-                            checked={pickerSel.includes(op.id)}
-                            onChange={() => togglePickerOp(op.id)}
-                          />
-                          {op.name}
-                        </label>
-                      ))}
-                    </div>
-                    <button
-                      onClick={() => applyPicker(emp.id)}
-                      className="text-xs bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-1.5 rounded-lg transition-colors"
-                    >
-                      Tasdiqlash
-                    </button>
+                    {can.enterHourly && (
+                      <div className="relative flex items-center gap-1">
+                        {isGuest && (
+                          <button
+                            onClick={() => removeGuest(emp.id)}
+                            className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                            title="Mehmon xodimni olib tashlash"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        )}
+                        <button
+                          onClick={() => setMenuEmp(menuEmp === emp.id ? null : emp.id)}
+                          className="p-2 rounded-lg text-gray-400 hover:bg-gray-200 hover:text-gray-600 transition-colors"
+                        >
+                          <MoreVertical className="w-4 h-4" />
+                        </button>
+                        {menuEmp === emp.id && (
+                          <>
+                            <div className="fixed inset-0 z-10" onClick={() => setMenuEmp(null)} />
+                            <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-20 min-w-[180px]">
+                              <button
+                                onClick={() => { openPicker(emp); setMenuEmp(null) }}
+                                className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-lg"
+                              >
+                                <RefreshCw className="w-3.5 h-3.5 text-gray-400" />
+                                Operatsiya almashtirish
+                              </button>
+                              <button
+                                onClick={() => { setTimePickerEmp(timePickerEmp === emp.id ? null : emp.id); setMenuEmp(null) }}
+                                className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-lg"
+                              >
+                                <Clock className="w-3.5 h-3.5 text-gray-400" />
+                                Vaqtni o'zgartirish
+                              </button>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    )}
                   </div>
-                )}
 
-                {/* Per-employee time override panel */}
-                {timePickerEmp === emp.id && (
-                  <div className="border-b border-indigo-100 bg-indigo-50 px-4 py-3">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs font-medium text-indigo-800">Xodim uchun alohida vaqt</span>
-                      <button onClick={() => setTimePickerEmp(null)} className="text-gray-400 hover:text-gray-600">
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="time"
-                        value={empTimes[emp.id]?.startTime || startTime}
-                        onChange={e => setEmpTimes(t => ({ ...t, [emp.id]: { ...t[emp.id], startTime: e.target.value, endTime: t[emp.id]?.endTime || endTime } }))}
-                        className="border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                      />
-                      <span className="text-gray-400 text-sm">—</span>
-                      <input
-                        type="time"
-                        value={empTimes[emp.id]?.endTime || endTime}
-                        onChange={e => setEmpTimes(t => ({ ...t, [emp.id]: { ...t[emp.id], endTime: e.target.value, startTime: t[emp.id]?.startTime || startTime } }))}
-                        className="border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                      />
+                  {/* Operation picker */}
+                  {pickerEmp === emp.id && (
+                    <div className="border-b border-orange-100 bg-orange-50 px-4 py-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-medium text-orange-800">Operatsiyalarni tanlang (faqat shu sessiya uchun)</span>
+                        <button onClick={() => { setPickerEmp(null); setPickerSearch('') }} className="text-gray-400 hover:text-gray-600">
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                      <div className="relative mb-2">
+                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+                        <input
+                          type="text"
+                          value={pickerSearch}
+                          onChange={e => setPickerSearch(e.target.value)}
+                          placeholder="Operatsiya qidirish..."
+                          className="w-full border border-orange-200 bg-white rounded-lg pl-8 pr-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-orange-400"
+                        />
+                      </div>
+                      <div className="flex flex-wrap gap-2 mb-3">
+                        {allOps.filter(o => o.departmentId === deptId).filter(o => !pickerSearch.trim() || o.name.toLowerCase().includes(pickerSearch.trim().toLowerCase())).map(op => (
+                          <label key={op.id} className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border cursor-pointer transition-colors ${
+                            pickerSel.includes(op.id)
+                              ? 'bg-indigo-600 text-white border-indigo-600'
+                              : 'bg-white text-gray-600 border-gray-200 hover:border-indigo-300'
+                          }`}>
+                            <input
+                              type="checkbox"
+                              className="hidden"
+                              checked={pickerSel.includes(op.id)}
+                              onChange={() => togglePickerOp(op.id)}
+                            />
+                            {op.name}
+                          </label>
+                        ))}
+                      </div>
                       <button
-                        onClick={() => { setEmpTimes(t => { const n = { ...t }; delete n[emp.id]; return n }); setTimePickerEmp(null) }}
-                        className="text-xs text-red-500 hover:text-red-700 px-2 py-1.5"
-                      >
-                        Bekor
-                      </button>
-                      <button
-                        onClick={() => setTimePickerEmp(null)}
-                        className="text-xs bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg"
+                        onClick={() => applyPicker(emp.id)}
+                        className="text-xs bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-1.5 rounded-lg transition-colors"
                       >
                         Tasdiqlash
                       </button>
                     </div>
-                    <p className="text-xs text-indigo-600 mt-1.5">
-                      Ishlagan soat: {getEmpHours(emp.id).toFixed(1)} soat
-                    </p>
-                  </div>
-                )}
+                  )}
 
-                {/* Operations */}
-                {empOps.length === 0 ? (
-                  <div className="px-4 py-4 text-sm text-gray-400">
-                    Operatsiyalar tayinlanmagan
-                  </div>
-                ) : (
-                  <div className="divide-y divide-gray-50">
-                    {empOps.map(op => {
-                      const qty = empEntries[op.id]?.quantity ?? ''
-                      const note = empEntries[op.id]?.note ?? ''
-                      const empH = getEmpHours(emp.id)
-                      const expected = op.norm * empH
-                      const status = normStatus(qty, op.norm, empH)
+                  {/* Per-employee time override */}
+                  {timePickerEmp === emp.id && (
+                    <div className="border-b border-indigo-100 bg-indigo-50 px-4 py-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-medium text-indigo-800">Xodim uchun alohida vaqt</span>
+                        <button onClick={() => setTimePickerEmp(null)} className="text-gray-400 hover:text-gray-600">
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="time"
+                          value={empTimes[emp.id]?.startTime || startTime}
+                          onChange={e => setEmpTimes(t => ({ ...t, [emp.id]: { ...t[emp.id], startTime: e.target.value, endTime: t[emp.id]?.endTime || endTime } }))}
+                          className="border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                        />
+                        <span className="text-gray-400 text-sm">—</span>
+                        <input
+                          type="time"
+                          value={empTimes[emp.id]?.endTime || endTime}
+                          onChange={e => setEmpTimes(t => ({ ...t, [emp.id]: { ...t[emp.id], endTime: e.target.value, startTime: t[emp.id]?.startTime || startTime } }))}
+                          className="border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                        />
+                        <button
+                          onClick={() => { setEmpTimes(t => { const n = { ...t }; delete n[emp.id]; return n }); setTimePickerEmp(null) }}
+                          className="text-xs text-red-500 hover:text-red-700 px-2 py-1.5"
+                        >
+                          Bekor
+                        </button>
+                        <button
+                          onClick={() => setTimePickerEmp(null)}
+                          className="text-xs bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg"
+                        >
+                          Tasdiqlash
+                        </button>
+                      </div>
+                      <p className="text-xs text-indigo-600 mt-1.5">
+                        Ishlagan soat: {getEmpHours(emp.id).toFixed(1)} soat
+                      </p>
+                    </div>
+                  )}
 
-                      return (
-                        <div key={op.id} className="px-4 py-3">
-                          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                            <div className="flex-1 min-w-0">
-                              <div className="text-sm font-medium text-gray-700">{op.name}</div>
-                              <div className="text-xs text-gray-400 mt-0.5">
-                                Norma: {op.norm} dona/soat · {hours > 0 ? `${hours.toFixed(1)} soat = ` : ''}{hours > 0 ? `${expected.toFixed(0)} dona` : '—'}
+                  {/* Operations */}
+                  {empOps.length === 0 ? (
+                    <div className="px-4 py-4 text-sm text-gray-400">
+                      Operatsiyalar tayinlanmagan
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-gray-50">
+                      {empOps.map(op => {
+                        const qty = empEntries[op.id]?.quantity ?? ''
+                        const note = empEntries[op.id]?.note ?? ''
+                        const empH = getEmpHours(emp.id)
+                        const expected = op.norm * empH
+                        const status = normStatus(qty, op.norm, empH)
+
+                        return (
+                          <div key={op.id} className="px-4 py-3">
+                            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                              <div className="flex-1 min-w-0">
+                                <div className="text-sm font-medium text-gray-700">{op.name}</div>
+                                <div className="text-xs text-gray-400 mt-0.5">
+                                  Norma: {op.norm} dona/soat · {hours > 0 ? `${hours.toFixed(1)} soat = ` : ''}{hours > 0 ? `${expected.toFixed(0)} dona` : '—'}
+                                </div>
                               </div>
-                            </div>
-                            <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-2">
+                                <input
+                                  type="number"
+                                  inputMode="numeric"
+                                  min="0"
+                                  value={qty}
+                                  onChange={e => setEntryVal(emp.id, op.id, 'quantity', e.target.value === '' ? '' : Number(e.target.value))}
+                                  disabled={!can.enterHourly}
+                                  className={`w-24 border rounded-lg px-3 py-3 text-xl text-center focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold ${statusStyle[status]}`}
+                                  placeholder="0"
+                                />
+                                <span className="text-xs text-gray-400">dona</span>
+                              </div>
                               <input
-                                type="number"
-                                inputMode="numeric"
-                                min="0"
-                                value={qty}
-                                onChange={e => setEntryVal(emp.id, op.id, 'quantity', e.target.value === '' ? '' : Number(e.target.value))}
+                                type="text"
+                                value={note}
+                                onChange={e => setEntryVal(emp.id, op.id, 'note', e.target.value)}
                                 disabled={!can.enterHourly}
-                                className={`w-24 border rounded-lg px-3 py-3 text-xl text-center focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold ${statusStyle[status]}`}
-                                placeholder="0"
+                                className="w-full sm:w-40 md:w-52 border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                placeholder="Izoh..."
                               />
-                              <span className="text-xs text-gray-400">dona</span>
                             </div>
-                            <input
-                              type="text"
-                              value={note}
-                              onChange={e => setEntryVal(emp.id, op.id, 'note', e.target.value)}
-                              disabled={!can.enterHourly}
-                              className="w-full sm:w-40 md:w-52 border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                              placeholder="Izoh..."
-                            />
                           </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                )}
-              </div>
-            )
-          })}
-        </div>
+                        )
+                      })}
+                    </div>
+                  )}
+
+                  {/* Save button per employee */}
+                  {can.enterHourly && (
+                    <div className="px-4 py-3 border-t border-gray-50 flex justify-end">
+                      <button
+                        onClick={() => saveEmployee(emp.id)}
+                        disabled={saving[emp.id]}
+                        className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm transition-colors ${
+                          saved[emp.id]
+                            ? 'bg-green-100 text-green-700'
+                            : 'bg-indigo-50 hover:bg-indigo-100 text-indigo-700'
+                        } disabled:opacity-60`}
+                      >
+                        {saved[emp.id] ? <CheckCircle className="w-4 h-4" /> : <Save className="w-4 h-4" />}
+                        {saved[emp.id] ? 'Saqlandi' : saving[emp.id] ? '...' : 'Saqlash'}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
         </>
       )}
 
+      {/* Guest picker modal */}
+      {showGuestPicker && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-5 modal-enter">
+            <div className="flex items-center justify-between mb-1">
+              <h3 className="font-bold text-gray-800">Mehmon xodim qo'shish</h3>
+              <button onClick={() => { setShowGuestPicker(false); setGuestWarning('') }} className="text-gray-400 hover:text-gray-600">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <p className="text-xs text-gray-400 mb-3">Boshqa bo'limdagi xodim bu bo'limda vaqtinchalik ishlaydi</p>
+
+            {guestWarning && (
+              <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg px-3 py-2 mb-3 text-xs">
+                {guestWarning}
+              </div>
+            )}
+
+            <div className="relative mb-3">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                type="text"
+                value={guestSearch}
+                onChange={e => setGuestSearch(e.target.value)}
+                placeholder="Xodim qidirish..."
+                autoFocus
+                className="w-full border border-gray-300 rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+
+            <div className="max-h-64 overflow-y-auto space-y-0.5">
+              {allEmployees
+                .filter(e => e.departmentId !== deptId)
+                .filter(e => !guestEmps.some(g => g.id === e.id))
+                .filter(e => {
+                  if (!guestSearch.trim()) return true
+                  return `${e.lastName} ${e.firstName}`.toLowerCase().includes(guestSearch.toLowerCase())
+                })
+                .map(emp => (
+                  <button
+                    key={emp.id}
+                    onClick={() => addGuest(emp)}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-amber-50 text-left transition-colors"
+                  >
+                    <div className="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center text-amber-700 text-xs font-bold shrink-0">
+                      {emp.firstName?.[0]}{emp.lastName?.[0]}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-sm font-medium text-gray-800">{emp.lastName} {emp.firstName}</div>
+                      <div className="text-xs text-gray-400">{departments.find(d => d.id === emp.departmentId)?.name || "Bo'lim yo'q"}</div>
+                    </div>
+                  </button>
+                ))
+              }
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
