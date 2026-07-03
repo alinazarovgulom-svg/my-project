@@ -71,6 +71,7 @@ export default function DepartmentWork() {
   const [showGuestPicker, setShowGuestPicker] = useState(false)
   const [guestSearch, setGuestSearch] = useState('')
   const [guestWarning, setGuestWarning] = useState('')
+  const [pendingGuest, setPendingGuest] = useState(null)
 
   useEffect(() => {
     getDocs(query(collection(db, 'factory_shifts'), where('isActive', '==', true)))
@@ -163,7 +164,7 @@ export default function DepartmentWork() {
     setIsDirty(true)
   }
 
-  const addGuest = async (emp) => {
+  const selectPendingGuest = async (emp) => {
     if (guestEmps.some(e => e.id === emp.id) || employees.some(e => e.id === emp.id)) return
     if (date) {
       const snap = await getDocs(query(
@@ -179,14 +180,19 @@ export default function DepartmentWork() {
         return
       }
     }
-    setGuestEmps(prev => [...prev, emp])
-    setOverrides(o => ({ ...o, [emp.id]: [] }))
+    setPendingGuest(emp)
+  }
+
+  const confirmGuest = () => {
+    if (!pendingGuest) return
+    setGuestEmps(prev => [...prev, pendingGuest])
+    setOverrides(o => ({ ...o, [pendingGuest.id]: [] }))
+    setPendingGuest(null)
     setShowGuestPicker(false)
     setGuestSearch('')
     setGuestWarning('')
-    // Immediately open operation picker so manager assigns host dept tasks
     setPickerSel([])
-    setPickerEmp(emp.id)
+    setPickerEmp(pendingGuest.id)
     setPickerSearch('')
   }
 
@@ -819,7 +825,7 @@ export default function DepartmentWork() {
               />
             </div>
 
-            <div className="max-h-64 overflow-y-auto space-y-0.5">
+            <div className="max-h-52 overflow-y-auto space-y-0.5">
               {allEmployees
                 .filter(e => e.departmentId !== deptId)
                 .filter(e => !guestEmps.some(g => g.id === e.id))
@@ -830,8 +836,8 @@ export default function DepartmentWork() {
                 .map(emp => (
                   <button
                     key={emp.id}
-                    onClick={() => addGuest(emp)}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-amber-50 text-left transition-colors"
+                    onClick={() => selectPendingGuest(emp)}
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors ${pendingGuest?.id === emp.id ? 'bg-amber-50 ring-2 ring-amber-300' : 'hover:bg-amber-50'}`}
                   >
                     <div className="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center text-amber-700 text-xs font-bold shrink-0">
                       {emp.firstName?.[0]}{emp.lastName?.[0]}
@@ -844,6 +850,29 @@ export default function DepartmentWork() {
                 ))
               }
             </div>
+
+            {pendingGuest && (
+              <div className="mt-3 pt-3 border-t border-amber-100">
+                <div className="text-sm text-gray-700 mb-3">
+                  <span className="font-semibold text-amber-700">{pendingGuest.lastName} {pendingGuest.firstName}</span>
+                  {' '}ni mehmon qilmoqchimisiz?
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={confirmGuest}
+                    className="flex-1 bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium py-2 rounded-lg transition-colors"
+                  >
+                    Tasdiqlash
+                  </button>
+                  <button
+                    onClick={() => setPendingGuest(null)}
+                    className="px-4 py-2 text-sm text-gray-500 hover:text-gray-700 border border-gray-200 rounded-lg transition-colors"
+                  >
+                    Bekor
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
