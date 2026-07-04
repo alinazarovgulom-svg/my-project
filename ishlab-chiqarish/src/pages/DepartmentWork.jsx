@@ -41,7 +41,7 @@ export default function DepartmentWork() {
 
   const hasAccess = can.manageMembers || !userDoc?.departmentIds?.length || userDoc.departmentIds.includes(deptId)
 
-  const [date, setDate] = useState('')
+  const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10))
   const [startTime, setStartTime] = useState('')
   const [endTime, setEndTime] = useState('')
   const [breakMinutes, setBreakMinutes] = useState(0)
@@ -50,6 +50,7 @@ export default function DepartmentWork() {
   const [entries, setEntries] = useState({})
   const [saving, setSaving] = useState({})
   const [saved, setSaved] = useState({})
+  const [dirtyEmps, setDirtyEmps] = useState({})
   const [savingAll, setSavingAll] = useState(false)
   const [savedAll, setSavedAll] = useState(false)
   const [isDirty, setIsDirty] = useState(false)
@@ -77,7 +78,16 @@ export default function DepartmentWork() {
   useEffect(() => {
     getDocs(query(collection(db, 'factory_shifts'), where('isActive', '==', true)))
       .then(snap => {
-        if (!snap.empty) setActiveShift({ id: snap.docs[0].id, ...snap.docs[0].data() })
+        if (!snap.empty) {
+          const shift = { id: snap.docs[0].id, ...snap.docs[0].data() }
+          setActiveShift(shift)
+          if (shift.slots?.length >= 1 && !startTime) {
+            const slot = shift.slots[0]
+            setStartTime(slot.startTime)
+            setEndTime(slot.endTime)
+            setBreakMinutes(slot.breakMinutes || 0)
+          }
+        }
       })
   }, [])
 
@@ -118,6 +128,7 @@ export default function DepartmentWork() {
     setPickerEmp(null)
     setIsDirty(false)
     setEntries({})
+    setDirtyEmps({})
   }, [date, startTime, endTime])
 
   // Warn on browser tab close / refresh
@@ -136,7 +147,7 @@ export default function DepartmentWork() {
     const q = query(
       collection(db, 'factory_work_entries'),
       where(documentId(), '>=', shiftPrefix),
-      where(documentId(), '<', shiftPrefix + ''),
+      where(documentId(), '<', shiftPrefix + ''),
     )
     return onSnapshot(q, snap => {
       const data = {}
@@ -162,6 +173,7 @@ export default function DepartmentWork() {
       },
     }))
     setSaved(s => ({ ...s, [empId]: false }))
+    setDirtyEmps(prev => ({ ...prev, [empId]: true }))
     setIsDirty(true)
   }
 
@@ -258,6 +270,7 @@ export default function DepartmentWork() {
     })
     setSaving(s => ({ ...s, [empId]: false }))
     setSaved(s => ({ ...s, [empId]: true }))
+    setDirtyEmps(prev => ({ ...prev, [empId]: false }))
     setTimeout(() => setSaved(s => ({ ...s, [empId]: false })), 2000)
 
     if (emp?.telegramId) {
@@ -296,6 +309,7 @@ export default function DepartmentWork() {
     setSavingAll(false)
     setSavedAll(true)
     setIsDirty(false)
+    setDirtyEmps({})
     setTimeout(() => setSavedAll(false), 2500)
   }
 
@@ -805,7 +819,7 @@ export default function DepartmentWork() {
                   )}
 
                   {/* Save button per employee */}
-                  {can.enterHourly && (
+                  {can.enterHourly && dirtyEmps[emp.id] && (
                     <div className="px-4 py-3 border-t border-gray-50 flex justify-end">
                       <button
                         onClick={() => saveEmployee(emp.id)}
