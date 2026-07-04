@@ -23,6 +23,7 @@ export default function Employees() {
   const [modal, setModal] = useState(null)
   const [form, setForm] = useState({ firstName: '', lastName: '', departmentId: '', operationIds: [], salaryType: 'hourly', hourlyRate: '', salaryHistory: [], telegramId: '' })
   const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState('')
   const [deleting, setDeleting] = useState(null)
   const [search, setSearch] = useState('')
   const [opSearch, setOpSearch] = useState('')
@@ -42,6 +43,7 @@ export default function Employees() {
   const openAdd = () => {
     setForm({ firstName: '', lastName: '', departmentId: visibleDepts[0]?.id || '', operationIds: [], salaryType: 'hourly', hourlyRate: '', salaryHistory: [], telegramId: '' })
     setOpSearch('')
+    setSaveError('')
     setModal('add')
   }
   const openEdit = (emp) => {
@@ -56,6 +58,7 @@ export default function Employees() {
       telegramId: emp.telegramId || '',
     })
     setOpSearch('')
+    setSaveError('')
     setModal(emp)
   }
 
@@ -73,32 +76,38 @@ export default function Employees() {
   }
 
   const handleSave = async () => {
-    if (!form.firstName.trim() || !form.lastName.trim()) return
+    if (!form.firstName.trim() || !form.lastName.trim() || !form.departmentId) return
     setSaving(true)
-    const newRate = form.hourlyRate !== '' ? Number(form.hourlyRate) : null
-    const today = new Date().toISOString().slice(0, 10)
-    const prevHistory = form.salaryHistory || []
-    const lastEntry = prevHistory[prevHistory.length - 1]
-    const salaryHistory = newRate !== null && (!lastEntry || lastEntry.hourlyRate !== newRate)
-      ? [...prevHistory, { hourlyRate: newRate, from: today }]
-      : prevHistory
-    const data = {
-      firstName: form.firstName.trim(),
-      lastName: form.lastName.trim(),
-      departmentId: form.departmentId,
-      operationIds: form.operationIds,
-      salaryType: form.salaryType,
-      hourlyRate: newRate,
-      salaryHistory,
-      telegramId: form.telegramId.trim() || null,
+    setSaveError('')
+    try {
+      const newRate = form.hourlyRate !== '' ? Number(form.hourlyRate) : null
+      const today = new Date().toISOString().slice(0, 10)
+      const prevHistory = form.salaryHistory || []
+      const lastEntry = prevHistory[prevHistory.length - 1]
+      const salaryHistory = newRate !== null && (!lastEntry || lastEntry.hourlyRate !== newRate)
+        ? [...prevHistory, { hourlyRate: newRate, from: today }]
+        : prevHistory
+      const data = {
+        firstName: form.firstName.trim(),
+        lastName: form.lastName.trim(),
+        departmentId: form.departmentId,
+        operationIds: form.operationIds,
+        salaryType: form.salaryType,
+        hourlyRate: newRate,
+        salaryHistory,
+        telegramId: form.telegramId.trim() || null,
+      }
+      if (modal === 'add') {
+        await addDoc(collection(db, 'factory_employees'), { ...data, isActive: true, createdAt: serverTimestamp() })
+      } else {
+        await updateDoc(doc(db, 'factory_employees', modal.id), data)
+      }
+      setSaving(false)
+      setModal(null)
+    } catch (err) {
+      setSaving(false)
+      setSaveError(err.message || 'Xatolik yuz berdi. Qayta urinib ko\'ring.')
     }
-    if (modal === 'add') {
-      await addDoc(collection(db, 'factory_employees'), { ...data, isActive: true, createdAt: serverTimestamp() })
-    } else {
-      await updateDoc(doc(db, 'factory_employees', modal.id), data)
-    }
-    setSaving(false)
-    setModal(null)
   }
 
   const handleArchive = async (id) => {
@@ -452,13 +461,19 @@ export default function Employees() {
               </div>
             </div>
 
-            <div className="flex gap-3 mt-6">
+            {saveError && (
+              <div className="mt-4 bg-red-50 border border-red-200 text-red-700 rounded-lg px-3 py-2 text-xs">
+                {saveError}
+              </div>
+            )}
+
+            <div className="flex gap-3 mt-4">
               <button onClick={() => setModal(null)} className="flex-1 border border-gray-300 rounded-lg py-2.5 text-sm text-gray-600 hover:bg-gray-50 transition-colors">
                 Bekor
               </button>
               <button
                 onClick={handleSave}
-                disabled={saving || !form.firstName.trim() || !form.lastName.trim()}
+                disabled={saving || !form.firstName.trim() || !form.lastName.trim() || !form.departmentId}
                 className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg py-2.5 text-sm font-medium transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
               >
                 <Check className="w-4 h-4" />
