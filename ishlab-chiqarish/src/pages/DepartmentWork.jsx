@@ -173,9 +173,12 @@ export default function DepartmentWork() {
         where('employeeId', '==', emp.id),
         where('date', '==', date),
       ))
-      if (!snap.empty) {
-        const existingDeptId = snap.docs[0].data().departmentId
-        const existingDept = departments.find(d => d.id === existingDeptId)
+      const entryWithWork = snap.docs.find(d => {
+        const ops = d.data().operations || {}
+        return Object.values(ops).some(op => Number(op.quantity || 0) > 0 || (op.note || '').trim())
+      })
+      if (entryWithWork) {
+        const existingDept = departments.find(d => d.id === entryWithWork.data().departmentId)
         setGuestWarning(`${emp.lastName} ${emp.firstName} bugun ${existingDept?.name || "boshqa bo'limda"} allaqachon ishlagan!`)
         setTimeout(() => setGuestWarning(''), 4000)
         return
