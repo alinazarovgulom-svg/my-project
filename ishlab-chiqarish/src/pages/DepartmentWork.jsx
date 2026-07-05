@@ -90,9 +90,10 @@ export default function DepartmentWork() {
     const q = query(collection(db, 'factory_employees'), where('departmentId', '==', deptId))
     return onSnapshot(q, snap => {
       setEmployees(snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(e => e.isActive !== false).sort((a, b) => {
-        const nameA = `${a.lastName} ${a.firstName}`.toLowerCase()
-        const nameB = `${b.lastName} ${b.firstName}`.toLowerCase()
-        return nameA.localeCompare(nameB, 'uz')
+        const aO = a.order ?? Infinity
+        const bO = b.order ?? Infinity
+        if (aO !== bO) return aO - bO
+        return `${a.lastName} ${a.firstName}`.localeCompare(`${b.lastName} ${b.firstName}`, 'uz')
       }))
     })
   }, [deptId])

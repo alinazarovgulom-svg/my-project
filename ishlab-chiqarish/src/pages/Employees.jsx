@@ -6,7 +6,7 @@ import {
 import { db } from '../firebase/config'
 import { useDepartments } from '../contexts/DepartmentsContext'
 import { useAuth } from '../contexts/AuthContext'
-import { Plus, Pencil, Trash2, X, Check, Search, Archive, RotateCcw } from 'lucide-react'
+import { Plus, Pencil, Trash2, X, Check, Search, Archive, RotateCcw, ChevronUp, ChevronDown } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
 export default function Employees() {
@@ -25,6 +25,7 @@ export default function Employees() {
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
   const [deleting, setDeleting] = useState(null)
+  const [reordering, setReordering] = useState(null)
   const [search, setSearch] = useState('')
   const [opSearch, setOpSearch] = useState('')
 
@@ -98,7 +99,10 @@ export default function Employees() {
         telegramId: form.telegramId.trim() || null,
       }
       if (modal === 'add') {
-        await addDoc(collection(db, 'factory_employees'), { ...data, isActive: true, createdAt: serverTimestamp() })
+        const maxOrder = employees
+          .filter(e => e.departmentId === form.departmentId)
+          .reduce((max, e) => Math.max(max, e.order ?? 0), 0)
+        await addDoc(collection(db, 'factory_employees'), { ...data, isActive: true, order: maxOrder + 1, createdAt: serverTimestamp() })
       } else {
         await updateDoc(doc(db, 'factory_employees', modal.id), data)
       }
@@ -126,6 +130,22 @@ export default function Employees() {
     setDeleting(null)
   }
 
+  const reorder = async (emp, dir) => {
+    const deptList = employees
+      .filter(e => e.departmentId === emp.departmentId && e.isActive !== false)
+      .sort((a, b) => (a.order ?? Infinity) - (b.order ?? Infinity))
+    const idx = deptList.findIndex(e => e.id === emp.id)
+    const swapIdx = dir === 'up' ? idx - 1 : idx + 1
+    if (swapIdx < 0 || swapIdx >= deptList.length) return
+    const other = deptList[swapIdx]
+    setReordering(emp.id)
+    await Promise.all([
+      updateDoc(doc(db, 'factory_employees', emp.id),   { order: other.order ?? swapIdx }),
+      updateDoc(doc(db, 'factory_employees', other.id), { order: emp.order ?? idx }),
+    ])
+    setReordering(null)
+  }
+
   const visibleDeptIds = new Set(visibleDepts.map(d => d.id))
 
   const byStatus = (e) => filterStatus === 'active' ? e.isActive !== false : e.isActive === false
@@ -138,6 +158,14 @@ export default function Employees() {
       if (!search.trim()) return true
       const q = search.trim().toLowerCase()
       return `${e.lastName} ${e.firstName}`.toLowerCase().includes(q)
+    })
+    .sort((a, b) => {
+      if (filterDept === 'all' && a.departmentId !== b.departmentId)
+        return getDeptName(a.departmentId).localeCompare(getDeptName(b.departmentId), 'uz')
+      const aO = a.order ?? Infinity
+      const bO = b.order ?? Infinity
+      if (aO !== bO) return aO - bO
+      return `${a.lastName} ${a.firstName}`.localeCompare(`${b.lastName} ${b.firstName}`, 'uz')
     })
 
   const activeCount = employees.filter(e => visibleDeptIds.has(e.departmentId) && e.isActive !== false).length
@@ -265,6 +293,7 @@ export default function Employees() {
                     <th className="text-left px-4 py-3 font-medium text-gray-600">Ismi Familyasi</th>
                     <th className="text-left px-4 py-3 font-medium text-gray-600">Bo'lim</th>
                     <th className="text-left px-4 py-3 font-medium text-gray-600">Operatsiyalar</th>
+                    {can.manageEmployees && filterDept !== 'all' && filterStatus === 'active' && <th className="px-4 py-3 w-20 text-center font-medium text-gray-600">Tartib</th>}
                     {can.manageEmployees && <th className="px-4 py-3 w-24" />}
                   </tr>
                 </thead>
@@ -287,6 +316,14 @@ export default function Employees() {
                             ))}
                           </div>
                         </td>
+                        {can.manageEmployees && filterDept !== 'all' && filterStatus === 'active' && (
+                          <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
+                            <div className="flex gap-1 justify-center">
+                              <button onClick={() => reorder(emp, 'up')} disabled={reordering === emp.id || i === 0} className="text-gray-400 hover:text-indigo-600 transition-colors disabled:opacity-20"><ChevronUp className="w-4 h-4" /></button>
+                              <button onClick={() => reorder(emp, 'down')} disabled={reordering === emp.id || i === filtered.length - 1} className="text-gray-400 hover:text-indigo-600 transition-colors disabled:opacity-20"><ChevronDown className="w-4 h-4" /></button>
+                            </div>
+                          </td>
+                        )}
                         {can.manageEmployees && (
                           <td className="px-4 py-3">
                             <div className="flex gap-2 justify-end">
