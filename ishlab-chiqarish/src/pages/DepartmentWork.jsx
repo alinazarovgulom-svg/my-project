@@ -65,6 +65,7 @@ export default function DepartmentWork() {
   const [activeShift, setActiveShift] = useState(null)
   const [tgSending, setTgSending] = useState(false)
   const [tgMsg, setTgMsg] = useState('')
+  const [emptyWarning, setEmptyWarning] = useState(null) // null | [{id, lastName, firstName}]
 
   // Guest worker state
   const [guestEmps, setGuestEmps] = useState([])
@@ -307,7 +308,7 @@ export default function DepartmentWork() {
     }
   }
 
-  const saveAll = async () => {
+  const doSaveAll = async () => {
     setSavingAll(true)
     const allWorkers = [...employees, ...guestEmps]
     await Promise.all(allWorkers.map(emp => saveEmployee(emp.id)))
@@ -316,6 +317,19 @@ export default function DepartmentWork() {
     setIsDirty(false)
     setDirtyEmps({})
     setTimeout(() => setSavedAll(false), 2500)
+  }
+
+  const saveAll = () => {
+    const allWorkers = [...employees, ...guestEmps]
+    const empty = allWorkers.filter(emp => {
+      const ops = entries[emp.id] || {}
+      return !Object.values(ops).some(v => Number(v.quantity || 0) > 0 || (v.note || '').trim())
+    })
+    if (empty.length > 0) {
+      setEmptyWarning(empty)
+    } else {
+      doSaveAll()
+    }
   }
 
   const openPicker = (emp) => {
@@ -948,6 +962,39 @@ export default function DepartmentWork() {
                 </div>
               </div>
             )}
+          </div>
+        </div>
+      )}
+      {/* Empty employees confirmation modal */}
+      {emptyWarning && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 modal-enter">
+            <h3 className="font-bold text-gray-800 mb-1">Kiritilmagan xodimlar</h3>
+            <p className="text-sm text-gray-500 mb-4">
+              Quyidagi {emptyWarning.length} ta xodim uchun miqdor yoki izoh kiritilmagan. Baribir saqlanadimi?
+            </p>
+            <ul className="mb-5 space-y-1 max-h-52 overflow-y-auto">
+              {emptyWarning.map((emp, i) => (
+                <li key={emp.id} className="flex items-center gap-2 text-sm text-gray-700 bg-gray-50 px-3 py-1.5 rounded-lg">
+                  <span className="text-gray-400 text-xs w-5 text-right">{i + 1}.</span>
+                  {emp.lastName} {emp.firstName}
+                </li>
+              ))}
+            </ul>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setEmptyWarning(null)}
+                className="flex-1 border border-gray-300 rounded-lg py-2.5 text-sm text-gray-600 hover:bg-gray-50 transition-colors"
+              >
+                Bekor qilish
+              </button>
+              <button
+                onClick={() => { setEmptyWarning(null); doSaveAll() }}
+                className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg py-2.5 text-sm font-medium transition-colors"
+              >
+                Baribir saqlash
+              </button>
+            </div>
           </div>
         </div>
       )}
