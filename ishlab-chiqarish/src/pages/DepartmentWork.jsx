@@ -119,8 +119,10 @@ export default function DepartmentWork() {
   // Load overrides from localStorage when date or dept changes
   useEffect(() => {
     if (!date) { setOverrides({}); return }
-    const saved = localStorage.getItem(`op_overrides_${deptId}_${date}`)
-    setOverrides(saved ? JSON.parse(saved) : {})
+    try {
+      const saved = localStorage.getItem(`op_overrides_${deptId}_${date}`)
+      setOverrides(saved ? JSON.parse(saved) : {})
+    } catch { setOverrides({}) }
   }, [deptId, date])
 
   // Reset dirty flag and entries when date/time changes
@@ -325,7 +327,7 @@ export default function DepartmentWork() {
   const applyPicker = (empId) => {
     const newOverrides = { ...overrides, [empId]: pickerSel }
     setOverrides(newOverrides)
-    if (date) localStorage.setItem(`op_overrides_${deptId}_${date}`, JSON.stringify(newOverrides))
+    if (date) try { localStorage.setItem(`op_overrides_${deptId}_${date}`, JSON.stringify(newOverrides)) } catch {}
     setPickerEmp(null)
   }
 
