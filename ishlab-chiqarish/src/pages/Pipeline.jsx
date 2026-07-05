@@ -37,6 +37,7 @@ export default function Pipeline() {
   const [rows, setRows] = useState([])
   const [loading, setLoading] = useState(false)
   const [searched, setSearched] = useState(false)
+  const [error, setError] = useState('')
 
   useEffect(() => {
     if (!selectedDept && visibleDepts.length > 0) setSelectedDept(visibleDepts[0].id)
@@ -46,41 +47,47 @@ export default function Pipeline() {
     if (!selectedDept) return
     setLoading(true)
     setSearched(false)
+    setError('')
 
     const { from, to } = getDateRange(period)
 
-    const [opsSnap, entriesSnap] = await Promise.all([
-      getDocs(query(collection(db, 'factory_operations'), where('departmentId', '==', selectedDept))),
-      getDocs(query(
-        collection(db, 'factory_work_entries'),
-        where('departmentId', '==', selectedDept),
-        where('date', '>=', from),
-        where('date', '<=', to),
-      )),
-    ])
+    try {
+      const [opsSnap, entriesSnap] = await Promise.all([
+        getDocs(query(collection(db, 'factory_operations'), where('departmentId', '==', selectedDept))),
+        getDocs(query(
+          collection(db, 'factory_work_entries'),
+          where('departmentId', '==', selectedDept),
+          where('date', '>=', from),
+          where('date', '<=', to),
+        )),
+      ])
 
-    const ops = opsSnap.docs
-      .map(d => ({ id: d.id, ...d.data() }))
-      .sort((a, b) => (a.order ?? Infinity) - (b.order ?? Infinity))
+      const ops = opsSnap.docs
+        .map(d => ({ id: d.id, ...d.data() }))
+        .sort((a, b) => (a.order ?? Infinity) - (b.order ?? Infinity))
 
-    const opStats = {}
-    entriesSnap.docs.forEach(d => {
-      const entryOps = d.data().operations || {}
-      Object.entries(entryOps).forEach(([opId, val]) => {
-        if (!opStats[opId]) opStats[opId] = { qty: 0, expected: 0 }
-        opStats[opId].qty      += Number(val.quantity || 0)
-        opStats[opId].expected += Number(val.expected  || 0)
+      const opStats = {}
+      entriesSnap.docs.forEach(d => {
+        const entryOps = d.data().operations || {}
+        Object.entries(entryOps).forEach(([opId, val]) => {
+          if (!opStats[opId]) opStats[opId] = { qty: 0, expected: 0 }
+          opStats[opId].qty      += Number(val.quantity || 0)
+          opStats[opId].expected += Number(val.expected  || 0)
+        })
       })
-    })
 
-    setRows(ops.map(op => {
-      const s = opStats[op.id]
-      const pct = s?.expected > 0 ? Math.round((s.qty / s.expected) * 100) : null
-      return { op, qty: s?.qty || 0, expected: s?.expected || 0, pct }
-    }))
+      setRows(ops.map(op => {
+        const s = opStats[op.id]
+        const pct = s?.expected > 0 ? Math.round((s.qty / s.expected) * 100) : null
+        return { op, qty: s?.qty || 0, expected: s?.expected || 0, pct }
+      }))
 
-    setLoading(false)
-    setSearched(true)
+      setSearched(true)
+    } catch (err) {
+      setError(err.message || 'Xatolik yuz berdi. Qayta urinib ko\'ring.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   const deptName = departments.find(d => d.id === selectedDept)?.name || ''
@@ -136,6 +143,12 @@ export default function Pipeline() {
           </div>
         </div>
       </div>
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-4 py-3 mb-5">
+          {error}
+        </div>
+      )}
 
       {searched && (
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
