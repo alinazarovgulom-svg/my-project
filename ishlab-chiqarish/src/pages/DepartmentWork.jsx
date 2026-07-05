@@ -123,6 +123,7 @@ export default function DepartmentWork() {
     setIsDirty(false)
     setEntries({})
     setDirtyEmps({})
+    setGuestEmps([])
   }, [date, startTime, endTime])
 
   // Warn on browser tab close / refresh
@@ -180,6 +181,7 @@ export default function DepartmentWork() {
         where('date', '==', date),
       ))
       const entryWithWork = snap.docs.find(d => {
+        if (d.data().departmentId === deptId) return false  // shu bo'limdagi boshqa smena — ruxsat
         const ops = d.data().operations || {}
         return Object.values(ops).some(op => Number(op.quantity || 0) > 0 || (op.note || '').trim())
       })
