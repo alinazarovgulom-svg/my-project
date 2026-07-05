@@ -116,9 +116,15 @@ export default function DepartmentWork() {
     })
   }, [])
 
-  // Reset overrides and dirty flag when date/time changes
+  // Load overrides from localStorage when date or dept changes
   useEffect(() => {
-    setOverrides({})
+    if (!date) { setOverrides({}); return }
+    const saved = localStorage.getItem(`op_overrides_${deptId}_${date}`)
+    setOverrides(saved ? JSON.parse(saved) : {})
+  }, [deptId, date])
+
+  // Reset dirty flag and entries when date/time changes
+  useEffect(() => {
     setPickerEmp(null)
     setIsDirty(false)
     setEntries({})
@@ -317,7 +323,9 @@ export default function DepartmentWork() {
   }
 
   const applyPicker = (empId) => {
-    setOverrides(o => ({ ...o, [empId]: pickerSel }))
+    const newOverrides = { ...overrides, [empId]: pickerSel }
+    setOverrides(newOverrides)
+    if (date) localStorage.setItem(`op_overrides_${deptId}_${date}`, JSON.stringify(newOverrides))
     setPickerEmp(null)
   }
 
