@@ -81,12 +81,6 @@ export default function DepartmentWork() {
         if (!snap.empty) {
           const shift = { id: snap.docs[0].id, ...snap.docs[0].data() }
           setActiveShift(shift)
-          if (shift.slots?.length >= 1 && !startTime) {
-            const slot = shift.slots[0]
-            setStartTime(slot.startTime)
-            setEndTime(slot.endTime)
-            setBreakMinutes(slot.breakMinutes || 0)
-          }
         }
       })
   }, [])
