@@ -17,6 +17,7 @@ import TVDisplay from './pages/TVDisplay'
 import MonthlyReport from './pages/MonthlyReport'
 import EmployeeCard from './pages/EmployeeCard'
 import Settings from './pages/Settings'
+import Pipeline from './pages/Pipeline'
 import { useAuth } from './contexts/AuthContext'
 
 function AppRoutes() {
@@ -43,6 +44,7 @@ function AppRoutes() {
                 <Route path="/members" element={<Members />} />
                 <Route path="/shifts" element={<Shifts />} />
                 <Route path="/settings" element={<Settings />} />
+                <Route path="/pipeline" element={<Pipeline />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </Layout>
