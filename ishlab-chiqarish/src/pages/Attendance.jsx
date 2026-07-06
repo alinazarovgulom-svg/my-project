@@ -48,7 +48,7 @@ export default function Attendance() {
     })
   }, [])
 
-  // Present = at least one operation with quantity > 0 on this date
+  // Present = has any work entry on this date (quantity > 0 OR note written)
   useEffect(() => {
     if (!date) return
     return onSnapshot(
@@ -57,8 +57,10 @@ export default function Attendance() {
         const ids = new Set()
         snap.docs.forEach(d => {
           const ops = d.data().operations || {}
-          const hasQty = Object.values(ops).some(op => Number(op.quantity) > 0)
-          if (hasQty) ids.add(d.data().employeeId)
+          const hasActivity = Object.values(ops).some(
+            op => Number(op.quantity) > 0 || (op.note || '').trim()
+          )
+          if (hasActivity) ids.add(d.data().employeeId)
         })
         setPresentIds(ids)
       }
