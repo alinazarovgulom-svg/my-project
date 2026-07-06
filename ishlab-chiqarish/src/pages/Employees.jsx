@@ -133,16 +133,22 @@ export default function Employees() {
   const reorder = async (emp, dir) => {
     const deptList = employees
       .filter(e => e.departmentId === emp.departmentId && e.isActive !== false)
-      .sort((a, b) => (a.order ?? Infinity) - (b.order ?? Infinity))
+      .sort((a, b) => {
+        const aO = a.order ?? Infinity
+        const bO = b.order ?? Infinity
+        if (aO !== bO) return aO - bO
+        return `${a.lastName} ${a.firstName}`.localeCompare(`${b.lastName} ${b.firstName}`, 'uz')
+      })
     const idx = deptList.findIndex(e => e.id === emp.id)
     const swapIdx = dir === 'up' ? idx - 1 : idx + 1
     if (swapIdx < 0 || swapIdx >= deptList.length) return
-    const other = deptList[swapIdx]
     setReordering(emp.id)
-    await Promise.all([
-      updateDoc(doc(db, 'factory_employees', emp.id),   { order: other.order ?? swapIdx }),
-      updateDoc(doc(db, 'factory_employees', other.id), { order: emp.order ?? idx }),
-    ])
+    await Promise.all(deptList.map((e, i) => {
+      if (e.id === emp.id) return updateDoc(doc(db, 'factory_employees', e.id), { order: swapIdx })
+      if (i === swapIdx) return updateDoc(doc(db, 'factory_employees', e.id), { order: idx })
+      if (e.order == null) return updateDoc(doc(db, 'factory_employees', e.id), { order: i })
+      return Promise.resolve()
+    }))
     setReordering(null)
   }
 
