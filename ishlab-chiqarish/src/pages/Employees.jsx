@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import {
   collection, addDoc, updateDoc, deleteDoc, doc,
   onSnapshot, serverTimestamp, query, orderBy, getDocs,
@@ -26,6 +26,7 @@ export default function Employees() {
   const [saveError, setSaveError] = useState('')
   const [deleting, setDeleting] = useState(null)
   const [reordering, setReordering] = useState(null)
+  const reorderingRef = useRef(false)
   const [search, setSearch] = useState('')
   const [opSearch, setOpSearch] = useState('')
 
@@ -131,6 +132,8 @@ export default function Employees() {
   }
 
   const reorder = async (emp, dir) => {
+    if (reorderingRef.current) return
+    reorderingRef.current = true
     const deptList = employees
       .filter(e => e.departmentId === emp.departmentId && e.isActive !== false)
       .sort((a, b) => {
@@ -150,6 +153,7 @@ export default function Employees() {
       return Promise.resolve()
     }))
     setReordering(null)
+    reorderingRef.current = false
   }
 
   const visibleDeptIds = new Set(visibleDepts.map(d => d.id))
