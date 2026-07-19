@@ -11,12 +11,6 @@ function fmtDate(iso) {
   return `${d}.${m}.${y}`
 }
 
-function qtyStyle(qty, exp) {
-  if (qty > exp)   return { bg: '#dcfce7', color: '#15803d' }
-  if (qty === exp) return { bg: '#fef9c3', color: '#854d0e' }
-  return               { bg: '#fee2e2', color: '#991b1b' }
-}
-
 export function buildWorkPDFHtml(rows, filters, deptName, showDept = true, autoPrint = true, dailyTayyor = null) {
   const totalDone   = rows.reduce((s, r) => s + Number(r.quantity || 0), 0)
   const totalExp    = rows.reduce((s, r) => s + Number(r.expected  || 0), 0)
@@ -42,11 +36,6 @@ export function buildWorkPDFHtml(rows, filters, deptName, showDept = true, autoP
       })
       .map(([name], i) => [name, i])
   )
-  function empEff(name) {
-    const s = empStats.get(name)
-    return s && s.exp > 0 ? Math.round((s.done / s.exp) * 100) : 0
-  }
-
   const dates = [...new Set(rows.map(r => r.date))].sort()
 
   const sections = dates.map(date => {
@@ -72,57 +61,43 @@ export function buildWorkPDFHtml(rows, filters, deptName, showDept = true, autoP
     return { date, slots, groups }
   })
 
-  const sectionsHtml = sections.map(({ date, slots, groups }) => {
-    const slotHeaders = slots
-      .map(s => `<th class="slot-th">${esc(s)}</th>`)
-      .join('')
-
+  const sectionsHtml = sections.map(({ date, groups }) => {
     let prevEmp = null
     const tableRows = groups.map((g, i) => {
       const isFirst = g.empName !== prevEmp
       prevEmp = g.empName
 
-      const totDone = slots.reduce((s, sl) => s + (g.bySlot[sl]?.qty ?? 0), 0)
-      const totExp  = slots.reduce((s, sl) => s + (g.bySlot[sl]?.exp ?? 0), 0)
-      const { bg: tBg, color: tCol } = qtyStyle(totDone, totExp)
+      const slotVals = Object.values(g.bySlot)
+      const totDone = slotVals.reduce((s, e) => s + (e.qty ?? 0), 0)
+      const totExp  = slotVals.reduce((s, e) => s + (e.exp ?? 0), 0)
+      const pct = totExp > 0 ? Math.round((totDone / totExp) * 100) : null
+      // Badge rangi va % bir xil chegarada — mos kelishi uchun
+      const pctCol = pct === null ? '#94a3b8' : pct >= 100 ? '#15803d' : pct >= 80 ? '#854d0e' : '#991b1b'
+      const bg     = pct === null ? '#f1f5f9' : pct >= 100 ? '#dcfce7' : pct >= 80 ? '#fef9c3' : '#fee2e2'
+      const color  = pctCol
+      const notes = slotVals.map(e => e.note).filter(Boolean)
 
-      const slotCells = slots.map(sl => {
-        const e = g.bySlot[sl]
-        if (!e) return `<td class="slot-td empty">—</td>`
-        const { bg, color } = qtyStyle(e.qty, e.exp)
-        return `<td class="slot-td">
-          <div class="qty-badge" style="background:${bg}">
-            <div class="qty-num" style="color:${color}">${e.qty}</div>
-            <div class="qty-exp">${Math.round(e.exp)}</div>
-          </div>
-          ${e.note ? `<div class="slot-note">${esc(e.note)}</div>` : ''}
-        </td>`
-      }).join('')
+      const rank = (empRank.get(g.empName) ?? 0) + 1
+      const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`
 
-      return `<tr class="${i % 2 === 1 ? 'row-alt' : ''}">
-        <td class="td-num">${i + 1}</td>
-        <td class="td-name">${isFirst ? (() => {
-          const rank = (empRank.get(g.empName) ?? 0) + 1
-          const e = empEff(g.empName)
-          const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`
-          const ec = e >= 100 ? '#15803d' : e >= 80 ? '#854d0e' : '#991b1b'
-          const eb = e >= 100 ? '#f0fdf4' : e >= 80 ? '#fefce8' : '#fef2f2'
-          return `<span style="display:flex;align-items:center;gap:5px;flex-wrap:nowrap">
-            <span style="font-size:11px">${medal}</span>
-            <strong>${esc(g.empName)}</strong>
-          </span>`
-        })() : ''}</td>
-        ${showDept ? `<td class="td-dept">${isFirst ? `<span class="dept-badge">${esc(g.deptName)}</span>` : ''}</td>` : ''}
-        <td class="td-op">${esc(g.opName)}</td>
-        <td class="td-norm">${esc(g.norm)} dona/soat</td>
-        ${slotCells}
-        <td class="slot-td">
-          <div class="qty-badge" style="background:${tBg}">
-            <div class="qty-num" style="color:${tCol}">${totDone}</div>
-            <div class="qty-exp">${totExp.toFixed(0)}</div>
-          </div>
-        </td>
+      const nameCell = isFirst
+        ? `<span class="medal">${medal}</span> <strong>${esc(g.empName)}</strong>` +
+          (showDept ? ` <span class="dept-badge">${esc(g.deptName)}</span>` : '') +
+          `<span class="op">${esc(g.opName)} · ${esc(g.norm)} dona/soat</span>`
+        : `<span class="op op-sub">${esc(g.opName)} · ${esc(g.norm)} dona/soat</span>`
+
+      const mainRow = `<tr class="${i % 2 === 1 ? 'row-alt' : ''}">
+        <td class="td-num">${isFirst ? rank : ''}</td>
+        <td class="td-name">${nameCell}${notes.length ? ` <span class="note-ico">✍️</span>` : ''}</td>
+        <td class="c"><span class="qty-badge" style="background:${bg}"><span class="qty-num" style="color:${color}">${totDone}</span><span class="qty-exp">/${Math.round(totExp)}</span></span></td>
+        <td class="r"><span class="eff" style="color:${pctCol}">${pct !== null ? pct + '%' : '—'}</span></td>
       </tr>`
+
+      const noteRow = notes.length
+        ? `<tr class="noterow"><td></td><td colspan="3">✍️ ${esc(notes.join('; '))}</td></tr>`
+        : ''
+
+      return mainRow + noteRow
     }).join('')
 
     return `
@@ -132,12 +107,9 @@ export function buildWorkPDFHtml(rows, filters, deptName, showDept = true, autoP
           <thead>
             <tr>
               <th class="th-num">#</th>
-              <th>Xodim</th>
-              ${showDept ? `<th>Bo'lim</th>` : ''}
-              <th>Operatsiya</th>
-              <th>Norma</th>
-              ${slotHeaders}
-              <th class="slot-th">Jami</th>
+              <th>Xodim / Operatsiya</th>
+              <th class="c">Miqdor</th>
+              <th class="r">%</th>
             </tr>
           </thead>
           <tbody>${tableRows}</tbody>
@@ -153,7 +125,7 @@ export function buildWorkPDFHtml(rows, filters, deptName, showDept = true, autoP
 <meta charset="utf-8">
 <title>Hisobot – KAFTIMDA</title>
 <style>
-  @page { size: A4 landscape; margin: 8mm 10mm; }
+  @page { size: A4 portrait; margin: 8mm 8mm; }
   * { margin:0; padding:0; box-sizing:border-box; }
   body { font-family: Arial, Helvetica, sans-serif; font-size:10px; color:#1e293b; }
 
@@ -182,29 +154,31 @@ export function buildWorkPDFHtml(rows, filters, deptName, showDept = true, autoP
   .date-hdr { background:#1e40af; color:#fff; font-size:10px; font-weight:700;
               padding:4px 8px; border-radius:4px 4px 0 0; letter-spacing:.3px; }
 
-  table { width:100%; border-collapse:collapse; font-size:10px; }
+  table { width:100%; border-collapse:collapse; font-size:11px; }
   thead { display:table-header-group; }
   thead tr { background:#334155; color:#fff; }
-  thead th { padding:5px 6px; text-align:left; font-weight:600;
-             font-size:9px; white-space:nowrap; }
-  .th-num  { width:22px; text-align:center; }
-  .slot-th { text-align:center; }
+  thead th { padding:6px 7px; text-align:left; font-weight:600;
+             font-size:10px; white-space:nowrap; }
+  th.c, td.c { text-align:center; }
+  th.r, td.r { text-align:right; }
+  .th-num  { width:26px; text-align:center; }
   .row-alt { background:#f8fafc; }
   tbody tr { border-bottom:1px solid #f1f5f9; page-break-inside:avoid; }
-  tbody td { padding:5px 6px; vertical-align:middle; }
-  .td-num  { color:#94a3b8; text-align:center; width:22px; }
-  .td-name { font-weight:700; white-space:nowrap; font-size:11px; }
-  .td-dept { white-space:nowrap; }
-  .td-op   { font-size:11px; }
-  .td-norm { color:#64748b; white-space:nowrap; font-size:9.5px; }
-  .dept-badge { background:#eff6ff; color:#1d4ed8; padding:2px 7px;
+  tbody td { padding:6px 7px; vertical-align:middle; }
+  .td-num  { color:#94a3b8; text-align:center; width:26px; font-size:10px; }
+  .td-name { font-weight:700; font-size:12px; line-height:1.35; }
+  .td-name .op { display:block; font-weight:400; color:#64748b; font-size:10px; margin-top:1px; }
+  .td-name .op-sub { padding-left:2px; }
+  .medal { font-size:12px; }
+  .dept-badge { background:#eff6ff; color:#1d4ed8; padding:1px 6px;
                 border-radius:10px; font-size:9.5px; white-space:nowrap; }
-  .slot-td { text-align:center; padding:3px 4px; }
-  .slot-td.empty { color:#94a3b8; font-size:11px; }
-  .qty-badge { border-radius:5px; padding:3px 6px; display:inline-block; min-width:36px; }
-  .qty-num { font-weight:700; font-size:12px; line-height:1.3; }
-  .qty-exp { font-size:8.5px; color:#64748b; line-height:1.3; }
-  .slot-note { font-size:8px; color:#475569; font-style:italic; margin-top:2px; max-width:80px; word-wrap:break-word; }
+  .qty-badge { border-radius:5px; padding:3px 8px; display:inline-block; min-width:52px; text-align:center; }
+  .qty-num { font-weight:800; font-size:13px; line-height:1.2; }
+  .qty-exp { font-size:9px; color:#64748b; }
+  .eff { font-weight:800; font-size:12px; }
+  .note-ico { color:#f59e0b; font-size:11px; }
+  .noterow td { background:#fff7ed; font-size:10px; color:#7c5410; font-style:italic;
+                padding:3px 8px 5px 10px; border-bottom:1px solid #f1f5f9; }
 
   .legend { display:flex; align-items:center; gap:12px; margin-top:8px;
             padding-top:6px; border-top:1px solid #e2e8f0; flex-wrap:wrap; }
