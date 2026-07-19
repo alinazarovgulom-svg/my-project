@@ -7,7 +7,7 @@ import {
 import { db } from '../firebase/config'
 import { useDepartments } from '../contexts/DepartmentsContext'
 import { useAuth } from '../contexts/AuthContext'
-import { Calendar, Clock, Save, CheckCircle, RefreshCw, X, Search, MoreVertical, Send, AlarmClock, UserPlus } from 'lucide-react'
+import { Calendar, Clock, Save, CheckCircle, RefreshCw, X, Search, MoreVertical, Send, AlarmClock, UserPlus, AlertTriangle } from 'lucide-react'
 import { buildWorkPDFHtml } from '../utils/pdf'
 import { sendHTMLToTelegram, sendTelegramMessage } from '../utils/telegram'
 
@@ -73,6 +73,7 @@ export default function DepartmentWork() {
   const [showGuestPicker, setShowGuestPicker] = useState(false)
   const [guestSearch, setGuestSearch] = useState('')
   const [guestWarning, setGuestWarning] = useState('')
+  const [guestNotice, setGuestNotice] = useState('') // ogohlantirish, lekin to'smaydi
   const [pendingGuest, setPendingGuest] = useState(null)
   const [removingGuestId, setRemovingGuestId] = useState(null)
 
@@ -184,6 +185,7 @@ export default function DepartmentWork() {
 
   const selectPendingGuest = async (emp) => {
     if (guestEmps.some(e => e.id === emp.id) || employees.some(e => e.id === emp.id)) return
+    setGuestNotice('')
     if (date) {
       const snap = await getDocs(query(
         collection(db, 'factory_work_entries'),
@@ -196,10 +198,9 @@ export default function DepartmentWork() {
         return Object.values(ops).some(op => Number(op.quantity || 0) > 0 || (op.note || '').trim())
       })
       if (entryWithWork) {
+        // To'smaydi — faqat ogohlantiradi. Xodim bir kunda ikki bo'limda ishlashi mumkin.
         const existingDept = departments.find(d => d.id === entryWithWork.data().departmentId)
-        setGuestWarning(`${emp.lastName} ${emp.firstName} bugun ${existingDept?.name || "boshqa bo'limda"} allaqachon ishlagan!`)
-        setTimeout(() => setGuestWarning(''), 4000)
-        return
+        setGuestNotice(`${emp.lastName} ${emp.firstName} bugun ${existingDept?.name || "boshqa bo'limda"} allaqachon ishlagan. Baribir qo'shsangiz bo'ladi.`)
       }
     }
     setPendingGuest(emp)
@@ -220,6 +221,7 @@ export default function DepartmentWork() {
     setShowGuestPicker(false)
     setGuestSearch('')
     setGuestWarning('')
+    setGuestNotice('')
     setPickerSel([])
     setPickerSearch('')
   }
@@ -869,7 +871,7 @@ export default function DepartmentWork() {
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-5 modal-enter">
             <div className="flex items-center justify-between mb-1">
               <h3 className="font-bold text-gray-800">Mehmon xodim qo'shish</h3>
-              <button onClick={() => { setShowGuestPicker(false); setGuestWarning('') }} className="text-gray-400 hover:text-gray-600">
+              <button onClick={() => { setShowGuestPicker(false); setGuestWarning(''); setGuestNotice('') }} className="text-gray-400 hover:text-gray-600">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -878,6 +880,13 @@ export default function DepartmentWork() {
             {guestWarning && (
               <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg px-3 py-2 mb-3 text-xs">
                 {guestWarning}
+              </div>
+            )}
+
+            {guestNotice && (
+              <div className="bg-amber-50 border border-amber-200 text-amber-700 rounded-lg px-3 py-2 mb-3 text-xs flex items-start gap-1.5">
+                <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                <span>{guestNotice}</span>
               </div>
             )}
 
