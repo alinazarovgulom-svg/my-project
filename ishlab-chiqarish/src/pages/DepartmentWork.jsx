@@ -276,6 +276,8 @@ export default function DepartmentWork() {
       updatedAt: serverTimestamp(),
       updatedBy: user.uid,
     })
+    // TV displey uchun signal — bu bo'limda smena o'zgargani belgilanadi (TV shu orqali yangilanadi)
+    setDoc(doc(db, 'factory_updates', deptId), { updatedAt: serverTimestamp() }, { merge: true }).catch(() => {})
     setSaving(s => ({ ...s, [empId]: false }))
     setSaved(s => ({ ...s, [empId]: true }))
     setDirtyEmps(prev => ({ ...prev, [empId]: false }))

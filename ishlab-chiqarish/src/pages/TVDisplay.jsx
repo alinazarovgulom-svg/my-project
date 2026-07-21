@@ -123,10 +123,13 @@ export default function TVDisplay() {
       setLastUpdated(lastEndTime || null)
     }
 
-    // Ish yozuvlarini bir marta o'qiydi (real-time emas — Firestore o'qishlarini tejaydi)
-    async function poll() {
-      if (!ctx) return
-      const dateStr = format(new Date(), 'yyyy-MM-dd') // har safar bugungi sana (yarim tunda ham to'g'ri)
+    let lastStamp = 0   // oxirgi ko'rilgan signal vaqti
+    let lastDate = ''   // oxirgi to'liq o'qish sanasi
+
+    // Ish yozuvlarini to'liq o'qiydi (faqat kerak bo'lganda chaqiriladi)
+    async function fullRead() {
+      const dateStr = format(new Date(), 'yyyy-MM-dd')
+      lastDate = dateStr
       const snap = await getDocs(query(
         collection(db, 'factory_work_entries'),
         where('date', '==', dateStr),
@@ -134,6 +137,18 @@ export default function TVDisplay() {
       ))
       if (cancelled) return
       processEntries(snap)
+    }
+
+    // Faqat bitta kichik "signal" hujjatini o'qiydi (arzon). O'zgargan bo'lsa — to'liq o'qiydi.
+    async function checkSignal() {
+      if (!ctx) return
+      // Yangi kunga o'tган bo'lsa — to'liq o'qish (sana o'zgardi)
+      if (format(new Date(), 'yyyy-MM-dd') !== lastDate) { await fullRead(); return }
+      try {
+        const mk = await getDoc(doc(db, 'factory_updates', deptId))
+        const stamp = mk.exists() ? (mk.data().updatedAt?.toMillis?.() || 0) : 0
+        if (stamp > lastStamp) { lastStamp = stamp; await fullRead() }
+      } catch (_) { /* signal o'qilmasa — keyingi tekshiruvда qayta urinadi */ }
     }
 
     async function setup() {
@@ -158,9 +173,14 @@ export default function TVDisplay() {
       })
 
       ctx = { allEmps, normMap, opNameMap, finalOpId }
-      await poll()
-      // Har 2 daqiqada bir marta yangilanadi
-      timer = setInterval(poll, 120000)
+      await fullRead()
+      // Boshlang'ich signal vaqtini eslab qolamiz (darrov qayta o'qimaslik uchun)
+      try {
+        const mk = await getDoc(doc(db, 'factory_updates', deptId))
+        lastStamp = mk.exists() ? (mk.data().updatedAt?.toMillis?.() || 0) : 0
+      } catch (_) {}
+      // Har 30 soniyada faqat signalни tekshiradi (1 o'qish); o'zgarsa to'liq yangilaydi
+      timer = setInterval(checkSignal, 30000)
     }
 
     setup()
