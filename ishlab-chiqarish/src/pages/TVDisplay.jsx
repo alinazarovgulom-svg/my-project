@@ -1,12 +1,11 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import {
-  collection, query, where, onSnapshot, getDocs, doc, getDoc,
+  collection, query, where, getDocs, doc, getDoc,
 } from 'firebase/firestore'
 import { db } from '../firebase/config'
 import { format } from 'date-fns'
 
-const today = format(new Date(), 'yyyy-MM-dd')
 const PER_PAGE = 2
 
 function shortSlot(slot) {
@@ -36,10 +35,106 @@ export default function TVDisplay() {
     })
   }, [deptId])
 
-  // Employees + real-time work entries
+  // Employees + operations (bir marta) + work entries (har 2 daqiqada yangilanadi)
   useEffect(() => {
-    let unsub = () => {}
     let cancelled = false
+    let timer = null
+    let ctx = null // { allEmps, normMap, opNameMap, finalOpId }
+
+    function processEntries(snap) {
+      const { allEmps, normMap, opNameMap, finalOpId } = ctx
+      // empData: { empId: { ops: { opId: { slots: { slotKey: qty }, total, exp } } } }
+      const empData = {}
+      const seenEmp = new Set()
+      let totalDone = 0
+      let totalExp = 0
+      let totalTayyor = 0
+      let lastEndTime = ''
+
+      snap.forEach(entry => {
+        const d = entry.data()
+        const hasQty = Object.values(d.operations || {}).some(op => Number(op.quantity) > 0)
+        if (hasQty) seenEmp.add(d.employeeId)
+        if (d.endTime && d.endTime > lastEndTime) lastEndTime = d.endTime
+        const slot = `${d.startTime}–${d.endTime}`
+        const hours = Math.max(0, calcHours(d.startTime, d.endTime) - Number(d.breakMinutes || 0) / 60)
+
+        if (!empData[d.employeeId]) empData[d.employeeId] = { ops: {}, totalQty: 0, totalExp: 0 }
+
+        Object.entries(d.operations || {}).forEach(([opId, val]) => {
+          const qty = Number(val.quantity || 0)
+          const exp = val.expected !== undefined ? Number(val.expected) : (normMap[opId] || 0) * hours
+
+          if (!empData[d.employeeId].ops[opId]) {
+            empData[d.employeeId].ops[opId] = { slots: {}, total: 0, exp: 0 }
+          }
+          if (!empData[d.employeeId].ops[opId].slots[slot]) {
+            empData[d.employeeId].ops[opId].slots[slot] = { qty: 0, exp: 0, note: '' }
+          }
+          empData[d.employeeId].ops[opId].slots[slot].qty += qty
+          empData[d.employeeId].ops[opId].slots[slot].exp += exp
+          if (val.note) empData[d.employeeId].ops[opId].slots[slot].note = val.note
+          empData[d.employeeId].ops[opId].total += qty
+          empData[d.employeeId].ops[opId].exp   += exp
+          empData[d.employeeId].totalQty += qty
+          empData[d.employeeId].totalExp += exp
+          totalDone += qty
+          totalExp  += exp
+          if (opId === finalOpId) totalTayyor += qty
+        })
+      })
+
+      const sorted = allEmps
+        .filter(e => seenEmp.has(e.id))
+        .map(e => {
+          const data = empData[e.id] || { ops: {}, totalQty: 0, totalExp: 0 }
+          const ops = Object.entries(data.ops).map(([opId, op]) => ({
+            name: opNameMap[opId] || opId,
+            norm: normMap[opId] || 0,
+            slots: op.slots,
+            total: op.total,
+            exp: op.exp,
+          }))
+          return {
+            id: e.id,
+            name: [e.lastName, e.firstName].filter(s => s && s.trim() && s.trim() !== '.').join(' '),
+            totalQty: data.totalQty,
+            totalExp: data.totalExp,
+            ops,
+          }
+        })
+        .sort((a, b) => {
+          const tier = e => {
+            if (!e.totalExp) return 2
+            if (e.totalQty > e.totalExp)           return 0  // yashil: 100%+
+            if (e.totalQty === e.totalExp)         return 1  // sariq: aynan 100%
+            if (e.totalQty >= e.totalExp * 0.95)  return 2  // qizil: 95-99%
+            return 3                                          // to'q qizil: <95%
+          }
+          const ta = tier(a), tb = tier(b)
+          if (ta !== tb) return ta - tb
+          const ea = a.totalExp > 0 ? a.totalQty / a.totalExp : 0
+          const eb = b.totalExp > 0 ? b.totalQty / b.totalExp : 0
+          return eb - ea
+        })
+
+      setRows(sorted)
+      setStats({ total: allEmps.length, attended: seenEmp.size, absent: allEmps.length - seenEmp.size, done: totalDone, expected: totalExp, tayyor: totalTayyor })
+      setLastUpdated(lastEndTime || null)
+    }
+
+    // Ish yozuvlarini bir marta o'qiydi (real-time emas — Firestore o'qishlarini tejaydi)
+    async function poll() {
+      if (!ctx) return
+      const dateStr = format(new Date(), 'yyyy-MM-dd') // har safar bugungi sana (yarim tunda ham to'g'ri)
+      const snap = await getDocs(query(
+        collection(db, 'factory_work_entries'),
+        where('date', '==', dateStr),
+        where('departmentId', '==', deptId),
+      ))
+      if (cancelled) return
+      processEntries(snap)
+    }
 
     async function setup() {
       const [empSnap, opSnap] = await Promise.all([
@@ -62,97 +157,14 @@ export default function TVDisplay() {
         if (data.isFinal && data.departmentId === deptId) finalOpId = d.id
       })
 
-      const q = query(
-        collection(db, 'factory_work_entries'),
-        where('date', '==', today),
-        where('departmentId', '==', deptId)
-      )
-
-      unsub = onSnapshot(q, snap => {
-        // empData: { empId: { ops: { opId: { slots: { slotKey: qty }, total, exp } } } }
-        const empData = {}
-        const seenEmp = new Set()
-        let totalDone = 0
-        let totalExp = 0
-        let totalTayyor = 0
-        let lastEndTime = ''
-
-        snap.forEach(entry => {
-          const d = entry.data()
-          const hasQty = Object.values(d.operations || {}).some(op => Number(op.quantity) > 0)
-          if (hasQty) seenEmp.add(d.employeeId)
-          if (d.endTime && d.endTime > lastEndTime) lastEndTime = d.endTime
-          const slot = `${d.startTime}–${d.endTime}`
-          const hours = Math.max(0, calcHours(d.startTime, d.endTime) - Number(d.breakMinutes || 0) / 60)
-
-          if (!empData[d.employeeId]) empData[d.employeeId] = { ops: {}, totalQty: 0, totalExp: 0 }
-
-          Object.entries(d.operations || {}).forEach(([opId, val]) => {
-            const qty = Number(val.quantity || 0)
-            const exp = val.expected !== undefined ? Number(val.expected) : (normMap[opId] || 0) * hours
-
-            if (!empData[d.employeeId].ops[opId]) {
-              empData[d.employeeId].ops[opId] = { slots: {}, total: 0, exp: 0 }
-            }
-            if (!empData[d.employeeId].ops[opId].slots[slot]) {
-              empData[d.employeeId].ops[opId].slots[slot] = { qty: 0, exp: 0, note: '' }
-            }
-            empData[d.employeeId].ops[opId].slots[slot].qty += qty
-            empData[d.employeeId].ops[opId].slots[slot].exp += exp
-            if (val.note) empData[d.employeeId].ops[opId].slots[slot].note = val.note
-            empData[d.employeeId].ops[opId].total += qty
-            empData[d.employeeId].ops[opId].exp   += exp
-            empData[d.employeeId].totalQty += qty
-            empData[d.employeeId].totalExp += exp
-            totalDone += qty
-            totalExp  += exp
-            if (opId === finalOpId) totalTayyor += qty
-          })
-        })
-
-        const sorted = allEmps
-          .filter(e => seenEmp.has(e.id))
-          .map(e => {
-            const data = empData[e.id] || { ops: {}, totalQty: 0, totalExp: 0 }
-            const ops = Object.entries(data.ops).map(([opId, op]) => ({
-              name: opNameMap[opId] || opId,
-              norm: normMap[opId] || 0,
-              slots: op.slots,
-              total: op.total,
-              exp: op.exp,
-            }))
-            return {
-              id: e.id,
-              name: [e.lastName, e.firstName].filter(s => s && s.trim() && s.trim() !== '.').join(' '),
-              totalQty: data.totalQty,
-              totalExp: data.totalExp,
-              ops,
-            }
-          })
-          .sort((a, b) => {
-            const tier = e => {
-              if (!e.totalExp) return 2
-              if (e.totalQty > e.totalExp)           return 0  // yashil: 100%+
-              if (e.totalQty === e.totalExp)         return 1  // sariq: aynan 100%
-              if (e.totalQty >= e.totalExp * 0.95)  return 2  // qizil: 95-99%
-              return 3                                          // to'q qizil: <95%
-            }
-            const ta = tier(a), tb = tier(b)
-            if (ta !== tb) return ta - tb
-            const ea = a.totalExp > 0 ? a.totalQty / a.totalExp : 0
-            const eb = b.totalExp > 0 ? b.totalQty / b.totalExp : 0
-            return eb - ea
-          })
-
-        setRows(sorted)
-        setStats({ total: allEmps.length, attended: seenEmp.size, absent: allEmps.length - seenEmp.size, done: totalDone, expected: totalExp, tayyor: totalTayyor })
-        setLastUpdated(lastEndTime || null)
-        setPage(0)
-      })
+      ctx = { allEmps, normMap, opNameMap, finalOpId }
+      await poll()
+      // Har 2 daqiqada bir marta yangilanadi
+      timer = setInterval(poll, 120000)
     }
 
     setup()
-    return () => { cancelled = true; unsub() }
+    return () => { cancelled = true; if (timer) clearInterval(timer) }
   }, [deptId])
 
   // Auto-paginate every 6 seconds
