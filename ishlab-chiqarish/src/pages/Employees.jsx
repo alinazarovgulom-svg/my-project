@@ -21,7 +21,8 @@ export default function Employees() {
   const [filterDept, setFilterDept] = useState('all')
   const [filterStatus, setFilterStatus] = useState('active')
   const [modal, setModal] = useState(null)
-  const [form, setForm] = useState({ firstName: '', lastName: '', departmentId: '', operationIds: [], salaryType: 'hourly', hourlyRate: '', salaryHistory: [], telegramId: '' })
+  const [form, setForm] = useState({ firstName: '', lastName: '', departmentId: '', operationIds: [], salaryType: 'hourly', hourlyRate: '', salaryHistory: [], telegramId: '', customNorms: {} })
+  const [normInputs, setNormInputs] = useState({}) // { opId: '45' } — tahrirlash uchun joriy shaxsiy norma
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
   const [deleting, setDeleting] = useState(null)
@@ -43,12 +44,14 @@ export default function Employees() {
   const deptOps = allOps.filter(o => o.departmentId === form.departmentId)
 
   const openAdd = () => {
-    setForm({ firstName: '', lastName: '', departmentId: visibleDepts[0]?.id || '', operationIds: [], salaryType: 'hourly', hourlyRate: '', salaryHistory: [], telegramId: '' })
+    setForm({ firstName: '', lastName: '', departmentId: visibleDepts[0]?.id || '', operationIds: [], salaryType: 'hourly', hourlyRate: '', salaryHistory: [], telegramId: '', customNorms: {} })
+    setNormInputs({})
     setOpSearch('')
     setSaveError('')
     setModal('add')
   }
   const openEdit = (emp) => {
+    const customNorms = emp.customNorms || {}
     setForm({
       firstName: emp.firstName,
       lastName: emp.lastName,
@@ -58,7 +61,14 @@ export default function Employees() {
       hourlyRate: emp.hourlyRate ?? '',
       salaryHistory: emp.salaryHistory || [],
       telegramId: emp.telegramId || '',
+      customNorms,
     })
+    // Har operatsiya uchun joriy (oxirgi) shaxsiy normani inputga qo'yamiz
+    const ni = {}
+    Object.entries(customNorms).forEach(([opId, hist]) => {
+      if (Array.isArray(hist) && hist.length) ni[opId] = String(hist[hist.length - 1].norm)
+    })
+    setNormInputs(ni)
     setOpSearch('')
     setSaveError('')
     setModal(emp)
@@ -89,6 +99,21 @@ export default function Employees() {
       const salaryHistory = newRate !== null && (!lastEntry || lastEntry.hourlyRate !== newRate)
         ? [...prevHistory, { hourlyRate: newRate, from: today }]
         : prevHistory
+
+      // Shaxsiy norma tarixi: input o'zgargan bo'lsa, shu sanadan yangi yozuv qo'shamiz
+      const customNorms = { ...(form.customNorms || {}) }
+      form.operationIds.forEach(opId => {
+        const raw = normInputs[opId]
+        if (raw === undefined || raw === '') return          // bo'sh = umumiy norma (o'zgartirmaymiz)
+        const val = Number(raw)
+        if (!Number.isFinite(val) || val <= 0) return
+        const hist = customNorms[opId] || []
+        const last = hist[hist.length - 1]
+        if (!last || last.norm !== val) {
+          customNorms[opId] = [...hist, { norm: val, from: today }]
+        }
+      })
+
       const data = {
         firstName: form.firstName.trim(),
         lastName: form.lastName.trim(),
@@ -97,6 +122,7 @@ export default function Employees() {
         salaryType: form.salaryType,
         hourlyRate: newRate,
         salaryHistory,
+        customNorms,
         telegramId: form.telegramId.trim() || null,
       }
       if (modal === 'add') {
@@ -449,6 +475,49 @@ export default function Employees() {
                   </>
                 )}
               </div>
+
+              {/* Shaxsiy normalar */}
+              {form.operationIds.length > 0 && (
+                <div className="border-t border-gray-100 pt-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Shaxsiy normalar
+                  </label>
+                  <p className="text-xs text-gray-400 mb-2">
+                    Bo'sh = umumiy norma. Kiritilса, o'zgartirilган sanadan boshlab amal qiladi.
+                  </p>
+                  <div className="space-y-2.5">
+                    {deptOps.filter(op => form.operationIds.includes(op.id)).map(op => {
+                      const hist = form.customNorms?.[op.id] || []
+                      return (
+                        <div key={op.id}>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-gray-700 flex-1 truncate">{op.name}</span>
+                            <span className="text-xs text-gray-400 shrink-0">umumiy: {op.norm}</span>
+                            <input
+                              type="number"
+                              min="0"
+                              value={normInputs[op.id] ?? ''}
+                              onChange={e => setNormInputs(n => ({ ...n, [op.id]: e.target.value }))}
+                              placeholder={String(op.norm)}
+                              className="w-20 border border-gray-300 rounded-lg px-2 py-1.5 text-sm text-center focus:outline-none focus:ring-2 focus:ring-indigo-500 shrink-0"
+                            />
+                          </div>
+                          {hist.length > 0 && (
+                            <div className="mt-1 pl-2 space-y-0.5">
+                              {[...hist].reverse().map((h, i) => (
+                                <div key={i} className="flex justify-between text-[11px] text-gray-400">
+                                  <span>{h.from} dan</span>
+                                  <span>{h.norm} dona/soat</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
 
               {/* Telegram ID */}
               <div className="border-t border-gray-100 pt-4">
