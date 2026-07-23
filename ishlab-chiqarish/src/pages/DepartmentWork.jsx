@@ -26,6 +26,18 @@ function normStatus(quantity, norm, hours) {
   return 'below'
 }
 
+// Xodimning shu operatsiya uchun berilgan sanada amal qiluvchi normasi.
+// Shaxsiy norma (customNorms) bo'lsa va sanaga mos kelsa — o'shani, aks holda umumiy normani qaytaradi.
+function effectiveNorm(emp, opId, globalNorm, date) {
+  const hist = emp?.customNorms?.[opId]
+  if (!Array.isArray(hist) || hist.length === 0) return globalNorm
+  let best = null
+  for (const h of hist) {
+    if (h.from <= date && (!best || h.from > best.from)) best = h
+  }
+  return best ? Number(best.norm) : globalNorm
+}
+
 const statusStyle = {
   above: 'bg-green-100 text-green-800 border-green-200',
   equal: 'bg-yellow-100 text-yellow-800 border-yellow-200',
@@ -250,7 +262,8 @@ export default function DepartmentWork() {
         const qty = Number(val.quantity || 0)
         const unitPrice = unitPriceMap[opId] || 0
         const piecePay = unitPrice * qty
-        return [opId, { ...val, norm: normMap[opId] || 0, expected: (normMap[opId] || 0) * empH, unitPrice, piecePay }]
+        const norm = effectiveNorm(emp, opId, normMap[opId] || 0, date)
+        return [opId, { ...val, norm, expected: norm * empH, unitPrice, piecePay }]
       })
     )
     const totalPiecePay = Object.values(operations).reduce((s, v) => s + (v.piecePay || 0), 0)
@@ -375,13 +388,14 @@ export default function DepartmentWork() {
       const activeOpIds = overrides[emp.id] ?? emp.operationIds ?? []
       allOps.filter(o => activeOpIds.includes(o.id)).forEach(op => {
         const data = empEntries[op.id] || {}
+        const norm = effectiveNorm(emp, op.id, op.norm || 0, date)
         rows.push({
           empName: `${emp.lastName} ${emp.firstName}`,
           deptName: dept.name,
           opName: op.name,
-          norm: op.norm,
+          norm,
           quantity: Number(data.quantity || 0),
-          expected: op.norm * hours,
+          expected: norm * hours,
           note: data.note || '',
           date,
           startTime,
@@ -803,8 +817,9 @@ export default function DepartmentWork() {
                         const qty = empEntries[op.id]?.quantity ?? ''
                         const note = empEntries[op.id]?.note ?? ''
                         const empH = getEmpHours(emp.id)
-                        const expected = op.norm * empH
-                        const status = normStatus(qty, op.norm, empH)
+                        const norm = effectiveNorm(emp, op.id, op.norm || 0, date)
+                        const expected = norm * empH
+                        const status = normStatus(qty, norm, empH)
 
                         return (
                           <div key={op.id} className="px-4 py-3">
@@ -812,7 +827,7 @@ export default function DepartmentWork() {
                               <div className="flex-1 min-w-0">
                                 <div className="text-sm font-medium text-gray-700">{op.name}</div>
                                 <div className="text-xs text-gray-400 mt-0.5">
-                                  Norma: {op.norm} dona/soat · {hours > 0 ? `${hours.toFixed(1)} soat = ` : ''}{hours > 0 ? `${expected.toFixed(0)} dona` : '—'}
+                                  Norma: {norm} dona/soat{norm !== (op.norm || 0) ? ' (shaxsiy)' : ''} · {hours > 0 ? `${hours.toFixed(1)} soat = ` : ''}{hours > 0 ? `${expected.toFixed(0)} dona` : '—'}
                                 </div>
                               </div>
                               <div className="flex items-center gap-2">
