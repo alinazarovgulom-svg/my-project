@@ -24,7 +24,7 @@ function threadForDept(dept) {
   const s = `${dept.id || ''} ${dept.name || ''}`.toLowerCase()
   if (s.includes('shim')) return 1014
   if (s.includes('kamzul') || s.includes('камзул')) return 1017
-  if (s.includes('tana') || s.includes('astar') || s.includes('montaj')) return 1015
+  if (s.includes('tana') || s.includes('astar') || s.includes('montaj') || s.includes('yeng')) return 1015
   return undefined
 }
 
