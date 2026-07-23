@@ -108,7 +108,8 @@ export default function Dashboard() {
         Object.entries(d.operations || {}).forEach(([opId, val]) => {
           const qty = Number(val.quantity || 0)
           dd.done     += qty
-          dd.expected += (normMap[opId] || 0) * hours
+          // Saqlangan expected (shaxsiy norma bilan) — bo'lmasa umumiy normadan hisoblanadi
+          dd.expected += val.expected !== undefined ? Number(val.expected) : (normMap[opId] || 0) * hours
           if (finalOpMap[d.departmentId] === opId) dd.tayyor += qty
           opQty[opId] = (opQty[opId] || 0) + qty
         })
@@ -169,7 +170,7 @@ export default function Dashboard() {
         const hours = calcHours(d.startTime, d.endTime)
         Object.entries(d.operations || {}).forEach(([opId, val]) => {
           day.done     += Number(val.quantity || 0)
-          day.expected += (normMap[opId] || 0) * hours
+          day.expected += val.expected !== undefined ? Number(val.expected) : (normMap[opId] || 0) * hours
         })
       })
 

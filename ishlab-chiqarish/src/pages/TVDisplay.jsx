@@ -66,8 +66,10 @@ export default function TVDisplay() {
           const exp = val.expected !== undefined ? Number(val.expected) : (normMap[opId] || 0) * hours
 
           if (!empData[d.employeeId].ops[opId]) {
-            empData[d.employeeId].ops[opId] = { slots: {}, total: 0, exp: 0 }
+            empData[d.employeeId].ops[opId] = { slots: {}, total: 0, exp: 0, norm: null }
           }
+          // Saqlangan norma (shaxsiy bo'lishi mumkin) — ko'rsatish uchun
+          if (val.norm !== undefined) empData[d.employeeId].ops[opId].norm = Number(val.norm)
           if (!empData[d.employeeId].ops[opId].slots[slot]) {
             empData[d.employeeId].ops[opId].slots[slot] = { qty: 0, exp: 0, note: '' }
           }
@@ -90,7 +92,7 @@ export default function TVDisplay() {
           const data = empData[e.id] || { ops: {}, totalQty: 0, totalExp: 0 }
           const ops = Object.entries(data.ops).map(([opId, op]) => ({
             name: opNameMap[opId] || opId,
-            norm: normMap[opId] || 0,
+            norm: op.norm != null ? op.norm : (normMap[opId] || 0),
             slots: op.slots,
             total: op.total,
             exp: op.exp,
