@@ -17,6 +17,17 @@ function calcHours(start, end) {
   return Math.max(0, (eh * 60 + em - sh * 60 - sm) / 60)
 }
 
+// Bo'lim uchun Telegram mavzu (forum topic) ID'si — nom/ID bo'yicha moslaydi.
+function threadForDept(dept) {
+  if (!dept) return undefined
+  if (dept.telegramThreadId != null) return dept.telegramThreadId
+  const s = `${dept.id || ''} ${dept.name || ''}`.toLowerCase()
+  if (s.includes('shim')) return 1014
+  if (s.includes('kamzul') || s.includes('камзул')) return 1017
+  if (s.includes('tana') || s.includes('astar') || s.includes('montaj')) return 1015
+  return undefined
+}
+
 function normStatus(quantity, norm, hours) {
   const expected = norm * hours
   if (!expected || quantity === '' || quantity === null) return 'none'
@@ -437,7 +448,8 @@ export default function DepartmentWork() {
       const html = buildWorkPDFHtml(filteredRows, filters, dept.name, false, false, dailyTayyor)
       const filename = `${dept.name}-${date}-${startTime.replace(':', '')}.pdf`
       const caption = `📊 ${dept.name} | ${date} | ${startTime}–${endTime}`
-      await sendHTMLToTelegram(html, filename, caption)
+      // Shu bo'limning Telegram mavzusiga (forum topic) yuboriladi
+      await sendHTMLToTelegram(html, filename, caption, threadForDept(dept))
       setTgMsg('✓ Yuborildi!')
     } catch (err) {
       setTgMsg('Xatolik: ' + err.message)
