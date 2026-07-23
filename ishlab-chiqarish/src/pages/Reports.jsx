@@ -23,12 +23,16 @@ function statusClass(qty, expected) {
 
 const today = format(new Date(), 'yyyy-MM-dd')
 
-// Bo'lim → Telegram mavzu (forum topic) ID. Standart qiymatlar (Bo'limlar
-// sahifasidagi telegramThreadId o'rnatilsa, u ustun keladi).
-const DEPT_THREAD_DEFAULTS = {
-  tana: 1015, astar: 1015, montaj: 1015, // Костюм mavzusi
-  shim: 1014,                             // Шим булими mavzusi
-  kamzul: 1017,                           // Камзул mavzusi
+// Bo'lim uchun Telegram mavzu (forum topic) ID'sini aniqlaydi.
+// Avval hujjatdagi telegramThreadId, bo'lmasa bo'lim nomi/ID bo'yicha standart.
+function threadForDept(dept) {
+  if (!dept) return undefined
+  if (dept.telegramThreadId != null) return dept.telegramThreadId
+  const s = `${dept.id || ''} ${dept.name || ''}`.toLowerCase()
+  if (s.includes('shim'))   return 1014 // Шим булими
+  if (s.includes('kamzul') || s.includes('камзул')) return 1017 // Камзул
+  if (s.includes('tana') || s.includes('astar') || s.includes('montaj')) return 1015 // Костюм
+  return undefined
 }
 
 export default function Reports() {
@@ -305,10 +309,8 @@ export default function Reports() {
                       const filename = `hisobot-${filterLabel}-${Date.now()}.pdf`
                       const caption = `📊 ${filterLabel} | ${filtersStr}`
                       // Bo'lim tanlangan bo'lsa — o'sha bo'lim mavzusiga (forum topic) yuboriladi.
-                      // Avval hujjatdagi qiymat, bo'lmasa standart mapping ishlatiladi.
                       const threadId = filterType === 'dept'
-                        ? (departments.find(d => d.id === selectedDept)?.telegramThreadId
-                            ?? DEPT_THREAD_DEFAULTS[selectedDept])
+                        ? threadForDept(departments.find(d => d.id === selectedDept))
                         : undefined
                       await sendHTMLToTelegram(html, filename, caption, threadId)
                       setTgMsg('✓ Yuborildi!')
