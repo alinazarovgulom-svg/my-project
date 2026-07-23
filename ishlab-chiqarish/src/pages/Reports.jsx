@@ -403,7 +403,7 @@ export default function Reports() {
               rows.forEach(r => {
                 const key = `${r.empName}|||${r.deptName}|||${r.opName}`
                 if (!grouped[key]) {
-                  grouped[key] = { empName: r.empName, deptName: r.deptName, opName: r.opName, norm: r.norm, isFinal: r.isFinal, slots: {} }
+                  grouped[key] = { empName: r.empName, deptName: r.deptName, opName: r.opName, norm: r.norm, isCustomNorm: !!r.isCustomNorm, isFinal: r.isFinal, slots: {} }
                 }
                 grouped[key].slots[`${r.date}|${r.startTime}–${r.endTime}`] = {
                   quantity: r.quantity, expected: r.expected, note: r.note,
@@ -482,7 +482,14 @@ export default function Reports() {
                               {r.opName}
                               {r.isFinal && <Star className="inline-block w-3 h-3 text-amber-500 fill-amber-500 ml-1 -mt-0.5" />}
                             </td>
-                            <td className="px-4 py-2.5 text-gray-400 text-xs whitespace-nowrap">{r.norm} dona/soat</td>
+                            <td className="px-4 py-2.5 text-gray-400 text-xs whitespace-nowrap">
+                              {r.norm} dona/soat
+                              {r.isCustomNorm && (
+                                <span className="ml-1.5 bg-indigo-50 text-indigo-700 px-1.5 py-0.5 rounded-full font-semibold">
+                                  shaxsiy{totalExp > 0 ? ` ${Math.round((totalDone / totalExp) * 100)}%` : ''}
+                                </span>
+                              )}
+                            </td>
                             {slots.map(k => {
                               const d = r.slots[k]
                               if (!d) return (
