@@ -90,7 +90,8 @@ export default async function handler(req, res) {
       Object.entries(d.operations || {}).forEach(([opId, val]) => {
         const qty = Number(val.quantity || 0)
         dd.done += qty
-        dd.expected += (normMap[opId] || 0) * hours
+        // Saqlangan expected (shaxsiy norma bilan) — bo'lmasa umumiy normadan hisoblanadi
+        dd.expected += val.expected !== undefined ? Number(val.expected) : (normMap[opId] || 0) * hours
         if (finalOpMap[d.departmentId] === opId) dd.tayyor += qty
       })
     })
@@ -126,10 +127,10 @@ export default async function handler(req, res) {
       `📅 ${dateFormatted}\n\n` +
       `📊 *Umumiy ko'rsatkichlar:*\n` +
       `👥 Kelgan: ${totalAttended}/${totalEmp} xodim\n` +
-      `${overallEmoji} Samaradorlik: ${totalEff !== null ? totalEff + '%' : 'Ma\\'lumot yo\\'q'}\n` +
+      `${overallEmoji} Samaradorlik: ${totalEff !== null ? totalEff + '%' : 'Ma\'lumot yo\'q'}\n` +
       `📦 Tayyor mahsulot: ${totalTayyor} dona\n\n` +
       `*Bo'limlar holati:*\n` +
-      (deptLines || '⚪ Bugun ma\\'lumot kiritilmagan') +
+      (deptLines || '⚪ Bugun ma\'lumot kiritilmagan') +
       `\n\n_KAFTIMDA ishlab chiqarish tizimi_`
 
     const tgRes = await fetch(
