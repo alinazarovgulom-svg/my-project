@@ -76,6 +76,11 @@ export default function Reports() {
         where('date', '>=', dateFrom),
         where('date', '<=', dateTo),
       ]
+      // Bo'lim tanlanganda faqat o'sha bo'lim yozuvlarini so'raymiz (butun kolleksiya emas)
+      // — Firestore o'qishlarini ~80% kamaytiradi. (departmentId+date kompozit indeks kerak)
+      if (filterType === 'dept' && selectedDept) {
+        constraints.push(where('departmentId', '==', selectedDept))
+      }
 
       const entriesSnap = await getDocs(query(collection(db, 'factory_work_entries'), ...constraints))
 

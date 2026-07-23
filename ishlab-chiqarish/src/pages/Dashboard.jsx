@@ -48,6 +48,11 @@ const CustomTooltip = ({ active, payload, label }) => {
   )
 }
 
+// Modul darajasidagi kesh — Dashboard qisqa vaqt ichida qayta ochilsa, qayta o'qimaydi
+const DASH_TTL = 60000 // 60 soniya
+let _dashToday = { key: '', ts: 0, data: null }
+let _dashWeek  = { key: '', ts: 0, data: null }
+
 export default function Dashboard() {
   const { departments: allDepartments } = useDepartments()
   const { userDoc, can } = useAuth()
@@ -63,6 +68,16 @@ export default function Dashboard() {
   // Today's stats
   useEffect(() => {
     if (!departments.length) return
+    const cacheKey = departments.map(d => d.id).join(',')
+    // Kesh yangi bo'lsa — qayta o'qimaymiz
+    if (_dashToday.key === cacheKey && _dashToday.data && Date.now() - _dashToday.ts < DASH_TTL) {
+      const c = _dashToday.data
+      setStats(c.stats)
+      setDeptStats(c.deptStats)
+      setOpsByDept(c.opsByDept)
+      setLoading(false)
+      return
+    }
     async function load() {
       const [empSnap, opSnap] = await Promise.all([
         getDocs(collection(db, 'factory_employees')),
@@ -129,10 +144,12 @@ export default function Dashboard() {
       })
       Object.values(opsByDeptData).forEach(arr => arr.sort((a, b) => b.qty - a.qty))
 
-      setStats({ employees: visibleEmpCount, operations: visibleOpCount })
+      const stats = { employees: visibleEmpCount, operations: visibleOpCount }
+      setStats(stats)
       setDeptStats(deptData)
       setOpsByDept(opsByDeptData)
       setLoading(false)
+      _dashToday = { key: cacheKey, ts: Date.now(), data: { stats, deptStats: deptData, opsByDept: opsByDeptData } }
     }
     load()
   }, [departments])
@@ -140,6 +157,11 @@ export default function Dashboard() {
   // Last 7 days trend
   useEffect(() => {
     if (!departments.length) return
+    const cacheKey = departments.map(d => d.id).join(',')
+    if (_dashWeek.key === cacheKey && _dashWeek.data && Date.now() - _dashWeek.ts < DASH_TTL) {
+      setWeekData(_dashWeek.data)
+      return
+    }
     async function loadWeek() {
       const last7 = Array.from({ length: 7 }, (_, i) =>
         format(subDays(new Date(), 6 - i), 'yyyy-MM-dd')
@@ -174,12 +196,14 @@ export default function Dashboard() {
         })
       })
 
-      setWeekData(last7.map(date => ({
+      const wd = last7.map(date => ({
         date: date.slice(5).replace('-', '.'),
         samaradorlik: dayMap[date].expected > 0
           ? Math.round((dayMap[date].done / dayMap[date].expected) * 100)
           : null,
-      })))
+      }))
+      setWeekData(wd)
+      _dashWeek = { key: cacheKey, ts: Date.now(), data: wd }
     }
     loadWeek()
   }, [departments])
