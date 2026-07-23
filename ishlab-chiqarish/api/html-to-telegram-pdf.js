@@ -5,7 +5,7 @@ export const config = {
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
 
-  const { html, filename = 'hisobot.pdf', caption = '' } = req.body
+  const { html, filename = 'hisobot.pdf', caption = '', threadId } = req.body
   if (!html) return res.status(400).json({ ok: false, error: 'HTML missing' })
 
   let browser
@@ -33,6 +33,8 @@ export default async function handler(req, res) {
     // Send directly to Telegram — PDF never goes back to client
     const formData = new FormData()
     formData.append('chat_id', process.env.TELEGRAM_CHAT_ID)
+    // Bo'lim mavzusi (forum topic) berilgan bo'lsa — xabar o'sha mavzuga boradi
+    if (threadId) formData.append('message_thread_id', String(threadId))
     formData.append('document', new Blob([pdfBuffer], { type: 'application/pdf' }), filename)
     if (caption) formData.append('caption', caption)
 

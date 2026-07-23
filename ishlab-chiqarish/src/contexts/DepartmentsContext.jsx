@@ -42,8 +42,9 @@ export function DepartmentsProvider({ children }) {
   const addDept = (name) =>
     addDoc(collection(db, 'factory_departments'), { name: name.trim(), createdAt: serverTimestamp() })
 
-  const updateDept = (id, name) =>
-    updateDoc(doc(db, 'factory_departments', id), { name: name.trim() })
+  const updateDept = (id, fields) =>
+    updateDoc(doc(db, 'factory_departments', id),
+      typeof fields === 'string' ? { name: fields.trim() } : fields)
 
   const deleteDept = (id) =>
     deleteDoc(doc(db, 'factory_departments', id))

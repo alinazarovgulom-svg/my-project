@@ -8,12 +8,13 @@ export default function Departments() {
   const { can } = useAuth()
   const [modal, setModal] = useState(null) // null | 'add' | { id, name }
   const [name, setName] = useState('')
+  const [threadId, setThreadId] = useState('')
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(null)
   const [error, setError] = useState('')
 
-  const openAdd = () => { setName(''); setError(''); setModal('add') }
-  const openEdit = (dept) => { setName(dept.name); setError(''); setModal(dept) }
+  const openAdd = () => { setName(''); setThreadId(''); setError(''); setModal('add') }
+  const openEdit = (dept) => { setName(dept.name); setThreadId(dept.telegramThreadId ?? ''); setError(''); setModal(dept) }
   const closeModal = () => { setModal(null); setError('') }
 
   const handleSave = async () => {
@@ -23,7 +24,10 @@ export default function Departments() {
       if (modal === 'add') {
         await addDept(name)
       } else {
-        await updateDept(modal.id, name)
+        await updateDept(modal.id, {
+          name: name.trim(),
+          telegramThreadId: threadId.trim() === '' ? null : Number(threadId.trim()),
+        })
       }
       closeModal()
     } catch (e) {
@@ -116,6 +120,25 @@ export default function Departments() {
                 autoFocus
               />
             </div>
+
+            {modal !== 'add' && (
+              <div className="mt-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Telegram mavzu ID <span className="text-gray-400 font-normal">— ixtiyoriy</span>
+                </label>
+                <input
+                  type="number"
+                  value={threadId}
+                  onChange={e => setThreadId(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handleSave()}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  placeholder="Masalan: 1015"
+                />
+                <p className="text-xs text-gray-400 mt-1">
+                  Hisobot shu mavzuga boradi. Mavzu havolasidagi oxirgi raqam (t.me/c/.../<b>1015</b>). Bo'sh = asosiy guruh.
+                </p>
+              </div>
+            )}
 
             <div className="flex gap-3 mt-5">
               <button onClick={closeModal} className="flex-1 border border-gray-300 rounded-lg py-2.5 text-sm text-gray-600 hover:bg-gray-50 transition-colors">

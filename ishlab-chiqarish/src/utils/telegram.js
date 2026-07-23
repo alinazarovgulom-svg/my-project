@@ -9,11 +9,11 @@ export async function sendTelegramMessage(chatId, text) {
   return res.json()
 }
 
-export async function sendHTMLToTelegram(html, filename, caption = '') {
+export async function sendHTMLToTelegram(html, filename, caption = '', threadId) {
   const res = await fetch('/api/html-to-telegram-pdf', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ html, filename, caption }),
+    body: JSON.stringify({ html, filename, caption, threadId }),
   })
   if (!res.ok) {
     const text = await res.text().catch(() => res.statusText)

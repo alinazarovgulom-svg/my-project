@@ -296,7 +296,11 @@ export default function Reports() {
                       const html = buildWorkPDFHtml(rows, filtersStr, filterLabel, filterType === 'employee', false, dailyTayyor)
                       const filename = `hisobot-${filterLabel}-${Date.now()}.pdf`
                       const caption = `📊 ${filterLabel} | ${filtersStr}`
-                      await sendHTMLToTelegram(html, filename, caption)
+                      // Bo'lim tanlangan bo'lsa — o'sha bo'lim mavzusiga (forum topic) yuboriladi
+                      const threadId = filterType === 'dept'
+                        ? departments.find(d => d.id === selectedDept)?.telegramThreadId
+                        : undefined
+                      await sendHTMLToTelegram(html, filename, caption, threadId)
                       setTgMsg('✓ Yuborildi!')
                     } catch (e) {
                       setTgMsg('Xatolik: ' + (e.message || 'Qayta urinib ko\'ring'))
