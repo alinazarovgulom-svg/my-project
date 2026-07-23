@@ -106,11 +106,13 @@ export default function Reports() {
           const op = opMap[opId]
           if (!op) return
           const expected = data.expected !== undefined ? Number(data.expected) : op.norm * hours
+          const usedNorm = data.norm !== undefined ? Number(data.norm) : op.norm
           result.push({
             empName: `${emp.lastName} ${emp.firstName}`,
             deptName: getDeptName(emp.departmentId),
             opName: op.name,
-            norm: data.norm !== undefined ? Number(data.norm) : op.norm,
+            norm: usedNorm,
+            isCustomNorm: op.norm !== undefined && Number(usedNorm) !== Number(op.norm),
             quantity: Number(data.quantity ?? 0),
             expected,
             note: data.note || '',

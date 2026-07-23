@@ -394,6 +394,7 @@ export default function DepartmentWork() {
           deptName: dept.name,
           opName: op.name,
           norm,
+          isCustomNorm: norm !== (op.norm || 0),
           quantity: Number(data.quantity || 0),
           expected: norm * hours,
           note: data.note || '',

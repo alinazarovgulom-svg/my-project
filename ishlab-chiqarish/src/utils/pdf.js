@@ -57,7 +57,7 @@ export function buildWorkPDFHtml(rows, filters, deptName, showDept = true, autoP
     dr.forEach(r => {
       const key = `${r.empName}||${r.deptName}||${r.opName}||${r.norm}`
       if (!groupMap.has(key)) {
-        groupMap.set(key, { empName: r.empName, deptName: r.deptName, opName: r.opName, norm: r.norm, bySlot: {} })
+        groupMap.set(key, { empName: r.empName, deptName: r.deptName, opName: r.opName, norm: r.norm, isCustomNorm: !!r.isCustomNorm, bySlot: {} })
       }
       groupMap.get(key).bySlot[`${r.startTime}–${r.endTime}`] = {
         qty: Number(r.quantity), exp: Number(r.expected), note: r.note || '',
@@ -85,6 +85,7 @@ export function buildWorkPDFHtml(rows, filters, deptName, showDept = true, autoP
       const totDone = slots.reduce((s, sl) => s + (g.bySlot[sl]?.qty ?? 0), 0)
       const totExp  = slots.reduce((s, sl) => s + (g.bySlot[sl]?.exp ?? 0), 0)
       const { bg: tBg, color: tCol } = qtyStyle(totDone, totExp)
+      const pct = totExp > 0 ? Math.round((totDone / totExp) * 100) : null
 
       const slotCells = slots.map(sl => {
         const e = g.bySlot[sl]
@@ -113,7 +114,7 @@ export function buildWorkPDFHtml(rows, filters, deptName, showDept = true, autoP
           </span>`
         })() : ''}</td>
         ${showDept ? `<td class="td-dept">${isFirst ? `<span class="dept-badge">${esc(g.deptName)}</span>` : ''}</td>` : ''}
-        <td class="td-op">${esc(g.opName)}</td>
+        <td class="td-op">${esc(g.opName)}${g.isCustomNorm ? ` <span class="custom-badge">shaxsiy${pct !== null ? ' ' + pct + '%' : ''}</span>` : ''}</td>
         <td class="td-norm">${esc(g.norm)} dona/soat</td>
         ${slotCells}
         <td class="slot-td">
@@ -199,6 +200,8 @@ export function buildWorkPDFHtml(rows, filters, deptName, showDept = true, autoP
   .td-norm { color:#64748b; white-space:nowrap; font-size:9.5px; }
   .dept-badge { background:#eff6ff; color:#1d4ed8; padding:2px 7px;
                 border-radius:10px; font-size:9.5px; white-space:nowrap; }
+  .custom-badge { background:#eef2ff; color:#4338ca; padding:1px 6px;
+                  border-radius:8px; font-size:8.5px; font-weight:700; white-space:nowrap; }
   .slot-td { text-align:center; padding:3px 4px; }
   .slot-td.empty { color:#94a3b8; font-size:11px; }
   .qty-badge { border-radius:5px; padding:3px 6px; display:inline-block; min-width:36px; }
