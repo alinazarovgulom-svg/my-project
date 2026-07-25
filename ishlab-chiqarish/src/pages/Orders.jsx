@@ -54,9 +54,13 @@ export default function Orders() {
     if (chains[order.id]) return // keshda bor
     setChainLoading(order.id)
     try {
-      const snap = await getDocs(query(collection(db, 'factory_work_entries'), where('orderId', '==', order.id)))
+      const [snap, autoSnap] = await Promise.all([
+        getDocs(query(collection(db, 'factory_work_entries'), where('orderId', '==', order.id))),
+        getDocs(query(collection(db, 'factory_work_entries'), where('orderId', '==', 'auto'))),
+      ])
       const entries = snap.docs.map(d => d.data())
-      const result = computeOrderChain(order, entries, opById, departments)
+      const autoEntries = autoSnap.docs.map(d => d.data())
+      const result = computeOrderChain(order, entries, opById, departments, { autoEntries, allOrders: orders })
       setChains(c => ({ ...c, [order.id]: result }))
     } catch (e) {
       setChains(c => ({ ...c, [order.id]: { error: e.message } }))

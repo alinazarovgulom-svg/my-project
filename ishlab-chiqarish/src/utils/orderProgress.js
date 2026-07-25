@@ -10,9 +10,11 @@
 //   { depts: [{ id, name, kirim, chiqim, boshlangich, qoldiq, rule, bottleneck }],
 //     endpointId, done, doneQty, orderQty, percent }
 
-export function computeOrderChain(order, entries, opById, departments) {
+export function computeOrderChain(order, entries, opById, departments, opts = {}) {
   const orderQty = Number(order.quantity || 0)
   const deptById = Object.fromEntries(departments.map(d => [d.id, d]))
+  const autoEntries = opts.autoEntries || [] // orderId == 'auto' teglangan yozuvlar
+  const allOrders = opts.allOrders || []
 
   // Har bo'lim uchun chiqim (yakuniy op) va boshlang'ich (kirim op) miqdori
   const chiqim = {}       // yakuniy operatsiya yig'indisi
@@ -30,6 +32,29 @@ export function computeOrderChain(order, entries, opById, departments) {
       if (op.isFirst) boshlangich[dId] = (boshlangich[dId] || 0) + qty
     })
   })
+
+  // FIFO avto: 'auto' teglangan chiqimni bo'lim buyurtmalari bo'ylab navbat bilan taqsimlash
+  // Bu buyurtmaga tegishli ulush shu buyurtma egasi bo'limi chiqimiga qo'shiladi.
+  const autoPool = {} // { deptId: yakuniy chiqim yig'indisi (auto) }
+  autoEntries.forEach(e => {
+    Object.entries(e.operations || {}).forEach(([opId, val]) => {
+      const op = opById[opId]
+      if (op?.isFinal) autoPool[e.departmentId] = (autoPool[e.departmentId] || 0) + Number(val.quantity || 0)
+    })
+  })
+  const ownerDept = order.departmentId
+  if (autoPool[ownerDept] > 0) {
+    const dOrders = allOrders
+      .filter(o => o.departmentId === ownerDept && o.isActive !== false)
+      .sort((a, b) => (a.order ?? Infinity) - (b.order ?? Infinity))
+    let pool = autoPool[ownerDept]
+    for (const o of dOrders) {
+      const share = Math.min(pool, Number(o.quantity || 0))
+      pool -= share
+      if (o.id === order.id) { chiqim[ownerDept] = (chiqim[ownerDept] || 0) + share; appeared.add(ownerDept); break }
+      if (pool <= 0) break
+    }
+  }
 
   // Ishtirok etgan bo'limlar: yozuvi borlar + ularga bog'langan 'from' bo'limlar (masalan Montaj)
   const involved = new Set(appeared)
