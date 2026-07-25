@@ -5,13 +5,14 @@ import { useDepartments } from '../contexts/DepartmentsContext'
 import {
   LayoutDashboard, Settings, Cog, Users, ClipboardList, FileText,
   Menu, X, ChevronDown, ChevronRight, Building2,
-  CalendarCheck, AlarmClock, BarChart2, Activity,
+  CalendarCheck, AlarmClock, BarChart2, Activity, Package,
 } from 'lucide-react'
 
 const navItems = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/attendance', label: 'Davomat', icon: CalendarCheck },
   { to: '/pipeline', label: 'Zanjir tahlili', icon: Activity },
+  { to: '/orders', label: 'Buyurtmalar', icon: Package },
   { to: '/operations', label: 'Operatsiyalar', icon: Settings },
   { to: '/employees', label: 'Xodimlar', icon: Users },
   { to: '/reports', label: 'Hisobotlar', icon: FileText },

@@ -18,6 +18,7 @@ import MonthlyReport from './pages/MonthlyReport'
 import EmployeeCard from './pages/EmployeeCard'
 import Settings from './pages/Settings'
 import Pipeline from './pages/Pipeline'
+import Orders from './pages/Orders'
 import { useAuth } from './contexts/AuthContext'
 
 function AppRoutes() {
@@ -45,6 +46,7 @@ function AppRoutes() {
                 <Route path="/shifts" element={<Shifts />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/pipeline" element={<Pipeline />} />
+                <Route path="/orders" element={<Orders />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </Layout>
