@@ -7,7 +7,7 @@ import { db } from '../firebase/config'
 import { useDepartments } from '../contexts/DepartmentsContext'
 import { useAuth } from '../contexts/AuthContext'
 import { Plus, Pencil, Trash2, X, Check, Package, Archive, RotateCcw, ChevronUp, ChevronDown, ChevronRight, AlertTriangle } from 'lucide-react'
-import { computeOrderChain } from '../utils/orderProgress'
+import { computeOrderChain, forecastOrder } from '../utils/orderProgress'
 
 const RULE_LABEL = { min: 'eng kam', sum: "yig'indi", mirror: 'nusxa' }
 
@@ -257,6 +257,15 @@ export default function Orders() {
                         <div className="w-full bg-gray-200 rounded-full h-2">
                           <div className={`h-2 rounded-full ${chain.done ? 'bg-green-500' : 'bg-indigo-500'}`} style={{ width: `${Math.min(chain.percent, 100)}%` }} />
                         </div>
+                        {(() => {
+                          const f = forecastOrder(order, chain.doneQty)
+                          if (!f || f.done) return null
+                          return (
+                            <div className="text-xs text-gray-500 mt-1.5">
+                              📈 Taxminan: <b className="text-gray-700">{f.date}</b> ({f.daysLeft} kun · ~{f.rate.toLocaleString()} dona/kun)
+                            </div>
+                          )
+                        })()}
                       </div>
                       {chain.depts.length === 0 ? (
                         <div className="text-xs text-gray-400 py-2">Bu buyurtma bo'yicha hali ish kiritilmagan</div>

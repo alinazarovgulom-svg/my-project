@@ -10,6 +10,23 @@
 //   { depts: [{ id, name, kirim, chiqim, boshlangich, qoldiq, rule, bottleneck }],
 //     endpointId, done, doneQty, orderQty, percent }
 
+// Tugash prognozi: buyurtma yaratilganidan beri o'rtacha tezlik bo'yicha taxminiy sana.
+export function forecastOrder(order, doneQty) {
+  const qty = Number(order.quantity || 0)
+  const remaining = Math.max(0, qty - doneQty)
+  if (qty > 0 && remaining === 0) return { done: true }
+  const created = order.createdAt?.toMillis?.()
+    ? order.createdAt.toMillis()
+    : (order.createdAt?.seconds ? order.createdAt.seconds * 1000 : null)
+  if (!created || doneQty <= 0) return null
+  const daysElapsed = Math.max(0.5, (Date.now() - created) / 86400000)
+  const rate = doneQty / daysElapsed // dona/kun
+  if (rate <= 0) return null
+  const daysLeft = Math.ceil(remaining / rate)
+  const date = new Date(Date.now() + daysLeft * 86400000).toISOString().slice(0, 10)
+  return { daysLeft, date, rate: Math.round(rate) }
+}
+
 export function computeOrderChain(order, entries, opById, departments, opts = {}) {
   const orderQty = Number(order.quantity || 0)
   const deptById = Object.fromEntries(departments.map(d => [d.id, d]))

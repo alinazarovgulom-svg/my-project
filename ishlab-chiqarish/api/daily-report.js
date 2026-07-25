@@ -1,5 +1,6 @@
 import { initializeApp, cert, getApps } from 'firebase-admin/app'
 import { getFirestore } from 'firebase-admin/firestore'
+import { computeOrderChain } from '../src/utils/orderProgress.js'
 
 const DEPARTMENTS = [
   { id: 'bichuv',    name: "Bichuv bo'limi" },
@@ -122,6 +123,35 @@ export default async function handler(req, res) {
     const overallEmoji = effEmoji(totalEff)
     const dateFormatted = today.split('-').reverse().join('.')
 
+    // Buyurtmalar holati
+    let orderLines = ''
+    try {
+      const ordersSnap = await db.collection('factory_orders').get()
+      const allOrders = ordersSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter(o => o.isActive !== false)
+      if (allOrders.length) {
+        const opById = {}
+        opSnap.docs.forEach(d => { const o = d.data(); opById[d.id] = { isFinal: !!o.isFinal, isFirst: !!o.isFirst, departmentId: o.departmentId } })
+        const ids = [...allOrders.map(o => o.id), 'auto']
+        const oEntries = []
+        for (let i = 0; i < ids.length; i += 30) {
+          const chunk = ids.slice(i, i + 30)
+          const snap = await db.collection('factory_work_entries').where('orderId', 'in', chunk).get()
+          snap.forEach(d => oEntries.push(d.data()))
+        }
+        const autoEntries = oEntries.filter(e => e.orderId === 'auto')
+        const byOrder = {}
+        oEntries.forEach(e => { if (e.orderId && e.orderId !== 'auto') (byOrder[e.orderId] = byOrder[e.orderId] || []).push(e) })
+        const lines = allOrders.map(o => {
+          const chain = computeOrderChain(o, byOrder[o.id] || [], opById, departments, { autoEntries, allOrders })
+          const bn = chain.depts.find(d => d.bottleneck)?.bottleneck
+          let line = `${chain.done ? '✅' : '🔄'} *${o.name}* — ${chain.doneQty}/${chain.orderQty} (${chain.percent}%)`
+          if (bn && !chain.done) line += `\n   ⚠️ Tiqilish: ${bn.name} (${bn.qty})`
+          return line
+        })
+        if (lines.length) orderLines = `\n\n📦 *Buyurtmalar holati:*\n` + lines.join('\n')
+      }
+    } catch (_) { /* buyurtma tizimi bo'lmasa e'tibor bermaymiz */ }
+
     const message =
       `🏭 *KAFTIMDA — Kunlik Xisobot*\n` +
       `📅 ${dateFormatted}\n\n` +
@@ -131,6 +161,7 @@ export default async function handler(req, res) {
       `📦 Tayyor mahsulot: ${totalTayyor} dona\n\n` +
       `*Bo'limlar holati:*\n` +
       (deptLines || '⚪ Bugun ma\'lumot kiritilmagan') +
+      orderLines +
       `\n\n_KAFTIMDA ishlab chiqarish tizimi_`
 
     const tgRes = await fetch(

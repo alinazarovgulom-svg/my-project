@@ -5,7 +5,8 @@ import { db } from '../firebase/config'
 import { useDepartments } from '../contexts/DepartmentsContext'
 import { useAuth } from '../contexts/AuthContext'
 import { format, subDays } from 'date-fns'
-import { Users, Settings, TrendingUp, ChevronRight, Package } from 'lucide-react'
+import { Users, Settings, TrendingUp, ChevronRight, Package, AlertTriangle } from 'lucide-react'
+import { computeOrderChain, forecastOrder } from '../utils/orderProgress'
 import {
   ResponsiveContainer,
   LineChart, Line,
@@ -52,6 +53,7 @@ const CustomTooltip = ({ active, payload, label }) => {
 const DASH_TTL = 60000 // 60 soniya
 let _dashToday = { key: '', ts: 0, data: null }
 let _dashWeek  = { key: '', ts: 0, data: null }
+let _dashOrders = { key: '', ts: 0, data: null }
 
 export default function Dashboard() {
   const { departments: allDepartments } = useDepartments()
@@ -208,6 +210,50 @@ export default function Dashboard() {
     loadWeek()
   }, [departments])
 
+  // Active orders progress (buyurtmalar holati) — keshlanadi
+  const [orderStats, setOrderStats] = useState([])
+  useEffect(() => {
+    if (!departments.length) return
+    const cacheKey = departments.map(d => d.id).join(',')
+    if (_dashOrders.key === cacheKey && _dashOrders.data && Date.now() - _dashOrders.ts < DASH_TTL) {
+      setOrderStats(_dashOrders.data); return
+    }
+    let cancelled = false
+    async function loadOrders() {
+      try {
+        const orderSnap = await getDocs(collection(db, 'factory_orders'))
+        const allOrders = orderSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter(o => o.isActive !== false)
+        const visibleIds = new Set(departments.map(d => d.id))
+        const orders = allOrders.filter(o => visibleIds.has(o.departmentId))
+        if (orders.length === 0) { if (!cancelled) { setOrderStats([]); _dashOrders = { key: cacheKey, ts: Date.now(), data: [] } } return }
+
+        const opSnap = await getDocs(collection(db, 'factory_operations'))
+        const opById = {}
+        opSnap.forEach(d => { const o = d.data(); opById[d.id] = { isFinal: !!o.isFinal, isFirst: !!o.isFirst, departmentId: o.departmentId } })
+
+        const ids = [...orders.map(o => o.id), 'auto']
+        const entries = []
+        for (let i = 0; i < ids.length; i += 30) {
+          const chunk = ids.slice(i, i + 30)
+          const snap = await getDocs(query(collection(db, 'factory_work_entries'), where('orderId', 'in', chunk)))
+          snap.forEach(d => entries.push(d.data()))
+        }
+        const autoEntries = entries.filter(e => e.orderId === 'auto')
+        const byOrder = {}
+        entries.forEach(e => { if (e.orderId && e.orderId !== 'auto') (byOrder[e.orderId] = byOrder[e.orderId] || []).push(e) })
+
+        const stats = orders.map(o => {
+          const chain = computeOrderChain(o, byOrder[o.id] || [], opById, departments, { autoEntries, allOrders })
+          return { order: o, chain, forecast: forecastOrder(o, chain.doneQty) }
+        }).sort((a, b) => (a.chain.done ? 1 : 0) - (b.chain.done ? 1 : 0) || (a.order.order ?? 0) - (b.order.order ?? 0))
+
+        if (!cancelled) { setOrderStats(stats); _dashOrders = { key: cacheKey, ts: Date.now(), data: stats } }
+      } catch (_) { if (!cancelled) setOrderStats([]) }
+    }
+    loadOrders()
+    return () => { cancelled = true }
+  }, [departments])
+
   const totalAttended = Object.values(deptStats).reduce((s, d) => s + d.attended, 0)
   const totalDone     = Object.values(deptStats).reduce((s, d) => s + d.done, 0)
   const totalExp      = Object.values(deptStats).reduce((s, d) => s + d.expected, 0)
@@ -354,6 +400,47 @@ export default function Dashboard() {
           )}
         </div>
       </div>
+
+      {/* Buyurtmalar holati */}
+      {orderStats.length > 0 && (
+        <div className="mb-8">
+          <h2 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-3 flex items-center gap-1.5">
+            <Package className="w-4 h-4" /> Buyurtmalar holati
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {orderStats.map(({ order, chain, forecast }) => {
+              const bn = chain.depts.find(d => d.bottleneck)?.bottleneck
+              return (
+                <div key={order.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+                  <div className="flex items-center justify-between mb-2 gap-2">
+                    <div className="min-w-0">
+                      <div className="text-sm font-semibold text-gray-800 truncate">{order.name}</div>
+                      <div className="text-xs text-gray-400">{order.quantity?.toLocaleString()} dona · {getDeptName(order.departmentId)}</div>
+                    </div>
+                    {chain.done
+                      ? <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-semibold shrink-0">✅ Bajarildi</span>
+                      : <span className="text-xs bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full shrink-0">{chain.percent}%</span>}
+                  </div>
+                  <div className="flex justify-between text-xs text-gray-500 mb-1">
+                    <span>Tayyor: <b className="text-gray-700">{chain.doneQty.toLocaleString()}</b> / {chain.orderQty.toLocaleString()}</span>
+                  </div>
+                  <div className="w-full bg-gray-100 rounded-full h-2">
+                    <div className={`h-2 rounded-full ${chain.done ? 'bg-green-500' : 'bg-indigo-500'}`} style={{ width: `${Math.min(chain.percent, 100)}%` }} />
+                  </div>
+                  {bn && !chain.done && (
+                    <div className="mt-2 flex items-center gap-1 text-xs text-red-600 bg-red-50 rounded-lg px-2 py-1">
+                      <AlertTriangle className="w-3.5 h-3.5 shrink-0" /> Tiqilish: <b>{bn.name}</b> ({bn.qty.toLocaleString()})
+                    </div>
+                  )}
+                  {forecast && !forecast.done && !chain.done && (
+                    <div className="mt-1.5 text-xs text-gray-500">📈 Taxminan: <b className="text-gray-700">{forecast.date}</b> ({forecast.daysLeft} kun)</div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Departments grid */}
       <h2 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-3">Bo'limlar — bugun</h2>
