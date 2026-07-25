@@ -9,24 +9,51 @@ export default function Departments() {
   const [modal, setModal] = useState(null) // null | 'add' | { id, name }
   const [name, setName] = useState('')
   const [threadId, setThreadId] = useState('')
+  const [chainMode, setChainMode] = useState('order')   // 'order' = buyurtmadan | 'from' = boshqa bo'limlardan
+  const [chainSources, setChainSources] = useState([])   // manba bo'lim id'lari
+  const [chainRule, setChainRule] = useState('min')      // 'mirror' | 'min' | 'sum'
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(null)
   const [error, setError] = useState('')
 
-  const openAdd = () => { setName(''); setThreadId(''); setError(''); setModal('add') }
-  const openEdit = (dept) => { setName(dept.name); setThreadId(dept.telegramThreadId ?? ''); setError(''); setModal(dept) }
+  const openAdd = () => {
+    setName(''); setThreadId(''); setChainMode('order'); setChainSources([]); setChainRule('min')
+    setError(''); setModal('add')
+  }
+  const openEdit = (dept) => {
+    setName(dept.name)
+    setThreadId(dept.telegramThreadId ?? '')
+    const ci = dept.chainInput || {}
+    setChainMode(ci.mode || 'order')
+    setChainSources(ci.sources || [])
+    setChainRule(ci.rule || 'min')
+    setError('')
+    setModal(dept)
+  }
   const closeModal = () => { setModal(null); setError('') }
+
+  const toggleSource = (id) => {
+    setChainSources(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id])
+  }
 
   const handleSave = async () => {
     if (!name.trim()) { setError("Bo'lim nomi kiritilmadi"); return }
+    if (modal !== 'add' && chainMode === 'from' && chainSources.length === 0) {
+      setError('Kirim manbai bo\'lim(lar)ini tanlang')
+      return
+    }
     setSaving(true)
     try {
       if (modal === 'add') {
         await addDept(name)
       } else {
+        const chainInput = chainMode === 'from'
+          ? { mode: 'from', sources: chainSources.filter(id => id !== modal.id), rule: chainRule }
+          : { mode: 'order' }
         await updateDept(modal.id, {
           name: name.trim(),
           telegramThreadId: threadId.trim() === '' ? null : Number(threadId.trim()),
+          chainInput,
         })
       }
       closeModal()
@@ -92,7 +119,7 @@ export default function Departments() {
 
       {modal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-5">
               <h2 className="font-bold text-gray-800">
                 {modal === 'add' ? "Yangi bo'lim" : "Bo'limni tahrirlash"}
@@ -137,6 +164,51 @@ export default function Departments() {
                 <p className="text-xs text-gray-400 mt-1">
                   Hisobot shu mavzuga boradi. Mavzu havolasidagi oxirgi raqam (t.me/c/.../<b>1015</b>). Bo'sh = asosiy guruh.
                 </p>
+              </div>
+            )}
+
+            {modal !== 'add' && (
+              <div className="mt-4 border-t border-gray-100 pt-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Zanjir — kirim manbai</label>
+                <div className="space-y-1.5">
+                  <label className="flex items-center gap-2 cursor-pointer text-sm text-gray-700">
+                    <input type="radio" name="chainMode" checked={chainMode === 'order'} onChange={() => setChainMode('order')} className="accent-indigo-600" />
+                    Buyurtmadan (mustaqil) — masalan Kamzul, Shim, Tana
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer text-sm text-gray-700">
+                    <input type="radio" name="chainMode" checked={chainMode === 'from'} onChange={() => setChainMode('from')} className="accent-indigo-600" />
+                    Boshqa bo'lim(lar)dan
+                  </label>
+                </div>
+
+                {chainMode === 'from' && (
+                  <div className="mt-3 pl-1 space-y-3">
+                    <div>
+                      <p className="text-xs text-gray-500 mb-1.5">Manba bo'lim(lar):</p>
+                      <div className="space-y-1 max-h-36 overflow-y-auto border border-gray-100 rounded-lg p-2">
+                        {departments.filter(d => d.id !== modal.id).map(d => (
+                          <label key={d.id} className="flex items-center gap-2 cursor-pointer text-sm text-gray-700 py-0.5">
+                            <input type="checkbox" checked={chainSources.includes(d.id)} onChange={() => toggleSource(d.id)} className="accent-indigo-600" />
+                            {d.name}
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500 mb-1.5">Qoida:</p>
+                      <select
+                        value={chainRule}
+                        onChange={e => setChainRule(e.target.value)}
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      >
+                        <option value="mirror">Nusxa (manba kirimi bilan bir xil — tarqalish, masalan Astar, Yeng)</option>
+                        <option value="min">Eng kam (manbalar chiqimi minimumi — masalan Montaj)</option>
+                        <option value="sum">Yig'indi (manbalar chiqimi yig'indisi)</option>
+                      </select>
+                    </div>
+                  </div>
+                )}
+                <p className="text-xs text-gray-400 mt-2">Buyurtma miqdori shu qoida bo'yicha bo'limlar bo'ylab tarqaladi.</p>
               </div>
             )}
 
