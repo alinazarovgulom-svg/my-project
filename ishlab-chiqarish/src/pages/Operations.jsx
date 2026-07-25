@@ -6,7 +6,7 @@ import {
 import { db } from '../firebase/config'
 import { useDepartments } from '../contexts/DepartmentsContext'
 import { useAuth } from '../contexts/AuthContext'
-import { Plus, Pencil, Trash2, X, Check, Star, Search, ChevronUp, ChevronDown } from 'lucide-react'
+import { Plus, Pencil, Trash2, X, Check, Star, Search, ChevronUp, ChevronDown, LogIn } from 'lucide-react'
 
 export default function Operations() {
   const { can, userDoc } = useAuth()
@@ -70,6 +70,19 @@ export default function Operations() {
         await updateDoc(doc(db, 'factory_operations', currentFinal.id), { isFinal: false })
       }
       await updateDoc(doc(db, 'factory_operations', op.id), { isFinal: true })
+    }
+  }
+
+  // Boshlang'ich operatsiya — bo'limga kirimni ko'rsatadi (har bo'limda bitta)
+  const handleToggleFirst = async (op) => {
+    if (op.isFirst) {
+      await updateDoc(doc(db, 'factory_operations', op.id), { isFirst: false })
+    } else {
+      const currentFirst = operations.find(o => o.departmentId === op.departmentId && o.isFirst && o.id !== op.id)
+      if (currentFirst) {
+        await updateDoc(doc(db, 'factory_operations', currentFirst.id), { isFirst: false })
+      }
+      await updateDoc(doc(db, 'factory_operations', op.id), { isFirst: true })
     }
   }
 
@@ -165,6 +178,7 @@ export default function Operations() {
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <span className="text-sm font-medium text-gray-800">{op.name}</span>
+                        {op.isFirst && <LogIn className="w-3.5 h-3.5 text-green-600 shrink-0" />}
                         {op.isFinal && <Star className="w-3.5 h-3.5 fill-amber-500 text-amber-500 shrink-0" />}
                       </div>
                       <span className="bg-indigo-50 text-indigo-700 text-xs px-2 py-0.5 rounded-full mt-1 inline-block">
@@ -209,14 +223,26 @@ export default function Operations() {
                       <td className="px-4 py-3 text-gray-600">{op.norm} dona</td>
                       <td className="px-4 py-3 text-gray-600">{op.unitPrice ? `${op.unitPrice.toLocaleString()} so'm` : '—'}</td>
                       <td className="px-4 py-3">
-                        <button
-                          onClick={() => can.manageOperations && handleToggleFinal(op)}
-                          disabled={!can.manageOperations}
-                          className={`flex items-center gap-1.5 text-xs transition-colors ${op.isFinal ? 'text-amber-600' : can.manageOperations ? 'text-gray-300 hover:text-amber-400' : 'text-gray-200 cursor-default'}`}
-                        >
-                          <Star className={`w-4 h-4 ${op.isFinal ? 'fill-amber-500 text-amber-500' : ''}`} />
-                          {op.isFinal && <span className="font-medium">Yakuniy</span>}
-                        </button>
+                        <div className="flex items-center gap-3">
+                          <button
+                            onClick={() => can.manageOperations && handleToggleFirst(op)}
+                            disabled={!can.manageOperations}
+                            title="Boshlang'ich operatsiya (kirim)"
+                            className={`flex items-center gap-1.5 text-xs transition-colors ${op.isFirst ? 'text-green-600' : can.manageOperations ? 'text-gray-300 hover:text-green-400' : 'text-gray-200 cursor-default'}`}
+                          >
+                            <LogIn className={`w-4 h-4 ${op.isFirst ? 'text-green-600' : ''}`} />
+                            {op.isFirst && <span className="font-medium">Boshlang'ich</span>}
+                          </button>
+                          <button
+                            onClick={() => can.manageOperations && handleToggleFinal(op)}
+                            disabled={!can.manageOperations}
+                            title="Yakuniy operatsiya (tayyor mahsulot)"
+                            className={`flex items-center gap-1.5 text-xs transition-colors ${op.isFinal ? 'text-amber-600' : can.manageOperations ? 'text-gray-300 hover:text-amber-400' : 'text-gray-200 cursor-default'}`}
+                          >
+                            <Star className={`w-4 h-4 ${op.isFinal ? 'fill-amber-500 text-amber-500' : ''}`} />
+                            {op.isFinal && <span className="font-medium">Yakuniy</span>}
+                          </button>
+                        </div>
                       </td>
                       {can.manageOperations && (
                         <td className="px-4 py-3">
