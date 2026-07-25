@@ -7,7 +7,7 @@ import {
 import { db } from '../firebase/config'
 import { useDepartments } from '../contexts/DepartmentsContext'
 import { useAuth } from '../contexts/AuthContext'
-import { Calendar, Clock, Save, CheckCircle, RefreshCw, X, Search, MoreVertical, Send, AlarmClock, UserPlus, AlertTriangle } from 'lucide-react'
+import { Calendar, Clock, Save, CheckCircle, RefreshCw, X, Search, MoreVertical, Send, AlarmClock, UserPlus, AlertTriangle, Package } from 'lucide-react'
 import { buildWorkPDFHtml } from '../utils/pdf'
 import { sendHTMLToTelegram, sendTelegramMessage } from '../utils/telegram'
 
@@ -78,6 +78,10 @@ export default function DepartmentWork() {
   const [savedAll, setSavedAll] = useState(false)
   const [isDirty, setIsDirty] = useState(false)
   const [overrides, setOverrides] = useState({})
+  // Buyurtma tanlash (3-bosqich)
+  const [orders, setOrders] = useState([])          // shu bo'limning faol buyurtmalari
+  const [defaultOrder, setDefaultOrder] = useState('none') // 'none' | 'auto' | orderId (hamma uchun)
+  const [empOrders, setEmpOrders] = useState({})    // { empId: 'none'|'auto'|orderId } — alohida override
   const [empTimes, setEmpTimes] = useState({})
   const [timePickerEmp, setTimePickerEmp] = useState(null)
   const [menuEmp, setMenuEmp] = useState(null)
@@ -123,6 +127,19 @@ export default function DepartmentWork() {
     })
   }, [deptId])
 
+  // Load active orders for this department (buyurtma tanlash uchun)
+  useEffect(() => {
+    getDocs(query(collection(db, 'factory_orders'), where('departmentId', '==', deptId)))
+      .then(snap => {
+        const list = snap.docs
+          .map(d => ({ id: d.id, ...d.data() }))
+          .filter(o => o.isActive !== false)
+          .sort((a, b) => (a.order ?? Infinity) - (b.order ?? Infinity))
+        setOrders(list)
+      })
+      .catch(() => setOrders([]))
+  }, [deptId])
+
   // Load all employees for guest picker
   useEffect(() => {
     getDocs(collection(db, 'factory_employees')).then(snap => {
@@ -158,6 +175,7 @@ export default function DepartmentWork() {
     setEntries({})
     setDirtyEmps({})
     setGuestEmps([])
+    setEmpOrders({})
   }, [date, startTime, endTime])
 
   // Warn on browser tab close / refresh
@@ -180,13 +198,16 @@ export default function DepartmentWork() {
     )
     return onSnapshot(q, snap => {
       const data = {}
+      const loadedOrders = {}
       let loadedBreak = null
       snap.forEach(d => {
-        const { employeeId, operations, breakMinutes: bm } = d.data()
+        const { employeeId, operations, breakMinutes: bm, orderId } = d.data()
         data[employeeId] = operations || {}
+        if (orderId !== undefined && orderId !== null) loadedOrders[employeeId] = orderId
         if (bm !== undefined) loadedBreak = bm
       })
       setEntries(data)
+      setEmpOrders(loadedOrders)
       if (loadedBreak !== null) setBreakMinutes(loadedBreak)
     }, err => {
       console.error('[DepartmentWork] entries onSnapshot error:', err)
@@ -285,6 +306,9 @@ export default function DepartmentWork() {
       : (salaryType === 'hourly' ? hourlyPay
         : salaryType === 'piece' ? totalPiecePay
         : hourlyPay + totalPiecePay)
+    // Buyurtma: xodim uchun tanlangan (bo'lmasa umumiy). 'none' = buyurtmasiz.
+    const resolvedOrder = empOrders[empId] ?? defaultOrder
+    const orderId = (!resolvedOrder || resolvedOrder === 'none') ? null : resolvedOrder
     await setDoc(doc(db, 'factory_work_entries', entryId), {
       employeeId: empId,
       departmentId: deptId,
@@ -296,6 +320,7 @@ export default function DepartmentWork() {
       salaryType,
       hourlyRate,
       totalPay,
+      orderId,   // null | 'auto' (FIFO) | buyurtma id
       ...(isGuest && { isGuest: true, homeDepartmentId: emp.departmentId }),
       updatedAt: serverTimestamp(),
       updatedBy: user.uid,
@@ -627,6 +652,27 @@ export default function DepartmentWork() {
             )}
           </div>
 
+          {/* Umumiy buyurtma tanlash (hamma xodim uchun) */}
+          {orders.length > 0 && can.enterHourly && (
+            <div className="bg-indigo-50 border border-indigo-100 rounded-xl px-4 py-3 mb-4 flex items-center gap-3 flex-wrap">
+              <span className="text-sm font-medium text-indigo-800 flex items-center gap-1.5 shrink-0">
+                <Package className="w-4 h-4" /> Buyurtma:
+              </span>
+              <select
+                value={defaultOrder}
+                onChange={e => setDefaultOrder(e.target.value)}
+                className="border border-indigo-200 bg-white rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              >
+                <option value="none">Hech qaysi (buyurtmasiz)</option>
+                <option value="auto">FIFO — avtomatik navbat</option>
+                {orders.map(o => (
+                  <option key={o.id} value={o.id}>{o.name} ({Number(o.quantity).toLocaleString()} dona)</option>
+                ))}
+              </select>
+              <span className="text-xs text-indigo-500">Har xodim uchun pastda alohida o'zgartirsa bo'ladi</span>
+            </div>
+          )}
+
           <div className="space-y-4">
             {allWorkersList.filter(emp => {
               if (!search.trim()) return true
@@ -665,6 +711,18 @@ export default function DepartmentWork() {
                           <AlarmClock className="w-3 h-3" />
                           {empTimes[emp.id].startTime}–{empTimes[emp.id].endTime}
                         </span>
+                      )}
+                      {orders.length > 0 && can.enterHourly && (
+                        <select
+                          value={empOrders[emp.id] ?? defaultOrder}
+                          onChange={e => setEmpOrders(o => ({ ...o, [emp.id]: e.target.value }))}
+                          title="Bu xodim uchun buyurtma"
+                          className="text-xs border border-gray-200 bg-white rounded-full px-2 py-0.5 max-w-[150px] focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                        >
+                          <option value="none">📦 Buyurtmasiz</option>
+                          <option value="auto">📦 FIFO avto</option>
+                          {orders.map(o => <option key={o.id} value={o.id}>📦 {o.name}</option>)}
+                        </select>
                       )}
                     </div>
                     {can.enterHourly && (
