@@ -6,6 +6,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { exportPDF, buildWorkPDFHtml } from '../utils/pdf'
 import { exportExcel } from '../utils/excel'
 import { sendHTMLToTelegram } from '../utils/telegram'
+import { fetchOrderSummary } from '../utils/orderReport'
 import { format } from 'date-fns'
 import { Search, FileText, Download, Package, Star } from 'lucide-react'
 
@@ -138,6 +139,7 @@ export default function Reports() {
             endTime: entry.endTime,
             breakMinutes: bm,
             isFinal: !!(op.isFinal),
+            orderId: entry.orderId || null,
           })
         })
       })
@@ -305,7 +307,15 @@ export default function Reports() {
                           })
                         })
                       } catch (_) {}
-                      const html = buildWorkPDFHtml(rows, filtersStr, filterLabel, filterType === 'employee', false, dailyTayyor)
+                      // Buyurtma xulosasi + har qatorga buyurtma nomi
+                      let orderSummary = null
+                      try {
+                        const orderIds = [...new Set(rows.map(r => r.orderId).filter(Boolean))]
+                        const { summary, orderById } = await fetchOrderSummary(db, orderIds)
+                        orderSummary = summary.length ? summary : null
+                        rows.forEach(r => { r.orderName = r.orderId ? (orderById[r.orderId]?.name || '') : '' })
+                      } catch (_) {}
+                      const html = buildWorkPDFHtml(rows, filtersStr, filterLabel, filterType === 'employee', false, dailyTayyor, orderSummary)
                       const filename = `hisobot-${filterLabel}-${Date.now()}.pdf`
                       const caption = `📊 ${filterLabel} | ${filtersStr}`
                       // Bo'lim tanlangan bo'lsa — o'sha bo'lim mavzusiga (forum topic) yuboriladi.

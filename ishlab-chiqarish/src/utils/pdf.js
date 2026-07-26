@@ -17,7 +17,7 @@ function qtyStyle(qty, exp) {
   return               { bg: '#fee2e2', color: '#991b1b' }
 }
 
-export function buildWorkPDFHtml(rows, filters, deptName, showDept = true, autoPrint = true, dailyTayyor = null) {
+export function buildWorkPDFHtml(rows, filters, deptName, showDept = true, autoPrint = true, dailyTayyor = null, orderSummary = null) {
   const totalDone   = rows.reduce((s, r) => s + Number(r.quantity || 0), 0)
   const totalExp    = rows.reduce((s, r) => s + Number(r.expected  || 0), 0)
   const totalTayyor = rows.filter(r => r.isFinal).reduce((s, r) => s + Number(r.quantity || 0), 0)
@@ -57,7 +57,7 @@ export function buildWorkPDFHtml(rows, filters, deptName, showDept = true, autoP
     dr.forEach(r => {
       const key = `${r.empName}||${r.deptName}||${r.opName}||${r.norm}`
       if (!groupMap.has(key)) {
-        groupMap.set(key, { empName: r.empName, deptName: r.deptName, opName: r.opName, norm: r.norm, isCustomNorm: !!r.isCustomNorm, bySlot: {} })
+        groupMap.set(key, { empName: r.empName, deptName: r.deptName, opName: r.opName, norm: r.norm, isCustomNorm: !!r.isCustomNorm, orderName: r.orderName || '', bySlot: {} })
       }
       groupMap.get(key).bySlot[`${r.startTime}–${r.endTime}`] = {
         qty: Number(r.quantity), exp: Number(r.expected), note: r.note || '',
@@ -114,7 +114,7 @@ export function buildWorkPDFHtml(rows, filters, deptName, showDept = true, autoP
           </span>`
         })() : ''}</td>
         ${showDept ? `<td class="td-dept">${isFirst ? `<span class="dept-badge">${esc(g.deptName)}</span>` : ''}</td>` : ''}
-        <td class="td-op">${esc(g.opName)}${g.isCustomNorm ? ` <span class="custom-badge">shaxsiy${pct !== null ? ' ' + pct + '%' : ''}</span>` : ''}</td>
+        <td class="td-op">${esc(g.opName)}${g.isCustomNorm ? ` <span class="custom-badge">shaxsiy${pct !== null ? ' ' + pct + '%' : ''}</span>` : ''}${g.orderName ? ` <span class="order-badge">📦 ${esc(g.orderName)}</span>` : ''}</td>
         <td class="td-norm">${esc(g.norm)} dona/soat</td>
         ${slotCells}
         <td class="slot-td">
@@ -202,12 +202,21 @@ export function buildWorkPDFHtml(rows, filters, deptName, showDept = true, autoP
                 border-radius:10px; font-size:9.5px; white-space:nowrap; }
   .custom-badge { background:#eef2ff; color:#4338ca; padding:1px 6px;
                   border-radius:8px; font-size:8.5px; font-weight:700; white-space:nowrap; }
+  .order-badge { background:#fef3c7; color:#92400e; padding:1px 6px;
+                 border-radius:8px; font-size:8.5px; font-weight:700; white-space:nowrap; }
   .slot-td { text-align:center; padding:3px 4px; }
   .slot-td.empty { color:#94a3b8; font-size:11px; }
   .qty-badge { border-radius:5px; padding:3px 6px; display:inline-block; min-width:36px; }
   .qty-num { font-weight:700; font-size:12px; line-height:1.3; }
   .qty-exp { font-size:8.5px; color:#64748b; line-height:1.3; }
   .slot-note { font-size:8px; color:#475569; font-style:italic; margin-top:2px; max-width:80px; word-wrap:break-word; }
+
+  .order-box { margin-top:10px; border:1px solid #e2e8f0; border-radius:6px; overflow:hidden; }
+  .order-title { background:#1e293b; color:#fff; font-size:10px; font-weight:700; padding:5px 10px; }
+  .order-table { width:100%; border-collapse:collapse; font-size:10px; }
+  .order-table th { background:#f1f5f9; color:#475569; font-size:9px; font-weight:700; padding:4px 8px; text-align:left; }
+  .order-table td { padding:4px 8px; border-top:1px solid #f1f5f9; }
+  .order-table .c { text-align:center; }
 
   .legend { display:flex; align-items:center; gap:12px; margin-top:8px;
             padding-top:6px; border-top:1px solid #e2e8f0; flex-wrap:wrap; }
@@ -283,6 +292,34 @@ export function buildWorkPDFHtml(rows, filters, deptName, showDept = true, autoP
 </div>
 
 ${sectionsHtml}
+
+${(orderSummary && orderSummary.length) ? `
+<div class="order-box">
+  <div class="order-title">📦 Buyurtmalar holati</div>
+  <table class="order-table">
+    <thead><tr>
+      <th>Buyurtma</th><th class="c">Tayyor</th><th class="c">Jami</th><th class="c">%</th>
+      <th class="c">Holat</th><th>Tiqilish / Prognoz</th>
+    </tr></thead>
+    <tbody>
+      ${orderSummary.map(o => {
+        const col = o.done ? '#15803d' : o.percent >= 80 ? '#854d0e' : '#991b1b'
+        const extra = []
+        if (o.bottleneck && !o.done) extra.push(`⚠️ Tiqilish: <strong>${esc(o.bottleneck)}</strong>`)
+        if (o.forecast && !o.done) extra.push(`📈 ${esc(o.forecast)}`)
+        return `<tr>
+          <td><strong>${esc(o.name)}</strong></td>
+          <td class="c">${o.doneQty.toLocaleString()}</td>
+          <td class="c">${o.orderQty.toLocaleString()}</td>
+          <td class="c" style="color:${col};font-weight:700">${o.percent}%</td>
+          <td class="c">${o.done ? '✅ Bajarildi' : '🔄 Jarayonda'}</td>
+          <td style="font-size:9px;color:#64748b">${extra.join(' · ') || '—'}</td>
+        </tr>`
+      }).join('')}
+    </tbody>
+  </table>
+</div>
+` : ''}
 
 <div class="legend">
   <div class="legend-item">

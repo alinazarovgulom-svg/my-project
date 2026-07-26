@@ -10,6 +10,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { Calendar, Clock, Save, CheckCircle, RefreshCw, X, Search, MoreVertical, Send, AlarmClock, UserPlus, AlertTriangle, Package } from 'lucide-react'
 import { buildWorkPDFHtml } from '../utils/pdf'
 import { sendHTMLToTelegram, sendTelegramMessage } from '../utils/telegram'
+import { fetchOrderSummary } from '../utils/orderReport'
 
 function calcHours(start, end) {
   const [sh, sm] = start.split(':').map(Number)
@@ -422,6 +423,8 @@ export default function DepartmentWork() {
     allWorkers.forEach(emp => {
       const empEntries = entries[emp.id] || {}
       const activeOpIds = overrides[emp.id] ?? emp.operationIds ?? []
+      const rawOrder = empOrders[emp.id] ?? defaultOrder
+      const empOrderId = (!rawOrder || rawOrder === 'none') ? null : rawOrder
       allOps.filter(o => activeOpIds.includes(o.id)).forEach(op => {
         const data = empEntries[op.id] || {}
         const norm = effectiveNorm(emp, op.id, op.norm || 0, date)
@@ -439,6 +442,7 @@ export default function DepartmentWork() {
           endTime,
           breakMinutes,
           isFinal: !!(op.isFinal),
+          orderId: empOrderId,
         })
       })
     })
@@ -469,8 +473,17 @@ export default function DepartmentWork() {
         })
       } catch (_) {}
 
+      // Buyurtma xulosasi + har qatorga buyurtma nomi
+      let orderSummary = null
+      try {
+        const orderIds = [...new Set(filteredRows.map(r => r.orderId).filter(Boolean))]
+        const { summary, orderById } = await fetchOrderSummary(db, orderIds)
+        orderSummary = summary.length ? summary : null
+        filteredRows.forEach(r => { r.orderName = r.orderId ? (orderById[r.orderId]?.name || '') : '' })
+      } catch (_) {}
+
       const filters = `${date} · ${startTime}–${endTime}`
-      const html = buildWorkPDFHtml(filteredRows, filters, dept.name, false, false, dailyTayyor)
+      const html = buildWorkPDFHtml(filteredRows, filters, dept.name, false, false, dailyTayyor, orderSummary)
       const filename = `${dept.name}-${date}-${startTime.replace(':', '')}.pdf`
       const caption = `📊 ${dept.name} | ${date} | ${startTime}–${endTime}`
       // Shu bo'limning Telegram mavzusiga (forum topic) yuboriladi

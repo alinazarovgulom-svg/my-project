@@ -1,0 +1,50 @@
+import { collection, getDocs, query, where } from 'firebase/firestore'
+import { computeOrderChain, forecastOrder } from './orderProgress'
+
+// Hisobotda uchragan buyurtmalar bo'yicha xulosa (tayyor/jami/%, tiqilish, prognoz)
+// va buyurtma nomlari xaritasini qaytaradi. PDF/Telegram hisoboti uchun.
+export async function fetchOrderSummary(db, orderIds) {
+  const ids = [...new Set((orderIds || []).filter(id => id && id !== 'auto'))]
+  if (ids.length === 0) return { summary: [], orderById: {} }
+
+  const [orderSnap, opSnap, deptSnap] = await Promise.all([
+    getDocs(collection(db, 'factory_orders')),
+    getDocs(collection(db, 'factory_operations')),
+    getDocs(collection(db, 'factory_departments')),
+  ])
+  const allOrders = orderSnap.docs.map(d => ({ id: d.id, ...d.data() }))
+  const orderById = Object.fromEntries(allOrders.map(o => [o.id, o]))
+  const opById = {}
+  opSnap.forEach(d => { const o = d.data(); opById[d.id] = { isFinal: !!o.isFinal, isFirst: !!o.isFirst, departmentId: o.departmentId } })
+  const departments = deptSnap.docs.map(d => ({ id: d.id, ...d.data() }))
+
+  const qids = [...ids, 'auto']
+  const entries = []
+  for (let i = 0; i < qids.length; i += 30) {
+    const chunk = qids.slice(i, i + 30)
+    const snap = await getDocs(query(collection(db, 'factory_work_entries'), where('orderId', 'in', chunk)))
+    snap.forEach(d => entries.push(d.data()))
+  }
+  const autoEntries = entries.filter(e => e.orderId === 'auto')
+  const byOrder = {}
+  entries.forEach(e => { if (e.orderId && e.orderId !== 'auto') (byOrder[e.orderId] = byOrder[e.orderId] || []).push(e) })
+
+  const summary = ids.map(id => {
+    const o = orderById[id]
+    if (!o) return null
+    const chain = computeOrderChain(o, byOrder[id] || [], opById, departments, { autoEntries, allOrders })
+    const f = forecastOrder(o, chain.doneQty)
+    const bn = chain.depts.find(d => d.bottleneck)?.bottleneck
+    return {
+      name: o.name,
+      doneQty: chain.doneQty,
+      orderQty: chain.orderQty,
+      percent: chain.percent,
+      done: chain.done,
+      bottleneck: bn ? `${bn.name} (${bn.qty})` : null,
+      forecast: f && !f.done ? `${f.date} (${f.daysLeft} kun)` : null,
+    }
+  }).filter(Boolean)
+
+  return { summary, orderById }
+}

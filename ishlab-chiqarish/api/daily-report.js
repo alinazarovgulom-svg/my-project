@@ -1,6 +1,6 @@
 import { initializeApp, cert, getApps } from 'firebase-admin/app'
 import { getFirestore } from 'firebase-admin/firestore'
-import { computeOrderChain } from '../src/utils/orderProgress.js'
+import { computeOrderChain, forecastOrder } from '../src/utils/orderProgress.js'
 
 const DEPARTMENTS = [
   { id: 'bichuv',    name: "Bichuv bo'limi" },
@@ -146,6 +146,8 @@ export default async function handler(req, res) {
           const bn = chain.depts.find(d => d.bottleneck)?.bottleneck
           let line = `${chain.done ? '✅' : '🔄'} *${o.name}* — ${chain.doneQty}/${chain.orderQty} (${chain.percent}%)`
           if (bn && !chain.done) line += `\n   ⚠️ Tiqilish: ${bn.name} (${bn.qty})`
+          const f = forecastOrder(o, chain.doneQty)
+          if (f && !f.done && !chain.done) line += `\n   📈 Taxminan: ${f.date} (${f.daysLeft} kun)`
           return line
         })
         if (lines.length) orderLines = `\n\n📦 *Buyurtmalar holati:*\n` + lines.join('\n')
