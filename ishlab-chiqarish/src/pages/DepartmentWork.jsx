@@ -18,6 +18,21 @@ function calcHours(start, end) {
   return Math.max(0, (eh * 60 + em - sh * 60 - sm) / 60)
 }
 
+// Bo'limning zanjir guruhi (chainInput bog'lanishlari bo'ylab bog'langan bo'limlar to'plami).
+// Masalan Montaj sources = [Tana,Astar,Yeng] bo'lsa, bu 4 bo'lim bir guruhda; Shim mustaqil.
+function chainComponent(startId, departments) {
+  const adj = {}
+  const link = (a, b) => { (adj[a] = adj[a] || new Set()).add(b); (adj[b] = adj[b] || new Set()).add(a) }
+  departments.forEach(d => (d.chainInput?.sources || []).forEach(s => link(d.id, s)))
+  const seen = new Set([startId])
+  const stack = [startId]
+  while (stack.length) {
+    const cur = stack.pop()
+    ;(adj[cur] || []).forEach(n => { if (!seen.has(n)) { seen.add(n); stack.push(n) } })
+  }
+  return seen
+}
+
 // Bo'lim uchun Telegram mavzu (forum topic) ID'si — nom/ID bo'yicha moslaydi.
 function threadForDept(dept) {
   if (!dept) return undefined
@@ -404,6 +419,10 @@ export default function DepartmentWork() {
     setPickerSel(s => s.includes(opId) ? s.filter(id => id !== opId) : [...s, opId])
   }
 
+  // Faqat shu bo'lim zanjiridagi buyurtmalar (mustaqil bo'lim — faqat o'ziniki)
+  const orderComponent = chainComponent(deptId, departments)
+  const visibleOrders = orders.filter(o => orderComponent.has(o.departmentId))
+
   const hours = Math.max(0, calcHours(startTime, endTime) - breakMinutes / 60)
   const getEmpHours = (empId) => {
     const t = empTimes[empId]
@@ -666,7 +685,7 @@ export default function DepartmentWork() {
           </div>
 
           {/* Umumiy buyurtma tanlash (hamma xodim uchun) */}
-          {orders.length > 0 && can.enterHourly && (
+          {visibleOrders.length > 0 && can.enterHourly && (
             <div className="bg-indigo-50 border border-indigo-100 rounded-xl px-4 py-3 mb-4 flex items-center gap-3 flex-wrap">
               <span className="text-sm font-medium text-indigo-800 flex items-center gap-1.5 shrink-0">
                 <Package className="w-4 h-4" /> Buyurtma:
@@ -678,7 +697,7 @@ export default function DepartmentWork() {
               >
                 <option value="none">Hech qaysi (buyurtmasiz)</option>
                 <option value="auto">FIFO — avtomatik navbat</option>
-                {orders.map(o => (
+                {visibleOrders.map(o => (
                   <option key={o.id} value={o.id}>{o.name} ({Number(o.quantity).toLocaleString()} dona)</option>
                 ))}
               </select>
@@ -725,7 +744,7 @@ export default function DepartmentWork() {
                           {empTimes[emp.id].startTime}–{empTimes[emp.id].endTime}
                         </span>
                       )}
-                      {orders.length > 0 && can.enterHourly && (
+                      {visibleOrders.length > 0 && can.enterHourly && (
                         <select
                           value={empOrders[emp.id] ?? defaultOrder}
                           onChange={e => setEmpOrders(o => ({ ...o, [emp.id]: e.target.value }))}
@@ -734,7 +753,7 @@ export default function DepartmentWork() {
                         >
                           <option value="none">📦 Buyurtmasiz</option>
                           <option value="auto">📦 FIFO avto</option>
-                          {orders.map(o => <option key={o.id} value={o.id}>📦 {o.name}</option>)}
+                          {visibleOrders.map(o => <option key={o.id} value={o.id}>📦 {o.name}</option>)}
                         </select>
                       )}
                     </div>
