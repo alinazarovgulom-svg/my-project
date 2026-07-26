@@ -125,21 +125,27 @@ export default function Reports() {
           if (!op) return
           const expected = data.expected !== undefined ? Number(data.expected) : op.norm * hours
           const usedNorm = data.norm !== undefined ? Number(data.norm) : op.norm
-          result.push({
-            empName: `${emp.lastName} ${emp.firstName}`,
-            deptName: getDeptName(emp.departmentId),
-            opName: op.name,
-            norm: usedNorm,
-            isCustomNorm: op.norm !== undefined && Number(usedNorm) !== Number(op.norm),
-            quantity: Number(data.quantity ?? 0),
-            expected,
-            note: data.note || '',
-            date: entry.date,
-            startTime: entry.startTime,
-            endTime: entry.endTime,
-            breakMinutes: bm,
-            isFinal: !!(op.isFinal),
-            orderId: (data.orderId !== undefined ? data.orderId : entry.orderId) || null,
+          // Operatsiya bir nechta buyurtmага bo'lingan bo'lsa (allocations) — har ulush alohida qator
+          const allocs = (Array.isArray(data.allocations) && data.allocations.length)
+            ? data.allocations
+            : [{ quantity: Number(data.quantity ?? 0), orderId: (data.orderId !== undefined ? data.orderId : entry.orderId) || null, note: data.note || '' }]
+          allocs.forEach((a, ai) => {
+            result.push({
+              empName: `${emp.lastName} ${emp.firstName}`,
+              deptName: getDeptName(emp.departmentId),
+              opName: op.name,
+              norm: usedNorm,
+              isCustomNorm: op.norm !== undefined && Number(usedNorm) !== Number(op.norm),
+              quantity: Number(a.quantity ?? 0),
+              expected: ai === 0 ? expected : 0,
+              note: a.note || '',
+              date: entry.date,
+              startTime: entry.startTime,
+              endTime: entry.endTime,
+              breakMinutes: bm,
+              isFinal: !!(op.isFinal),
+              orderId: a.orderId ?? null,
+            })
           })
         })
       })
