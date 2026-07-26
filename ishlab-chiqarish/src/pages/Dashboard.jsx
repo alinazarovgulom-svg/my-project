@@ -229,7 +229,7 @@ export default function Dashboard() {
 
         const opSnap = await getDocs(collection(db, 'factory_operations'))
         const opById = {}
-        opSnap.forEach(d => { const o = d.data(); opById[d.id] = { isFinal: !!o.isFinal, isFirst: !!o.isFirst, departmentId: o.departmentId } })
+        opSnap.forEach(d => { const o = d.data(); opById[d.id] = { isFinal: !!o.isFinal, isFirst: !!o.isFirst, departmentId: o.departmentId, name: o.name, order: o.order ?? Infinity } })
 
         const ids = [...orders.map(o => o.id), 'auto']
         const entries = []
@@ -410,6 +410,7 @@ export default function Dashboard() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {orderStats.map(({ order, chain, forecast }) => {
               const bn = chain.depts.find(d => d.bottleneck)?.bottleneck
+              const opbnDept = chain.depts.find(d => d.opBottleneck)
               return (
                 <div key={order.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
                   <div className="flex items-center justify-between mb-2 gap-2">
@@ -430,6 +431,11 @@ export default function Dashboard() {
                   {bn && !chain.done && (
                     <div className="mt-2 flex items-center gap-1 text-xs text-red-600 bg-red-50 rounded-lg px-2 py-1">
                       <AlertTriangle className="w-3.5 h-3.5 shrink-0" /> Tiqilish: <b>{bn.name}</b> ({bn.qty.toLocaleString()})
+                    </div>
+                  )}
+                  {opbnDept && !chain.done && (
+                    <div className="mt-1 flex items-center gap-1 text-xs text-orange-600 bg-orange-50 rounded-lg px-2 py-1">
+                      <AlertTriangle className="w-3.5 h-3.5 shrink-0" /> {opbnDept.name}: <b>{opbnDept.opBottleneck.name}</b> ({opbnDept.opBottleneck.qty.toLocaleString()})
                     </div>
                   )}
                   {forecast && !forecast.done && !chain.done && (

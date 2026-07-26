@@ -130,7 +130,7 @@ export default async function handler(req, res) {
       const allOrders = ordersSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter(o => o.isActive !== false)
       if (allOrders.length) {
         const opById = {}
-        opSnap.docs.forEach(d => { const o = d.data(); opById[d.id] = { isFinal: !!o.isFinal, isFirst: !!o.isFirst, departmentId: o.departmentId } })
+        opSnap.docs.forEach(d => { const o = d.data(); opById[d.id] = { isFinal: !!o.isFinal, isFirst: !!o.isFirst, departmentId: o.departmentId, name: o.name, order: o.order ?? Infinity } })
         const ids = [...allOrders.map(o => o.id), 'auto']
         const oEntries = []
         for (let i = 0; i < ids.length; i += 30) {
@@ -144,8 +144,10 @@ export default async function handler(req, res) {
         const lines = allOrders.map(o => {
           const chain = computeOrderChain(o, byOrder[o.id] || [], opById, departments, { autoEntries, allOrders })
           const bn = chain.depts.find(d => d.bottleneck)?.bottleneck
+          const opbnDept = chain.depts.find(d => d.opBottleneck)
           let line = `${chain.done ? '✅' : '🔄'} *${o.name}* — ${chain.doneQty}/${chain.orderQty} (${chain.percent}%)`
-          if (bn && !chain.done) line += `\n   ⚠️ Tiqilish: ${bn.name} (${bn.qty})`
+          if (bn && !chain.done) line += `\n   ⚠️ Bo'lim: ${bn.name} (${bn.qty})`
+          if (opbnDept && !chain.done) line += `\n   ⚠️ Operatsiya: ${opbnDept.name} — ${opbnDept.opBottleneck.name} (${opbnDept.opBottleneck.qty})`
           const f = forecastOrder(o, chain.doneQty)
           if (f && !f.done && !chain.done) line += `\n   📈 Taxminan: ${f.date} (${f.daysLeft} kun)`
           return line

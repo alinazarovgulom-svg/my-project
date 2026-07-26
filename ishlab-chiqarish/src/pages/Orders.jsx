@@ -43,7 +43,7 @@ export default function Orders() {
   useEffect(() => {
     getDocs(collection(db, 'factory_operations')).then(snap => {
       const map = {}
-      snap.docs.forEach(d => { const o = d.data(); map[d.id] = { isFinal: !!o.isFinal, isFirst: !!o.isFirst, departmentId: o.departmentId } })
+      snap.docs.forEach(d => { const o = d.data(); map[d.id] = { isFinal: !!o.isFinal, isFirst: !!o.isFirst, departmentId: o.departmentId, name: o.name, order: o.order ?? Infinity } })
       setOpById(map)
     })
   }, [])
@@ -287,6 +287,11 @@ export default function Orders() {
                               {d.bottleneck && (
                                 <div className="mt-1 flex items-center gap-1 text-xs text-red-600">
                                   <AlertTriangle className="w-3.5 h-3.5 shrink-0" /> Tiqilish: <b>{d.bottleneck.name}</b> ({d.bottleneck.qty.toLocaleString()}) — eng kam yetkazyapti
+                                </div>
+                              )}
+                              {d.opBottleneck && (
+                                <div className="mt-1 flex items-center gap-1 text-xs text-orange-600">
+                                  <AlertTriangle className="w-3.5 h-3.5 shrink-0" /> Operatsiya tiqilishi: <b>{d.opBottleneck.name}</b> ({d.opBottleneck.qty.toLocaleString()})
                                 </div>
                               )}
                             </div>

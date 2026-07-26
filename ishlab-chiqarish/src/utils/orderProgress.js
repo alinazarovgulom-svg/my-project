@@ -36,6 +36,7 @@ export function computeOrderChain(order, entries, opById, departments, opts = {}
   // Har bo'lim uchun chiqim (yakuniy op) va boshlang'ich (kirim op) miqdori
   const chiqim = {}       // yakuniy operatsiya yig'indisi
   const boshlangich = {}  // boshlang'ich operatsiya yig'indisi
+  const opQtyByDept = {}  // { deptId: { opId: yig'indi } } — operatsiya tiqilishi uchun
   const appeared = new Set()
 
   entries.forEach(e => {
@@ -47,8 +48,27 @@ export function computeOrderChain(order, entries, opById, departments, opts = {}
       const qty = Number(val.quantity || 0)
       if (op.isFinal) chiqim[dId] = (chiqim[dId] || 0) + qty
       if (op.isFirst) boshlangich[dId] = (boshlangich[dId] || 0) + qty
+      if (!opQtyByDept[dId]) opQtyByDept[dId] = {}
+      opQtyByDept[dId][opId] = (opQtyByDept[dId][opId] || 0) + qty
     })
   })
+
+  // Bo'lim ichida tiqilgan operatsiya = eng kam bajarilgan (drop bo'lgan) operatsiya
+  const opBottleneckOf = (dId) => {
+    const m = opQtyByDept[dId]
+    if (!m) return null
+    const list = Object.entries(m).map(([opId, qty]) => ({
+      name: opById[opId]?.name || opId,
+      order: opById[opId]?.order ?? Infinity,
+      qty,
+    }))
+    if (list.length < 2) return null
+    const max = Math.max(...list.map(o => o.qty))
+    const min = Math.min(...list.map(o => o.qty))
+    if (min >= max) return null // barcha operatsiya teng — tiqilish yo'q
+    const bn = list.filter(o => o.qty === min).sort((a, b) => a.order - b.order)[0]
+    return { name: bn.name, qty: bn.qty }
+  }
 
   // FIFO avto: 'auto' teglangan chiqimni bo'lim buyurtmalari bo'ylab navbat bilan taqsimlash
   // Bu buyurtmaga tegishli ulush shu buyurtma egasi bo'limi chiqimiga qo'shiladi.
@@ -116,7 +136,8 @@ export function computeOrderChain(order, entries, opById, departments, opts = {}
       chiqim: c,
       boshlangich: boshlangich[dId] || 0,
       qoldiq: Math.max(0, k - c),
-      bottleneck,
+      bottleneck,               // qaysi manba BO'LIM eng kam (min-bo'lim uchun)
+      opBottleneck: opBottleneckOf(dId), // qaysi OPERATSIYA orqada (bo'lim ichida)
     }
   })
 

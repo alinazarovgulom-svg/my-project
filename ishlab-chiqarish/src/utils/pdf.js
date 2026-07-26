@@ -305,7 +305,8 @@ ${(orderSummary && orderSummary.length) ? `
       ${orderSummary.map(o => {
         const col = o.done ? '#15803d' : o.percent >= 80 ? '#854d0e' : '#991b1b'
         const extra = []
-        if (o.bottleneck && !o.done) extra.push(`⚠️ Tiqilish: <strong>${esc(o.bottleneck)}</strong>`)
+        if (o.bottleneck && !o.done) extra.push(`⚠️ Bo'lim: <strong>${esc(o.bottleneck)}</strong>`)
+        if (o.opBottleneck && !o.done) extra.push(`⚠️ Operatsiya: <strong>${esc(o.opBottleneck)}</strong>`)
         if (o.forecast && !o.done) extra.push(`📈 ${esc(o.forecast)}`)
         return `<tr>
           <td><strong>${esc(o.name)}</strong></td>

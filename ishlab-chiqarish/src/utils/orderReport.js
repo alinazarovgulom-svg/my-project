@@ -15,7 +15,7 @@ export async function fetchOrderSummary(db, orderIds) {
   const allOrders = orderSnap.docs.map(d => ({ id: d.id, ...d.data() }))
   const orderById = Object.fromEntries(allOrders.map(o => [o.id, o]))
   const opById = {}
-  opSnap.forEach(d => { const o = d.data(); opById[d.id] = { isFinal: !!o.isFinal, isFirst: !!o.isFirst, departmentId: o.departmentId } })
+  opSnap.forEach(d => { const o = d.data(); opById[d.id] = { isFinal: !!o.isFinal, isFirst: !!o.isFirst, departmentId: o.departmentId, name: o.name, order: o.order ?? Infinity } })
   const departments = deptSnap.docs.map(d => ({ id: d.id, ...d.data() }))
 
   const qids = [...ids, 'auto']
@@ -35,6 +35,7 @@ export async function fetchOrderSummary(db, orderIds) {
     const chain = computeOrderChain(o, byOrder[id] || [], opById, departments, { autoEntries, allOrders })
     const f = forecastOrder(o, chain.doneQty)
     const bn = chain.depts.find(d => d.bottleneck)?.bottleneck
+    const opbnDept = chain.depts.find(d => d.opBottleneck)
     return {
       name: o.name,
       doneQty: chain.doneQty,
@@ -42,6 +43,7 @@ export async function fetchOrderSummary(db, orderIds) {
       percent: chain.percent,
       done: chain.done,
       bottleneck: bn ? `${bn.name} (${bn.qty})` : null,
+      opBottleneck: opbnDept ? `${opbnDept.name}: ${opbnDept.opBottleneck.name} (${opbnDept.opBottleneck.qty})` : null,
       forecast: f && !f.done ? `${f.date} (${f.daysLeft} kun)` : null,
     }
   }).filter(Boolean)
