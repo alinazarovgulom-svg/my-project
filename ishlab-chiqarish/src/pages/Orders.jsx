@@ -21,6 +21,7 @@ export default function Orders() {
 
   const [orders, setOrders] = useState([])
   const [filterStatus, setFilterStatus] = useState('active') // 'active' | 'archived'
+  const [filterDept, setFilterDept] = useState('all') // 'all' | departmentId
   const [modal, setModal] = useState(null) // null | 'add' | {order}
   const [form, setForm] = useState({ name: '', quantity: '', departmentId: '' })
   const [saving, setSaving] = useState(false)
@@ -149,10 +150,15 @@ export default function Orders() {
 
   const filtered = orders
     .filter(o => filterStatus === 'active' ? o.isActive !== false : o.isActive === false)
+    .filter(o => filterDept === 'all' ? true : o.departmentId === filterDept)
     .sort((a, b) => (a.order ?? Infinity) - (b.order ?? Infinity))
 
   const activeCount = orders.filter(o => o.isActive !== false).length
   const archivedCount = orders.filter(o => o.isActive === false).length
+  // Har bo'lim uchun buyurtma soni (chip yonida ko'rsatiladi)
+  const deptCount = (dId) => orders.filter(o =>
+    (filterStatus === 'active' ? o.isActive !== false : o.isActive === false) && o.departmentId === dId
+  ).length
 
   return (
     <div>
@@ -186,6 +192,27 @@ export default function Orders() {
           Arxivlangan ({archivedCount})
         </button>
       </div>
+
+      {/* Bo'lim bo'yicha filtr — har bo'lim o'z kirim qilgan buyurtmalarini ko'radi */}
+      {visibleDepts.length > 1 && (
+        <div className="flex gap-2 mb-5 flex-wrap">
+          <button
+            onClick={() => setFilterDept('all')}
+            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${filterDept === 'all' ? 'bg-indigo-100 text-indigo-700 ring-1 ring-indigo-300' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+          >
+            Barchasi
+          </button>
+          {visibleDepts.map(d => (
+            <button
+              key={d.id}
+              onClick={() => setFilterDept(d.id)}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${filterDept === d.id ? 'bg-indigo-100 text-indigo-700 ring-1 ring-indigo-300' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+            >
+              {d.name} ({deptCount(d.id)})
+            </button>
+          ))}
+        </div>
+      )}
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         {filtered.length === 0 ? (
@@ -225,10 +252,12 @@ export default function Orders() {
 
                 {canManage && filterStatus === 'active' && (
                   <div className="flex items-center gap-1 shrink-0">
-                    <div className="flex flex-col">
-                      <button onClick={() => reorder(order, 'up')} disabled={reordering === order.id || i === 0} className="text-gray-400 hover:text-indigo-600 transition-colors disabled:opacity-20"><ChevronUp className="w-4 h-4" /></button>
-                      <button onClick={() => reorder(order, 'down')} disabled={reordering === order.id || i === filtered.length - 1} className="text-gray-400 hover:text-indigo-600 transition-colors disabled:opacity-20"><ChevronDown className="w-4 h-4" /></button>
-                    </div>
+                    {filterDept === 'all' && (
+                      <div className="flex flex-col">
+                        <button onClick={() => reorder(order, 'up')} disabled={reordering === order.id || i === 0} className="text-gray-400 hover:text-indigo-600 transition-colors disabled:opacity-20"><ChevronUp className="w-4 h-4" /></button>
+                        <button onClick={() => reorder(order, 'down')} disabled={reordering === order.id || i === filtered.length - 1} className="text-gray-400 hover:text-indigo-600 transition-colors disabled:opacity-20"><ChevronDown className="w-4 h-4" /></button>
+                      </div>
+                    )}
                     <button onClick={() => openEdit(order)} className="p-1.5 text-gray-400 hover:text-indigo-600 transition-colors"><Pencil className="w-4 h-4" /></button>
                     <button onClick={() => handleArchive(order.id)} className="p-1.5 text-gray-400 hover:text-amber-600 transition-colors"><Archive className="w-4 h-4" /></button>
                   </div>
