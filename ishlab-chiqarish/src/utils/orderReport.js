@@ -18,21 +18,25 @@ export async function fetchOrderSummary(db, orderIds) {
   opSnap.forEach(d => { const o = d.data(); opById[d.id] = { isFinal: !!o.isFinal, isFirst: !!o.isFirst, departmentId: o.departmentId, name: o.name, order: o.order ?? Infinity } })
   const departments = deptSnap.docs.map(d => ({ id: d.id, ...d.data() }))
 
+  // Ham eski (entry.orderId), ham yangi (operatsiya ichidagi orderId → entry.orderIds massivi)
+  // yozuvlarni yig'amiz. Har op alohida teglanadi, shuning uchun ikkala so'rov birlashtiriladi.
   const qids = [...ids, 'auto']
-  const entries = []
+  const byDoc = new Map()
   for (let i = 0; i < qids.length; i += 30) {
     const chunk = qids.slice(i, i + 30)
-    const snap = await getDocs(query(collection(db, 'factory_work_entries'), where('orderId', 'in', chunk)))
-    snap.forEach(d => entries.push(d.data()))
+    const [legacy, tagged] = await Promise.all([
+      getDocs(query(collection(db, 'factory_work_entries'), where('orderId', 'in', chunk))),
+      getDocs(query(collection(db, 'factory_work_entries'), where('orderIds', 'array-contains-any', chunk))),
+    ])
+    legacy.forEach(d => byDoc.set(d.id, d.data()))
+    tagged.forEach(d => byDoc.set(d.id, d.data()))
   }
-  const autoEntries = entries.filter(e => e.orderId === 'auto')
-  const byOrder = {}
-  entries.forEach(e => { if (e.orderId && e.orderId !== 'auto') (byOrder[e.orderId] = byOrder[e.orderId] || []).push(e) })
+  const entries = [...byDoc.values()]
 
   const summary = ids.map(id => {
     const o = orderById[id]
     if (!o) return null
-    const chain = computeOrderChain(o, byOrder[id] || [], opById, departments, { autoEntries, allOrders })
+    const chain = computeOrderChain(o, entries, opById, departments, { allOrders })
     const f = forecastOrder(o, chain.doneQty)
     const bn = chain.depts.find(d => d.bottleneck)?.bottleneck
     const opbnDept = chain.depts.find(d => d.opBottleneck)

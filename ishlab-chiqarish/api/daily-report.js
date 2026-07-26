@@ -131,18 +131,21 @@ export default async function handler(req, res) {
       if (allOrders.length) {
         const opById = {}
         opSnap.docs.forEach(d => { const o = d.data(); opById[d.id] = { isFinal: !!o.isFinal, isFirst: !!o.isFirst, departmentId: o.departmentId, name: o.name, order: o.order ?? Infinity } })
+        // Eski (entry.orderId) + yangi (op ichidagi orderId → entry.orderIds) yozuvlarni birlashtiramiz
         const ids = [...allOrders.map(o => o.id), 'auto']
-        const oEntries = []
+        const byDoc = new Map()
         for (let i = 0; i < ids.length; i += 30) {
           const chunk = ids.slice(i, i + 30)
-          const snap = await db.collection('factory_work_entries').where('orderId', 'in', chunk).get()
-          snap.forEach(d => oEntries.push(d.data()))
+          const [legacy, tagged] = await Promise.all([
+            db.collection('factory_work_entries').where('orderId', 'in', chunk).get(),
+            db.collection('factory_work_entries').where('orderIds', 'array-contains-any', chunk).get(),
+          ])
+          legacy.forEach(d => byDoc.set(d.id, d.data()))
+          tagged.forEach(d => byDoc.set(d.id, d.data()))
         }
-        const autoEntries = oEntries.filter(e => e.orderId === 'auto')
-        const byOrder = {}
-        oEntries.forEach(e => { if (e.orderId && e.orderId !== 'auto') (byOrder[e.orderId] = byOrder[e.orderId] || []).push(e) })
+        const oEntries = [...byDoc.values()]
         const lines = allOrders.map(o => {
-          const chain = computeOrderChain(o, byOrder[o.id] || [], opById, departments, { autoEntries, allOrders })
+          const chain = computeOrderChain(o, oEntries, opById, departments, { allOrders })
           const bn = chain.depts.find(d => d.bottleneck)?.bottleneck
           const opbnDept = chain.depts.find(d => d.opBottleneck)
           let line = `${chain.done ? '✅' : '🔄'} *${o.name}* — ${chain.doneQty}/${chain.orderQty} (${chain.percent}%)`

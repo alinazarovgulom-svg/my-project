@@ -55,13 +55,17 @@ export default function Orders() {
     if (chains[order.id]) return // keshda bor
     setChainLoading(order.id)
     try {
-      const [snap, autoSnap] = await Promise.all([
+      // Eski (entry.orderId) + yangi (op ichidagi orderId → entry.orderIds) yozuvlar; FIFO-avto ham
+      const [s1, s2, a1, a2] = await Promise.all([
         getDocs(query(collection(db, 'factory_work_entries'), where('orderId', '==', order.id))),
+        getDocs(query(collection(db, 'factory_work_entries'), where('orderIds', 'array-contains', order.id))),
         getDocs(query(collection(db, 'factory_work_entries'), where('orderId', '==', 'auto'))),
+        getDocs(query(collection(db, 'factory_work_entries'), where('orderIds', 'array-contains', 'auto'))),
       ])
-      const entries = snap.docs.map(d => d.data())
-      const autoEntries = autoSnap.docs.map(d => d.data())
-      const result = computeOrderChain(order, entries, opById, departments, { autoEntries, allOrders: orders })
+      const byDoc = new Map()
+      ;[s1, s2, a1, a2].forEach(s => s.forEach(d => byDoc.set(d.id, d.data())))
+      const entries = [...byDoc.values()]
+      const result = computeOrderChain(order, entries, opById, departments, { allOrders: orders })
       setChains(c => ({ ...c, [order.id]: result }))
     } catch (e) {
       setChains(c => ({ ...c, [order.id]: { error: e.message } }))

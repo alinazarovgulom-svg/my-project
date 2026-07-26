@@ -231,19 +231,22 @@ export default function Dashboard() {
         const opById = {}
         opSnap.forEach(d => { const o = d.data(); opById[d.id] = { isFinal: !!o.isFinal, isFirst: !!o.isFirst, departmentId: o.departmentId, name: o.name, order: o.order ?? Infinity } })
 
-        const ids = [...orders.map(o => o.id), 'auto']
-        const entries = []
-        for (let i = 0; i < ids.length; i += 30) {
-          const chunk = ids.slice(i, i + 30)
-          const snap = await getDocs(query(collection(db, 'factory_work_entries'), where('orderId', 'in', chunk)))
-          snap.forEach(d => entries.push(d.data()))
+        // Eski (entry.orderId) + yangi (op ichidagi orderId → entry.orderIds) yozuvlarni birlashtiramiz
+        const qids = [...orders.map(o => o.id), 'auto']
+        const byDoc = new Map()
+        for (let i = 0; i < qids.length; i += 30) {
+          const chunk = qids.slice(i, i + 30)
+          const [legacy, tagged] = await Promise.all([
+            getDocs(query(collection(db, 'factory_work_entries'), where('orderId', 'in', chunk))),
+            getDocs(query(collection(db, 'factory_work_entries'), where('orderIds', 'array-contains-any', chunk))),
+          ])
+          legacy.forEach(d => byDoc.set(d.id, d.data()))
+          tagged.forEach(d => byDoc.set(d.id, d.data()))
         }
-        const autoEntries = entries.filter(e => e.orderId === 'auto')
-        const byOrder = {}
-        entries.forEach(e => { if (e.orderId && e.orderId !== 'auto') (byOrder[e.orderId] = byOrder[e.orderId] || []).push(e) })
+        const entries = [...byDoc.values()]
 
         const stats = orders.map(o => {
-          const chain = computeOrderChain(o, byOrder[o.id] || [], opById, departments, { autoEntries, allOrders })
+          const chain = computeOrderChain(o, entries, opById, departments, { allOrders })
           return { order: o, chain, forecast: forecastOrder(o, chain.doneQty) }
         }).sort((a, b) => (a.chain.done ? 1 : 0) - (b.chain.done ? 1 : 0) || (a.order.order ?? 0) - (b.order.order ?? 0))
 
