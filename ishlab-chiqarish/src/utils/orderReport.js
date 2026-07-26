@@ -3,7 +3,7 @@ import { computeOrderChain, forecastOrder } from './orderProgress'
 
 // Hisobotda uchragan buyurtmalar bo'yicha xulosa (tayyor/jami/%, tiqilish, prognoz)
 // va buyurtma nomlari xaritasini qaytaradi. PDF/Telegram hisoboti uchun.
-export async function fetchOrderSummary(db, orderIds) {
+export async function fetchOrderSummary(db, orderIds, targetDeptId = null) {
   const ids = [...new Set((orderIds || []).filter(id => id && id !== 'auto'))]
   if (ids.length === 0) return { summary: [], orderById: {} }
 
@@ -40,6 +40,10 @@ export async function fetchOrderSummary(db, orderIds) {
     const f = forecastOrder(o, chain.doneQty)
     const bn = chain.depts.find(d => d.bottleneck)?.bottleneck
     const opbnDept = chain.depts.find(d => d.opBottleneck)
+    // Hisobot bo'limining operatsiya × miqdor ro'yxati (bo'lim berilmasa — yakuniy bo'lim)
+    const dForOps = targetDeptId
+      ? chain.depts.find(d => d.id === targetDeptId)
+      : chain.depts.find(d => d.id === chain.endpointId)
     return {
       name: o.name,
       doneQty: chain.doneQty,
@@ -49,6 +53,7 @@ export async function fetchOrderSummary(db, orderIds) {
       bottleneck: bn ? `${bn.name} (${bn.qty})` : null,
       opBottleneck: opbnDept ? `${opbnDept.name}: ${opbnDept.opBottleneck.name} (${opbnDept.opBottleneck.qty})` : null,
       forecast: f && !f.done ? `${f.date} (${f.daysLeft} kun)` : null,
+      ops: (dForOps?.opList || []).map(op => ({ name: op.name, qty: op.qty, isFinal: op.isFinal })),
     }
   }).filter(Boolean)
 

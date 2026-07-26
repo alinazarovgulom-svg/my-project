@@ -127,6 +127,18 @@ export function computeOrderChain(order, entries, opById, departments, opts = {}
     return Math.min(...vals)
   }
 
+  // Bo'limning BARCHA operatsiyalari (Operatsiyalar sahifasidagi tartibда) + shu buyurtмага
+  // teglangan miqdori (yo'q bo'lsa 0). Hisobotда buyurtma × operatsiya jadvали uchun.
+  const opsOfDept = (dId) => Object.keys(opById)
+    .filter(opId => opById[opId].departmentId === dId)
+    .map(opId => ({
+      name: opById[opId].name || opId,
+      order: opById[opId].order ?? Infinity,
+      qty: (opQtyByDept[dId] && opQtyByDept[dId][opId]) || 0,
+      isFinal: !!opById[opId].isFinal,
+    }))
+    .sort((a, b) => a.order - b.order)
+
   const depts = [...involved].map(dId => {
     const d = deptById[dId] || { id: dId, name: dId }
     const ci = d.chainInput
@@ -148,7 +160,8 @@ export function computeOrderChain(order, entries, opById, departments, opts = {}
       boshlangich: boshlangich[dId] || 0,
       qoldiq: Math.max(0, k - c),
       bottleneck,               // qaysi manba BO'LIM eng kam (min-bo'lim uchun)
-      opBottleneck: opBottleneckOf(dId), // qaysi OPERATSIYA orqada (bo'lim ichida)
+      opBottleneck: opBottleneckOf(dId), // qaysi OPERATSIYA orqada (bo'lim ichида)
+      opList: opsOfDept(dId),   // bo'limning barcha operatsiyalari + shu buyurtma miqdori
     }
   })
 
