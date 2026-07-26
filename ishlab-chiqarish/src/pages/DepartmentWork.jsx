@@ -7,7 +7,7 @@ import {
 import { db } from '../firebase/config'
 import { useDepartments } from '../contexts/DepartmentsContext'
 import { useAuth } from '../contexts/AuthContext'
-import { Calendar, Clock, Save, CheckCircle, RefreshCw, X, Search, MoreVertical, Send, AlarmClock, UserPlus, AlertTriangle, Package } from 'lucide-react'
+import { Calendar, Clock, Save, CheckCircle, RefreshCw, X, Search, MoreVertical, Send, AlarmClock, UserPlus, AlertTriangle, Package, Plus } from 'lucide-react'
 import { buildWorkPDFHtml } from '../utils/pdf'
 import { sendHTMLToTelegram, sendTelegramMessage } from '../utils/telegram'
 import { fetchOrderSummary } from '../utils/orderReport'
@@ -99,6 +99,8 @@ export default function DepartmentWork() {
   const [defaultOrder, setDefaultOrder] = useState('none') // 'none' | 'auto' | orderId (hamma uchun)
   const [empOrders, setEmpOrders] = useState({})    // { empId: 'none'|'auto'|orderId } — xodim uchun standart
   const [opOrders, setOpOrders] = useState({})      // { empId: { opId: 'none'|'auto'|orderId } } — har operatsiya alohida
+  // Bir operatsiyani bir nechta buyurtmага bo'lish: qo'shimcha qatorlar (birinchidan keyingi ulushlar)
+  const [opSplits, setOpSplits] = useState({})      // { empId: { opId: [{ quantity, note, orderId }] } }
   const [empTimes, setEmpTimes] = useState({})
   const [timePickerEmp, setTimePickerEmp] = useState(null)
   const [menuEmp, setMenuEmp] = useState(null)
@@ -194,6 +196,7 @@ export default function DepartmentWork() {
     setGuestEmps([])
     setEmpOrders({})
     setOpOrders({})
+    setOpSplits({})
   }, [date, startTime, endTime])
 
   // Warn on browser tab close / refresh
@@ -218,16 +221,27 @@ export default function DepartmentWork() {
       const data = {}
       const loadedOrders = {}
       const loadedOpOrders = {}
+      const loadedSplits = {}
       let loadedBreak = null
       snap.forEach(d => {
         const { employeeId, operations, breakMinutes: bm, orderId } = d.data()
         data[employeeId] = operations || {}
-        // Har operatsiya uchun saqlangan buyurtma (yangi model)
+        // Har operatsiya uchun saqlangan buyurtma (yangi model) + bo'linishlar (allocations)
         const opo = {}
+        const splits = {}
         Object.entries(operations || {}).forEach(([opId, v]) => {
-          if (v && v.orderId !== undefined) opo[opId] = v.orderId === null ? 'none' : v.orderId
+          if (v && Array.isArray(v.allocations) && v.allocations.length) {
+            // Birinchi ulush — asosiy qator, qolganlari qo'shimcha ("+") qatorlar
+            const [first, ...rest] = v.allocations
+            opo[opId] = first.orderId == null ? 'none' : first.orderId
+            data[employeeId][opId] = { ...v, quantity: first.quantity ?? '', note: first.note ?? v.note ?? '' }
+            if (rest.length) splits[opId] = rest.map(a => ({ quantity: a.quantity ?? '', note: a.note ?? '', orderId: a.orderId == null ? 'none' : a.orderId }))
+          } else if (v && v.orderId !== undefined) {
+            opo[opId] = v.orderId === null ? 'none' : v.orderId
+          }
         })
         if (Object.keys(opo).length) loadedOpOrders[employeeId] = opo
+        if (Object.keys(splits).length) loadedSplits[employeeId] = splits
         // Eski model: butun yozuv uchun bitta buyurtma (xodim standarti sifatida)
         if (orderId !== undefined && orderId !== null) loadedOrders[employeeId] = orderId
         if (bm !== undefined) loadedBreak = bm
@@ -235,6 +249,7 @@ export default function DepartmentWork() {
       setEntries(data)
       setEmpOrders(loadedOrders)
       setOpOrders(loadedOpOrders)
+      setOpSplits(loadedSplits)
       if (loadedBreak !== null) setBreakMinutes(loadedBreak)
     }, err => {
       console.error('[DepartmentWork] entries onSnapshot error:', err)
@@ -257,6 +272,36 @@ export default function DepartmentWork() {
   // Bitta operatsiya uchun buyurtma tanlash
   const setOpOrder = (empId, opId, value) => {
     setOpOrders(prev => ({ ...prev, [empId]: { ...prev[empId], [opId]: value } }))
+    setSaved(s => ({ ...s, [empId]: false }))
+    setDirtyEmps(prev => ({ ...prev, [empId]: true }))
+    setIsDirty(true)
+  }
+
+  // Operatsiyани "+" bilan yana bir buyurtmага bo'lish (qo'shimcha qator)
+  const addOpSplit = (empId, opId) => {
+    setOpSplits(prev => {
+      const cur = prev[empId]?.[opId] || []
+      return { ...prev, [empId]: { ...prev[empId], [opId]: [...cur, { quantity: '', note: '', orderId: 'auto' }] } }
+    })
+    setDirtyEmps(prev => ({ ...prev, [empId]: true }))
+    setIsDirty(true)
+  }
+  const removeOpSplit = (empId, opId, idx) => {
+    setOpSplits(prev => {
+      const cur = (prev[empId]?.[opId] || []).filter((_, i) => i !== idx)
+      const empMap = { ...prev[empId] }
+      if (cur.length) empMap[opId] = cur; else delete empMap[opId]
+      return { ...prev, [empId]: empMap }
+    })
+    setSaved(s => ({ ...s, [empId]: false }))
+    setDirtyEmps(prev => ({ ...prev, [empId]: true }))
+    setIsDirty(true)
+  }
+  const setOpSplitVal = (empId, opId, idx, field, value) => {
+    setOpSplits(prev => {
+      const cur = (prev[empId]?.[opId] || []).map((l, i) => i === idx ? { ...l, [field]: value } : l)
+      return { ...prev, [empId]: { ...prev[empId], [opId]: cur } }
+    })
     setSaved(s => ({ ...s, [empId]: false }))
     setDirtyEmps(prev => ({ ...prev, [empId]: true }))
     setIsDirty(true)
@@ -333,18 +378,28 @@ export default function DepartmentWork() {
     const hourlyRate = emp?.hourlyRate || 0
     const empH = getEmpHours(empId)
     const rawOps = entries[empId] || {}
-    // Har operatsiya uchun buyurtma: op darajasidagi tanlov → xodim standarti → umumiy standart
-    const resolveOpOrder = (opId) => {
-      const v = opOrders[empId]?.[opId] ?? empOrders[empId] ?? defaultOrder
-      return (!v || v === 'none') ? null : v
-    }
+    const norm2order = (v) => (!v || v === 'none') ? null : v
+    // Asosiy qator buyurtmasi: op darajasidagi tanlov → xodim standarti → umumiy standart
+    const resolveOpOrder = (opId) => norm2order(opOrders[empId]?.[opId] ?? empOrders[empId] ?? defaultOrder)
     const operations = Object.fromEntries(
       Object.entries(rawOps).map(([opId, val]) => {
-        const qty = Number(val.quantity || 0)
+        const primaryQty = Number(val.quantity || 0)
+        const splits = opSplits[empId]?.[opId] || []
+        // Operatsiya ulushlari: asosiy qator + "+" bilan qo'shilgan qatorlar
+        const allocations = [
+          { quantity: primaryQty, orderId: resolveOpOrder(opId), note: val.note || '' },
+          ...splits.map(l => ({ quantity: Number(l.quantity || 0), orderId: norm2order(l.orderId), note: l.note || '' })),
+        ].filter(a => a.quantity > 0 || (a.note || '').trim())
+        const totalQty = allocations.reduce((s, a) => s + Number(a.quantity || 0), 0)
         const unitPrice = unitPriceMap[opId] || 0
-        const piecePay = unitPrice * qty
+        const piecePay = unitPrice * totalQty
         const norm = effectiveNorm(emp, opId, normMap[opId] || 0, date)
-        return [opId, { ...val, norm, expected: norm * empH, unitPrice, piecePay, orderId: resolveOpOrder(opId) }]
+        const base = { ...val, quantity: totalQty, norm, expected: norm * empH, unitPrice, piecePay }
+        if (splits.length) {
+          // Bir nechta buyurtma — ulushlar massivi saqlanadi, orderId noaniq (null)
+          return [opId, { ...base, orderId: allocations.length === 1 ? allocations[0].orderId : null, allocations }]
+        }
+        return [opId, { ...base, orderId: resolveOpOrder(opId) }]
       })
     )
     const totalPiecePay = Object.values(operations).reduce((s, v) => s + (v.piecePay || 0), 0)
@@ -357,7 +412,9 @@ export default function DepartmentWork() {
         : hourlyPay + totalPiecePay)
     // Buyurtmalar operatsiya darajasida saqlanadi. So'rov (query) uchun yozuvda
     // uch raydigan barcha buyurtma id'lari massivi (orderIds) ham saqlanadi.
-    const orderIds = [...new Set(Object.values(operations).map(o => o.orderId).filter(Boolean))]
+    const orderIds = [...new Set(Object.values(operations).flatMap(o =>
+      Array.isArray(o.allocations) ? o.allocations.map(a => a.orderId) : [o.orderId]
+    ).filter(Boolean))]
     // Eski o'quvchilar uchun: bitta buyurtma bo'lsa o'sha, aks holda null
     const orderId = orderIds.length === 1 ? orderIds[0] : null
     await setDoc(doc(db, 'factory_work_entries', entryId), {
@@ -428,7 +485,10 @@ export default function DepartmentWork() {
     const allWorkers = [...employees, ...guestEmps]
     const empty = allWorkers.filter(emp => {
       const ops = entries[emp.id] || {}
-      return !Object.values(ops).some(v => Number(v.quantity || 0) > 0 || (v.note || '').trim())
+      const hasPrimary = Object.values(ops).some(v => Number(v.quantity || 0) > 0 || (v.note || '').trim())
+      const splitMap = opSplits[emp.id] || {}
+      const hasSplit = Object.values(splitMap).some(list => (list || []).some(l => Number(l.quantity || 0) > 0 || (l.note || '').trim()))
+      return !hasPrimary && !hasSplit
     })
     if (empty.length > 0) {
       setEmptyWarning(empty)
@@ -481,23 +541,30 @@ export default function DepartmentWork() {
       allOps.filter(o => activeOpIds.includes(o.id)).forEach(op => {
         const data = empEntries[op.id] || {}
         const norm = effectiveNorm(emp, op.id, op.norm || 0, date)
-        const rawOrder = opOrders[emp.id]?.[op.id] ?? empOrders[emp.id] ?? defaultOrder
-        const opOrderId = (!rawOrder || rawOrder === 'none') ? null : rawOrder
-        rows.push({
-          empName: `${emp.lastName} ${emp.firstName}`,
-          deptName: dept.name,
-          opName: op.name,
-          norm,
-          isCustomNorm: norm !== (op.norm || 0),
-          quantity: Number(data.quantity || 0),
-          expected: norm * hours,
-          note: data.note || '',
-          date,
-          startTime,
-          endTime,
-          breakMinutes,
-          isFinal: !!(op.isFinal),
-          orderId: opOrderId,
+        const primaryOrder = opOrders[emp.id]?.[op.id] ?? empOrders[emp.id] ?? defaultOrder
+        const toId = (v) => (!v || v === 'none') ? null : v
+        // Har operatsiya ulushlari: asosiy qator + "+" bilan qo'shilgan buyurtма qatorlari
+        const allocs = [
+          { quantity: Number(data.quantity || 0), note: data.note || '', orderId: toId(primaryOrder), expected: norm * hours },
+          ...(opSplits[emp.id]?.[op.id] || []).map(l => ({ quantity: Number(l.quantity || 0), note: l.note || '', orderId: toId(l.orderId), expected: 0 })),
+        ]
+        allocs.forEach(a => {
+          rows.push({
+            empName: `${emp.lastName} ${emp.firstName}`,
+            deptName: dept.name,
+            opName: op.name,
+            norm,
+            isCustomNorm: norm !== (op.norm || 0),
+            quantity: a.quantity,
+            expected: a.expected,
+            note: a.note,
+            date,
+            startTime,
+            endTime,
+            breakMinutes,
+            isFinal: !!(op.isFinal),
+            orderId: a.orderId,
+          })
         })
       })
     })
@@ -981,6 +1048,13 @@ export default function DepartmentWork() {
                                       <option value="auto">FIFO avto</option>
                                       {visibleOrders.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
                                     </select>
+                                    <button
+                                      onClick={() => addOpSplit(emp.id, op.id)}
+                                      title="Shu operatsiyani boshqa buyurtmага bo'lish"
+                                      className="flex items-center gap-0.5 text-xs text-indigo-600 hover:text-white hover:bg-indigo-500 border border-indigo-200 rounded-full px-1.5 py-0.5 transition-colors"
+                                    >
+                                      <Plus className="w-3 h-3" /> buyurtma
+                                    </button>
                                   </div>
                                 )}
                               </div>
@@ -1006,6 +1080,59 @@ export default function DepartmentWork() {
                                 placeholder="Izoh..."
                               />
                             </div>
+
+                            {/* Qo'shimcha buyurtма qatorlari (shu operatsiyани boshqa buyurtmага) */}
+                            {(opSplits[emp.id]?.[op.id] || []).map((line, li) => (
+                              <div key={li} className="flex flex-wrap items-center gap-2 sm:gap-3 mt-2 pl-3 border-l-2 border-indigo-100">
+                                <div className="flex-1 min-w-0">
+                                  <div className="text-xs text-indigo-400 flex items-center gap-1">↳ {op.name} · yana bir buyurtма</div>
+                                  {visibleOrders.length > 0 && can.enterHourly && (
+                                    <div className="flex items-center gap-1 mt-1">
+                                      <Package className="w-3 h-3 text-indigo-400 shrink-0" />
+                                      <select
+                                        value={line.orderId ?? 'auto'}
+                                        onChange={e => setOpSplitVal(emp.id, op.id, li, 'orderId', e.target.value)}
+                                        className="text-xs border border-indigo-100 bg-indigo-50/60 text-indigo-800 rounded-full px-2 py-0.5 max-w-[170px] focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                                      >
+                                        <option value="none">Buyurtmasiz</option>
+                                        <option value="auto">FIFO avto</option>
+                                        {visibleOrders.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
+                                      </select>
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <input
+                                    type="number"
+                                    inputMode="numeric"
+                                    min="0"
+                                    value={line.quantity ?? ''}
+                                    onChange={e => setOpSplitVal(emp.id, op.id, li, 'quantity', e.target.value === '' ? '' : Number(e.target.value))}
+                                    disabled={!can.enterHourly}
+                                    className="w-24 border border-gray-200 rounded-lg px-3 py-3 text-xl text-center focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold"
+                                    placeholder="0"
+                                  />
+                                  <span className="text-xs text-gray-400">dona</span>
+                                </div>
+                                <input
+                                  type="text"
+                                  value={line.note ?? ''}
+                                  onChange={e => setOpSplitVal(emp.id, op.id, li, 'note', e.target.value)}
+                                  disabled={!can.enterHourly}
+                                  className="w-full sm:w-40 md:w-52 border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                  placeholder="Izoh..."
+                                />
+                                {can.enterHourly && (
+                                  <button
+                                    onClick={() => removeOpSplit(emp.id, op.id, li)}
+                                    title="Bu qatorni olib tashlash"
+                                    className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                  >
+                                    <X className="w-4 h-4" />
+                                  </button>
+                                )}
+                              </div>
+                            ))}
                           </div>
                         )
                       })}

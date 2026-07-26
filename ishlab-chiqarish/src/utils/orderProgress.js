@@ -33,6 +33,15 @@ export function opOrderOf(entry, opVal) {
   return opVal && opVal.orderId !== undefined ? opVal.orderId : (entry.orderId ?? null)
 }
 
+// Bitta operatsiya bir nechta buyurtmага bo'linishi mumkin (xodim "+" bilan qo'shsa).
+// allocations bo'lsa — o'shани, bo'lmasa butun operatsiyани bitta ulush deb qaytaradi.
+export function allocationsOf(entry, opVal) {
+  if (opVal && Array.isArray(opVal.allocations) && opVal.allocations.length) {
+    return opVal.allocations.map(a => ({ quantity: Number(a.quantity || 0), orderId: a.orderId ?? null }))
+  }
+  return [{ quantity: Number(opVal?.quantity || 0), orderId: opOrderOf(entry, opVal) }]
+}
+
 export function computeOrderChain(order, entries, opById, departments, opts = {}) {
   const orderQty = Number(order.quantity || 0)
   const targetId = order.id
@@ -51,15 +60,17 @@ export function computeOrderChain(order, entries, opById, departments, opts = {}
   entries.forEach(e => {
     const dId = e.departmentId
     Object.entries(e.operations || {}).forEach(([opId, val]) => {
-      if (opOrderOf(e, val) !== targetId) return // faqat shu buyurtmaga teglangan op
       const op = opById[opId]
       if (!op) return
-      appeared.add(dId)
-      const qty = Number(val.quantity || 0)
-      if (op.isFinal) chiqim[dId] = (chiqim[dId] || 0) + qty
-      if (op.isFirst) boshlangich[dId] = (boshlangich[dId] || 0) + qty
-      if (!opQtyByDept[dId]) opQtyByDept[dId] = {}
-      opQtyByDept[dId][opId] = (opQtyByDept[dId][opId] || 0) + qty
+      allocationsOf(e, val).forEach(a => {
+        if (a.orderId !== targetId) return // faqat shu buyurtmaga teglangan ulush
+        appeared.add(dId)
+        const qty = a.quantity
+        if (op.isFinal) chiqim[dId] = (chiqim[dId] || 0) + qty
+        if (op.isFirst) boshlangich[dId] = (boshlangich[dId] || 0) + qty
+        if (!opQtyByDept[dId]) opQtyByDept[dId] = {}
+        opQtyByDept[dId][opId] = (opQtyByDept[dId][opId] || 0) + qty
+      })
     })
   })
 
@@ -85,9 +96,12 @@ export function computeOrderChain(order, entries, opById, departments, opts = {}
   const autoPool = {} // { deptId: yakuniy chiqim yig'indisi (auto) }
   autoEntries.forEach(e => {
     Object.entries(e.operations || {}).forEach(([opId, val]) => {
-      if (opOrderOf(e, val) !== 'auto') return // faqat FIFO-avto teglangan op
       const op = opById[opId]
-      if (op?.isFinal) autoPool[e.departmentId] = (autoPool[e.departmentId] || 0) + Number(val.quantity || 0)
+      if (!op?.isFinal) return
+      allocationsOf(e, val).forEach(a => {
+        if (a.orderId !== 'auto') return // faqat FIFO-avto teglangan ulush
+        autoPool[e.departmentId] = (autoPool[e.departmentId] || 0) + a.quantity
+      })
     })
   })
   const ownerDept = order.departmentId
