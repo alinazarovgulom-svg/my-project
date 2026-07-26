@@ -139,7 +139,7 @@ export default function Reports() {
             endTime: entry.endTime,
             breakMinutes: bm,
             isFinal: !!(op.isFinal),
-            orderId: entry.orderId || null,
+            orderId: (data.orderId !== undefined ? data.orderId : entry.orderId) || null,
           })
         })
       })

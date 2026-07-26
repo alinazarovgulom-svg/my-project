@@ -27,10 +27,19 @@ export function forecastOrder(order, doneQty) {
   return { daysLeft, date, rate: Math.round(rate) }
 }
 
+// Operatsiyaning buyurtmasi: yozuv ichidagi op.orderId (yangi model),
+// bo'lmasa (eski yozuv) butun yozuvning entry.orderId'si.
+export function opOrderOf(entry, opVal) {
+  return opVal && opVal.orderId !== undefined ? opVal.orderId : (entry.orderId ?? null)
+}
+
 export function computeOrderChain(order, entries, opById, departments, opts = {}) {
   const orderQty = Number(order.quantity || 0)
+  const targetId = order.id
   const deptById = Object.fromEntries(departments.map(d => [d.id, d]))
-  const autoEntries = opts.autoEntries || [] // orderId == 'auto' teglangan yozuvlar
+  // Har operatsiya alohida buyurtmaga teglanadi — shuning uchun barcha yozuvlar
+  // uzatiladi, ichida esa faqat shu buyurtmaga tegishli operatsiyalar hisoblanadi.
+  const autoEntries = opts.autoEntries || entries
   const allOrders = opts.allOrders || []
 
   // Har bo'lim uchun chiqim (yakuniy op) va boshlang'ich (kirim op) miqdori
@@ -41,10 +50,11 @@ export function computeOrderChain(order, entries, opById, departments, opts = {}
 
   entries.forEach(e => {
     const dId = e.departmentId
-    appeared.add(dId)
     Object.entries(e.operations || {}).forEach(([opId, val]) => {
+      if (opOrderOf(e, val) !== targetId) return // faqat shu buyurtmaga teglangan op
       const op = opById[opId]
       if (!op) return
+      appeared.add(dId)
       const qty = Number(val.quantity || 0)
       if (op.isFinal) chiqim[dId] = (chiqim[dId] || 0) + qty
       if (op.isFirst) boshlangich[dId] = (boshlangich[dId] || 0) + qty
@@ -75,6 +85,7 @@ export function computeOrderChain(order, entries, opById, departments, opts = {}
   const autoPool = {} // { deptId: yakuniy chiqim yig'indisi (auto) }
   autoEntries.forEach(e => {
     Object.entries(e.operations || {}).forEach(([opId, val]) => {
+      if (opOrderOf(e, val) !== 'auto') return // faqat FIFO-avto teglangan op
       const op = opById[opId]
       if (op?.isFinal) autoPool[e.departmentId] = (autoPool[e.departmentId] || 0) + Number(val.quantity || 0)
     })

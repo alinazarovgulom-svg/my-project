@@ -97,7 +97,8 @@ export default function DepartmentWork() {
   // Buyurtma tanlash (3-bosqich)
   const [orders, setOrders] = useState([])          // shu bo'limning faol buyurtmalari
   const [defaultOrder, setDefaultOrder] = useState('none') // 'none' | 'auto' | orderId (hamma uchun)
-  const [empOrders, setEmpOrders] = useState({})    // { empId: 'none'|'auto'|orderId } — alohida override
+  const [empOrders, setEmpOrders] = useState({})    // { empId: 'none'|'auto'|orderId } — xodim uchun standart
+  const [opOrders, setOpOrders] = useState({})      // { empId: { opId: 'none'|'auto'|orderId } } — har operatsiya alohida
   const [empTimes, setEmpTimes] = useState({})
   const [timePickerEmp, setTimePickerEmp] = useState(null)
   const [menuEmp, setMenuEmp] = useState(null)
@@ -192,6 +193,7 @@ export default function DepartmentWork() {
     setDirtyEmps({})
     setGuestEmps([])
     setEmpOrders({})
+    setOpOrders({})
   }, [date, startTime, endTime])
 
   // Warn on browser tab close / refresh
@@ -215,15 +217,24 @@ export default function DepartmentWork() {
     return onSnapshot(q, snap => {
       const data = {}
       const loadedOrders = {}
+      const loadedOpOrders = {}
       let loadedBreak = null
       snap.forEach(d => {
         const { employeeId, operations, breakMinutes: bm, orderId } = d.data()
         data[employeeId] = operations || {}
+        // Har operatsiya uchun saqlangan buyurtma (yangi model)
+        const opo = {}
+        Object.entries(operations || {}).forEach(([opId, v]) => {
+          if (v && v.orderId !== undefined) opo[opId] = v.orderId === null ? 'none' : v.orderId
+        })
+        if (Object.keys(opo).length) loadedOpOrders[employeeId] = opo
+        // Eski model: butun yozuv uchun bitta buyurtma (xodim standarti sifatida)
         if (orderId !== undefined && orderId !== null) loadedOrders[employeeId] = orderId
         if (bm !== undefined) loadedBreak = bm
       })
       setEntries(data)
       setEmpOrders(loadedOrders)
+      setOpOrders(loadedOpOrders)
       if (loadedBreak !== null) setBreakMinutes(loadedBreak)
     }, err => {
       console.error('[DepartmentWork] entries onSnapshot error:', err)
@@ -238,6 +249,23 @@ export default function DepartmentWork() {
         [opId]: { ...prev[empId]?.[opId], [field]: value },
       },
     }))
+    setSaved(s => ({ ...s, [empId]: false }))
+    setDirtyEmps(prev => ({ ...prev, [empId]: true }))
+    setIsDirty(true)
+  }
+
+  // Bitta operatsiya uchun buyurtma tanlash
+  const setOpOrder = (empId, opId, value) => {
+    setOpOrders(prev => ({ ...prev, [empId]: { ...prev[empId], [opId]: value } }))
+    setSaved(s => ({ ...s, [empId]: false }))
+    setDirtyEmps(prev => ({ ...prev, [empId]: true }))
+    setIsDirty(true)
+  }
+
+  // Xodimning barcha operatsiyalari uchun buyurtmani birdaniga belgilash (standart)
+  const setEmpOrderAll = (empId, value) => {
+    setEmpOrders(o => ({ ...o, [empId]: value }))
+    setOpOrders(o => { const n = { ...o }; delete n[empId]; return n }) // op-darajali o'zgarishlarni tozalash
     setSaved(s => ({ ...s, [empId]: false }))
     setDirtyEmps(prev => ({ ...prev, [empId]: true }))
     setIsDirty(true)
@@ -305,13 +333,18 @@ export default function DepartmentWork() {
     const hourlyRate = emp?.hourlyRate || 0
     const empH = getEmpHours(empId)
     const rawOps = entries[empId] || {}
+    // Har operatsiya uchun buyurtma: op darajasidagi tanlov → xodim standarti → umumiy standart
+    const resolveOpOrder = (opId) => {
+      const v = opOrders[empId]?.[opId] ?? empOrders[empId] ?? defaultOrder
+      return (!v || v === 'none') ? null : v
+    }
     const operations = Object.fromEntries(
       Object.entries(rawOps).map(([opId, val]) => {
         const qty = Number(val.quantity || 0)
         const unitPrice = unitPriceMap[opId] || 0
         const piecePay = unitPrice * qty
         const norm = effectiveNorm(emp, opId, normMap[opId] || 0, date)
-        return [opId, { ...val, norm, expected: norm * empH, unitPrice, piecePay }]
+        return [opId, { ...val, norm, expected: norm * empH, unitPrice, piecePay, orderId: resolveOpOrder(opId) }]
       })
     )
     const totalPiecePay = Object.values(operations).reduce((s, v) => s + (v.piecePay || 0), 0)
@@ -322,9 +355,11 @@ export default function DepartmentWork() {
       : (salaryType === 'hourly' ? hourlyPay
         : salaryType === 'piece' ? totalPiecePay
         : hourlyPay + totalPiecePay)
-    // Buyurtma: xodim uchun tanlangan (bo'lmasa umumiy). 'none' = buyurtmasiz.
-    const resolvedOrder = empOrders[empId] ?? defaultOrder
-    const orderId = (!resolvedOrder || resolvedOrder === 'none') ? null : resolvedOrder
+    // Buyurtmalar operatsiya darajasida saqlanadi. So'rov (query) uchun yozuvda
+    // uch raydigan barcha buyurtma id'lari massivi (orderIds) ham saqlanadi.
+    const orderIds = [...new Set(Object.values(operations).map(o => o.orderId).filter(Boolean))]
+    // Eski o'quvchilar uchun: bitta buyurtma bo'lsa o'sha, aks holda null
+    const orderId = orderIds.length === 1 ? orderIds[0] : null
     await setDoc(doc(db, 'factory_work_entries', entryId), {
       employeeId: empId,
       departmentId: deptId,
@@ -336,7 +371,8 @@ export default function DepartmentWork() {
       salaryType,
       hourlyRate,
       totalPay,
-      orderId,   // null | 'auto' (FIFO) | buyurtma id
+      orderId,   // null | 'auto' (FIFO) | buyurtma id (bitta bo'lsa)
+      orderIds,  // yozuvdagi barcha buyurtmalar (array-contains so'rovi uchun)
       ...(isGuest && { isGuest: true, homeDepartmentId: emp.departmentId }),
       updatedAt: serverTimestamp(),
       updatedBy: user.uid,
@@ -442,11 +478,11 @@ export default function DepartmentWork() {
     allWorkers.forEach(emp => {
       const empEntries = entries[emp.id] || {}
       const activeOpIds = overrides[emp.id] ?? emp.operationIds ?? []
-      const rawOrder = empOrders[emp.id] ?? defaultOrder
-      const empOrderId = (!rawOrder || rawOrder === 'none') ? null : rawOrder
       allOps.filter(o => activeOpIds.includes(o.id)).forEach(op => {
         const data = empEntries[op.id] || {}
         const norm = effectiveNorm(emp, op.id, op.norm || 0, date)
+        const rawOrder = opOrders[emp.id]?.[op.id] ?? empOrders[emp.id] ?? defaultOrder
+        const opOrderId = (!rawOrder || rawOrder === 'none') ? null : rawOrder
         rows.push({
           empName: `${emp.lastName} ${emp.firstName}`,
           deptName: dept.name,
@@ -461,7 +497,7 @@ export default function DepartmentWork() {
           endTime,
           breakMinutes,
           isFinal: !!(op.isFinal),
-          orderId: empOrderId,
+          orderId: opOrderId,
         })
       })
     })
@@ -701,7 +737,7 @@ export default function DepartmentWork() {
                   <option key={o.id} value={o.id}>{o.name} ({Number(o.quantity).toLocaleString()} dona)</option>
                 ))}
               </select>
-              <span className="text-xs text-indigo-500">Har xodim uchun pastda alohida o'zgartirsa bo'ladi</span>
+              <span className="text-xs text-indigo-500">Har xodim va har operatsiya uchun pastda alohida o'zgartirsa bo'ladi</span>
             </div>
           )}
 
@@ -747,13 +783,13 @@ export default function DepartmentWork() {
                       {visibleOrders.length > 0 && can.enterHourly && (
                         <select
                           value={empOrders[emp.id] ?? defaultOrder}
-                          onChange={e => setEmpOrders(o => ({ ...o, [emp.id]: e.target.value }))}
-                          title="Bu xodim uchun buyurtma"
+                          onChange={e => setEmpOrderAll(emp.id, e.target.value)}
+                          title="Barcha operatsiyalar uchun buyurtma (standart)"
                           className="text-xs border border-gray-200 bg-white rounded-full px-2 py-0.5 max-w-[150px] focus:outline-none focus:ring-1 focus:ring-indigo-500"
                         >
-                          <option value="none">📦 Buyurtmasiz</option>
-                          <option value="auto">📦 FIFO avto</option>
-                          {visibleOrders.map(o => <option key={o.id} value={o.id}>📦 {o.name}</option>)}
+                          <option value="none">📦 Hammasi: buyurtmasiz</option>
+                          <option value="auto">📦 Hammasi: FIFO avto</option>
+                          {visibleOrders.map(o => <option key={o.id} value={o.id}>📦 Hammasi: {o.name}</option>)}
                         </select>
                       )}
                     </div>
@@ -932,6 +968,21 @@ export default function DepartmentWork() {
                                 <div className="text-xs text-gray-400 mt-0.5">
                                   Norma: {norm} dona/soat{norm !== (op.norm || 0) ? ' (shaxsiy)' : ''} · {hours > 0 ? `${hours.toFixed(1)} soat = ` : ''}{hours > 0 ? `${expected.toFixed(0)} dona` : '—'}
                                 </div>
+                                {visibleOrders.length > 0 && can.enterHourly && (
+                                  <div className="flex items-center gap-1 mt-1">
+                                    <Package className="w-3 h-3 text-indigo-400 shrink-0" />
+                                    <select
+                                      value={opOrders[emp.id]?.[op.id] ?? empOrders[emp.id] ?? defaultOrder}
+                                      onChange={e => setOpOrder(emp.id, op.id, e.target.value)}
+                                      title="Bu operatsiya uchun buyurtma"
+                                      className="text-xs border border-indigo-100 bg-indigo-50/60 text-indigo-800 rounded-full px-2 py-0.5 max-w-[170px] focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                                    >
+                                      <option value="none">Buyurtmasiz</option>
+                                      <option value="auto">FIFO avto</option>
+                                      {visibleOrders.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
+                                    </select>
+                                  </div>
+                                )}
                               </div>
                               <div className="flex items-center gap-2">
                                 <input
