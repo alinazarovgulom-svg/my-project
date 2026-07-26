@@ -128,9 +128,9 @@ export default function DepartmentWork() {
     })
   }, [deptId])
 
-  // Load active orders for this department (buyurtma tanlash uchun)
+  // Barcha faol buyurtmalar (har bo'lim tanlashi mumkin — zanjirdagi bo'limlar ham, masalan Montaj)
   useEffect(() => {
-    getDocs(query(collection(db, 'factory_orders'), where('departmentId', '==', deptId)))
+    getDocs(collection(db, 'factory_orders'))
       .then(snap => {
         const list = snap.docs
           .map(d => ({ id: d.id, ...d.data() }))
