@@ -218,6 +218,17 @@ export function buildWorkPDFHtml(rows, filters, deptName, showDept = true, autoP
   .order-table td { padding:4px 8px; border-top:1px solid #f1f5f9; }
   .order-table .c { text-align:center; }
 
+  .order-ops { padding:6px 10px 8px; border-top:1px solid #e2e8f0; }
+  .order-ops-item { margin-top:6px; }
+  .order-ops-item:first-child { margin-top:0; }
+  .order-ops-hdr { font-size:9.5px; font-weight:700; color:#1e293b; margin-bottom:2px; }
+  .order-ops-grid { display:flex; flex-wrap:wrap; gap:4px 6px; }
+  .op-chip { font-size:9px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:5px;
+             padding:1px 6px; color:#475569; white-space:nowrap; }
+  .op-chip.final { background:#f0fdf4; border-color:#bbf7d0; color:#15803d; }
+  .op-chip.zero { color:#94a3b8; }
+  .op-chip b { color:#1e293b; }
+
   .legend { display:flex; align-items:center; gap:12px; margin-top:8px;
             padding-top:6px; border-top:1px solid #e2e8f0; flex-wrap:wrap; }
   .legend-item { display:flex; align-items:center; gap:4px; font-size:9px; color:#64748b; }
@@ -319,6 +330,18 @@ ${(orderSummary && orderSummary.length) ? `
       }).join('')}
     </tbody>
   </table>
+  ${orderSummary.some(o => (o.ops || []).length) ? `
+  <div class="order-ops">
+    ${orderSummary.filter(o => (o.ops || []).length).map(o => `
+      <div class="order-ops-item">
+        <div class="order-ops-hdr">📦 ${esc(o.name)} — ${o.doneQty.toLocaleString()}/${o.orderQty.toLocaleString()} (${o.percent}%)</div>
+        <div class="order-ops-grid">
+          ${o.ops.map(op => `<span class="op-chip${op.isFinal ? ' final' : ''}${op.qty === 0 ? ' zero' : ''}">${esc(op.name)}: <b>${Number(op.qty).toLocaleString()}</b></span>`).join('')}
+        </div>
+      </div>
+    `).join('')}
+  </div>
+  ` : ''}
 </div>
 ` : ''}
 

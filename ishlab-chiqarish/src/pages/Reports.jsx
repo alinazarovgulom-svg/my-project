@@ -311,7 +311,8 @@ export default function Reports() {
                       let orderSummary = null
                       try {
                         const orderIds = [...new Set(rows.map(r => r.orderId).filter(Boolean))]
-                        const { summary, orderById } = await fetchOrderSummary(db, orderIds)
+                        const reportDept = filterType === 'dept' ? selectedDept : null
+                        const { summary, orderById } = await fetchOrderSummary(db, orderIds, reportDept)
                         orderSummary = summary.length ? summary : null
                         rows.forEach(r => { r.orderName = r.orderId ? (orderById[r.orderId]?.name || '') : '' })
                       } catch (_) {}

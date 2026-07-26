@@ -532,7 +532,7 @@ export default function DepartmentWork() {
       let orderSummary = null
       try {
         const orderIds = [...new Set(filteredRows.map(r => r.orderId).filter(Boolean))]
-        const { summary, orderById } = await fetchOrderSummary(db, orderIds)
+        const { summary, orderById } = await fetchOrderSummary(db, orderIds, deptId)
         orderSummary = summary.length ? summary : null
         filteredRows.forEach(r => { r.orderName = r.orderId ? (orderById[r.orderId]?.name || '') : '' })
       } catch (_) {}
