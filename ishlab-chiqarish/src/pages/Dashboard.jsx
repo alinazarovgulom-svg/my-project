@@ -56,7 +56,7 @@ let _dashWeek  = { key: '', ts: 0, data: null }
 let _dashOrders = { key: '', ts: 0, data: null }
 
 export default function Dashboard() {
-  const { departments: allDepartments } = useDepartments()
+  const { departments: allDepartments, getDeptName } = useDepartments()
   const { userDoc, can } = useAuth()
   const departments = can.manageMembers || !userDoc?.departmentIds?.length
     ? allDepartments
