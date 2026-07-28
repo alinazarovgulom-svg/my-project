@@ -6,7 +6,7 @@ import {
 import { db } from '../firebase/config'
 import { useDepartments } from '../contexts/DepartmentsContext'
 import { useAuth } from '../contexts/AuthContext'
-import { Plus, Pencil, Trash2, X, Check, Search, Archive, RotateCcw, ChevronUp, ChevronDown } from 'lucide-react'
+import { Plus, Pencil, Trash2, X, Check, Search, Archive, RotateCcw, GripVertical } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
 export default function Employees() {
@@ -27,7 +27,8 @@ export default function Employees() {
   const [saveError, setSaveError] = useState('')
   const [deleting, setDeleting] = useState(null)
   const [reordering, setReordering] = useState(null)
-  const reorderingRef = useRef(false)
+  const [dragId, setDragId] = useState(null)
+  const [dragOverId, setDragOverId] = useState(null)
   const [search, setSearch] = useState('')
   const [opSearch, setOpSearch] = useState('')
 
@@ -157,29 +158,27 @@ export default function Employees() {
     setDeleting(null)
   }
 
-  const reorder = async (emp, dir) => {
-    if (reorderingRef.current) return
-    reorderingRef.current = true
-    const deptList = employees
-      .filter(e => e.departmentId === emp.departmentId && e.isActive !== false)
+  // Sudrab tashlab tartiblash — faqat shu bo'lim ichida
+  const reorderByDrag = async (sourceId, targetId) => {
+    if (!sourceId || !targetId || sourceId === targetId) return
+    const src = employees.find(e => e.id === sourceId)
+    const tgt = employees.find(e => e.id === targetId)
+    if (!src || !tgt || src.departmentId !== tgt.departmentId) return
+    const list = employees
+      .filter(e => e.departmentId === src.departmentId && e.isActive !== false)
       .sort((a, b) => {
-        const aO = a.order ?? Infinity
-        const bO = b.order ?? Infinity
+        const aO = a.order ?? Infinity, bO = b.order ?? Infinity
         if (aO !== bO) return aO - bO
         return `${a.lastName} ${a.firstName}`.localeCompare(`${b.lastName} ${b.firstName}`, 'uz')
       })
-    const idx = deptList.findIndex(e => e.id === emp.id)
-    const swapIdx = dir === 'up' ? idx - 1 : idx + 1
-    if (swapIdx < 0 || swapIdx >= deptList.length) return
-    setReordering(emp.id)
-    await Promise.all(deptList.map((e, i) => {
-      if (e.id === emp.id) return updateDoc(doc(db, 'factory_employees', e.id), { order: swapIdx })
-      if (i === swapIdx) return updateDoc(doc(db, 'factory_employees', e.id), { order: idx })
-      if (e.order == null) return updateDoc(doc(db, 'factory_employees', e.id), { order: i })
-      return Promise.resolve()
-    }))
+    const next = list.filter(e => e.id !== sourceId)
+    const insertAt = next.findIndex(e => e.id === targetId)
+    next.splice(insertAt, 0, src)
+    setReordering(sourceId)
+    await Promise.all(next.map((e, i) =>
+      (e.order !== i) ? updateDoc(doc(db, 'factory_employees', e.id), { order: i }) : Promise.resolve()
+    ))
     setReordering(null)
-    reorderingRef.current = false
   }
 
   const visibleDeptIds = new Set(visibleDepts.map(d => d.id))
@@ -271,6 +270,12 @@ export default function Employees() {
         })}
       </div>
 
+      {can.manageEmployees && filterDept !== 'all' && filterStatus === 'active' && !search.trim() && filtered.length > 1 && (
+        <p className="hidden md:flex items-center gap-1.5 text-xs text-gray-400 mb-2">
+          <GripVertical className="w-3.5 h-3.5" /> Xodimni sudrab tartibini o'zgartiring
+        </p>
+      )}
+
       {/* Table */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         {filtered.length === 0 ? (
@@ -336,8 +341,20 @@ export default function Employees() {
                 <tbody className="divide-y divide-gray-50">
                   {filtered.map((emp, i) => {
                     const empOps = allOps.filter(o => emp.operationIds?.includes(o.id))
+                    const canDrag = can.manageEmployees && filterDept !== 'all' && filterStatus === 'active' && !search.trim()
+                    const isDragging = dragId === emp.id
+                    const isDragOver = dragOverId === emp.id && dragId && dragId !== emp.id
                     return (
-                      <tr key={emp.id} onClick={() => navigate(`/employee/${emp.id}`)} className={`hover:bg-gray-50 cursor-pointer ${filterStatus === 'archived' ? 'opacity-60' : ''}`}>
+                      <tr
+                        key={emp.id}
+                        draggable={canDrag}
+                        onDragStart={() => canDrag && setDragId(emp.id)}
+                        onDragEnd={() => { setDragId(null); setDragOverId(null) }}
+                        onDragOver={e => { if (dragId) { e.preventDefault(); setDragOverId(emp.id) } }}
+                        onDrop={e => { e.preventDefault(); reorderByDrag(dragId, emp.id); setDragId(null); setDragOverId(null) }}
+                        onClick={() => navigate(`/employee/${emp.id}`)}
+                        className={`hover:bg-gray-50 cursor-pointer ${filterStatus === 'archived' ? 'opacity-60' : ''} ${isDragging ? 'opacity-40' : ''} ${isDragOver ? 'border-t-2 border-indigo-500' : ''}`}
+                      >
                         <td className="px-4 py-3 text-gray-400">{i + 1}</td>
                         <td className="px-4 py-3 font-medium text-gray-800 hover:text-indigo-700">{emp.lastName} {emp.firstName}</td>
                         <td className="px-4 py-3">
@@ -354,9 +371,10 @@ export default function Employees() {
                         </td>
                         {can.manageEmployees && filterDept !== 'all' && filterStatus === 'active' && (
                           <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
-                            <div className="flex gap-1 justify-center">
-                              <button onClick={() => reorder(emp, 'up')} disabled={reordering === emp.id || i === 0} className="text-gray-400 hover:text-indigo-600 transition-colors disabled:opacity-20"><ChevronUp className="w-4 h-4" /></button>
-                              <button onClick={() => reorder(emp, 'down')} disabled={reordering === emp.id || i === filtered.length - 1} className="text-gray-400 hover:text-indigo-600 transition-colors disabled:opacity-20"><ChevronDown className="w-4 h-4" /></button>
+                            <div className="flex justify-center" title={search.trim() ? "Tartiblash uchun qidiruvni tozalang" : "Sudrab tartiblang"}>
+                              <span className={`${search.trim() ? 'text-gray-200 cursor-not-allowed' : 'text-gray-400 hover:text-indigo-600 cursor-grab active:cursor-grabbing'}`}>
+                                <GripVertical className="w-5 h-5" />
+                              </span>
                             </div>
                           </td>
                         )}
