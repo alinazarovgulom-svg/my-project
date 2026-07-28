@@ -518,9 +518,9 @@ export default function DepartmentWork() {
   // Faqat shu bo'lim zanjiridagi buyurtmalar (mustaqil bo'lim — faqat o'ziniki)
   const orderComponent = chainComponent(deptId, departments)
   const visibleOrders = orders.filter(o => orderComponent.has(o.departmentId))
-  // Zanjir yakuni (masalan Montaj) — o'zi buyurtma kirim qilmasa ham buyurtма/FIFO tanlay olsin
-  const isChainEndpoint = dept?.chainInput?.mode === 'from'
-  const showOrderPicker = can.enterHourly && (visibleOrders.length > 0 || isChainEndpoint)
+  // Buyurtma selektori har bir bo'limда ko'rinadi (Buyurtmasiz / FIFO avto doim bor).
+  // Buyurtmalar ro'yxati esa faqat shu bo'lim zanjiridagilar (Montaj — Tana/Astar/Yeng).
+  const showOrderPicker = can.enterHourly
 
   const hours = Math.max(0, calcHours(startTime, endTime) - breakMinutes / 60)
   const getEmpHours = (empId) => {
