@@ -11,6 +11,7 @@ import { Calendar, Clock, Save, CheckCircle, RefreshCw, X, Search, MoreVertical,
 import { buildWorkPDFHtml } from '../utils/pdf'
 import { sendHTMLToTelegram, sendTelegramMessage } from '../utils/telegram'
 import { fetchOrderSummary } from '../utils/orderReport'
+import { allocationsOf } from '../utils/orderProgress'
 
 function calcHours(start, end) {
   const [sh, sm] = start.split(':').map(Number)
@@ -86,6 +87,9 @@ export default function DepartmentWork() {
   const [opOrders, setOpOrders] = useState({})      // { empId: { opId: 'none'|'auto'|orderId } } — har operatsiya alohida
   // Bir operatsiyani bir nechta buyurtmага bo'lish: qo'shimcha qatorlar (birinchidan keyingi ulushlar)
   const [opSplits, setOpSplits] = useState({})      // { empId: { opId: [{ quantity, note, orderId }] } }
+  // Buyurtма bo'yicha oldin bajarilган operatsiya yig'indilari (joriy smenаdan tashqari) — qoldiq/oshiqcha uchun
+  const [orderBaseline, setOrderBaseline] = useState({}) // { orderId: { opId: bajarilgan } }
+  const baselineFetchedRef = useRef(new Set())
   const [empTimes, setEmpTimes] = useState({})
   const [timePickerEmp, setTimePickerEmp] = useState(null)
   const [menuEmp, setMenuEmp] = useState(null)
@@ -182,6 +186,8 @@ export default function DepartmentWork() {
     setEmpOrders({})
     setOpOrders({})
     setOpSplits({})
+    setOrderBaseline({})
+    baselineFetchedRef.current = new Set()
   }, [date, startTime, endTime])
 
   // Warn on browser tab close / refresh
@@ -240,6 +246,47 @@ export default function DepartmentWork() {
       console.error('[DepartmentWork] entries onSnapshot error:', err)
     })
   }, [deptId, date, startTime, endTime])
+
+  // Tanlangan buyurtmalar uchun oldin bajarilган operatsiya yig'indisini bir marta o'qib olamiz
+  // (joriy smenаdan tashqari) — qoldiq / oshiqcha hisobi uchun. Har buyurtма bir marta o'qiladi.
+  useEffect(() => {
+    if (!date || !startTime || !endTime) return
+    const shiftPrefix = `${date}_${deptId}_${startTime.replace(':', '')}_${endTime.replace(':', '')}_`
+    const assigned = new Set()
+    const collect = (v) => { if (v && v !== 'none' && v !== 'auto') assigned.add(v) }
+    ;[...employees, ...guestEmps].forEach(emp => {
+      const activeOpIds = overrides[emp.id] ?? emp.operationIds ?? []
+      activeOpIds.forEach(opId => {
+        collect(opOrders[emp.id]?.[opId] ?? empOrders[emp.id] ?? defaultOrder)
+        ;(opSplits[emp.id]?.[opId] || []).forEach(l => collect(l.orderId))
+      })
+    })
+    assigned.forEach(orderId => {
+      if (baselineFetchedRef.current.has(orderId)) return
+      baselineFetchedRef.current.add(orderId)
+      ;(async () => {
+        try {
+          const [s1, s2] = await Promise.all([
+            getDocs(query(collection(db, 'factory_work_entries'), where('orderId', '==', orderId))),
+            getDocs(query(collection(db, 'factory_work_entries'), where('orderIds', 'array-contains', orderId))),
+          ])
+          const byDoc = new Map()
+          ;[s1, s2].forEach(s => s.forEach(d => { if (!d.id.startsWith(shiftPrefix)) byDoc.set(d.id, d.data()) }))
+          const done = {}
+          byDoc.forEach(e => {
+            Object.entries(e.operations || {}).forEach(([opId, val]) => {
+              allocationsOf(e, val).forEach(a => {
+                if (a.orderId === orderId) done[opId] = (done[opId] || 0) + Number(a.quantity || 0)
+              })
+            })
+          })
+          setOrderBaseline(b => ({ ...b, [orderId]: done }))
+        } catch (_) {
+          setOrderBaseline(b => ({ ...b, [orderId]: {} }))
+        }
+      })()
+    })
+  }, [deptId, date, startTime, endTime, employees, guestEmps, overrides, opOrders, empOrders, defaultOrder, opSplits])
 
   const setEntryVal = (empId, opId, field, value) => {
     setEntries(prev => ({
@@ -351,6 +398,7 @@ export default function DepartmentWork() {
   }
 
   const saveEmployee = async (empId) => {
+    if (empHasOverage(empId)) return // buyurtмadan oshган — avval boshqa buyurtмага bo'linsin
     setSaving(s => ({ ...s, [empId]: true }))
     const emp = employees.find(e => e.id === empId) || guestEmps.find(e => e.id === empId)
     const isGuest = guestEmps.some(e => e.id === empId)
@@ -467,6 +515,7 @@ export default function DepartmentWork() {
   }
 
   const saveAll = () => {
+    if (hasOverage) return // buyurtмadan oshган operatsiya bor — saqlash to'silади
     const allWorkers = [...employees, ...guestEmps]
     const empty = allWorkers.filter(emp => {
       const ops = entries[emp.id] || {}
@@ -505,6 +554,54 @@ export default function DepartmentWork() {
   // qo'lда tanlaydi — zanjir sozlash shart emas.
   const visibleOrders = orders
   const orderLabel = (o) => `${getDeptName(o.departmentId)} — ${o.name}`
+
+  // ── Buyurtма miqdoridan oshib ketishni nazorat qilish ──
+  const orderQtyById = Object.fromEntries(orders.map(o => [o.id, Number(o.quantity || 0)]))
+  // Joriy smenада (UI holatiда) har (buyurtma, operatsiya) uchun kiritilgan yig'indi
+  const shiftUsage = {}
+  const addUsage = (orderVal, opId, qty) => {
+    if (!orderVal || orderVal === 'none' || orderVal === 'auto') return
+    const q = Number(qty || 0)
+    if (!q) return
+    if (!shiftUsage[orderVal]) shiftUsage[orderVal] = {}
+    shiftUsage[orderVal][opId] = (shiftUsage[orderVal][opId] || 0) + q
+  }
+  ;[...employees, ...guestEmps].forEach(emp => {
+    const activeOpIds = overrides[emp.id] ?? emp.operationIds ?? []
+    activeOpIds.forEach(opId => {
+      addUsage(opOrders[emp.id]?.[opId] ?? empOrders[emp.id] ?? defaultOrder, opId, entries[emp.id]?.[opId]?.quantity)
+      ;(opSplits[emp.id]?.[opId] || []).forEach(l => addUsage(l.orderId, opId, l.quantity))
+    })
+  })
+  // (buyurtma, operatsiya) uchun oshiqcha miqdor = oldin bajarilgan + joriy − buyurtma miqdori
+  const overFor = (orderVal, opId) => {
+    if (!orderVal || orderVal === 'none' || orderVal === 'auto') return 0
+    const oQty = orderQtyById[orderVal]
+    if (!oQty) return 0
+    const base = orderBaseline[orderVal]?.[opId] || 0
+    const cur = shiftUsage[orderVal]?.[opId] || 0
+    return Math.max(0, base + cur - oQty)
+  }
+  const remainingFor = (orderVal, opId) => {
+    if (!orderVal || orderVal === 'none' || orderVal === 'auto') return null
+    const oQty = orderQtyById[orderVal]
+    if (!oQty) return null
+    const base = orderBaseline[orderVal]?.[opId] || 0
+    const cur = shiftUsage[orderVal]?.[opId] || 0
+    return oQty - base - cur
+  }
+  let hasOverage = false
+  Object.entries(shiftUsage).forEach(([orderVal, ops]) => {
+    Object.keys(ops).forEach(opId => { if (overFor(orderVal, opId) > 0) hasOverage = true })
+  })
+  const empHasOverage = (empId) => {
+    const emp = [...employees, ...guestEmps].find(e => e.id === empId)
+    const activeOpIds = overrides[empId] ?? emp?.operationIds ?? []
+    return activeOpIds.some(opId => {
+      if (overFor(opOrders[empId]?.[opId] ?? empOrders[empId] ?? defaultOrder, opId) > 0) return true
+      return (opSplits[empId]?.[opId] || []).some(l => overFor(l.orderId, opId) > 0)
+    })
+  }
   // Buyurtma selektori har bir bo'limда ko'rinadi (Buyurtmasiz / FIFO avto doim bor).
   // Buyurtmalar ro'yxati esa faqat shu bo'lim zanjiridagilar (Montaj — Tana/Astar/Yeng).
   const showOrderPicker = can.enterHourly
@@ -760,7 +857,8 @@ export default function DepartmentWork() {
                 </div>
                 <button
                   onClick={saveAll}
-                  disabled={savingAll}
+                  disabled={savingAll || hasOverage}
+                  title={hasOverage ? "Buyurtmadan oshgan operatsiya bor — avval boshqa buyurtmaga yozing" : ''}
                   className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                     savedAll
                       ? 'bg-green-100 text-green-700'
@@ -795,6 +893,13 @@ export default function DepartmentWork() {
                 ))}
               </select>
               <span className="text-xs text-indigo-500">Har xodim va har operatsiya uchun pastda alohida o'zgartirsa bo'ladi</span>
+            </div>
+          )}
+
+          {hasOverage && (
+            <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 mb-4 text-sm flex items-start gap-2">
+              <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+              <span>Ba'zi operatsiyalar buyurtma miqdoridan oshib ketgan. Oshgan qismni <b>"+ buyurtma"</b> orqali boshqa buyurtmaga yozmaguncha saqlab bo'lmaydi.</span>
             </div>
           )}
 
@@ -1016,6 +1121,10 @@ export default function DepartmentWork() {
                         const norm = effectiveNorm(emp, op.id, op.norm || 0, date)
                         const expected = norm * empH
                         const status = normStatus(qty, norm, empH)
+                        // Buyurtма oshib ketish nazorati (asosiy qator)
+                        const primaryOrder = opOrders[emp.id]?.[op.id] ?? empOrders[emp.id] ?? defaultOrder
+                        const over = overFor(primaryOrder, op.id)
+                        const rem = remainingFor(primaryOrder, op.id)
 
                         return (
                           <div key={op.id} className="px-4 py-3">
@@ -1047,6 +1156,13 @@ export default function DepartmentWork() {
                                     </button>
                                   </div>
                                 )}
+                                {over > 0 ? (
+                                  <div className="mt-1 flex items-center gap-1 text-xs text-red-600 font-medium">
+                                    <AlertTriangle className="w-3.5 h-3.5 shrink-0" /> {over} ta ortiqcha — «+ buyurtma» bilan boshqa buyurtmaga yozing
+                                  </div>
+                                ) : (rem !== null && rem >= 0 && (
+                                  <div className="mt-1 text-xs text-gray-400">Buyurtmада qoldi: {rem.toLocaleString()}</div>
+                                ))}
                               </div>
                               <div className="flex items-center gap-2">
                                 <input
@@ -1088,6 +1204,11 @@ export default function DepartmentWork() {
                                         <option value="auto">FIFO avto</option>
                                         {visibleOrders.map(o => <option key={o.id} value={o.id}>{orderLabel(o)}</option>)}
                                       </select>
+                                    </div>
+                                  )}
+                                  {overFor(line.orderId, op.id) > 0 && (
+                                    <div className="mt-1 flex items-center gap-1 text-xs text-red-600 font-medium">
+                                      <AlertTriangle className="w-3.5 h-3.5 shrink-0" /> {overFor(line.orderId, op.id)} ta ortiqcha
                                     </div>
                                   )}
                                 </div>
@@ -1134,7 +1255,8 @@ export default function DepartmentWork() {
                     <div className="px-4 py-3 border-t border-gray-50 flex justify-end">
                       <button
                         onClick={() => saveEmployee(emp.id)}
-                        disabled={saving[emp.id]}
+                        disabled={saving[emp.id] || empHasOverage(emp.id)}
+                        title={empHasOverage(emp.id) ? "Buyurtmadan oshgan operatsiya bor — avval boshqa buyurtmaga yozing" : ''}
                         className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm transition-colors ${
                           saved[emp.id]
                             ? 'bg-green-100 text-green-700'
