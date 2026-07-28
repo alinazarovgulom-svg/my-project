@@ -37,23 +37,30 @@ export async function fetchOrderSummary(db, orderIds, targetDeptId = null) {
     const o = orderById[id]
     if (!o) return null
     const chain = computeOrderChain(o, entries, opById, departments, { allOrders })
-    const f = forecastOrder(o, chain.doneQty)
-    const bn = chain.depts.find(d => d.bottleneck)?.bottleneck
-    const opbnDept = chain.depts.find(d => d.opBottleneck)
-    // Hisobot bo'limining operatsiya × miqdor ro'yxati (bo'lim berilmasa — yakuniy bo'lim)
-    const dForOps = targetDeptId
+    // Hisobot bo'limi: berilган bo'lim (masalan Montaj), bo'lmasa — yakuniy bo'lim
+    const reportDept = targetDeptId
       ? chain.depts.find(d => d.id === targetDeptId)
       : chain.depts.find(d => d.id === chain.endpointId)
+    // Tiqilish HAR BIR bo'limga o'zinikini ko'rsatadi: bo'lim berilган bo'lsa o'shaniki,
+    // aks holda (umumiy hisobot) zanjirdagi birinchi tiqilgan bo'lim.
+    const bnDept = targetDeptId ? reportDept : chain.depts.find(d => d.bottleneck)
+    const opbnDept = targetDeptId ? reportDept : chain.depts.find(d => d.opBottleneck)
+    // "Tayyor": bo'lim hisoboti bo'lsa -> shu bo'lim yakuniy operatsiyasi (chiqim);
+    // umumiy hisoboti bo'lsa -> buyurtma zanjir yakuni.
+    const doneQ = targetDeptId ? (reportDept?.chiqim ?? 0) : chain.doneQty
+    const pct = chain.orderQty > 0 ? Math.round((doneQ / chain.orderQty) * 100) : 0
+    const isDone = chain.orderQty > 0 && doneQ >= chain.orderQty
+    const f = forecastOrder(o, doneQ)
     return {
       name: o.name,
-      doneQty: chain.doneQty,
+      doneQty: doneQ,
       orderQty: chain.orderQty,
-      percent: chain.percent,
-      done: chain.done,
-      bottleneck: bn ? `${bn.name} (${bn.qty})` : null,
-      opBottleneck: opbnDept ? `${opbnDept.name}: ${opbnDept.opBottleneck.name} (${opbnDept.opBottleneck.qty})` : null,
+      percent: pct,
+      done: isDone,
+      bottleneck: bnDept?.bottleneck ? `${bnDept.bottleneck.name} (${bnDept.bottleneck.qty})` : null,
+      opBottleneck: opbnDept?.opBottleneck ? `${opbnDept.name}: ${opbnDept.opBottleneck.name} (${opbnDept.opBottleneck.qty})` : null,
       forecast: f && !f.done ? `${f.date} (${f.daysLeft} kun)` : null,
-      ops: (dForOps?.opList || []).map(op => ({ name: op.name, qty: op.qty, isFinal: op.isFinal })),
+      ops: (reportDept?.opList || []).map(op => ({ name: op.name, qty: op.qty, isFinal: op.isFinal })),
     }
   }).filter(Boolean)
 
