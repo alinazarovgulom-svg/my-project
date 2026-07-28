@@ -18,17 +18,22 @@ function calcHours(start, end) {
   return Math.max(0, (eh * 60 + em - sh * 60 - sm) / 60)
 }
 
-// Bo'limning zanjir guruhi (chainInput bog'lanishlari bo'ylab bog'langan bo'limlar to'plami).
-// Masalan Montaj sources = [Tana,Astar,Yeng] bo'lsa, bu 4 bo'lim bir guruhda; Shim mustaqil.
-function chainComponent(startId, departments) {
-  const adj = {}
-  const link = (a, b) => { (adj[a] = adj[a] || new Set()).add(b); (adj[b] = adj[b] || new Set()).add(a) }
-  departments.forEach(d => (d.chainInput?.sources || []).forEach(s => link(d.id, s)))
-  const seen = new Set([startId])
-  const stack = [startId]
+// Bu bo'lim smena kiritishда qaysi bo'limlar buyurtmasidan tanlashi mumkin:
+// - Zanjir yakuni ('from', masalan Montaj): FAQAT o'z manba bo'limlari (Tana/Astar/Yeng),
+//   yo'nalish bo'yicha yuqoriga (rekursiv). Boshqa mustaqil bo'limlar (Shim) kirmaydi.
+// - Mustaqil bo'lim: faqat o'zi.
+function orderSourceDepts(startId, departments) {
+  const byId = Object.fromEntries(departments.map(d => [d.id, d]))
+  const start = byId[startId]
+  if (start?.chainInput?.mode !== 'from') return new Set([startId])
+  const seen = new Set()
+  const stack = [...(start.chainInput.sources || [])]
   while (stack.length) {
     const cur = stack.pop()
-    ;(adj[cur] || []).forEach(n => { if (!seen.has(n)) { seen.add(n); stack.push(n) } })
+    if (seen.has(cur)) continue
+    seen.add(cur)
+    const ci = byId[cur]?.chainInput
+    if (ci?.mode === 'from') (ci.sources || []).forEach(s => stack.push(s))
   }
   return seen
 }
@@ -515,9 +520,9 @@ export default function DepartmentWork() {
     setPickerSel(s => s.includes(opId) ? s.filter(id => id !== opId) : [...s, opId])
   }
 
-  // Shu bo'lim zanjiridagi buyurtmalar: mustaqil bo'lim — faqat o'ziniki;
-  // zanjir yakuni (Montaj) — manba bo'lim(lar)i (Tana/Astar/Yeng) kiritgan buyurtmalar.
-  const orderComponent = chainComponent(deptId, departments)
+  // Shu bo'lim smena kiritishда qaysi buyurtmalarni tanlashi mumkin:
+  // mustaqil — faqat o'ziniki; zanjir yakuni (Montaj) — faqat manba bo'limlari (Tana...) buyurtmalari.
+  const orderComponent = orderSourceDepts(deptId, departments)
   const visibleOrders = orders.filter(o => orderComponent.has(o.departmentId))
   // Buyurtma selektori har bir bo'limда ko'rinadi (Buyurtmasiz / FIFO avto doim bor).
   // Buyurtmalar ro'yxati esa faqat shu bo'lim zanjiridagilar (Montaj — Tana/Astar/Yeng).
