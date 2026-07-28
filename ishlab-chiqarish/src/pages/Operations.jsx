@@ -6,7 +6,7 @@ import {
 import { db } from '../firebase/config'
 import { useDepartments } from '../contexts/DepartmentsContext'
 import { useAuth } from '../contexts/AuthContext'
-import { Plus, Pencil, Trash2, X, Check, Star, Search, ChevronUp, ChevronDown, LogIn } from 'lucide-react'
+import { Plus, Pencil, Trash2, X, Check, Star, Search, GripVertical, LogIn } from 'lucide-react'
 
 export default function Operations() {
   const { can, userDoc } = useAuth()
@@ -22,6 +22,8 @@ export default function Operations() {
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(null)
   const [reordering, setReordering] = useState(null)
+  const [dragId, setDragId] = useState(null)       // sudralayotgan operatsiya
+  const [dragOverId, setDragOverId] = useState(null) // ustiga kelingan operatsiya
 
   useEffect(() => {
     const q = query(collection(db, 'factory_operations'), orderBy('createdAt', 'desc'))
@@ -93,19 +95,23 @@ export default function Operations() {
     setDeleting(null)
   }
 
-  const reorder = async (op, dir) => {
-    const deptList = operations
-      .filter(o => o.departmentId === op.departmentId)
+  // Sudrab tashlab tartiblash — faqat shu bo'lim ichida. Operatsiyani nishon
+  // operatsiyaning oldiga joylab, bo'limning butun ro'yxatiga 0..n tartib beriladi.
+  const reorderByDrag = async (sourceId, targetId) => {
+    if (!sourceId || !targetId || sourceId === targetId) return
+    const src = operations.find(o => o.id === sourceId)
+    const tgt = operations.find(o => o.id === targetId)
+    if (!src || !tgt || src.departmentId !== tgt.departmentId) return // boshqa bo'limга emas
+    const list = operations
+      .filter(o => o.departmentId === src.departmentId)
       .sort((a, b) => (a.order ?? Infinity) - (b.order ?? Infinity))
-    const idx = deptList.findIndex(o => o.id === op.id)
-    const swapIdx = dir === 'up' ? idx - 1 : idx + 1
-    if (swapIdx < 0 || swapIdx >= deptList.length) return
-    const other = deptList[swapIdx]
-    setReordering(op.id)
-    await Promise.all([
-      updateDoc(doc(db, 'factory_operations', op.id),    { order: other.order ?? swapIdx }),
-      updateDoc(doc(db, 'factory_operations', other.id), { order: op.order ?? idx }),
-    ])
+    const next = list.filter(o => o.id !== sourceId)
+    const insertAt = next.findIndex(o => o.id === targetId)
+    next.splice(insertAt, 0, src)
+    setReordering(sourceId)
+    await Promise.all(next.map((o, i) =>
+      (o.order !== i) ? updateDoc(doc(db, 'factory_operations', o.id), { order: i }) : Promise.resolve()
+    ))
     setReordering(null)
   }
 
@@ -162,6 +168,12 @@ export default function Operations() {
         ))}
       </div>
 
+      {can.manageOperations && filtered.length > 1 && !search.trim() && (
+        <p className="hidden md:flex items-center gap-1.5 text-xs text-gray-400 mb-2">
+          <GripVertical className="w-3.5 h-3.5" /> Operatsiyani sudrab tartibini o'zgartiring
+        </p>
+      )}
+
       {/* Table */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         {filtered.length === 0 ? (
@@ -214,8 +226,20 @@ export default function Operations() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
-                  {filtered.map(op => (
-                    <tr key={op.id} className="hover:bg-gray-50">
+                  {filtered.map(op => {
+                    const canDrag = can.manageOperations && !search.trim()
+                    const isDragging = dragId === op.id
+                    const isDragOver = dragOverId === op.id && dragId && dragId !== op.id
+                    return (
+                    <tr
+                      key={op.id}
+                      draggable={canDrag}
+                      onDragStart={() => canDrag && setDragId(op.id)}
+                      onDragEnd={() => { setDragId(null); setDragOverId(null) }}
+                      onDragOver={e => { if (dragId) { e.preventDefault(); setDragOverId(op.id) } }}
+                      onDrop={e => { e.preventDefault(); reorderByDrag(dragId, op.id); setDragId(null); setDragOverId(null) }}
+                      className={`hover:bg-gray-50 ${isDragging ? 'opacity-40' : ''} ${isDragOver ? 'border-t-2 border-indigo-500' : ''}`}
+                    >
                       <td className="px-4 py-3 font-medium text-gray-800">{op.name}</td>
                       <td className="px-4 py-3">
                         <span className="bg-indigo-50 text-indigo-700 text-xs px-2 py-0.5 rounded-full">{getDeptName(op.departmentId)}</span>
@@ -246,9 +270,10 @@ export default function Operations() {
                       </td>
                       {can.manageOperations && (
                         <td className="px-4 py-3">
-                          <div className="flex gap-1 justify-center">
-                            <button onClick={() => reorder(op, 'up')} disabled={reordering === op.id || filtered.indexOf(op) === 0} className="text-gray-400 hover:text-indigo-600 transition-colors disabled:opacity-20"><ChevronUp className="w-4 h-4" /></button>
-                            <button onClick={() => reorder(op, 'down')} disabled={reordering === op.id || filtered.indexOf(op) === filtered.length - 1} className="text-gray-400 hover:text-indigo-600 transition-colors disabled:opacity-20"><ChevronDown className="w-4 h-4" /></button>
+                          <div className="flex justify-center" title={search.trim() ? "Tartiblash uchun qidiruvni tozalang" : "Sudrab tartiblang"}>
+                            <span className={`${search.trim() ? 'text-gray-200 cursor-not-allowed' : 'text-gray-400 hover:text-indigo-600 cursor-grab active:cursor-grabbing'}`}>
+                              <GripVertical className="w-5 h-5" />
+                            </span>
                           </div>
                         </td>
                       )}
@@ -261,7 +286,8 @@ export default function Operations() {
                         </td>
                       )}
                     </tr>
-                  ))}
+                    )
+                  })}
                 </tbody>
               </table>
             </div>
