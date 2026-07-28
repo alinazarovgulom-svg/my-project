@@ -17,7 +17,8 @@ export default function Orders() {
   const visibleDepts = can.manageMembers || !userDoc?.departmentIds?.length
     ? departments
     : departments.filter(d => userDoc.departmentIds.includes(d.id))
-  const canManage = can.manageOperations
+  const canManage = can.manageOperations   // kirim qilish (admin yoki entry)
+  const isAdmin = can.manageMembers         // tahrir / arxiv / o'chirish — faqat admin
 
   const [orders, setOrders] = useState([])
   const [filterStatus, setFilterStatus] = useState('active') // 'active' | 'archived'
@@ -258,7 +259,7 @@ export default function Orders() {
                   </div>
                 </div>
 
-                {canManage && filterStatus === 'active' && (
+                {isAdmin && filterStatus === 'active' && (
                   <div className="flex items-center gap-1 shrink-0">
                     {filterDept === 'all' && (
                       <div className="flex flex-col">
@@ -270,7 +271,7 @@ export default function Orders() {
                     <button onClick={() => handleArchive(order.id)} className="p-1.5 text-gray-400 hover:text-amber-600 transition-colors"><Archive className="w-4 h-4" /></button>
                   </div>
                 )}
-                {canManage && filterStatus === 'archived' && (
+                {isAdmin && filterStatus === 'archived' && (
                   <div className="flex items-center gap-1 shrink-0">
                     <button onClick={() => handleRestore(order.id)} className="p-1.5 text-gray-400 hover:text-green-600 transition-colors"><RotateCcw className="w-4 h-4" /></button>
                     <button onClick={() => handleDelete(order.id)} disabled={deleting === order.id} className="p-1.5 text-gray-400 hover:text-red-600 transition-colors disabled:opacity-40"><Trash2 className="w-4 h-4" /></button>
