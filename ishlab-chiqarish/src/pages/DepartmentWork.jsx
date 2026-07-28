@@ -515,12 +515,10 @@ export default function DepartmentWork() {
     setPickerSel(s => s.includes(opId) ? s.filter(id => id !== opId) : [...s, opId])
   }
 
-  // Shu bo'lim zanjiridagi buyurtmalar (mustaqil bo'lim — faqat o'ziniki).
-  // Agar guruh bo'sh bo'lsa (masalan Montaj zanjiri hali sozlanmagan) — o'tish davri
-  // uchun barcha faol buyurtmalar ko'rsatiladi, shunда Montaj ham qo'lда tanlay oladi.
+  // Shu bo'lim zanjiridagi buyurtmalar: mustaqil bo'lim — faqat o'ziniki;
+  // zanjir yakuni (Montaj) — manba bo'lim(lar)i (Tana/Astar/Yeng) kiritgan buyurtmalar.
   const orderComponent = chainComponent(deptId, departments)
-  const groupOrders = orders.filter(o => orderComponent.has(o.departmentId))
-  const visibleOrders = groupOrders.length > 0 ? groupOrders : orders
+  const visibleOrders = orders.filter(o => orderComponent.has(o.departmentId))
   // Buyurtma selektori har bir bo'limда ko'rinadi (Buyurtmasiz / FIFO avto doim bor).
   // Buyurtmalar ro'yxati esa faqat shu bo'lim zanjiridagilar (Montaj — Tana/Astar/Yeng).
   const showOrderPicker = can.enterHourly
