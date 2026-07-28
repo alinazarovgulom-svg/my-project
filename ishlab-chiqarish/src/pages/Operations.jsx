@@ -95,6 +95,29 @@ export default function Operations() {
     setDeleting(null)
   }
 
+  // Operatsiyaning bo'lim ichidagi joriy o'rni (1 dan boshlab)
+  const posInDept = (op) => operations
+    .filter(o => o.departmentId === op.departmentId)
+    .sort((a, b) => (a.order ?? Infinity) - (b.order ?? Infinity))
+    .findIndex(o => o.id === op.id) + 1
+
+  // Raqam yozib tartiblash — operatsiyani berilgan o'ringa (1..n) ko'chiradi
+  const reorderByNumber = async (opId, newPos) => {
+    const src = operations.find(o => o.id === opId)
+    if (!src || !newPos) return
+    const list = operations
+      .filter(o => o.departmentId === src.departmentId)
+      .sort((a, b) => (a.order ?? Infinity) - (b.order ?? Infinity))
+    const clamped = Math.max(1, Math.min(list.length, newPos))
+    const next = list.filter(o => o.id !== opId)
+    next.splice(clamped - 1, 0, src)
+    setReordering(opId)
+    await Promise.all(next.map((o, i) =>
+      (o.order !== i) ? updateDoc(doc(db, 'factory_operations', o.id), { order: i }) : Promise.resolve()
+    ))
+    setReordering(null)
+  }
+
   // Sudrab tashlab tartiblash — faqat shu bo'lim ichida. Operatsiyani nishon
   // operatsiyaning oldiga joylab, bo'limning butun ro'yxatiga 0..n tartib beriladi.
   const reorderByDrag = async (sourceId, targetId) => {
@@ -170,7 +193,7 @@ export default function Operations() {
 
       {can.manageOperations && filtered.length > 1 && !search.trim() && (
         <p className="hidden md:flex items-center gap-1.5 text-xs text-gray-400 mb-2">
-          <GripVertical className="w-3.5 h-3.5" /> Operatsiyani sudrab tartibini o'zgartiring
+          <GripVertical className="w-3.5 h-3.5" /> Operatsiyani sudrab yoki tartib raqamini yozib joyini o'zgartiring
         </p>
       )}
 
@@ -201,7 +224,18 @@ export default function Operations() {
                       </div>
                     </div>
                     {can.manageOperations && (
-                      <div className="flex gap-1 shrink-0">
+                      <div className="flex items-center gap-1 shrink-0">
+                        <input
+                          type="number"
+                          min="1"
+                          key={`mpos-${op.id}-${posInDept(op)}`}
+                          defaultValue={posInDept(op)}
+                          disabled={reordering === op.id}
+                          title="Tartib raqami"
+                          onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur() }}
+                          onBlur={e => { const v = parseInt(e.target.value, 10); if (v && v !== posInDept(op)) reorderByNumber(op.id, v) }}
+                          className="w-10 border border-gray-200 rounded-md px-1 py-1 text-sm text-center focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                        />
                         <button onClick={() => openEdit(op)} className="p-2 text-gray-400 hover:text-indigo-600"><Pencil className="w-4 h-4" /></button>
                         <button onClick={() => handleDelete(op.id)} disabled={deleting === op.id} className="p-2 text-gray-400 hover:text-red-600 disabled:opacity-40"><Trash2 className="w-4 h-4" /></button>
                       </div>
@@ -270,8 +304,23 @@ export default function Operations() {
                       </td>
                       {can.manageOperations && (
                         <td className="px-4 py-3">
-                          <div className="flex justify-center" title={search.trim() ? "Tartiblash uchun qidiruvni tozalang" : "Sudrab tartiblang"}>
-                            <span className={`${search.trim() ? 'text-gray-200 cursor-not-allowed' : 'text-gray-400 hover:text-indigo-600 cursor-grab active:cursor-grabbing'}`}>
+                          <div className="flex items-center justify-center gap-1.5">
+                            <input
+                              type="number"
+                              min="1"
+                              key={`pos-${op.id}-${posInDept(op)}`}
+                              defaultValue={posInDept(op)}
+                              disabled={reordering === op.id}
+                              title="Tartib raqami — yozib joyini o'zgartiring"
+                              onClick={e => e.stopPropagation()}
+                              onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur() }}
+                              onBlur={e => { const v = parseInt(e.target.value, 10); if (v && v !== posInDept(op)) reorderByNumber(op.id, v) }}
+                              className="w-11 border border-gray-200 rounded-md px-1 py-1 text-sm text-center focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                            />
+                            <span
+                              title={search.trim() ? "Tartiblash uchun qidiruvni tozalang" : "Sudrab tartiblang"}
+                              className={`${search.trim() ? 'text-gray-200 cursor-not-allowed' : 'text-gray-400 hover:text-indigo-600 cursor-grab active:cursor-grabbing'}`}
+                            >
                               <GripVertical className="w-5 h-5" />
                             </span>
                           </div>

@@ -158,6 +158,31 @@ export default function Employees() {
     setDeleting(null)
   }
 
+  // Xodimning bo'lim ichidagi joriy o'rni (1 dan boshlab)
+  const deptSorted = (deptId) => employees
+    .filter(e => e.departmentId === deptId && e.isActive !== false)
+    .sort((a, b) => {
+      const aO = a.order ?? Infinity, bO = b.order ?? Infinity
+      if (aO !== bO) return aO - bO
+      return `${a.lastName} ${a.firstName}`.localeCompare(`${b.lastName} ${b.firstName}`, 'uz')
+    })
+  const posInDept = (emp) => deptSorted(emp.departmentId).findIndex(e => e.id === emp.id) + 1
+
+  // Raqam yozib tartiblash — xodimni berilgan o'ringa (1..n) ko'chiradi
+  const reorderByNumber = async (empId, newPos) => {
+    const src = employees.find(e => e.id === empId)
+    if (!src || !newPos) return
+    const list = deptSorted(src.departmentId)
+    const clamped = Math.max(1, Math.min(list.length, newPos))
+    const next = list.filter(e => e.id !== empId)
+    next.splice(clamped - 1, 0, src)
+    setReordering(empId)
+    await Promise.all(next.map((e, i) =>
+      (e.order !== i) ? updateDoc(doc(db, 'factory_employees', e.id), { order: i }) : Promise.resolve()
+    ))
+    setReordering(null)
+  }
+
   // Sudrab tashlab tartiblash — faqat shu bo'lim ichida
   const reorderByDrag = async (sourceId, targetId) => {
     if (!sourceId || !targetId || sourceId === targetId) return
@@ -272,7 +297,7 @@ export default function Employees() {
 
       {can.manageEmployees && filterDept !== 'all' && filterStatus === 'active' && !search.trim() && filtered.length > 1 && (
         <p className="hidden md:flex items-center gap-1.5 text-xs text-gray-400 mb-2">
-          <GripVertical className="w-3.5 h-3.5" /> Xodimni sudrab tartibini o'zgartiring
+          <GripVertical className="w-3.5 h-3.5" /> Xodimni sudrab yoki tartib raqamini yozib joyini o'zgartiring
         </p>
       )}
 
@@ -305,7 +330,21 @@ export default function Employees() {
                         )}
                       </div>
                       {can.manageEmployees && (
-                        <div className="flex gap-1 shrink-0">
+                        <div className="flex items-center gap-1 shrink-0">
+                          {filterDept !== 'all' && filterStatus === 'active' && (
+                            <input
+                              type="number"
+                              min="1"
+                              key={`mpos-${emp.id}-${posInDept(emp)}`}
+                              defaultValue={posInDept(emp)}
+                              disabled={reordering === emp.id}
+                              title="Tartib raqami"
+                              onClick={e => e.stopPropagation()}
+                              onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur() }}
+                              onBlur={e => { const v = parseInt(e.target.value, 10); if (v && v !== posInDept(emp)) reorderByNumber(emp.id, v) }}
+                              className="w-10 border border-gray-200 rounded-md px-1 py-1 text-sm text-center focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                            />
+                          )}
                           {filterStatus === 'active' ? (
                             <>
                               <button onClick={e => { e.stopPropagation(); openEdit(emp) }} className="p-2 text-gray-400 hover:text-indigo-600"><Pencil className="w-4 h-4" /></button>
@@ -371,8 +410,22 @@ export default function Employees() {
                         </td>
                         {can.manageEmployees && filterDept !== 'all' && filterStatus === 'active' && (
                           <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
-                            <div className="flex justify-center" title={search.trim() ? "Tartiblash uchun qidiruvni tozalang" : "Sudrab tartiblang"}>
-                              <span className={`${search.trim() ? 'text-gray-200 cursor-not-allowed' : 'text-gray-400 hover:text-indigo-600 cursor-grab active:cursor-grabbing'}`}>
+                            <div className="flex items-center justify-center gap-1.5">
+                              <input
+                                type="number"
+                                min="1"
+                                key={`pos-${emp.id}-${posInDept(emp)}`}
+                                defaultValue={posInDept(emp)}
+                                disabled={reordering === emp.id}
+                                title="Tartib raqami — yozib joyini o'zgartiring"
+                                onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur() }}
+                                onBlur={e => { const v = parseInt(e.target.value, 10); if (v && v !== posInDept(emp)) reorderByNumber(emp.id, v) }}
+                                className="w-11 border border-gray-200 rounded-md px-1 py-1 text-sm text-center focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                              />
+                              <span
+                                title={search.trim() ? "Tartiblash uchun qidiruvni tozalang" : "Sudrab tartiblang"}
+                                className={`${search.trim() ? 'text-gray-200 cursor-not-allowed' : 'text-gray-400 hover:text-indigo-600 cursor-grab active:cursor-grabbing'}`}
+                              >
                                 <GripVertical className="w-5 h-5" />
                               </span>
                             </div>
