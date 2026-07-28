@@ -18,26 +18,6 @@ function calcHours(start, end) {
   return Math.max(0, (eh * 60 + em - sh * 60 - sm) / 60)
 }
 
-// Bu bo'lim smena kiritishда qaysi bo'limlar buyurtmasidan tanlashi mumkin:
-// - Zanjir yakuni ('from', masalan Montaj): FAQAT o'z manba bo'limlari (Tana/Astar/Yeng),
-//   yo'nalish bo'yicha yuqoriga (rekursiv). Boshqa mustaqil bo'limlar (Shim) kirmaydi.
-// - Mustaqil bo'lim: faqat o'zi.
-function orderSourceDepts(startId, departments) {
-  const byId = Object.fromEntries(departments.map(d => [d.id, d]))
-  const start = byId[startId]
-  if (start?.chainInput?.mode !== 'from') return new Set([startId])
-  const seen = new Set()
-  const stack = [...(start.chainInput.sources || [])]
-  while (stack.length) {
-    const cur = stack.pop()
-    if (seen.has(cur)) continue
-    seen.add(cur)
-    const ci = byId[cur]?.chainInput
-    if (ci?.mode === 'from') (ci.sources || []).forEach(s => stack.push(s))
-  }
-  return seen
-}
-
 // Bo'lim uchun Telegram mavzu (forum topic) ID'si — nom/ID bo'yicha moslaydi.
 function threadForDept(dept) {
   if (!dept) return undefined
@@ -80,7 +60,7 @@ const statusStyle = {
 export default function DepartmentWork() {
   const { deptId } = useParams()
   const { user, userDoc, can } = useAuth()
-  const { departments } = useDepartments()
+  const { departments, getDeptName } = useDepartments()
   const dept = departments.find(d => d.id === deptId)
 
   const hasAccess = can.manageMembers || !userDoc?.departmentIds?.length || userDoc.departmentIds.includes(deptId)
@@ -520,10 +500,11 @@ export default function DepartmentWork() {
     setPickerSel(s => s.includes(opId) ? s.filter(id => id !== opId) : [...s, opId])
   }
 
-  // Shu bo'lim smena kiritishда qaysi buyurtmalarni tanlashi mumkin:
-  // mustaqil — faqat o'ziniki; zanjir yakuni (Montaj) — faqat manba bo'limlari (Tana...) buyurtmalari.
-  const orderComponent = orderSourceDepts(deptId, departments)
-  const visibleOrders = orders.filter(o => orderComponent.has(o.departmentId))
+  // Sodda usul: har bo'lim BARCHA faol buyurtmalarni ko'radi, har biri bo'lim nomi bilan
+  // belgilangan (masalan "Tana — Kostyum"). Shunda Astar/Montaj ham Tana buyurtmасини
+  // qo'lда tanlaydi — zanjir sozlash shart emas.
+  const visibleOrders = orders
+  const orderLabel = (o) => `${getDeptName(o.departmentId)} — ${o.name}`
   // Buyurtma selektori har bir bo'limда ko'rinadi (Buyurtmasiz / FIFO avto doim bor).
   // Buyurtmalar ro'yxati esa faqat shu bo'lim zanjiridagilar (Montaj — Tana/Astar/Yeng).
   const showOrderPicker = can.enterHourly
@@ -810,7 +791,7 @@ export default function DepartmentWork() {
                 <option value="none">Hech qaysi (buyurtmasiz)</option>
                 <option value="auto">FIFO — avtomatik navbat</option>
                 {visibleOrders.map(o => (
-                  <option key={o.id} value={o.id}>{o.name} ({Number(o.quantity).toLocaleString()} dona)</option>
+                  <option key={o.id} value={o.id}>{orderLabel(o)} ({Number(o.quantity).toLocaleString()} dona)</option>
                 ))}
               </select>
               <span className="text-xs text-indigo-500">Har xodim va har operatsiya uchun pastda alohida o'zgartirsa bo'ladi</span>
@@ -865,7 +846,7 @@ export default function DepartmentWork() {
                         >
                           <option value="none">📦 Hammasi: buyurtmasiz</option>
                           <option value="auto">📦 Hammasi: FIFO avto</option>
-                          {visibleOrders.map(o => <option key={o.id} value={o.id}>📦 Hammasi: {o.name}</option>)}
+                          {visibleOrders.map(o => <option key={o.id} value={o.id}>📦 Hammasi: {orderLabel(o)}</option>)}
                         </select>
                       )}
                     </div>
@@ -1055,7 +1036,7 @@ export default function DepartmentWork() {
                                     >
                                       <option value="none">Buyurtmasiz</option>
                                       <option value="auto">FIFO avto</option>
-                                      {visibleOrders.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
+                                      {visibleOrders.map(o => <option key={o.id} value={o.id}>{orderLabel(o)}</option>)}
                                     </select>
                                     <button
                                       onClick={() => addOpSplit(emp.id, op.id)}
@@ -1105,7 +1086,7 @@ export default function DepartmentWork() {
                                       >
                                         <option value="none">Buyurtmasiz</option>
                                         <option value="auto">FIFO avto</option>
-                                        {visibleOrders.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
+                                        {visibleOrders.map(o => <option key={o.id} value={o.id}>{orderLabel(o)}</option>)}
                                       </select>
                                     </div>
                                   )}
