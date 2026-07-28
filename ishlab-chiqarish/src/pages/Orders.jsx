@@ -17,7 +17,8 @@ export default function Orders() {
   const visibleDepts = can.manageMembers || !userDoc?.departmentIds?.length
     ? departments
     : departments.filter(d => userDoc.departmentIds.includes(d.id))
-  const canManage = can.manageOperations
+  const canManage = can.manageOperations   // kirim qilish (admin yoki entry)
+  const isAdmin = can.manageMembers         // tahrir / arxiv / o'chirish — faqat admin
 
   const [orders, setOrders] = useState([])
   const [filterStatus, setFilterStatus] = useState('active') // 'active' | 'archived'
@@ -152,15 +153,19 @@ export default function Orders() {
     reorderingRef.current = false
   }
 
-  const filtered = orders
+  // Foydalanuvchi faqat o'z bo'lim(lar)i buyurtmalarini ko'radi (admin — hammasini)
+  const visibleDeptIds = new Set(visibleDepts.map(d => d.id))
+  const ownOrders = orders.filter(o => visibleDeptIds.has(o.departmentId))
+
+  const filtered = ownOrders
     .filter(o => filterStatus === 'active' ? o.isActive !== false : o.isActive === false)
     .filter(o => filterDept === 'all' ? true : o.departmentId === filterDept)
     .sort((a, b) => (a.order ?? Infinity) - (b.order ?? Infinity))
 
-  const activeCount = orders.filter(o => o.isActive !== false).length
-  const archivedCount = orders.filter(o => o.isActive === false).length
+  const activeCount = ownOrders.filter(o => o.isActive !== false).length
+  const archivedCount = ownOrders.filter(o => o.isActive === false).length
   // Har bo'lim uchun buyurtma soni (chip yonida ko'rsatiladi)
-  const deptCount = (dId) => orders.filter(o =>
+  const deptCount = (dId) => ownOrders.filter(o =>
     (filterStatus === 'active' ? o.isActive !== false : o.isActive === false) && o.departmentId === dId
   ).length
 
@@ -254,7 +259,7 @@ export default function Orders() {
                   </div>
                 </div>
 
-                {canManage && filterStatus === 'active' && (
+                {isAdmin && filterStatus === 'active' && (
                   <div className="flex items-center gap-1 shrink-0">
                     {filterDept === 'all' && (
                       <div className="flex flex-col">
@@ -266,7 +271,7 @@ export default function Orders() {
                     <button onClick={() => handleArchive(order.id)} className="p-1.5 text-gray-400 hover:text-amber-600 transition-colors"><Archive className="w-4 h-4" /></button>
                   </div>
                 )}
-                {canManage && filterStatus === 'archived' && (
+                {isAdmin && filterStatus === 'archived' && (
                   <div className="flex items-center gap-1 shrink-0">
                     <button onClick={() => handleRestore(order.id)} className="p-1.5 text-gray-400 hover:text-green-600 transition-colors"><RotateCcw className="w-4 h-4" /></button>
                     <button onClick={() => handleDelete(order.id)} disabled={deleting === order.id} className="p-1.5 text-gray-400 hover:text-red-600 transition-colors disabled:opacity-40"><Trash2 className="w-4 h-4" /></button>
