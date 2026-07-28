@@ -59,9 +59,13 @@ export function buildWorkPDFHtml(rows, filters, deptName, showDept = true, autoP
       if (!groupMap.has(key)) {
         groupMap.set(key, { empName: r.empName, deptName: r.deptName, opName: r.opName, norm: r.norm, isCustomNorm: !!r.isCustomNorm, orderName: r.orderName || '', bySlot: {} })
       }
-      groupMap.get(key).bySlot[`${r.startTime}–${r.endTime}`] = {
-        qty: Number(r.quantity), exp: Number(r.expected), note: r.note || '',
-      }
+      // Bir operatsiya bir necha buyurtmага bo'lingan bo'lsa — ulushlar qo'shiladi (o'zaro yozilmaydi)
+      const slotKey = `${r.startTime}–${r.endTime}`
+      const cell = groupMap.get(key).bySlot[slotKey] || { qty: 0, exp: 0, note: '' }
+      cell.qty += Number(r.quantity || 0)
+      cell.exp += Number(r.expected || 0)
+      if (r.note) cell.note = cell.note ? `${cell.note}; ${r.note}` : r.note
+      groupMap.get(key).bySlot[slotKey] = cell
     })
 
     const groups = [...groupMap.values()].sort((a, b) =>
