@@ -42,6 +42,20 @@ export function allocationsOf(entry, opVal) {
   return [{ quantity: Number(opVal?.quantity || 0), orderId: opOrderOf(entry, opVal) }]
 }
 
+// Bo'limning zanjir guruhi (chainInput.sources bog'lanishlari bo'ylab bog'langan bo'limlar).
+function chainGroup(startId, departments) {
+  const adj = {}
+  const link = (a, b) => { (adj[a] = adj[a] || new Set()).add(b); (adj[b] = adj[b] || new Set()).add(a) }
+  departments.forEach(d => (d.chainInput?.sources || []).forEach(s => link(d.id, s)))
+  const seen = new Set([startId])
+  const stack = [startId]
+  while (stack.length) {
+    const cur = stack.pop()
+    ;(adj[cur] || []).forEach(n => { if (!seen.has(n)) { seen.add(n); stack.push(n) } })
+  }
+  return seen
+}
+
 export function computeOrderChain(order, entries, opById, departments, opts = {}) {
   const orderQty = Number(order.quantity || 0)
   const targetId = order.id
@@ -104,19 +118,23 @@ export function computeOrderChain(order, entries, opById, departments, opts = {}
       })
     })
   })
-  const ownerDept = order.departmentId
-  if (autoPool[ownerDept] > 0) {
-    const dOrders = allOrders
-      .filter(o => o.departmentId === ownerDept && o.isActive !== false)
+  // Har bir bo'limning 'auto' yakuniy chiqimini o'sha bo'lim zanjir guruhiga
+  // tegishli buyurtmalar bo'yicha navbat (priority) bilan taqsimlaymiz. Shu bilan
+  // mustaqil bo'lim ham, zanjir yakuni (masalan Montaj) ham FIFO'da to'g'ri ishlaydi.
+  Object.keys(autoPool).forEach(d => {
+    if (!(autoPool[d] > 0)) return
+    const comp = chainGroup(d, departments)
+    const groupOrders = allOrders
+      .filter(o => o.isActive !== false && comp.has(o.departmentId))
       .sort((a, b) => (a.order ?? Infinity) - (b.order ?? Infinity))
-    let pool = autoPool[ownerDept]
-    for (const o of dOrders) {
+    let pool = autoPool[d]
+    for (const o of groupOrders) {
       const share = Math.min(pool, Number(o.quantity || 0))
       pool -= share
-      if (o.id === order.id) { chiqim[ownerDept] = (chiqim[ownerDept] || 0) + share; appeared.add(ownerDept); break }
+      if (o.id === order.id) { chiqim[d] = (chiqim[d] || 0) + share; appeared.add(d); break }
       if (pool <= 0) break
     }
-  }
+  })
 
   // Ishtirok etgan bo'limlar: yozuvi borlar + ularga bog'langan 'from' bo'limlar (masalan Montaj)
   const involved = new Set(appeared)

@@ -518,6 +518,9 @@ export default function DepartmentWork() {
   // Faqat shu bo'lim zanjiridagi buyurtmalar (mustaqil bo'lim — faqat o'ziniki)
   const orderComponent = chainComponent(deptId, departments)
   const visibleOrders = orders.filter(o => orderComponent.has(o.departmentId))
+  // Zanjir yakuni (masalan Montaj) — o'zi buyurtma kirim qilmasa ham buyurtма/FIFO tanlay olsin
+  const isChainEndpoint = dept?.chainInput?.mode === 'from'
+  const showOrderPicker = can.enterHourly && (visibleOrders.length > 0 || isChainEndpoint)
 
   const hours = Math.max(0, calcHours(startTime, endTime) - breakMinutes / 60)
   const getEmpHours = (empId) => {
@@ -788,7 +791,7 @@ export default function DepartmentWork() {
           </div>
 
           {/* Umumiy buyurtma tanlash (hamma xodim uchun) */}
-          {visibleOrders.length > 0 && can.enterHourly && (
+          {showOrderPicker && (
             <div className="bg-indigo-50 border border-indigo-100 rounded-xl px-4 py-3 mb-4 flex items-center gap-3 flex-wrap">
               <span className="text-sm font-medium text-indigo-800 flex items-center gap-1.5 shrink-0">
                 <Package className="w-4 h-4" /> Buyurtma:
@@ -847,7 +850,7 @@ export default function DepartmentWork() {
                           {empTimes[emp.id].startTime}–{empTimes[emp.id].endTime}
                         </span>
                       )}
-                      {visibleOrders.length > 0 && can.enterHourly && (
+                      {showOrderPicker && (
                         <select
                           value={empOrders[emp.id] ?? defaultOrder}
                           onChange={e => setEmpOrderAll(emp.id, e.target.value)}
@@ -1035,7 +1038,7 @@ export default function DepartmentWork() {
                                 <div className="text-xs text-gray-400 mt-0.5">
                                   Norma: {norm} dona/soat{norm !== (op.norm || 0) ? ' (shaxsiy)' : ''} · {hours > 0 ? `${hours.toFixed(1)} soat = ` : ''}{hours > 0 ? `${expected.toFixed(0)} dona` : '—'}
                                 </div>
-                                {visibleOrders.length > 0 && can.enterHourly && (
+                                {showOrderPicker && (
                                   <div className="flex items-center gap-1 mt-1">
                                     <Package className="w-3 h-3 text-indigo-400 shrink-0" />
                                     <select
@@ -1086,7 +1089,7 @@ export default function DepartmentWork() {
                               <div key={li} className="flex flex-wrap items-center gap-2 sm:gap-3 mt-2 pl-3 border-l-2 border-indigo-100">
                                 <div className="flex-1 min-w-0">
                                   <div className="text-xs text-indigo-400 flex items-center gap-1">↳ {op.name} · yana bir buyurtма</div>
-                                  {visibleOrders.length > 0 && can.enterHourly && (
+                                  {showOrderPicker && (
                                     <div className="flex items-center gap-1 mt-1">
                                       <Package className="w-3 h-3 text-indigo-400 shrink-0" />
                                       <select
