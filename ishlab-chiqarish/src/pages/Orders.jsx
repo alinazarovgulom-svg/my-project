@@ -152,15 +152,19 @@ export default function Orders() {
     reorderingRef.current = false
   }
 
-  const filtered = orders
+  // Foydalanuvchi faqat o'z bo'lim(lar)i buyurtmalarini ko'radi (admin — hammasini)
+  const visibleDeptIds = new Set(visibleDepts.map(d => d.id))
+  const ownOrders = orders.filter(o => visibleDeptIds.has(o.departmentId))
+
+  const filtered = ownOrders
     .filter(o => filterStatus === 'active' ? o.isActive !== false : o.isActive === false)
     .filter(o => filterDept === 'all' ? true : o.departmentId === filterDept)
     .sort((a, b) => (a.order ?? Infinity) - (b.order ?? Infinity))
 
-  const activeCount = orders.filter(o => o.isActive !== false).length
-  const archivedCount = orders.filter(o => o.isActive === false).length
+  const activeCount = ownOrders.filter(o => o.isActive !== false).length
+  const archivedCount = ownOrders.filter(o => o.isActive === false).length
   // Har bo'lim uchun buyurtma soni (chip yonida ko'rsatiladi)
-  const deptCount = (dId) => orders.filter(o =>
+  const deptCount = (dId) => ownOrders.filter(o =>
     (filterStatus === 'active' ? o.isActive !== false : o.isActive === false) && o.departmentId === dId
   ).length
 
