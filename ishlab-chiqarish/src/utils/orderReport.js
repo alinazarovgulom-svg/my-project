@@ -37,7 +37,6 @@ export async function fetchOrderSummary(db, orderIds, targetDeptId = null) {
     const o = orderById[id]
     if (!o) return null
     const chain = computeOrderChain(o, entries, opById, departments, { allOrders })
-    const f = forecastOrder(o, chain.doneQty)
     // Hisobot bo'limi: berilган bo'lim (masalan Montaj), bo'lmasa — yakuniy bo'lim
     const reportDept = targetDeptId
       ? chain.depts.find(d => d.id === targetDeptId)
@@ -46,12 +45,18 @@ export async function fetchOrderSummary(db, orderIds, targetDeptId = null) {
     // aks holda (umumiy hisobot) zanjirdagi birinchi tiqilgan bo'lim.
     const bnDept = targetDeptId ? reportDept : chain.depts.find(d => d.bottleneck)
     const opbnDept = targetDeptId ? reportDept : chain.depts.find(d => d.opBottleneck)
+    // "Tayyor": bo'lim hisoboti bo'lsa -> shu bo'lim yakuniy operatsiyasi (chiqim);
+    // umumiy hisoboti bo'lsa -> buyurtma zanjir yakuni.
+    const doneQ = targetDeptId ? (reportDept?.chiqim ?? 0) : chain.doneQty
+    const pct = chain.orderQty > 0 ? Math.round((doneQ / chain.orderQty) * 100) : 0
+    const isDone = chain.orderQty > 0 && doneQ >= chain.orderQty
+    const f = forecastOrder(o, doneQ)
     return {
       name: o.name,
-      doneQty: chain.doneQty,
+      doneQty: doneQ,
       orderQty: chain.orderQty,
-      percent: chain.percent,
-      done: chain.done,
+      percent: pct,
+      done: isDone,
       bottleneck: bnDept?.bottleneck ? `${bnDept.bottleneck.name} (${bnDept.bottleneck.qty})` : null,
       opBottleneck: opbnDept?.opBottleneck ? `${opbnDept.name}: ${opbnDept.opBottleneck.name} (${opbnDept.opBottleneck.qty})` : null,
       forecast: f && !f.done ? `${f.date} (${f.daysLeft} kun)` : null,
