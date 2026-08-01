@@ -1,4 +1,4 @@
-const CACHE = 'kaftimda-v1';
+const CACHE = 'kassa_moliya-v1';
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(['/my-project/tizim2026.html'])));
 });

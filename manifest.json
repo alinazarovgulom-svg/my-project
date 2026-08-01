@@ -1,6 +1,6 @@
 {
-  "name": "KAFTIMDA ERP",
-  "short_name": "KAFTIMDA",
+  "name": "Kassa moliya ERP",
+  "short_name": "Kassa moliya",
   "description": "Tikuvchilik korxonasi uchun ERP tizimi",
   "start_url": "/my-project/tizim2026.html",
   "display": "standalone",
